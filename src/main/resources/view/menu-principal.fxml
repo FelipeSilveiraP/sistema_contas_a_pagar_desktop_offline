@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.chaveiro.controller.MenuController"
+      alignment="CENTER" 
+      spacing="24.0" 
+      styleClass="root"
+      stylesheets="@../styles/neobrutalism.css"
+      prefWidth="900.0" 
+      prefHeight="680.0">
+
+    <padding>
+        <Insets top="40.0" right="40.0" bottom="40.0" left="40.0"/>
+    </padding>
+
+    <!-- Cabeçalho Neobrutalista -->
+    <VBox alignment="CENTER" spacing="8.0" styleClass="painel-card" maxWidth="750.0">
+        <Label text="CHAVEIRO UNIVERSAL" styleClass="titulo-destaque" />
+        <Label text="SISTEMA DE CONTAS A PAGAR" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #475569;" />
+    </VBox>
+
+    <!-- Menu Principal: Os 5 Botões Gigantes (Stitch) -->
+    <VBox alignment="CENTER" spacing="16.0" maxWidth="650.0">
+        
+        <!-- 1. Inserir Conta -->
+        <Button fx:id="btnInserirConta" 
+                text="1. INSERIR CONTA" 
+                onAction="#onInserirConta"
+                maxWidth="Infinity" 
+                styleClass="botao-neobrutal, botao-amarelo" />
+
+        <!-- 2. Controle de Boletos -->
+        <Button fx:id="btnControle" 
+                text="2. CONTROLE" 
+                onAction="#onControle"
+                maxWidth="Infinity" 
+                styleClass="botao-neobrutal, botao-azul" />
+
+        <!-- 3. Cadastros Gerais (Centro) -->
+        <Button fx:id="btnCadastros" 
+                text="3. CADASTROS" 
+                onAction="#onCadastros"
+                maxWidth="Infinity" 
+                styleClass="botao-neobrutal, botao-laranja" />
+
+        <!-- 4. Mensagens e Avisos -->
+        <Button fx:id="btnMensagens" 
+                text="4. MENSAGENS" 
+                onAction="#onMensagens"
+                maxWidth="Infinity" 
+                styleClass="botao-neobrutal, botao-rosa" />
+
+        <!-- 5. Gráficos Financeiros -->
+        <Button fx:id="btnGraficos" 
+                text="5. GRÁFICOS" 
+                onAction="#onGraficos"
+                maxWidth="Infinity" 
+                styleClass="botao-neobrutal, botao-ciano" />
+    </VBox>
+
+    <!-- Rodapé Informativo -->
+    <HBox alignment="CENTER">
+        <Label text="Modo 100% Offline • SQLite Integrado • Versão 1.0" 
+               style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #64748B;" />
+    </HBox>
+
+</VBox>

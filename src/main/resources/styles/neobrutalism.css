@@ -1,0 +1,105 @@
+/* ==========================================================================
+   ESTILO NEOBRUTALISTA NATIVO PARA JAVAFX (-fx-*)
+   Fidelidade visual 100% ao mockup do Google Stitch
+   Cores vivas, bordas pretas grossas (3px) e sombras secas sem desfoque
+   ========================================================================== */
+
+.root {
+    -fx-font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+    -fx-background-color: #F1F5F9; /* Fundo limpo e de alto contraste */
+}
+
+/* --- BOTÕES GERAIS NEOBRUTALISTAS --- */
+.botao-neobrutal {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #000000;
+    -fx-border-color: #000000;
+    -fx-border-width: 3px;
+    -fx-border-radius: 0px;
+    -fx-background-radius: 0px;
+    -fx-padding: 14px 24px;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    /* Efeito de sombra seca projetada (4px 4px preta pura) */
+    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 4, 4);
+}
+
+/* Efeito tátil de clique: o botão 'afunda' e a sombra some */
+.botao-neobrutal:pressed {
+    -fx-translate-x: 3px;
+    -fx-translate-y: 3px;
+    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 1, 1);
+}
+
+/* --- VARIANTES DE CORES DO MENU PRINCIPAL (STITCH) --- */
+
+/* 1. Amarelo Primário (Inserir Conta) */
+.botao-amarelo {
+    -fx-background-color: #FFE600;
+}
+.botao-amarelo:hover {
+    -fx-background-color: #FFF04D;
+}
+
+/* 2. Azul (Controle de Boletos) */
+.botao-azul {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: #FFFFFF;
+}
+.botao-azul:hover {
+    -fx-background-color: #60A5FA;
+}
+
+/* 3. Laranja (Cadastros - Centro) */
+.botao-laranja {
+    -fx-background-color: #F97316;
+    -fx-text-fill: #FFFFFF;
+}
+.botao-laranja:hover {
+    -fx-background-color: #FB923C;
+}
+
+/* 4. Rosa (Mensagens) */
+.botao-rosa {
+    -fx-background-color: #EC4899;
+    -fx-text-fill: #FFFFFF;
+}
+.botao-rosa:hover {
+    -fx-background-color: #F472B6;
+}
+
+/* 5. Ciano / Roxo (Gráficos) */
+.botao-ciano {
+    -fx-background-color: #06B6D4;
+    -fx-text-fill: #000000;
+}
+.botao-ciano:hover {
+    -fx-background-color: #22D3EE;
+}
+
+/* 6. Verde (Pagos / Baixa Rápida) */
+.botao-verde {
+    -fx-background-color: #10B981;
+    -fx-text-fill: #000000;
+}
+.botao-verde:hover {
+    -fx-background-color: #34D399;
+}
+
+/* --- CARDS E PAINÉIS --- */
+.painel-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #000000;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 5, 5);
+    -fx-padding: 24px;
+}
+
+/* Título de Destaque */
+.titulo-destaque {
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #000000;
+    -fx-padding: 0 0 10 0;
+}

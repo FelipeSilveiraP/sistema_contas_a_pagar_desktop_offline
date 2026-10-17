@@ -1,0 +1,69 @@
+# ==========================================
+# Compilação e Artefatos de Build (Maven)
+# ==========================================
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# ==========================================
+# Dados Sensíveis, Confidenciais e Operacionais
+# ==========================================
+# Planilhas financeiras reais e rotinas proprietárias do cliente
+vba/
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+
+# Scripts locais e chaves de prototipação do Stitch
+inspect_stitch.js
+list_stitch.js
+.agents/
+
+# Banco de dados local SQLite (nunca commitar dados de produção)
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+data/
+database/*.db
+
+# Logs e arquivos de diagnóstico
+*.log
+logs/
+hs_err_pid*
+replay_pid*
+
+# Variáveis de ambiente e credenciais
+.env
+*.local
+*.secret
+
+# ==========================================
+# IDEs e Editores
+# ==========================================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.settings/
+.project
+.classpath
+
+# ==========================================
+# Sistema Operacional
+# ==========================================
+Thumbs.db
+Desktop.ini
+.DS_Store
+$RECYCLE.BIN/
