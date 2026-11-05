@@ -1,25 +1,17 @@
 # Progress Tracking
 
-## O que já está 100% Pronto
-- [x] Conexão com Google Stitch & Design Tokens Neobrutalistas mapeados.
-- [x] Configuração Maven com Java 21, JavaFX 21, SQLite JDBC, JUnit 5 e AssertJ.
-- [x] DER Conceitual e Lógico formalizado e validado (12 entidades e relacionamentos).
-- [x] DDL SQLite completo idempotente com 12 tabelas, índices e dados semente (`DatabaseInitializer`).
-- [x] 12 Modelos Records do Java 21 imutáveis em `com.chaveiro.model`.
-- [x] Persistência SQLite local em modo WAL (`ConnectionFactory`).
-- [x] Camada de Repository JDBC com baixa atômica e auditoria ACID (`ContaRepository`).
-- [x] Camada de Service com regras de negócio e propagação de recorrências do VBA (`ContaService`).
-- [x] Ponto de entrada JavaFX com Pure DI (`App`, `AppContainer`).
-- [x] Tratamento global de exceções contra crash abrupto (`App.configurarTratamentoGlobalErros`).
-- [x] Layout inicial FXML e CSS Neobrutalista do Menu Principal (`menu-principal.fxml`, `neobrutalism.css`).
-- [x] Testes unitários com JUnit 5 + AssertJ (`ContaServiceTest`).
-- [x] Memory Bank instalado e atualizado em `.memory-bank/`.
-- [x] 7 Skills de Engenharia instaladas em `.agents/skills/`.
+## Reinício (04/11/2026)
+- [x] Descarte total do código anterior (`src/` inteiro apagado por comando do usuário).
+- [x] Tela de Menu Principal reconstruído do zero: `App.java` (UI em código) + `neobrutalism.css`.
+- [x] Layout fiel ao sketch: banner "MENSAGENS DO DIA" (3 linhas com badges) + grade 3x3 com 5 cards gigantes (2-1-2).
+- [x] Estilo Neobrutalista: bordas 4px pretas, sombras duras sem desfoque, Space Grotesk peso 900, paleta de 5 cores.
+- [x] `mvn clean compile` aprovado.
+- [x] Smoke test `mvn javafx:run` (35s) sem exceções.
 
-## Em Andamento / Próximos Itens
-- [ ] Fluxo 1: Inserir Conta (Formulário em 2 etapas: Valor/Vencimento ➔ Categoria/Fornecedor/NF).
-- [ ] Fluxo 2: Controle (Todas as Contas com Baixa Rápida em 1 clique, Recorrentes e Histórico de Pagos).
-- [ ] Fluxo 3: Cadastros (Empresas, Pagadores, Bancos).
-- [ ] Fluxo 4: Mensagens (Quadro de recados).
-- [ ] Fluxo 5: Gráficos e Impressão de relatórios.
-- [ ] Empacotamento final `.exe` offline via `jpackage`.
+## Histórico (descartado — código não existe mais)
+- [ ] Tudo da iteração anterior: 18 telas, Pure DI, SQLite WAL, Services/Repositories, testes JUnit.
+
+## Próximos Passos
+- [ ] Validação visual do Menu pelo usuário.
+- [ ] Reconstrução dos demais fluxos sobre a base atual.
+- [ ] Commit da nova base (somente quando solicitado).

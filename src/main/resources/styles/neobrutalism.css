@@ -1,105 +1,212 @@
 /* ==========================================================================
-   ESTILO NEOBRUTALISTA NATIVO PARA JAVAFX (-fx-*)
-   Fidelidade visual 100% ao mockup do Google Stitch
-   Cores vivas, bordas pretas grossas (3px) e sombras secas sem desfoque
+   NEOBRUTALISMO PURO JAVAFX (-fx-*) — TELA DE MENU PRINCIPAL
+   Bordas pretas 4px, sombras duras sem desfoque, tipografia alto contraste
    ========================================================================== */
 
 .root {
-    -fx-font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
-    -fx-background-color: #F1F5F9; /* Fundo limpo e de alto contraste */
+    -fx-font-family: "Space Grotesk";
+    -fx-background-color: #FCF9F8;
 }
 
-/* --- BOTÕES GERAIS NEOBRUTALISTAS --- */
-.botao-neobrutal {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #000000;
-    -fx-border-color: #000000;
-    -fx-border-width: 3px;
-    -fx-border-radius: 0px;
-    -fx-background-radius: 0px;
-    -fx-padding: 14px 24px;
-    -fx-cursor: hand;
-    -fx-alignment: center;
-    /* Efeito de sombra seca projetada (4px 4px preta pura) */
-    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 4, 4);
+.menu-scroll {
+    -fx-background: #FCF9F8;
+    -fx-background-color: #FCF9F8;
+    -fx-border-width: 0;
 }
 
-/* Efeito tátil de clique: o botão 'afunda' e a sombra some */
-.botao-neobrutal:pressed {
-    -fx-translate-x: 3px;
-    -fx-translate-y: 3px;
-    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 1, 1);
+.menu-root {
+    -fx-background-color: #FCF9F8;
 }
 
-/* --- VARIANTES DE CORES DO MENU PRINCIPAL (STITCH) --- */
+/* ==========================================================================
+   BANNER "MENSAGENS DO DIA"
+   ========================================================================== */
 
-/* 1. Amarelo Primário (Inserir Conta) */
-.botao-amarelo {
-    -fx-background-color: #FFE600;
-}
-.botao-amarelo:hover {
-    -fx-background-color: #FFF04D;
-}
-
-/* 2. Azul (Controle de Boletos) */
-.botao-azul {
-    -fx-background-color: #3B82F6;
-    -fx-text-fill: #FFFFFF;
-}
-.botao-azul:hover {
-    -fx-background-color: #60A5FA;
-}
-
-/* 3. Laranja (Cadastros - Centro) */
-.botao-laranja {
-    -fx-background-color: #F97316;
-    -fx-text-fill: #FFFFFF;
-}
-.botao-laranja:hover {
-    -fx-background-color: #FB923C;
-}
-
-/* 4. Rosa (Mensagens) */
-.botao-rosa {
-    -fx-background-color: #EC4899;
-    -fx-text-fill: #FFFFFF;
-}
-.botao-rosa:hover {
-    -fx-background-color: #F472B6;
-}
-
-/* 5. Ciano / Roxo (Gráficos) */
-.botao-ciano {
-    -fx-background-color: #06B6D4;
-    -fx-text-fill: #000000;
-}
-.botao-ciano:hover {
-    -fx-background-color: #22D3EE;
-}
-
-/* 6. Verde (Pagos / Baixa Rápida) */
-.botao-verde {
-    -fx-background-color: #10B981;
-    -fx-text-fill: #000000;
-}
-.botao-verde:hover {
-    -fx-background-color: #34D399;
-}
-
-/* --- CARDS E PAINÉIS --- */
-.painel-card {
+.banner-mensagens-container {
     -fx-background-color: #FFFFFF;
-    -fx-border-color: #000000;
-    -fx-border-width: 3px;
-    -fx-effect: dropshadow(three-pass-box, #000000, 0, 1, 5, 5);
-    -fx-padding: 24px;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 4px;
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 6, 6);
 }
 
-/* Título de Destaque */
-.titulo-destaque {
-    -fx-font-size: 26px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #000000;
-    -fx-padding: 0 0 10 0;
+.banner-header {
+    -fx-background-color: #FFE600;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 0 0 4px 0;
+    -fx-padding: 10px 20px;
 }
+
+.banner-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+}
+
+.banner-subtitle {
+    -fx-font-family: "Consolas";
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+}
+
+.tabela-stitch-header {
+    -fx-background-color: #FCF9F8;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 0 0 2px 0;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+}
+
+.tabela-stitch-row {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 0 0 2px 0;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.tabela-stitch-row:last {
+    -fx-border-width: 0;
+}
+
+.tabela-stitch-row:hover {
+    -fx-background-color: #FFF9D6;
+}
+
+.data-mono {
+    -fx-font-family: "Consolas";
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+    -fx-alignment: center;
+}
+
+.valor-mono {
+    -fx-font-family: "Consolas";
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+    -fx-alignment: center-right;
+}
+
+.empresa-nome {
+    -fx-font-weight: bold;
+    -fx-text-fill: #1C1B1B;
+}
+
+.badge-sim {
+    -fx-background-color: #DCFCE7;
+    -fx-text-fill: #15803D;
+    -fx-border-color: #15803D;
+    -fx-border-width: 2px;
+    -fx-font-weight: 900;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 10px;
+}
+
+.badge-nao {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+    -fx-border-color: #DC2626;
+    -fx-border-width: 2px;
+    -fx-font-weight: 900;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 10px;
+}
+
+.badge-vence-hoje {
+    -fx-background-color: #FFE4E6;
+    -fx-text-fill: #E11D48;
+    -fx-border-color: #E11D48;
+    -fx-border-width: 2px;
+    -fx-font-weight: 900;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 8px;
+}
+
+.badge-a-vencer {
+    -fx-background-color: #FEF9C3;
+    -fx-text-fill: #A16207;
+    -fx-border-color: #A16207;
+    -fx-border-width: 2px;
+    -fx-font-weight: 900;
+    -fx-font-size: 11px;
+    -fx-padding: 2px 8px;
+}
+
+/* ==========================================================================
+   CARDS GIGANTES 2-1-2 (5 BOTÕES DO MENU)
+   ========================================================================== */
+
+.stitch-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 4px;
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 6, 6);
+    -fx-cursor: hand;
+}
+
+.stitch-card:hover {
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 10, 10);
+    -fx-translate-x: -2px;
+    -fx-translate-y: -2px;
+}
+
+.stitch-card:pressed {
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 2, 2);
+    -fx-translate-x: 2px;
+    -fx-translate-y: 2px;
+}
+
+.stitch-card-amarelo { -fx-background-color: #FFE600; }
+.stitch-card-azul    { -fx-background-color: #38BDF8; }
+.stitch-card-laranja { -fx-background-color: #FF8400; }
+.stitch-card-rosa    { -fx-background-color: #FF5E89; }
+.stitch-card-verde   { -fx-background-color: #00FF66; }
+
+.stitch-card-area {
+    -fx-padding: 16px;
+}
+
+.stitch-icon-box {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 4px;
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 3, 3);
+    -fx-alignment: center;
+    -fx-min-width: 76px;
+    -fx-min-height: 76px;
+    -fx-max-width: 76px;
+    -fx-max-height: 76px;
+}
+
+.stitch-card-footer {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #1C1B1B transparent transparent transparent;
+    -fx-border-width: 4px 0 0 0;
+    -fx-padding: 8px 14px;
+}
+
+.stitch-card-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1C1B1B;
+}
+
+.stitch-mini-box {
+    -fx-border-color: #1C1B1B;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(three-pass-box, #1C1B1B, 0, 0, 2, 2);
+    -fx-alignment: center;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-max-width: 30px;
+    -fx-max-height: 30px;
+}
+
+.stitch-mini-amarelo { -fx-background-color: #FFE600; }
+.stitch-mini-azul    { -fx-background-color: #38BDF8; }
+.stitch-mini-laranja { -fx-background-color: #FF8400; }
+.stitch-mini-rosa    { -fx-background-color: #FF5E89; }
+.stitch-mini-verde   { -fx-background-color: #00FF66; }

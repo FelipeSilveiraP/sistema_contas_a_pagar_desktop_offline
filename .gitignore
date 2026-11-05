@@ -17,10 +17,18 @@ vba/
 *.xls
 *.csv
 
-# Scripts locais e chaves de prototipação do Stitch
+# Scripts locais, dumps e chaves de prototipação do Stitch
 inspect_stitch.js
 list_stitch.js
+download_maven.js
+fetch_all_screens.js
+stitch_dump/
 .agents/
+*.zip
+*.tar
+*.gz
+*.tmp
+*.bak
 
 # Banco de dados local SQLite (nunca commitar dados de produção)
 *.db
@@ -39,8 +47,24 @@ replay_pid*
 
 # Variáveis de ambiente e credenciais
 .env
+.env.*
+!.env.example
 *.local
 *.secret
+chat_mimo.ps1
+*.pfx
+*.p12
+*.jks
+*.pid
+backups/
+
+# ==========================================
+# Node / Electron (Fase 1)
+# ==========================================
+node_modules/
+dist/
+release/
+.webpack/
 
 # ==========================================
 # IDEs e Editores
