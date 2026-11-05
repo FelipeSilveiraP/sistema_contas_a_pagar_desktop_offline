@@ -1,17 +1,22 @@
 # Progress Tracking
 
-## Reinício (04/11/2026)
-- [x] Descarte total do código anterior (`src/` inteiro apagado por comando do usuário).
-- [x] Tela de Menu Principal reconstruído do zero: `App.java` (UI em código) + `neobrutalism.css`.
-- [x] Layout fiel ao sketch: banner "MENSAGENS DO DIA" (3 linhas com badges) + grade 3x3 com 5 cards gigantes (2-1-2).
-- [x] Estilo Neobrutalista: bordas 4px pretas, sombras duras sem desfoque, Space Grotesk peso 900, paleta de 5 cores.
-- [x] `mvn clean compile` aprovado.
-- [x] Smoke test `mvn javafx:run` (35s) sem exceções.
+## Fase 0 — Auditoria e planejamento (CONCLUÍDA)
+- [x] Auditoria de segurança: 6 segredos em 5 arquivos, nenhum no histórico/GitHub; .gitignore reforçado
+- [x] Chaves migradas para `.env` (3 scripts Stitch) + teste de conexão OK
+- [x] Tag `legado-javafx` (b4fe64b); commit de preservação `d1558b3` em `develop`
 
-## Histórico (descartado — código não existe mais)
-- [ ] Tudo da iteração anterior: 18 telas, Pure DI, SQLite WAL, Services/Repositories, testes JUnit.
+## Fase 1 — Estrutura mínima funcional (CONCLUÍDA localmente)
+- [x] HTML original do Menu Principal baixado do Stitch e adaptado a 100% offline (fontes WOFF2 locais, Tailwind CSS estático — sem CDN)
+- [x] Backend Spring Boot: `/api/status`, `/api/contas` (mock), token por boot, 127.0.0.1, porta dinâmica
+- [x] Frontend TypeScript puro (api.ts separado de ui/main) compilado com esbuild + typecheck
+- [x] Electron: spawn/kill do jar, espera de health, instância única, preload com contextBridge
+- [x] Testes: 4 JUnit (401/200), tsc, build CSS/TS, smoke test completo
+- [x] Smoke: janela "…Menu Principal - API OK", 3 contas de teste recebidas, porta 62134
+- [x] Instância única OK; encerramento por WM_CLOSE → 0 processos residuais
+- [x] Offline: 0 URLs externas de rede; scan de segredos nos novos arquivos: 0
 
-## Próximos Passos
-- [ ] Validação visual do Menu pelo usuário.
-- [ ] Reconstrução dos demais fluxos sobre a base atual.
-- [ ] Commit da nova base (somente quando solicitado).
+## Pendências
+- [ ] Validação visual do usuário (resolução real do monitor)
+- [ ] CSP do Electron
+- [ ] Re-auditoria de segurança + autorização de push (GitHub: NADA publicado ainda)
+- [ ] Fase 2: SQLite + cadastros + BigDecimal (restaurar núcleo de b4fe64b seletivamente)
