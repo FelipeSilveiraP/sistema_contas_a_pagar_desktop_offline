@@ -1,19 +1,10 @@
-<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<!DOCTYPE html><html lang="pt-BR"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Oficina do Chaveiro - Menu Principal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
 <link href="../css/fonts.css" rel="stylesheet">
 <link href="../dist/tailwind.css" rel="stylesheet">
-<style>
-    @layer base {
-      html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-      }
-    }
-  </style>
 </head>
 <body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 select-none overflow-y-auto">
 <!-- GRADE 2x2 CENTRALIZADA E DOMINANTE -->
@@ -89,27 +80,5 @@
 </div>
 </a>
 </main>
-<script>
-    // Atalhos de teclado para acionamento direto dos 4 botões
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'F1' || event.key === '1') {
-        event.preventDefault();
-        const btn = document.querySelector('[data-path="inserir-conta"]');
-        if (btn) btn.click();
-      } else if (event.key === 'F2' || event.key === '2') {
-        event.preventDefault();
-        const btn = document.querySelector('[data-path="controle-de-contas"]');
-        if (btn) btn.click();
-      } else if (event.key === 'F3' || event.key === '3') {
-        event.preventDefault();
-        const btn = document.querySelector('[data-path="mensagens-e-avisos"]');
-        if (btn) btn.click();
-      } else if (event.key === 'F4' || event.key === '4') {
-        event.preventDefault();
-        const btn = document.querySelector('[data-path="graficos-e-relatorios"]');
-        if (btn) btn.click();
-      }
-    });
-  </script>
 <script src="../dist/app.js"></script>
 </body></html>
