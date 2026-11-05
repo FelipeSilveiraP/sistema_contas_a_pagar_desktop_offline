@@ -1,125 +1,200 @@
-# FinDesk FX — Core Financeiro Desktop Offline
+# FinDesk — Sistema de Contas a Pagar (Chaveiro Universal)
 
-> **Motor financeiro desktop de alta performance, 100% offline e resiliente a quedas de energia.**  
-> Desenvolvido em **Java 21 LTS**, **JavaFX** com estética **Neobrutalista** e banco de dados **SQLite WAL**.
+Aplicativo desktop offline para gestão de contas a pagar de pequenos negócios: cadastro de contas, controle de vencimentos, baixas de pagamento, contas recorrentes, cadastros, quadro de avisos e indicadores. Desenvolvido para operar **100% sem internet**, com interface fiel a um design aprovado no Google Stitch e backend em Java com regras de negócio isoladas da interface.
 
----
-
-## 🎯 Sobre o Projeto & Visão de Arquitetura
-
-O **FinDesk FX** foi concebido como um **núcleo financeiro desktop reutilizável (white-label)** para micro e pequenas empresas que necessitam de controle rigoroso de fluxo de caixa sem depender de internet, servidores complexos ou custos recorrentes de nuvem.
-
-O projeto foi pilotado e validado em ambiente real de alta rotatividade operacional (*Chaveiro Universal*), substituindo controles legados em planilhas por uma arquitetura transacional robusta, blindada contra erros humanos e falhas elétricas.
+> **Status:** Fase 1 concluída (interface + comunicação local). Funcionalidades financeiras ainda não estão conectadas a banco de dados — os dados exibidos são **simulados**. Detalhes na seção [Status do desenvolvimento](#status-do-desenvolvimento).
 
 ---
 
-## 🚀 Principais Diferenciais e Inovações Técnicas
+## Sumário
 
-### 1. 🛡️ Persistência SQLite com Crash-Resilience (Modo WAL)
-* **Write-Ahead Logging (WAL):** Configurado com `PRAGMA journal_mode = WAL` e `PRAGMA synchronous = NORMAL`, garantindo que leituras e escritas não se bloqueiem mutuamente e evitando corrupção de dados em caso de queda súbita de energia.
-* **Integridade Referencial Estrita:** Chaves estrangeiras ativadas nativamente (`PRAGMA foreign_keys = ON`).
-* **Blindagem contra SQL Injection:** 100% das operações de banco utilizam `PreparedStatement` parametrizados.
-* **Auditoria Transacional ACID:** Cada baixa ou alteração de título é gravada atomicamente na mesma transação da tabela de auditoria (`auditoria_operacoes`).
-
-### 2. ⚡ Pure Dependency Injection (Manual DI / Sem Bloatware)
-* **Zero Overhead de Framework:** Ao invés de carregar um Spring Boot pesado (que adicionaria centenas de megabytes e segundos preciosos de inicialização a um aplicativo desktop), o projeto utiliza **Pure DI** via [AppContainer.java](file:///c:/contas_pagar_chaveiro_universal/src/main/java/com/chaveiro/AppContainer.java).
-* **Controlador Injetável via Fábrica:** O [FXMLLoader](file:///c:/contas_pagar_chaveiro_universal/src/main/java/com/chaveiro/App.java) utiliza um `ControllerFactory` customizado, garantindo injeção de dependências limpa por construtor em todos os Controllers.
-* **Testabilidade Total:** Repositórios e Serviços podem ser mockados ou instanciados diretamente em testes sem necessidade de inicializar contextos pesados.
-
-### 3. ☕ Java 21 LTS Moderno & Pragmatismo
-* **Java Records Imutáveis:** Uso extensivo de `record` para todos os modelos de domínio (ex: `Conta`, `Pagamento`, `Banco`, `Empresa`, `NotaFiscal`), eliminando boilerplate e garantindo imutabilidade de estado.
-* **Pattern Matching & Switch Expressions:** Código conciso, expressivo e estaticamente seguro para regras de negócio e transições de status (`StatusConta`, `FormaPagamento`).
-* **Resource Management:** Gerenciamento rigoroso de conexões e recursos via `try-with-resources`.
-
-### 4. 🎨 Design System Neobrutalista no JavaFX
-* **UI de Alto Contraste:** Estética Neobrutalista inspirada em protótipos modernos do *Stitch with Google* (bordas sólidas pretas de 3px a 4px, sombras duras `4px 4px 0px #000`, paleta vibrante de alta visibilidade: Amarelo `#FFE600`, Azul `#2563EB`, Roxo `#9333EA`, Verde `#10B981`).
-* **Ergonomia para Usuários Leigos:** Botões gigantes, tipografia clara (*Space Grotesk* / *Inter*), navegação autoexplicativa e fluxos em etapas sem poluição visual.
-* **CSS Nativo Modular:** Estilos desacoplados em folha de estilos dedicada (`neobrutalism.css`) sem poluir a lógica dos Controllers.
-
-### 5. 🧵 Interface Responsiva & Thread-Safety
-* **Zero Travamento de UI:** Operações pesadas e I/O de disco/banco são orquestradas assincronamente através de `javafx.concurrent.Task` e sincronizadas na Thread de Aplicação via `Platform.runLater`.
-
-### 6. 🧪 TDD com JUnit 5 & AssertJ
-* Cobertura de regras críticas financeiras (cálculo de atrasos, juros, multas, regras de recorrência e liquidação) utilizando **Given-When-Then** e asserções fluentes com AssertJ.
+- [Objetivo](#objetivo)
+- [Tecnologias](#tecnologias)
+- [Arquitetura](#arquitetura)
+- [API REST local](#api-rest-local)
+- [Funcionalidades da Fase 1](#funcionalidades-da-fase-1)
+- [Próximas fases](#próximas-fases)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Requisitos e execução local](#requisitos-e-execução-local)
+- [Segurança e funcionamento offline](#segurança-e-funcionamento-offline)
+- [Interface](#interface)
+- [Status do desenvolvimento](#status-do-desenvolvimento)
+- [Licença](#licença)
 
 ---
 
-## 🏛️ Arquitetura do Sistema
+## Objetivo
 
-```mermaid
-graph TD
-    UI[JavaFX FXML + Neobrutalism CSS] -->|Ações do Usuário| C[MenuController / Controllers]
-    C -->|Invoca Regras de Negócio| S[ContaService / Business Services]
-    S -->|Acesso a Dados| R[ContaRepository / Data Repositories]
-    R -->|PreparedStatements| DB[(SQLite Database WAL Mode)]
-    
-    AC[AppContainer] -.->|Injeção por Construtor| S
-    AC -.->|Injeção por Construtor| R
-    AC -.->|ControllerFactory| C
-```
+Substituir o controle de contas a pagar em planilha Excel/VBA por um aplicativo desktop robusto, com:
 
----
+- interface autoexplicativa para usuários leigos (botões grandes, alto contraste);
+- regras financeiras centralizadas no backend, testadas e auditáveis;
+- integridade de dados (transações, auditoria, prevenção de duplicidade);
+- operação sem internet e sem servidores externos;
+- caminho de evolução para uma versão web no futuro, sem reescrever o backend.
 
-## 📂 Estrutura do Repositório
+## Tecnologias
+
+| Camada | Tecnologia |
+|---|---|
+| Desktop | Electron 33 |
+| Frontend | HTML5, CSS3 e **TypeScript puro** (sem React/Angular/Vue) |
+| Estilos | CSS estático gerado com Tailwind CSS (build local, sem CDN) |
+| Compilação TS | esbuild + `tsc` (typecheck em modo estrito) |
+| Backend | Java 21 + Spring Boot 3.3 |
+| Comunicação | API REST local (JSON) sobre HTTP em `127.0.0.1` |
+| Banco de dados | SQLite (previsto para a Fase 2) |
+| Build Java | Maven |
+| Testes | JUnit 5 + Spring MockMvc |
+
+## Arquitetura
 
 ```text
-├── src
-│   ├── main
-│   │   ├── java/com/chaveiro
-│   │   │   ├── controller       # Controladores finos de UI (JavaFX)
-│   │   │   ├── database         # ConnectionFactory, SQLite WAL & Migrações
-│   │   │   ├── model            # Records imutáveis de domínio (Java 21)
-│   │   │   ├── repository       # Acesso a dados com PreparedStatements e transações ACID
-│   │   │   ├── service          # Regras de negócio, cálculos financeiros e auditoria
-│   │   │   ├── App.java         # Ponto de entrada JavaFX
-│   │   │   └── AppContainer.java# Injetor de dependências puro (Pure DI)
-│   │   └── resources
-│   │       ├── styles           # Neobrutalism CSS nativo JavaFX
-│   │       └── view             # FXMLs de telas e componentes
-│   └── test
-│       └── java/com/chaveiro    # Testes unitários com JUnit 5 e AssertJ
-├── pom.xml                      # Gerenciador de dependências Maven
-└── LICENSE.md                   # Termos de uso e propriedade intelectual
+┌──────────────────────────────┐
+│  Electron (janela desktop)   │
+│  ├── frontend/ (HTML+CSS+TS) │  interface: Menu Principal do Stitch
+│  └── processo principal      │  inicia/encerra o backend, porta + token
+└──────────────┬───────────────┘
+               │ HTTP127.0.0.1 + header X-FinDesk-Token
+┌──────────────▼───────────────┐
+│  Spring Boot (backend Java)  │  regras de negócio e API REST
+│  controllers → services      │  independente do Electron
+│  → repositories → SQLite     │  (camada de dados na Fase 2)
+└──────────────────────────────┘
 ```
 
----
+Decisões principais:
 
-## 🛠️ Tecnologias Utilizadas
+- **Separação real entre UI e regra de negócio:** o frontend consome a API e não contém lógica financeira; o backend não conhece o Electron — requisito para a futura versão web.
+- **Processo único:** o Electron escolhe uma porta livre, gera um token por execução, aguarda o backend responder e o encerra junto com a janela (sem processos órfãos; instância única garantida).
+- **Backend legado:** o núcleo financeiro Java anterior (models, repositórios, serviço, DDL SQLite) está preservado no histórico Git e será reaproveitado na Fase 2.
 
-| Tecnologia | Versão / Finalidade |
-| :--- | :--- |
-| **Java** | 21 LTS (Records, Pattern Matching, Clean Core) |
-| **JavaFX** | 21.0.2 (Controls & FXML) |
-| **SQLite JDBC** | 3.45.2.0 (Persistência local ACID em arquivo único) |
-| **JUnit 5** | 5.10.2 (Testes de unidade estruturados) |
-| **AssertJ** | 3.25.3 (Asserções fluentes e expressivas) |
-| **Maven** | Gerenciamento de ciclo de vida e compilação |
+## API REST local
 
----
+| Método | Endpoint | Descrição | Status |
+|---|---|---|---|
+| GET | `/api/status` | Saúde da API | Implementado |
+| GET | `/api/contas` | Lista de contas | Implementado com **dados simulados** |
 
-## 💻 Como Executar
+- Endereço fixo `127.0.0.1` (não exposto na rede local); porta dinâmica por execução.
+- Autenticação: header `X-FinDesk-Token` com valor aleatório gerado a cada inicialização — sem token, a resposta é `401`.
+- CORS restrito às origens da aplicação local.
+- Erros padronizados em JSON, sem vazamento de detalhes internos.
 
-### Pré-requisitos
-* **JDK 21** instalado e configurado no PATH (`JAVA_HOME`).
-* **Maven 3.9+** instalado.
+## Funcionalidades da Fase 1
 
-### Executar a Aplicação
+- Janela desktop própria (Electron) abrindo com dois cliques via comando de desenvolvimento.
+- **Menu Principal recuperado do Google Stitch** (HTML original), executado offline.
+- Comunicação real frontend TypeScript ↔ backend Java via API REST autenticada.
+- Os 5 botões do menu respondem (comportamento provisório) e atalhos F1–F4 funcionam.
+- Encerramento limpo: fechar a janela encerra o backend (verificado sem processos residuais).
+- Proteção contra múltiplas instâncias.
+- CSP (Content-Security-Policy) ativa na página, sem avisos de segurança do Electron.
+- Compilação com verificação de tipos estrita (`tsc --noEmit`) e build reproduzível.
+
+## Próximas fases
+
+| Fase | Escopo |
+|---|---|
+| 2 | SQLite (WAL, integridade referencial), `BigDecimal` para valores, cadastros (contas, empresas, pagadores, bancos), backup/restauração |
+| 3 | Fluxo financeiro: pendentes, pagas, baixa com transação atômica e auditoria, vencimentos, contas recorrentes (regras do VBA original) |
+| 4 | Mensagens/avisos, filtros, gráficos e relatórios |
+| 5 | Testes completos, logs com rotação, empacotamento Windows (Electron Forge + JRE via `jpackage`), instalação e atualização |
+
+Nenhuma dessas fases está concluída nesta versão.
+
+## Estrutura do projeto
+
+```text
+sistema_contas_a_pagar_desktop_offline/
+├── backend/                  # Spring Boot (Java 21) — API REST
+│   ├── pom.xml
+│   └── src/ (main + test)
+├── desktop/                  # processo Electron (main.js, preload.js)
+├── frontend/
+│   ├── html/menu.html        # HTML original do Stitch (adaptado ao offline)
+│   ├── css/                  # fonts.css + fontes do build Tailwind
+│   ├── ts/                   # TypeScript puro (api.ts, main.ts)
+│   ├── assets/fonts/         # fontes WOFF2 locais (offline)
+│   └── dist/                 # artefatos gerados (não versionados)
+├── docs/                     # imagens da documentação
+├── telas_referencia/         # 28 PNGs de referência do design Stitch
+├── package.json              # scripts e dependências de desenvolvimento
+├── tailwind.config.js        # configuração extraída do design
+├── tsconfig.json             # TypeScript estrito
+├── .env.example              # modelo de configuração (sem segredos)
+├── src/, pom.xml             # legado JavaFX (preservado; ver branch main)
+├── BRIEFING_PROJETO.md       # briefing original do projeto
+└── LICENSE.md
+```
+
+## Requisitos e execução local
+
+**Pré-requisitos (máquina de desenvolvimento):**
+
+- Windows 10/11 (plataforma testada)
+- JDK 21
+- Maven 3.9+
+- Node.js 20+ e npm
+- Git
+
+**Execução:**
+
 ```bash
-# Rodar via plugin oficial do JavaFX
-mvn javafx:run
+git clone https://github.com/FelipeSilveiraP/sistema_contas_a_pagar_desktop_offline.git
+cd sistema_contas_a_pagar_desktop_offline
+
+npm install                      # dependências de frontend/desktop
+mvn -f backend/pom.xml package   # compila o backend (gera o .jar)
+npm run dev                      # build do frontend + abre a janela
 ```
 
-### Executar a Suíte de Testes
+**Testes e verificações:**
+
 ```bash
-# Rodar testes automatizados
-mvn test
+mvn -f backend/pom.xml test   # testes do backend (JUnit 5)
+npm run typecheck             # verificação de tipos do TypeScript
+npm run build                 # gera CSS estático e bundle JS
 ```
 
----
+Todos os comandos acima foram executados e verificados nesta fase.
 
-## 🔒 Licença & Propriedade Intelectual
+## Segurança e funcionamento offline
 
-Este projeto está registrado sob **Licença Proprietária / Source-Available**.  
-Consulte o arquivo [LICENSE.md](file:///c:/contas_pagar_chaveiro_universal/LICENSE.md) para detalhes.
+- **Offline total da interface:** fontes WOFF2 e CSS do Tailwind são gerados/servidos localmente — nenhuma chamada de rede externa em execução (CDN do Tailwind e Google Fonts removidos).
+- **API local isolada:** servidor vinculado a `127.0.0.1`; não responde na rede local ou internet.
+- **Token por execução:** valor aleatório a cada inicialização, exposto ao renderer via `contextBridge` (sem `nodeIntegration`); não é gravado em logs.
+- **CSP ativa** na página e permissões padrão do Electron endurecidas (`contextIsolation`).
+- **Repositório sem credenciais:** arquivos de ambiente (`.env`), planilhas financeiras, bancos SQLite, logs e scripts de integração local são ignorados pelo `.gitignore`; `.env.example` contém apenas nomes de variáveis fictícias.
+- **Próximos passos de segurança (Fase 2+):** transações ACID no SQLite, auditoria de operações financeiras, backup automático com teste de restauração.
 
-O código está público no GitHub para fins exclusivos de **auditoria técnica, avaliação em processos seletivos e demonstração de portfólio**. É estritamente proibida a cópia, redistribuição ou exploração comercial deste software sem autorização prévia por escrito.
+## Interface
+
+Menu Principal recuperado do Google Stitch e executado no Electron durante a Fase 1.
+Os dados exibidos (empresas, valores, datas) são **mockups do design original** — não há dados reais da empresa nesta tela.
+
+![Menu Principal — FinDesk em execução no Electron](docs/menu-principal.png)
+
+## Status do desenvolvimento
+
+| Marco | Situação |
+|---|---|
+| Fase 0 — Auditoria e planejamento | Concluída |
+| Fase 1 — Interface + API local | **Concluída** (branch `develop`) |
+| Fase 2 — Banco de dados e cadastros | Não iniciada |
+| Fase 3 — Fluxo financeiro completo | Não iniciada |
+| Fase 4 — Mensagens, filtros, gráficos | Não iniciada |
+| Fase 5 — Testes finais e instalador Windows | Não iniciada |
+
+Limitações desta versão:
+
+- dados de contas **simulados** (sem persistência);
+- nenhum módulo financeiro está em produção;
+- o instalador definitivo ainda não foi gerado;
+- validação de layout pendente na resolução real do monitor da empresa.
+
+## Licença
+
+Licença proprietária / source-available — Copyright (c) 2026 Felipe / Contas a Pagar Core. Todos os direitos reservados.
+
+O código-fonte é público exclusivamente para auditoria técnica, avaliação em processos seletivos e estudo. É vedada a exploração comercial. Consulte [LICENSE.md](LICENSE.md) para os termos completos.

@@ -1,7 +1,7 @@
 # Active Context
 
 ## Foco Atual
-**Fase 1 do FinDesk CONCLUÍDA localmente** (aguardando validação visual do usuário e autorização de publicação): Electron + Menu Principal original do Stitch offline + backend Spring Boot com API REST local autenticada.
+**Fase 1 do FinDesk CONCLUÍDA** (aguardando validação visual do usuário e autorização de publicação): Electron + Menu Principal original do Stitch offline + backend Spring Boot com API REST local autenticada. A documentação final (`README.md` + `docs/menu-principal.png`) também foi concluída.
 
 ## Estrutura Atual (branch `develop`)
 - `frontend/` — `html/menu.html` (HTML original do Stitch, offline), `css/` (fonts.css local + tailwind.input), `ts/` (api.ts/main.ts TS puro), `assets/fonts/` (10 WOFF2, 1,2 MB), `dist/` gerado (tailwind.css + app.js, ignorado pelo git)
@@ -17,5 +17,4 @@
 
 ## Pendências Fase 1
 1. Validação visual do usuário (resolução real da empresa; provisório 1920×1080)
-2. CSP no Electron (aviso de segurança do Chromium)
-3. Re-auditoria de segurança + autorização para push (não publicado nada ainda)
+2. Re-auditoria de segurança + autorização para push (não publicado nada ainda)
