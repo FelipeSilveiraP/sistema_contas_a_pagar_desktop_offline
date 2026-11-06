@@ -16,6 +16,7 @@
 - [x] Offline: 0 URLs externas de rede; scan de segredos nos novos arquivos: 0
 - [x] CSP do Electron (`Content-Security-Policy` em `frontend/html/menu.html`)
 - [x] Documentação final: `README.md` atualizado + screenshot `docs/menu-principal.png`
+- [x] Layout do menu sem scroll no padrão Stitch: wrapper com `aspect-[1360/1059]` (proporção medida do PNG 09) mantém cartões 2,1:1 como no design em qualquer tela; tamanhos em `clamp(vh)`; referência do usuário: 1536x864 lógico (1920x1080 @125%)
 
 ## Pendências
 - [ ] Validação visual do usuário (resolução real do monitor)

@@ -1,7 +1,7 @@
 # Active Context
 
 ## Foco Atual
-**Fase 1 do FinDesk CONCLUÍDA** (aguardando validação visual do usuário e autorização de publicação): Electron + Menu Principal original do Stitch offline + backend Spring Boot com API REST local autenticada. A documentação final (`README.md` + `docs/menu-principal.png`) também foi concluída.
+**Fase 1 do FinDesk CONCLUÍDA** (aguardando validação visual do usuário e autorização de publicação): Electron + Menu Principal original do Stitch offline + backend Spring Boot com API REST local autenticada. A documentação final (`README.md` + `docs/menu-principal.png`) também foi concluída. Menu no padrão Stitch sem scroll (tabela em cima, grade 3x3 embaixo; wrapper `aspect-[1360/1059]` preserva a proporção dos cartões do design; tamanhos escalam com `clamp(vh)`). Tela de referência do usuário: 1536x864 lógico (1920x1080 física, escala 125%).
 
 ## Estrutura Atual (branch `develop`)
 - `frontend/` — `html/menu.html` (HTML original do Stitch, offline), `css/` (fonts.css local + tailwind.input), `ts/` (api.ts/main.ts TS puro), `assets/fonts/` (10 WOFF2, 1,2 MB), `dist/` gerado (tailwind.css + app.js, ignorado pelo git)

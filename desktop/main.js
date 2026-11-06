@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, screen } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const path = require("path");
@@ -65,11 +65,13 @@ async function iniciarBackend() {
 }
 
 function criarJanela() {
+  const area = screen.getPrimaryDisplay().workAreaSize;
   janela = new BrowserWindow({
-    width: 1500,
-    height: 950,
-    minWidth: 1024,
-    minHeight: 700,
+    width: Math.min(1500, area.width),
+    height: Math.min(950, area.height),
+    minWidth: 800,
+    minHeight: 520,
+    center: true,
     title: "FinDesk - Contas a Pagar",
     backgroundColor: "#fcf9f8",
     autoHideMenuBar: true,
