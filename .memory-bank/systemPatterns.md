@@ -17,3 +17,9 @@
 8. **Crash Resilience & WAL:** Conexões SQLite abertas com `PRAGMA journal_mode = WAL;` e `PRAGMA synchronous = NORMAL;`.
 9. **Exception Safety:** Registro de `Thread.setDefaultUncaughtExceptionHandler` no boot da aplicação, impedindo travamento ou encerramento súbito sem diálogo amigável.
 10. **Virtual Threads / Worker Pattern:** Operações assíncronas via `javafx.concurrent.Task` e Virtual Threads do Java 21 para garantir 60 FPS na UI.
+
+## Padrões FinDesk (migração Electron/TypeScript — atual)
+11. **Navegação Multi-página Segura:** cada tela = 1 HTML + 1 módulo TS (`telas/*.ts`); despacho por `body[data-tela]`. Renderer **não** toca o sistema de arquivos: o preload expõe só `config()` e `navegar(tela)`; o processo principal valida a chave contra whitelist (`Map` chave→arquivo) antes de `loadFile`. `contextIsolation: true`, `nodeIntegration: false`, `will-navigate` e `window.open` bloqueados, CSP por página.
+12. **Pilha de Voltar em `sessionStorage`:** `navegacao.ts` mantém `irPara()/voltar()/menuPrincipal()`; persistência entre páginas `file://` verificada no smoke.
+13. **Entregas Agrupadas por Afinidade:** tarefas semelhantes que compartilham componentes/layouts/testes são agrupadas em uma única entrega (ex.: todos os submenus); cada entrega é testada e apresentada antes da próxima. Submenus são navegação pura (sem SQLite/regras financeiras — ver `docs/plano-telas.md` §3).
+14. **Submenu como Componente Genérico:** `telas/submenu.ts` renderiza cards a partir de `submenus-config.ts` (rótulos/cores/selos/SVGs/destinos centralizados); telas HTML são cascas finas; Tailwind extrai classes também de `frontend/ts/**`.

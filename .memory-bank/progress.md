@@ -1,24 +1,34 @@
 # Progress Tracking
 
 ## Fase 0 — Auditoria e planejamento (CONCLUÍDA)
-- [x] Auditoria de segurança: 6 segredos em 5 arquivos, nenhum no histórico/GitHub; .gitignore reforçado
-- [x] Chaves migradas para `.env` (3 scripts Stitch) + teste de conexão OK
-- [x] Tag `legado-javafx` (b4fe64b); commit de preservação `d1558b3` em `develop`
+- [x] Auditoria de segurança; chaves em `.env`; tag `legado-javafx`; commit de preservação `d1558b3`
 
 ## Fase 1 — Estrutura mínima funcional (CONCLUÍDA)
-- [x] HTML original do Menu Principal baixado do Stitch e adaptado a 100% offline (fontes WOFF2 locais, Tailwind CSS estático — sem CDN)
-- [x] Backend Spring Boot: `/api/status`, `/api/contas` (mock), token por boot, 127.0.0.1, porta dinâmica
-- [x] Frontend TypeScript puro (api.ts separado de ui/main) compilado com esbuild + typecheck
-- [x] Electron: spawn/kill do jar, espera de health, instância única, preload com contextBridge
-- [x] Testes: 4 JUnit (401/200), tsc, build CSS/TS, smoke test completo
-- [x] Smoke: janela "…Menu Principal - API OK", 3 contas de teste recebidas, porta 62134
-- [x] Instância única OK; encerramento por WM_CLOSE → 0 processos residuais
-- [x] Offline: 0 URLs externas de rede; scan de segredos nos novos arquivos: 0
-- [x] CSP do Electron (`Content-Security-Policy` em `frontend/html/menu.html`)
-- [x] Documentação final: `README.md` atualizado + screenshot `docs/menu-principal.png`
-- [x] Layout do menu sem scroll no padrão Stitch: wrapper com `aspect-[1360/1059]` (proporção medida do PNG 09) mantém cartões 2,1:1 como no design em qualquer tela; tamanhos em `clamp(vh)`; referência do usuário: 1536x864 lógico (1920x1080 @125%)
+- [x] Menu Principal Stitch offline; backend Spring Boot (mock); Electron (contextBridge, instância única)
+- [x] 4 JUnit; smoke; quincunx Stitch; responsividade 3/2/1 col
+
+## Etapa 2 — Planejamento das telas (CONCLUÍDA, revisões v2/v3)
+- [x] Inventário Stitch 29 telas (IDs completos); reconciliação 14+4+11=29
+- [x] v2: requisitos obrigatórios × não aplicáveis; submenus sem SQLite/regras
+- [x] v3: variantes Stitch mapeadas definitivamente; mapa de destinos com status (§2.3); estratégia agrupada (§5)
+
+## Entregas incrementais
+- [x] 1. Estrutura de navegação + Submenu Controle (APROVADA)
+- [x] 2. Navegação completa + TODOS os submenus em entrega agrupada (AGUARDA APROVAÇÃO)
+      — componente genérico de submenu + config central; Controle e Menu preservados
+- [ ] 3. Pool financeiro (Cadastros, Inserir Conta, Boletos+baixa, Pagos, Recorrentes, Mensagens,
+      Gráficos) — sequência a reavaliar/aprovar após Entrega 2
+
+## Validação da Entrega 2 (2026-11-06)
+- [x] Smoke `desktop/smoke.js`: 127/127 — abertura menu, API, segurança (Node/fs, whitelist 6 chaves,
+      rejeição de caminho arbitrário), botões do Menu, atalhos F1–F4/1–4 + Esc/1/2/3, 5 submenus
+      (entrada, rótulos, botões navega/provisório, VOLTAR), pilha profunda 2 níveis, repetição 3x,
+      responsividade 6 páginas × 7 resoluções (colunas corretas, 0 overflow), offline 0 URLs externas,
+      0 erros de console
+- [x] JUnit regressão: 4/4; tsc + build CSS/TS OK (classes Tailwind geradas a partir do TS)
+- [x] Capturas: docs/responsivo/{controle,cadastros,mensagens,recorrentes,novo-cadastro}-{1536x864,768x800,480x800}.png
 
 ## Pendências
-- [ ] Validação visual do usuário (resolução real do monitor)
+- [ ] Aprovação visual do usuário (submenus)
 - [ ] Re-auditoria de segurança + autorização de push (GitHub: NADA publicado ainda)
 - [ ] Fase 2: SQLite + cadastros + BigDecimal (restaurar núcleo de b4fe64b seletivamente)

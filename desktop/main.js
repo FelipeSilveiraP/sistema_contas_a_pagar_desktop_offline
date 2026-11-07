@@ -11,6 +11,15 @@ let token = null;
 let porta = null;
 let encerrando = false;
 
+const TELAS = new Map([
+  ["menu", path.join(__dirname, "..", "frontend", "html", "menu.html")],
+  ["controle", path.join(__dirname, "..", "frontend", "html", "controle.html")],
+  ["cadastros", path.join(__dirname, "..", "frontend", "html", "cadastros.html")],
+  ["mensagens", path.join(__dirname, "..", "frontend", "html", "mensagens.html")],
+  ["recorrentes", path.join(__dirname, "..", "frontend", "html", "recorrentes.html")],
+  ["novo-cadastro", path.join(__dirname, "..", "frontend", "html", "novo-cadastro.html")],
+]);
+
 function portaLivre() {
   return new Promise((resolver, rejeitar) => {
     const servidor = net.createServer();
@@ -69,8 +78,8 @@ function criarJanela() {
   janela = new BrowserWindow({
     width: Math.min(1500, area.width),
     height: Math.min(950, area.height),
-    minWidth: 800,
-    minHeight: 520,
+    minWidth: 480,
+    minHeight: 480,
     center: true,
     title: "FinDesk - Contas a Pagar",
     backgroundColor: "#fcf9f8",
@@ -81,6 +90,8 @@ function criarJanela() {
       nodeIntegration: false,
     },
   });
+  janela.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  janela.webContents.on("will-navigate", (evento) => evento.preventDefault());
   janela.loadFile(path.join(__dirname, "..", "frontend", "html", "menu.html"));
   janela.on("closed", () => {
     janela = null;
@@ -95,6 +106,13 @@ function encerrarBackend() {
 }
 
 ipcMain.handle("findesk:config", () => ({ port: porta, token }));
+
+ipcMain.handle("findesk:navegar", (_evento, tela) => {
+  const destino = TELAS.get(tela);
+  if (!destino || !janela) return false;
+  janela.loadFile(destino);
+  return true;
+});
 
 const instanciaUnica = app.requestSingleInstanceLock();
 if (!instanciaUnica) {

@@ -7,6 +7,142 @@
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
   }
+}
+
+/* ===== Menu Principal — layout responsivo (Grid/Flexbox + media queries) ===== */
+
+.menu-body {
+  box-sizing: border-box;
+  min-height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(0.5rem, 2vmin, 1.5rem);
+}
+
+.menu-wrap {
+  width: 100%;
+  max-width: 1500px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 2vmin, 1.25rem);
+}
+
+.menu-grade {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  gap: clamp(0.5rem, 2vmin, 1.25rem);
+  flex: 1;
+  min-height: 0;
+}
+
+.cartao {
+  aspect-ratio: 429 / 240;
+  min-height: 7.5rem;
+}
+
+/* Tabela mensagens: linhas rotuladas quando estreita */
+@media (max-width: 599px) {
+  .tabela-avisos thead { display: none; }
+  .tabela-avisos tbody,
+  .tabela-avisos tr,
+  .tabela-avisos td { display: block; width: 100%; }
+  .tabela-avisos tr { border-bottom: 2px solid #1c1b1b; padding: 0.35rem 0; }
+  .tabela-avisos tbody tr:last-child { border-bottom: 0; }
+  .tabela-avisos td {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    text-align: left;
+  }
+  .tabela-avisos td::before {
+    content: attr(data-rotulo);
+    min-width: 5.25rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    opacity: 0.75;
+  }
+}
+
+/* ===== Submenus (Controle/Cadastros/Mensagens) - layout responsivo ===== */
+
+.submenu-body {
+  box-sizing: border-box;
+  min-height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(0.75rem, 2.5vmin, 2rem);
+}
+
+.submenu-wrap {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 2.5vmin, 2rem);
+  flex: 1;
+}
+
+[data-botoes="2"] .submenu-wrap {
+  max-width: 56rem;
+}
+
+.submenu-grade {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(0.75rem, 2vmin, 1.5rem);
+  align-content: center;
+  flex: 1;
+}
+
+.submenu-cartao__area {
+  height: clamp(7.5rem, 28vmin, 18rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 2vmin, 1.5rem);
+}
+
+/* Compacto: 2 colunas (600–960px) */
+@media (min-width: 600px) {
+  .menu-grade { grid-template-columns: repeat(2, 1fr); }
+  .submenu-grade { grid-template-columns: repeat(2, 1fr); }
+  .submenu-cartao--ultimo { grid-column: span 2; }
+  [data-botoes="2"] .submenu-cartao--ultimo { grid-column: auto; }
+}
+
+@media (min-width: 600px) and (max-width: 960px) {
+  .cartao--graficos { grid-column: span 2; aspect-ratio: 878 / 240; }
+}
+
+/* Padrão: quincunx 3x3 do Stitch (>=961px), proporcao 1360/1059 do design */
+@media (min-width: 961px) {
+  .menu-wrap {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 1360 / 1059;
+  }
+  .menu-grade {
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .cartao--inserir   { grid-area: 1 / 1; }
+  .cartao--controle  { grid-area: 1 / 3; }
+  .cartao--cadastros { grid-area: 2 / 2; }
+  .cartao--mensagens { grid-area: 3 / 1; }
+  .cartao--graficos  { grid-area: 3 / 3; }
+  .submenu-grade { grid-template-columns: repeat(3, 1fr); }
+  .submenu-cartao--ultimo { grid-column: auto; }
+  [data-botoes="2"] .submenu-grade { grid-template-columns: repeat(2, 1fr); }
 }

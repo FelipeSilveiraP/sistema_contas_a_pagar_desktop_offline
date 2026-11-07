@@ -1,20 +1,39 @@
 # Active Context
 
 ## Foco Atual
-**Fase 1 do FinDesk CONCLUÍDA** (aguardando validação visual do usuário e autorização de publicação): Electron + Menu Principal original do Stitch offline + backend Spring Boot com API REST local autenticada. A documentação final (`README.md` + `docs/menu-principal.png`) também foi concluída. Menu no padrão Stitch sem scroll (tabela em cima, grade 3x3 embaixo; wrapper `aspect-[1360/1059]` preserva a proporção dos cartões do design; tamanhos escalam com `clamp(vh)`). Tela de referência do usuário: 1536x864 lógico (1920x1080 física, escala 125%).
+**Entrega 2 CONCLUÍDA — aguardando aprovação** (branch `feature/navegacao-submenus`, NENHUM commit, NENHUM push):
+navegação completa + TODOS os submenus em entrega agrupada (Controle preservado + Cadastros, Novo
+Cadastro, Mensagens, Recorrentes novos). Smoke 127/127 + JUnit 4/4. Capturas em `docs/responsivo/<tela>-*.png`.
+`docs/plano-telas.md` revisado v3 (estratégia agrupada + mapa de destinos §2.3). Próximo passo: aprovação
+→ Entrega 3 (pool financeiro, sequência a reavaliar com o usuário).
 
-## Estrutura Atual (branch `develop`)
-- `frontend/` — `html/menu.html` (HTML original do Stitch, offline), `css/` (fonts.css local + tailwind.input), `ts/` (api.ts/main.ts TS puro), `assets/fonts/` (10 WOFF2, 1,2 MB), `dist/` gerado (tailwind.css + app.js, ignorado pelo git)
-- `backend/` — Spring Boot 3.3.5 (`com.chaveiro`): StatusController, ContasController (mock), TokenFilter (`X-FinDesk-Token`), CorsConfig (origem `null`/localhost), ApiExceptionHandler; jar `findesk-backend-0.1.0.jar`
-- `desktop/` — Electron `main.js` (porta dinâmica + token por boot, spawn/kill do jar, instância única) + `preload.js` (contextBridge)
-- Raiz — `package.json` (typescript, esbuild, tailwindcss+forms+container-queries, electron), `tailwind.config.js`, `tsconfig.json`
-- Legados preservados: `src/`, `pom.xml` (menu JavaFX), tag `legado-javafx` → `b4fe64b`
+## Entrega 2 (submenus agrupados)
+- Componente genérico `frontend/ts/telas/submenu.ts` (render de cards + atalhos + VOLTAR + provisório/navega)
+  instanciado por `frontend/ts/submenus-config.ts` (config central: rótulos, cores, selos, SVGs, destinos)
+- Submenus: `controle.html`, `cadastros.html`, `mensagens.html`, `recorrentes.html`, `novo-cadastro.html`
+  (cascas finas; cards gerados por TS; Tailwind content inclui `frontend/ts/**`)
+- Mapeamento definitivo variantes Stitch (verificado por htmlCode + pixels): 79967450→Mensagens
+  (#ec4899/#f43f5e), 11751738→Cadastros (#ea580c/#f59e0b — style inline do Stitch prevalece),
+  16202825→Recorrentes (#38bdf8/#7c3aed), 19211312→Novo Cadastro (#f59e0b/#dc2626/#16a34a)
+- Destinos: CONTAS RECORRENTES→recorrentes, NOVO CADASTRO→novo-cadastro (navegam); demais provisórios
+- Menu: CADASTROS/MENSAGENS agora navegam (visual preservado); INSERIR CONTA/GRÁFICOS provisórios
+- `desktop/smoke.js` reescrito (data-driven): 127 verificações — todos os submenus, botões, VOLTAR,
+  pilha profunda, repetição 3x, atalhos, responsividade 6 páginas × 7 resoluções, offline, console,
+  whitelist (6 chaves + rejeição de caminhos arbitrários)
+
+## Decisões
+- Estratégia agrupada: tarefas semelhantes compartilham componentes/testes (§5 do plano revisado)
+- Cores de Cadastros = cores renderizadas no screenshot do Stitch (inline style > classe CSS)
+- Ícones dos cards em SVG local (design usava imgs remotas) — offline, identidade preservada
+- Ícones de selo seguem o design (fonte Material Symbols local completa)
 
 ## Git
-- `main` = `origin/main` = `b4fe64b` (intocada, sem push)
-- `develop`: commit preservação `d1558b3` + commit Fase 1
-- Credenciais: `.env` local (ignorado) + `.env.example`; 3 scripts Stitch migrados; `mcp_config.json` intocado (uso autorizado, ignorado)
+- `feature/navegacao-submenus` (nova, a partir de `feature/menu-responsivo`); `main`/`develop` intocadas
+- Working tree: entregas 1+2 completas, sem commit (aguardando autorização)
+- API Stitch: header `X-Goog-Api-Key` (parâmetro `?key=` descontinuado)
 
-## Pendências Fase 1
-1. Validação visual do usuário (resolução real da empresa; provisório 1920×1080)
-2. Re-auditoria de segurança + autorização para push (não publicado nada ainda)
+## Pendências
+1. Aprovação visual do usuário (5 submenus + capturas)
+2. Entrega 3: pool financeiro (Cadastros → Inserir Conta → Boletos → Pagos → Recorrentes → Gráficos)
+   — sequência a reavaliar/aprovar
+3. Re-auditoria de segurança + autorização de push
