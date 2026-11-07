@@ -72,6 +72,86 @@
   }
 }
 
+/* ===== Navbar global (barra desktop + menu lateral compacto) ===== */
+
+.nav-barra {
+  display: none;
+}
+
+.nav-hamburguer {
+  display: none;
+}
+
+.nav-veu {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(28, 27, 27, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 250ms ease, visibility 250ms ease;
+}
+
+.nav-painel {
+  position: fixed;
+  top: calc(clamp(0.75rem, 2.5vmin, 2rem) + 4.25rem);
+  left: clamp(0.75rem, 2.5vmin, 2rem);
+  width: min(20rem, calc(100vw - 2 * clamp(0.75rem, 2.5vmin, 2rem)));
+  z-index: 50;
+  transform: translateX(calc(-100% - 3rem));
+  visibility: hidden;
+  transition: transform 250ms ease, visibility 250ms ease;
+}
+
+[data-menu-aberto="true"] .nav-veu {
+  opacity: 1;
+  visibility: visible;
+}
+
+[data-menu-aberto="true"] .nav-painel {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.nav-hamburguer__linha {
+  display: block;
+  width: 1.75rem;
+  height: 0.25rem;
+  background: #1c1b1b;
+  transition: transform 250ms ease, opacity 250ms ease;
+}
+
+[data-menu-aberto="true"] .nav-hamburguer__linha:nth-child(1) {
+  transform: translateY(0.625rem) rotate(45deg);
+}
+
+[data-menu-aberto="true"] .nav-hamburguer__linha:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0.25);
+}
+
+[data-menu-aberto="true"] .nav-hamburguer__linha:nth-child(3) {
+  transform: translateY(-0.625rem) rotate(-45deg);
+}
+
+/* A barra cabe a partir de 900px (largura necessária para 6 botões);
+   abaixo disso vale o botão flutuante com menu lateral */
+@media (min-width: 900px) {
+  .nav-barra { display: flex; }
+}
+
+@media (max-width: 899px) {
+  .nav-hamburguer { display: inline-flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-veu,
+  .nav-painel,
+  .nav-hamburguer__linha {
+    transition: none;
+  }
+}
+
 /* ===== Submenus (Controle/Cadastros/Mensagens) - layout responsivo ===== */
 
 .submenu-body {

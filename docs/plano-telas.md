@@ -7,6 +7,8 @@
 > Revisão v3 (Entrega 2 — navegação e submenus agrupados): todos os submenus do Menu implementados
 > em uma única entrega; variantes Stitch mapeadas definitivamente (§1.2/§1.4); novo mapa de destinos
 > com status (§2.3); estratégia de entregas agrupadas (§5).
+> Revisão v4 (Entrega 2.1 — barra de navegação global): barra desktop + menu lateral compacto com
+> hambúrguer→X em todas as telas internas; componente global reutilizável (§4.1).
 > Fontes: API Google Stitch (projeto `5659178840976603476` — 29 telas listadas em 2026-11-05),
 > `BRIEFING_PROJETO.md`, `telas_referencia/` (28 PNGs), `vba/cod_vba_contas_a_pagar.txt`, `.memory-bank/`.
 > A tela `Relatório de Mapeamento de Telas e Navegação` do próprio Stitch foi usada como fonte
@@ -266,6 +268,36 @@ frontend/
 
 Alternativa descartada por ora: SPA com parciais embutidos (mais hidratação, mesmo ganho).
 
+### 4.1 Barra de navegação global (Entrega 2.1)
+
+Componente único reutilizável (`frontend/ts/navbar.ts`) montado em todas as telas internas
+(Controle, Cadastros, Novo Cadastro, Mensagens, Recorrentes e futuras telas) via `montarNavbar(tela)`.
+Substituiu o antigo botão VOLTAR isolado. O Menu Principal aprovado não recebe a barra.
+
+**Barra desktop (≥900px — largura necessária para os 6 botões):** retângulos neobrutalistas
+(branco, borda grossa `#1c1b1b`, sombra rígida) na ordem obrigatória
+**VOLTAR → MENU PRINCIPAL → CADASTROS → CONTROLE → MENSAGENS → GRÁFICOS**, com ícones nas cores
+oficiais dos módulos do Menu Principal (`#FF8400`, `#38BDF8`, `#FF5E89`, `#00FF66`). O módulo da tela
+atual fica destacado com o preenchimento da cor oficial (módulo de tela filha herda o módulo pai:
+novo-cadastro→Cadastros, recorrentes→Controle).
+
+**Modo compacto (<900px):** um único botão flutuante quadrado (hambúrguer de 3 linhas) no canto
+superior esquerdo da área de conteúdo. Ao abrir, as linhas giram ±45° e a central desaparece — o
+mesmo botão vira X (CSS `transform`/`opacity`/`transition`, 250ms, `prefers-reduced-motion`
+respeitado). Abaixo dele desliza o painel lateral: **um único retângulo** (fundo branco, borda
+preta, sombra rígida), divisórias entre os 6 itens (**VOLTAR**, MENU PRINCIPAL, CADASTROS, CONTROLE,
+MENSAGENS, GRÁFICOS), ícones coloridos e seção atual destacada. VOLTAR sem histórico anterior tem
+comportamento seguro e previsível: navega ao Menu Principal.
+
+**Fundo e estabilidade (requisito crítico):** painel e véu são camadas `position: fixed` + `z-index`
+independentes do layout — abrir o menu **não move, não comprime e não redimensiona** nenhum cartão
+(verificado por `getBoundingClientRect()` idêntico antes/depois); o véu semitransparente escurece o
+conteúdo uniformemente e absorve os cliques do fundo. Fecha pelo X, clique fora (véu), ESC ou
+automaticamente ao navegar. ESC com o menu fechado mantém o voltar à tela anterior.
+
+**Destinos:** §2.3 (navega quando a tela existe; resposta provisória quando não — GRÁFICOS segue
+provisório). VOLTAR usa a pilha de histórico; MENU PRINCIPAL zera a pilha.
+
 ---
 
 ## 5. Plano de implementação incremental (estratégia agrupada)
@@ -278,8 +310,9 @@ aguardar aprovação → próxima**.
 | # | Entrega | Conteúdo | Situação |
 |---|---------|----------|----------|
 | 1 | Estrutura de navegação + Submenu Controle | `navegacao.ts`, `componentes.ts`, navegação segura Electron, submenu Controle | **Concluída** (aprovada) |
-| 2 | Navegação completa + todos os submenus | componente genérico de submenu, submenus Cadastros, Novo Cadastro, Mensagens e Recorrentes, integração de destinos (§2.3) | **Concluída** (aguardando aprovação) |
-| 3 | Funcionalidades financeiras | pool abaixo — sequência a reavaliar e aprovar após a Entrega 2 | Não iniciada |
+| 2 | Navegação completa + todos os submenus | componente genérico de submenu, submenus Cadastros, Novo Cadastro, Mensagens e Recorrentes, integração de destinos (§2.3) | **Concluída** (aprovada) |
+| 2.1 | Barra de navegação global | barra desktop 6 botões + menu lateral compacto (hambúrguer→X, véu, estabilidade dos cartões) — §4.1 | **Concluída** (aguardando aprovação) |
+| 3 | Funcionalidades financeiras | pool abaixo — sequência a reavaliar e aprovar após a Entrega 2.1 | Não iniciada |
 
 Pool de referência das funcionalidades financeiras (ordem provisória, sujeita à reavaliação):
 Cadastros (Banco → Pagador → Empresa), Inserir Conta, Todas as Contas + baixa rápida, Pagos,
@@ -312,4 +345,4 @@ Submenus concluem-se com Interface + Navegação.
 
 ---
 
-*Documento gerado como planejamento (Etapa 2); revisões v2 (correções) e v3 (entrega agrupada de submenus).*
+*Documento gerado como planejamento (Etapa 2); revisões v2 (correções), v3 (entrega agrupada de submenus) e v4 (barra de navegação global).*

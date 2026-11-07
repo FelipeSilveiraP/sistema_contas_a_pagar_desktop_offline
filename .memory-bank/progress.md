@@ -7,28 +7,41 @@
 - [x] Menu Principal Stitch offline; backend Spring Boot (mock); Electron (contextBridge, instância única)
 - [x] 4 JUnit; smoke; quincunx Stitch; responsividade 3/2/1 col
 
-## Etapa 2 — Planejamento das telas (CONCLUÍDA, revisões v2/v3)
+## Etapa 2 — Planejamento das telas (CONCLUÍDA, revisões v2/v3/v4)
 - [x] Inventário Stitch 29 telas (IDs completos); reconciliação 14+4+11=29
-- [x] v2: requisitos obrigatórios × não aplicáveis; submenus sem SQLite/regras
-- [x] v3: variantes Stitch mapeadas definitivamente; mapa de destinos com status (§2.3); estratégia agrupada (§5)
+- [x] v2: requisitos obrigatórios × não aplicáveis; v3: variantes mapeadas + §2.3 + estratégia agrupada
+- [x] v4: componente de navegação global documentado (§4.1)
 
 ## Entregas incrementais
 - [x] 1. Estrutura de navegação + Submenu Controle (APROVADA)
-- [x] 2. Navegação completa + TODOS os submenus em entrega agrupada (AGUARDA APROVAÇÃO)
-      — componente genérico de submenu + config central; Controle e Menu preservados
+- [x] 2. Navegação completa + todos os submenus agrupados (APROVADA — commit `f4fcbaf`)
+- [x] 2.1. Barra de navegação global responsiva (APROVADA — commit de preservação local; sem push)
+      — barra desktop 6 botões + menu lateral hambúrguer→X + véu; estabilidade dos cartões comprovada
 - [ ] 3. Pool financeiro (Cadastros, Inserir Conta, Boletos+baixa, Pagos, Recorrentes, Mensagens,
-      Gráficos) — sequência a reavaliar/aprovar após Entrega 2
+      Gráficos) — sequência a reavaliar/aprovar
 
-## Validação da Entrega 2 (2026-11-06)
-- [x] Smoke `desktop/smoke.js`: 127/127 — abertura menu, API, segurança (Node/fs, whitelist 6 chaves,
-      rejeição de caminho arbitrário), botões do Menu, atalhos F1–F4/1–4 + Esc/1/2/3, 5 submenus
-      (entrada, rótulos, botões navega/provisório, VOLTAR), pilha profunda 2 níveis, repetição 3x,
-      responsividade 6 páginas × 7 resoluções (colunas corretas, 0 overflow), offline 0 URLs externas,
-      0 erros de console
-- [x] JUnit regressão: 4/4; tsc + build CSS/TS OK (classes Tailwind geradas a partir do TS)
-- [x] Capturas: docs/responsivo/{controle,cadastros,mensagens,recorrentes,novo-cadastro}-{1536x864,768x800,480x800}.png
+## Validação da Entrega 2.1 (2026-11-07; correção VOLTAR no painel revalidada)
+- [x] Smoke `desktop/smoke.js`: 199/199 — ordem dos 6 botões (barra e painel), destinos
+      reais/provisórios, destaque ativo por cor oficial (pixel-verificado), VOLTAR com histórico
+      (barra e painel), VOLTAR sem histórico → Menu (fallback seguro), histórico entre módulos via
+      painel, MENU PRINCIPAL, hambúrguer→X (matrizes ±45°), X/fora/ESC/auto-fechar, cliques
+      bloqueados no fundo (elementFromPoint), abrir/fechar 5x, estabilidade de cartões (rects
+      idênticos em 480/600/768, telas de 2–3 cartões, simetria central), breakpoints barra/hambúrguer
+      em 7 resoluções, ligaturas Material Symbols, offline 0 URLs, 0 erros de console, whitelist
+- [x] Regressão: JUnit 4/4; tsc + build CSS/TS; atalhos F1–F4/1–4 + Esc/1/2/3; Menu intocado
+- [x] Inspeção visual por pixel-sampling: ícones laranja/rosa/verde na barra, ativo azul #38BDF8,
+      véu escurece fundo (174→110), painel retângulo único branco+preto, hambúrguer 3 linhas
+- [x] Capturas: docs/responsivo/nav-{barra-desktop-1536x864, menu-fechado-480x800,
+      menu-aberto-480x800, menu-aberto-768x800}.png + <tela>-{1536x864,768x800,480x800}.png
+
+## Auditoria final da Entrega 2.1 (2026-11-07)
+- [x] Diff dos 28 arquivos modificados + 5 novos auditado (navbar, CSS, HTMLs, smoke, docs)
+- [x] Segurança: 0 credenciais no repo; `.env`/`vba/`/scripts de prototipação git-ignored; `.env.example`
+      sem chave real; token API é `dev-token-local` via env `FINDESK_API_TOKEN` (loopback 127.0.0.1)
+- [x] Regressão final: `npm run build` (tsc + tailwind + esbuild) OK; JUnit 4/4 OK
 
 ## Pendências
-- [ ] Aprovação visual do usuário (submenus)
-- [ ] Re-auditoria de segurança + autorização de push (GitHub: NADA publicado ainda)
-- [ ] Fase 2: SQLite + cadastros + BigDecimal (restaurar núcleo de b4fe64b seletivamente)
+- [ ] Iniciar Entrega 3.1 (fundação SQLite + Cadastro de Banco) — SOMENTE após autorização do usuário
+- [ ] Push ao GitHub (AGUARDA autorização explícita; nada publicado ainda)
+- [ ] Sequência Fase 3 (3.2+): Pagador → Empresa → Tabela Todos os Cadastros → Inserir Conta →
+      Boletos/baixa → Pagos → Recorrentes → Mensagens → Gráficos (uma entrega por vez)

@@ -1,13 +1,5 @@
-import { voltar } from "./navegacao";
-
 export function respostaProvisoria(nome: string, tipo = "Módulo"): void {
   window.alert(`${tipo} ${nome}\n\nDisponível nas próximas fases do FinDesk.`);
-}
-
-export function registrarBotaoVoltar(): void {
-  document.getElementById("btn-back")?.addEventListener("click", () => {
-    void voltar();
-  });
 }
 
 export function registrarAtalhos(mapa: Record<string, () => void>): void {

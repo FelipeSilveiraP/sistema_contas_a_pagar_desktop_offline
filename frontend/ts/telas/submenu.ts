@@ -1,6 +1,7 @@
 import { buscarStatus } from "../api";
-import { Tela, irPara, voltar } from "../navegacao";
-import { registrarAtalhos, registrarBotaoVoltar, respostaProvisoria } from "../componentes";
+import { Tela, irPara } from "../navegacao";
+import { registrarAtalhos, respostaProvisoria } from "../componentes";
+import { montarNavbar } from "../navbar";
 import { BotaoSubmenu, ConfigSubmenu } from "../submenus-config";
 
 function cartaoHtml(botao: BotaoSubmenu, ultimo: boolean): string {
@@ -42,9 +43,7 @@ function registrarOpcoes(config: ConfigSubmenu): void {
 }
 
 function registrarAtalhosSubmenu(config: ConfigSubmenu): void {
-  const mapa: Record<string, () => void> = {
-    Escape: () => void voltar(),
-  };
+  const mapa: Record<string, () => void> = {};
   config.botoes.forEach((botao, indice) => {
     mapa[String(indice + 1)] = () => acionarBotao(botao);
   });
@@ -74,7 +73,7 @@ export function iniciarSubmenu(tela: Tela, config: ConfigSubmenu): void {
       .map((botao, indice) => cartaoHtml(botao, indice === config.botoes.length - 1))
       .join("");
   }
-  registrarBotaoVoltar();
+  montarNavbar(tela);
   registrarOpcoes(config);
   registrarAtalhosSubmenu(config);
   console.info(`[FinDesk] submenu "${tela}" (${config.botoes.length} opções) iniciado`);

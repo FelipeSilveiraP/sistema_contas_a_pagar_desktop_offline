@@ -17,6 +17,7 @@ const CAPTURAS = [
   { w: 768, h: 800 },
   { w: 480, h: 800 },
 ];
+const BREAKPOINT_BARRA = 900;
 
 const SUBMENUS = [
   {
@@ -151,7 +152,7 @@ async function navegarPor(seletor, destino) {
 
 async function voltarPara(destino) {
   await prepararPagina();
-  await clicar("#btn-back");
+  await clicar('.nav-barra button[data-nav="voltar"]');
   const ok = await esperarTela(destino);
   await prepararPagina();
   return ok;
@@ -168,6 +169,122 @@ function colunasEsperadas(numBotoes, w) {
   if (w >= 961) return numBotoes >= 3 ? 3 : 2;
   if (w >= 600) return 2;
   return 1;
+}
+
+async function estadoMenu() {
+  return JSON.parse(
+    await js(`(() => {
+      const raiz = document.getElementById('nav-global');
+      const painel = document.querySelector('.nav-painel');
+      const veu = document.querySelector('.nav-veu');
+      const hamb = document.querySelector('.nav-hamburguer');
+      const linhas = document.querySelectorAll('.nav-hamburguer__linha');
+      const cs = (el) => (el ? getComputedStyle(el) : null);
+      return JSON.stringify({
+        aberto: raiz ? raiz.dataset.menuAberto : null,
+        aria: hamb ? hamb.getAttribute('aria-expanded') : null,
+        painelVisivel: cs(painel) ? cs(painel).visibility : null,
+        painelTransform: cs(painel) ? cs(painel).transform : null,
+        veuOpacidade: cs(veu) ? cs(veu).opacity : null,
+        linha1: cs(linhas[0]) ? cs(linhas[0]).transform : null,
+        linha2Opacidade: cs(linhas[1]) ? cs(linhas[1]).opacity : null,
+        linha3: cs(linhas[2]) ? cs(linhas[2]).transform : null,
+      });
+    })()`)
+  );
+}
+
+async function rectsCartoes() {
+  return JSON.parse(
+    await js(`JSON.stringify([...document.querySelectorAll('a[data-modulo]')].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: +r.x.toFixed(2), y: +r.y.toFixed(2), w: +r.width.toFixed(2), h: +r.height.toFixed(2) };
+    }))`)
+  );
+}
+
+function rectsIguais(a, b) {
+  return (
+    a.length === b.length &&
+    a.every(
+      (r, i) =>
+        Math.abs(r.x - b[i].x) < 0.5 &&
+        Math.abs(r.y - b[i].y) < 0.5 &&
+        Math.abs(r.w - b[i].w) < 0.5 &&
+        Math.abs(r.h - b[i].h) < 0.5
+    )
+  );
+}
+
+function simetriaCentral(rects, largura) {
+  if (!rects.length) return false;
+  const esquerda = Math.min(...rects.map((r) => r.x));
+  const direita = Math.max(...rects.map((r) => r.x + r.w));
+  return Math.abs(esquerda - (largura - direita)) < 2;
+}
+
+async function corBotaoNav(chave) {
+  return js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="${chave}"]')).backgroundColor`);
+}
+
+async function capturar(nome) {
+  const imagem = await janela.webContents.capturePage();
+  fs.writeFileSync(path.join(SAIDA, nome), imagem.toPNG());
+}
+
+async function definirTamanho(w, h) {
+  let anterior = null;
+  for (let i = 0; i < 20; i++) {
+    janela.setContentSize(w, h);
+    await esperar(300);
+    try {
+      const d = JSON.parse(await js("JSON.stringify({ w: window.innerWidth, h: window.innerHeight })"));
+      if (Math.abs(d.w - w) <= 2 && Math.abs(d.h - h) <= 2) {
+        await esperar(300);
+        return true;
+      }
+      if (anterior && Math.abs(d.w - anterior.w) <= 2 && Math.abs(d.h - anterior.h) <= 2) {
+        await esperar(300);
+        return true;
+      }
+      anterior = d;
+    } catch {
+      // renderer em carregamento
+    }
+  }
+  console.log(`  [aviso] janela não estabilizou em ${w}x${h}`);
+  return false;
+}
+
+async function medirTelaEstavel() {
+  let anterior = null;
+  for (let i = 0; i < 12; i++) {
+    const atual = await medirTela();
+    if (anterior && JSON.stringify(atual) === JSON.stringify(anterior)) return atual;
+    anterior = atual;
+    await esperar(200);
+  }
+  return anterior;
+}
+
+async function abrirMenu() {
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    await clicar(".nav-hamburguer");
+    const ok = await esperarPredicado("document.getElementById('nav-global')?.dataset.menuAberto === 'true'", 3000);
+    if (ok) break;
+    console.log(`  [retry abrirMenu tentativa ${tentativa}]`);
+  }
+  await esperar(350);
+}
+
+async function fecharMenu() {
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    await clicar(".nav-hamburguer");
+    const ok = await esperarPredicado("document.getElementById('nav-global')?.dataset.menuAberto === 'false'", 3000);
+    if (ok) break;
+    console.log(`  [retry fecharMenu tentativa ${tentativa}]`);
+  }
+  await esperar(350);
 }
 
 function escanearOffline() {
@@ -204,7 +321,17 @@ async function medirTela() {
       const grade = document.querySelector(".submenu-grade, .menu-grade");
       const colunas = getComputedStyle(grade).gridTemplateColumns.split(" ").filter(Boolean).length;
       const doc = document.documentElement;
-      return JSON.stringify({ colunas, overflow: doc.scrollWidth - doc.clientWidth });
+      const barra = document.querySelector(".nav-barra");
+      const hamb = document.querySelector(".nav-hamburguer");
+      const visivel = (el) => !!el && getComputedStyle(el).display !== "none";
+      return JSON.stringify({
+        colunas,
+        overflow: doc.scrollWidth - doc.clientWidth,
+        barraVisivel: visivel(barra),
+        hambVisivel: visivel(hamb),
+        barraCabe: barra ? barra.scrollWidth - barra.clientWidth : 0,
+        vw: window.innerWidth,
+      });
     })()`)
   );
 }
@@ -227,9 +354,17 @@ require("./main.js");
 
 async function executar() {
   while (!janela) await esperar(100);
-  janela.setContentSize(1536, 864);
+  // blindagem: a janela de teste não pode ser arrastada/redimensionada pelo usuário
+  try {
+    janela.setMovable(false);
+    janela.setIgnoreMouseEvents(true);
+    janela.setAlwaysOnTop(true);
+  } catch {
+    // plataformas sem suporte
+  }
+  await definirTamanho(1536, 864);
 
-  console.log("\n=== SMOKE TEST — navegação completa + submenus ===\n");
+  console.log("\n=== SMOKE TEST — navbar global + navegação completa ===\n");
 
   // 1. Abertura do Menu + API + segurança
   teste("Abertura do Menu Principal", await esperarPredicado("document.body.dataset.tela === 'menu'"));
@@ -254,15 +389,13 @@ async function executar() {
   }
   await prepararPagina();
 
-  // 3. Botões do Menu (provisórios)
+  // 3. Botões do Menu (provisórios) + 4. atalhos do Menu (regressão)
   for (const [sel, nome] of [
     ['a[data-path="inserir-conta"]', "INSERIR CONTA"],
     ['a[data-path="graficos-e-relatorios"]', "GRÁFICOS"],
   ]) {
     teste(`Botão ${nome} do Menu responde (provisório)`, await testarProvisorio(sel, nome));
   }
-
-  // 4. Atalhos do Menu (regressão)
   for (const [teclaAlvo, nome] of [
     ["F1", "INSERIR CONTA"],
     ["1", "INSERIR CONTA"],
@@ -290,7 +423,44 @@ async function executar() {
     await prepararPagina();
   }
 
-  // 5. Submenus: entrada, rótulos, botões e VOLTAR
+  // 5. Navbar desktop: ordem, destinos, destaque ativo
+  await js("window.finDesk.navegar('controle')");
+  await esperarTela("controle");
+  await prepararPagina();
+  const ordem = JSON.parse(
+    await js("JSON.stringify([...document.querySelectorAll('.nav-barra button[data-nav]')].map(b => b.dataset.nav))")
+  );
+  teste(
+    "Barra desktop: ordem VOLTAR/MENU/CADASTROS/CONTROLE/MENSAGENS/GRÁFICOS",
+    JSON.stringify(ordem) === JSON.stringify(["voltar", "menu", "cadastros", "controle", "mensagens", "graficos"]),
+    JSON.stringify(ordem)
+  );
+  teste("Destaque ativo: CONTROLE em azul #38BDF8", (await corBotaoNav("controle")) === "rgb(56, 189, 248)", await corBotaoNav("controle"));
+
+  // GRÁFICOS = provisório; MENU PRINCIPAL navega; destinos a partir de tela profunda
+  teste("Navbar GRÁFICOS responde (provisório)", await testarProvisorio('.nav-barra button[data-nav="graficos"]', "GRÁFICOS"));
+  await prepararPagina();
+  await clicar('.nav-barra button[data-nav="menu"]');
+  teste("Navbar MENU PRINCIPAL navega ao Menu", await esperarTela("menu"));
+  teste("Menu Principal aprovado permanece sem navbar", (await js("!!document.getElementById('nav-global')")) === false);
+  teste("Pilha profunda: Menu → cadastros", await navegarPor('a[data-path="cadastros"]', "cadastros"));
+  teste("Destaque ativo: CADASTROS em laranja #FF8400", (await corBotaoNav("cadastros")) === "rgb(255, 132, 0)");
+  teste("Pilha profunda: cadastros → novo-cadastro", await navegarPor('a[data-modulo="novo-cadastro"]', "novo-cadastro"));
+  teste("Destaque ativo em tela filha: CADASTROS (novo-cadastro)", (await corBotaoNav("cadastros")) === "rgb(255, 132, 0)");
+  await prepararPagina();
+  await clicar('.nav-barra button[data-nav="controle"]');
+  teste("Da tela profunda (novo-cadastro), CONTROLE navega direto", await esperarTela("controle"));
+  teste("VOLTAR preserva histórico após salto de módulo", await voltarPara("novo-cadastro"));
+  await prepararPagina();
+  await clicar('.nav-barra button[data-nav="mensagens"]');
+  teste("Da tela profunda, MENSAGENS navega direto", await esperarTela("mensagens"));
+  teste("Destaque ativo: MENSAGENS em rosa #FF5E89", (await corBotaoNav("mensagens")) === "rgb(255, 94, 137)");
+  await prepararPagina();
+  await clicar('.nav-barra button[data-nav="menu"]');
+  teste("Da tela profunda, MENU PRINCIPAL navega direto", await esperarTela("menu"));
+  await prepararPagina();
+
+  // 6. Submenus: entrada, rótulos, botões e VOLTAR
   for (const sub of SUBMENUS) {
     if ((await js("document.body.dataset.tela")) !== sub.origem) {
       await prepararPagina();
@@ -298,8 +468,7 @@ async function executar() {
       await esperarTela(sub.origem);
       await prepararPagina();
     }
-    const entrou = await navegarPor(sub.entrada, sub.tela);
-    teste(`${sub.origem} ⇄ ${sub.tela}: navegação de entrada`, entrou);
+    teste(`${sub.origem} ⇄ ${sub.tela}: navegação de entrada`, await navegarPor(sub.entrada, sub.tela));
     teste(`Persistência sessionStorage (pilha do Voltar) em ${sub.tela}`, (await js("String(sessionStorage.getItem('smoke-probe'))")) === "ok");
     const rotulos = JSON.parse(
       await js("JSON.stringify([...document.querySelectorAll('a[data-modulo] span.font-headline')].map(s => s.textContent.trim()))")
@@ -309,7 +478,7 @@ async function executar() {
       rotulos.length === sub.numBotoes && sub.botoes.every((b, i) => rotulos[i] === b.nome),
       JSON.stringify(rotulos)
     );
-    teste(`Botão VOLTAR presente em ${sub.tela}`, (await js("!!document.getElementById('btn-back')")) === true);
+    teste(`Navbar VOLTAR presente em ${sub.tela}`, (await js('!!document.querySelector(\'.nav-barra button[data-nav="voltar"]\')')) === true);
     teste(`API respondendo em ${sub.tela}`, (await js("document.body.dataset.apiStatus")) === "ok");
     for (const botao of sub.botoes) {
       if (botao.tipo === "provisorio") {
@@ -319,16 +488,15 @@ async function executar() {
         await clicar(botao.sel);
         teste(`Botão ${botao.nome} navega para ${botao.destino}`, await esperarTela(botao.destino));
         await prepararPagina();
-        await clicar("#btn-back");
+        await clicar('.nav-barra button[data-nav="voltar"]');
         teste(`VOLTAR de ${botao.destino} retorna a ${sub.tela}`, await esperarTela(sub.tela));
         await prepararPagina();
       }
     }
-    const voltou = await voltarPara(sub.volta);
-    teste(`VOLTAR em ${sub.tela} retorna a ${sub.volta}`, voltou);
+    teste(`VOLTAR em ${sub.tela} retorna a ${sub.volta}`, await voltarPara(sub.volta));
   }
 
-  // 6. Atalhos nos submenus
+  // 7. Atalhos nos submenus (regressão)
   for (const [tela, chaves] of [
     ["mensagens", [["1", "TODAS AS MENSAGENS"], ["2", "CRIAR NOVA MENSAGEM"]]],
     ["novo-cadastro", [["1", "CADASTRAR NOVA EMPRESA"], ["2", "CADASTRAR NOVO PAGADOR"], ["3", "CADASTRAR NOVO BANCO"]]],
@@ -346,7 +514,6 @@ async function executar() {
     teste(`Escape em ${tela} volta ao Menu`, await esperarTela("menu"));
     await prepararPagina();
   }
-  // controle: tecla 2 navega para recorrentes
   await js("window.finDesk.navegar('controle')");
   await esperarTela("controle");
   await prepararPagina();
@@ -356,14 +523,6 @@ async function executar() {
   await tecla("Escape");
   teste("Escape em recorrentes volta ao controle", await esperarTela("controle"));
   await prepararPagina();
-
-  // 7. Pilha profunda: Menu → cadastros → novo-cadastro → VOLTAR → VOLTAR
-  await js("window.finDesk.navegar('menu')");
-  await esperarTela("menu");
-  teste("Pilha profunda: Menu → cadastros", await navegarPor('a[data-path="cadastros"]', "cadastros"));
-  teste("Pilha profunda: cadastros → novo-cadastro", await navegarPor('a[data-modulo="novo-cadastro"]', "novo-cadastro"));
-  teste("Pilha profunda: VOLTAR → cadastros", await voltarPara("cadastros"));
-  teste("Pilha profunda: VOLTAR → menu", await voltarPara("menu"));
 
   // 8. Navegação repetida sem erros
   let repeticaoOk = true;
@@ -379,7 +538,157 @@ async function executar() {
   }
   teste("Navegação repetida 3x (Menu ⇄ 3 submenus) sem erro", repeticaoOk);
 
-  // 9. Responsividade (medição) + capturas dos submenus
+  // 9. Menu lateral compacto (480x800)
+  await definirTamanho(480, 800);
+  await js("window.finDesk.navegar('controle')");
+  await esperarTela("controle");
+  await prepararPagina();
+  const medidoCompacto = await medirTela();
+  teste("Compacto: hambúrguer visível e barra oculta em 480x800", medidoCompacto.hambVisivel && !medidoCompacto.barraVisivel);
+  const rectsAntes = await rectsCartoes();
+  teste("Hambúrguer abre o menu", await (async () => {
+    await abrirMenu();
+    const e = await estadoMenu();
+    return e.aberto === "true" && e.aria === "true" && e.painelVisivel === "visible" && Number(e.veuOpacidade) > 0.9;
+  })());
+  const estadoAberto = await estadoMenu();
+  const g1 = (estadoAberto.linha1 || "").match(/matrix\(([^)]+)\)/);
+  const g3 = (estadoAberto.linha3 || "").match(/matrix\(([^)]+)\)/);
+  const m1 = g1 ? g1[1].split(",").map(Number) : [];
+  const m3 = g3 ? g3[1].split(",").map(Number) : [];
+  teste(
+    "Hambúrguer se transforma em X (rotações ±45°, linha central some)",
+    m1.length > 1 && Math.abs(m1[1] - 0.7071) < 0.01 && m3.length > 1 && Math.abs(m3[1] + 0.7071) < 0.01 && Number(estadoAberto.linha2Opacidade) < 0.1,
+    `linha1=${estadoAberto.linha1} linha2op=${estadoAberto.linha2Opacidade} linha3=${estadoAberto.linha3}`
+  );
+  await capturar("nav-menu-aberto-480x800.png");
+  const rectsAberto = await rectsCartoes();
+  teste("Estabilidade: cartões intactos com menu ABERTO (480x800)", rectsIguais(rectsAntes, rectsAberto), JSON.stringify({ antes: rectsAntes, aberto: rectsAberto }));
+  const larguraConteudo = janela.getContentBounds().width;
+  teste("Alinhamento central dos cartões preservado (480x800)", simetriaCentral(rectsAberto, larguraConteudo));
+  const topoCartoes = await js(`(() => {
+    return JSON.stringify([...document.querySelectorAll('a[data-modulo]')].map((c) => {
+      const r = c.getBoundingClientRect();
+      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return el ? String(el.className) : 'null';
+    }));
+  })()`);
+  const classesTopo = JSON.parse(topoCartoes);
+  teste(
+    "Conteúdo ao fundo não recebe cliques (painel/véu cobrem os cartões)",
+    classesTopo.length > 0 && classesTopo.every((c) => !c.includes("submenu-cartao")),
+    topoCartoes
+  );
+  teste("X fecha o menu", await (async () => {
+    await fecharMenu();
+    const e = await estadoMenu();
+    return e.aberto === "false" && e.painelVisivel === "hidden" && Number(e.veuOpacidade) < 0.1;
+  })());
+  teste("Clique fora (véu) fecha o menu", await (async () => {
+    await abrirMenu();
+    await clicar(".nav-veu");
+    await esperarPredicado("document.getElementById('nav-global')?.dataset.menuAberto === 'false'", 5000);
+    const e = await estadoMenu();
+    return e.aberto === "false";
+  })());
+  teste("ESC fecha o menu", await (async () => {
+    await abrirMenu();
+    await tecla("Escape");
+    await esperarPredicado("document.getElementById('nav-global')?.dataset.menuAberto === 'false'", 5000);
+    const e = await estadoMenu();
+    return e.aberto === "false" && (await js("document.body.dataset.tela")) === "controle";
+  })());
+  teste("Selecionar seção fecha o menu e navega", await (async () => {
+    await abrirMenu();
+    await clicar('.nav-painel button[data-nav="mensagens"]');
+    const navega = await esperarTela("mensagens");
+    await prepararPagina();
+    const e = await estadoMenu();
+    return navega && e.aberto === "false";
+  })());
+  await js("window.finDesk.navegar('controle')");
+  await esperarTela("controle");
+  await prepararPagina();
+  const ordemPainel = JSON.parse(
+    await js("JSON.stringify([...document.querySelectorAll('.nav-painel button[data-nav]')].map(b => b.dataset.nav))")
+  );
+  teste(
+    "Painel: VOLTAR presente e primeiro (ordem preservada)",
+    JSON.stringify(ordemPainel) === JSON.stringify(["voltar", "menu", "cadastros", "controle", "mensagens", "graficos"]),
+    JSON.stringify(ordemPainel)
+  );
+  await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
+  teste("Painel VOLTAR retorna à tela anterior", await (async () => {
+    await navegarPor('a[data-modulo="contas-recorrentes"]', "recorrentes");
+    await abrirMenu();
+    await clicar('.nav-painel button[data-nav="voltar"]');
+    return await esperarTela("controle");
+  })());
+  await prepararPagina();
+  teste("Painel VOLTAR sem histórico: comportamento seguro (vai ao Menu)", await (async () => {
+    await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
+    await abrirMenu();
+    await clicar('.nav-painel button[data-nav="voltar"]');
+    return await esperarTela("menu");
+  })());
+  await prepararPagina();
+  teste("Histórico entre módulos via painel", await (async () => {
+    await js("window.finDesk.navegar('novo-cadastro')");
+    await esperarTela("novo-cadastro");
+    await prepararPagina();
+    await abrirMenu();
+    await clicar('.nav-painel button[data-nav="controle"]');
+    if (!(await esperarTela("controle"))) return false;
+    await prepararPagina();
+    await abrirMenu();
+    await clicar('.nav-painel button[data-nav="voltar"]');
+    return await esperarTela("novo-cadastro");
+  })());
+  await prepararPagina();
+  await abrirMenu();
+  await clicar('.nav-painel button[data-nav="menu"]');
+  teste("Painel: MENU PRINCIPAL navega ao Menu", await esperarTela("menu"));
+  teste("Menu aprovado sem navbar (repetição)", (await js("!!document.getElementById('nav-global')")) === false);
+  await prepararPagina();
+  await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
+  await js("window.finDesk.navegar('controle')");
+  await esperarTela("controle");
+  await prepararPagina();
+  let cicloMenuOk = true;
+  for (let i = 1; i <= 5; i++) {
+    await abrirMenu();
+    if ((await estadoMenu()).aberto !== "true") cicloMenuOk = false;
+    await fecharMenu();
+    if ((await estadoMenu()).aberto !== "false") cicloMenuOk = false;
+  }
+  teste("Abrir/fechar o menu 5x sem erro", cicloMenuOk);
+  teste("ESC fechado volta à tela anterior (comportamento preservado)", await (async () => {
+    await tecla("Escape");
+    return await esperarTela("menu");
+  })());
+  await prepararPagina();
+
+  // 10. Estabilidade visual dos cartões (480/600/768) em telas de 2 e 3 cartões
+  for (const [tela, larguras] of [
+    ["controle", [480, 600, 768]],
+    ["cadastros", [768]],
+  ]) {
+    for (const w of larguras) {
+      await definirTamanho(w, 800);
+      await js(`window.finDesk.navegar('${tela}')`);
+      await esperarTela(tela);
+      await prepararPagina();
+      const antes = await rectsCartoes();
+      await abrirMenu();
+      const aberto = await rectsCartoes();
+      await fecharMenu();
+      const depois = await rectsCartoes();
+      teste(`Cartões estáveis abrir/fechar menu (${tela} ${w}x800)`, rectsIguais(antes, aberto) && rectsIguais(antes, depois), JSON.stringify({ antes, aberto, depois }));
+      teste(`Simetria central dos cartões (${tela} ${w}x800)`, simetriaCentral(aberto, w));
+    }
+  }
+
+  // 11. Responsividade (medição) + breakpoint da barra + capturas
   if (!fs.existsSync(SAIDA)) fs.mkdirSync(SAIDA, { recursive: true });
   const paginas = [
     { tela: "menu", numBotoes: 5 },
@@ -390,23 +699,72 @@ async function executar() {
     await esperarTela(pagina.tela);
     await prepararPagina();
     for (const { w, h } of RESOLUCOES) {
-      janela.setContentSize(w, h);
-      await esperar(350);
-      const medido = await medirTela();
+      await definirTamanho(w, h);
+      const medido = await medirTelaEstavel();
       const esperado = colunasEsperadas(pagina.numBotoes, w);
+      const vwValido =
+        colunasEsperadas(pagina.numBotoes, medido.vw) === esperado &&
+        w >= BREAKPOINT_BARRA === medido.vw >= BREAKPOINT_BARRA;
       teste(
         `Responsividade ${pagina.tela} ${w}x${h} (${esperado} col)`,
-        medido.colunas === esperado && medido.overflow <= 1,
-        `colunas=${medido.colunas} overflow=${medido.overflow}px`
+        medido.colunas === esperado && medido.overflow <= 1 && vwValido,
+        `colunas=${medido.colunas} overflow=${medido.overflow}px viewport=${medido.vw}`
       );
+      if (pagina.tela !== "menu") {
+        const barraEsperada = w >= BREAKPOINT_BARRA;
+        teste(
+          `Navbar ${pagina.tela} ${w}x${h}: ${barraEsperada ? "barra" : "hambúrguer"}`,
+          medido.barraVisivel === barraEsperada && medido.hambVisivel === !barraEsperada && (barraEsperada ? medido.barraCabe <= 1 : true),
+          `barra=${medido.barraVisivel} hamb=${medido.hambVisivel} barraCabe=${medido.barraCabe}px`
+        );
+      }
       if (pagina.tela !== "menu" && CAPTURAS.some((c) => c.w === w && c.h === h)) {
-        const imagem = await janela.webContents.capturePage();
-        fs.writeFileSync(path.join(SAIDA, `${pagina.tela}-${w}x${h}.png`), imagem.toPNG());
+        await capturar(`${pagina.tela}-${w}x${h}.png`);
       }
     }
   }
+  await js("window.finDesk.navegar('controle')");
+  await esperarTela("controle");
+  await prepararPagina();
+  await definirTamanho(1536, 864);
+  await capturar("nav-barra-desktop-1536x864.png");
+  await definirTamanho(480, 800);
+  await capturar("nav-menu-fechado-480x800.png");
+  await abrirMenu();
+  await capturar("nav-menu-aberto-480x800.png");
+  await fecharMenu();
+  await definirTamanho(768, 800);
+  await abrirMenu();
+  await capturar("nav-menu-aberto-768x800.png");
+  await fecharMenu();
 
-  // 10. Offline + console
+  // 12. Ícones (ligaturas do Material Symbols) renderizando
+  const largurasIcones = JSON.parse(
+    await js(`(() => {
+      const glifos = ['arrow_back', 'home', 'badge', 'checklist', 'forum', 'bar_chart', 'zqxwv_'];
+      const res = {};
+      for (const g of glifos) {
+        const s = document.createElement('span');
+        s.className = 'material-symbols-outlined';
+        s.textContent = g;
+        document.body.appendChild(s);
+        const range = document.createRange();
+        range.selectNodeContents(s);
+        res[g] = +range.getBoundingClientRect().width.toFixed(2);
+        range.detach();
+        s.remove();
+      }
+      return JSON.stringify(res);
+    })()`)
+  );
+  const usados = ["arrow_back", "home", "badge", "checklist", "forum", "bar_chart"].map((g) => largurasIcones[g]);
+  teste(
+    "Ícones da navbar renderizam (ligaturas Material Symbols)",
+    usados.every((l) => l === usados[0] && l > 0) && largurasIcones["zqxwv_"] !== usados[0],
+    JSON.stringify(largurasIcones)
+  );
+
+  // 13. Offline + console
   const externos = escanearOffline();
   teste("Offline: nenhuma URL externa em frontend/", externos.length === 0, externos.slice(0, 5).join(" | "));
   teste("Ausência de erros no console", errosConsole.length === 0, errosConsole.slice(0, 3).join(" | "));
