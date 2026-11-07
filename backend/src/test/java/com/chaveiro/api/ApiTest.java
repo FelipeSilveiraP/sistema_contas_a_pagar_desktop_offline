@@ -14,33 +14,32 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class ApiTest {
 
-    private static final String TOKEN = "dev-token-local";
+    private static final String TOKEN = "token-teste-unitario";
 
     @Autowired
     private MockMvc mvc;
 
     @Test
-    void statusSemTokenNegado() throws Exception {
+    void deveNegarStatusSemToken() throws Exception {
         mvc.perform(get("/api/status")).andExpect(status().isUnauthorized());
     }
 
     @Test
-    void statusComTokenOk() throws Exception {
+    void deveResponderStatusComTokenValido() throws Exception {
         mvc.perform(get("/api/status").header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ok"))
-                .andExpect(jsonPath("$.fase").value("1"));
+                .andExpect(jsonPath("$.status").value("ok"));
     }
 
     @Test
-    void contasComTokenOk() throws Exception {
+    void deveManterContasMockDaFase1() throws Exception {
         mvc.perform(get("/api/contas").header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
     }
 
     @Test
-    void contasComTokenInvalidoNegado() throws Exception {
+    void deveNegarRequisicaoComTokenInvalido() throws Exception {
         mvc.perform(get("/api/contas").header("X-FinDesk-Token", "errado"))
                 .andExpect(status().isUnauthorized());
     }

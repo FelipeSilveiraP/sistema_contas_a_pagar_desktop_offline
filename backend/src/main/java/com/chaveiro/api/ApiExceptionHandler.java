@@ -1,5 +1,9 @@
 package com.chaveiro.api;
 
+import com.chaveiro.service.ConflitoIntegridadeException;
+import com.chaveiro.service.DadosInvalidosException;
+import com.chaveiro.service.RecursoNaoEncontradoException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +17,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    @ExceptionHandler(DadosInvalidosException.class)
+    public ResponseEntity<Map<String, Object>> validacao(DadosInvalidosException erro) {
+        Map<String, Object> corpo = new LinkedHashMap<>();
+        corpo.put("erro", "dados invalidos");
+        corpo.put("campos", erro.getCampos());
+        return ResponseEntity.badRequest().body(corpo);
+    }
+
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> naoEncontrado(RecursoNaoEncontradoException erro) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("erro", erro.getMessage()));
+    }
+
+    @ExceptionHandler(ConflitoIntegridadeException.class)
+    public ResponseEntity<Map<String, String>> conflito(ConflitoIntegridadeException erro) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("erro", erro.getMessage()));
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> validacao(MethodArgumentNotValidException erro) {

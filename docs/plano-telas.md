@@ -1,4 +1,4 @@
-# FinDesk — Plano das Demais Telas (Etapa 2 — planejamento corrigido)
+# Sistema de Contas a Pagar — Chaveiro Universal — Plano das Demais Telas (Etapa 2 — planejamento corrigido)
 
 > Escopo: análise e planejamento. **Nenhuma tela nova foi implementada quando este documento foi criado.**
 > Revisão v2 (correções solicitadas): contagem reconciliada (14 telas funcionais = 14 entradas),
@@ -168,7 +168,7 @@ Regra: se a tela de destino existe, o botão **navega**; caso contrário apresen
 | Submenu Cadastros | NOVO CADASTRO | Submenu Novo Cadastro | **Navega** |
 | Submenu Novo Cadastro | CADASTRAR NOVA EMPRESA | Form Empresa (2 etapas) | Provisório |
 | Submenu Novo Cadastro | CADASTRAR NOVO PAGADOR | Form Pagador | Provisório |
-| Submenu Novo Cadastro | CADASTRAR NOVO BANCO | Form Banco | Provisório |
+| Submenu Novo Cadastro | CADASTRAR NOVO BANCO | Form Banco | **Navega** |
 | Submenu Mensagens | TODAS AS MENSAGENS | Tabela de avisos | Provisório |
 | Submenu Mensagens | CRIAR NOVA MENSAGEM | Form de recado | Provisório |
 | Submenu Recorrentes | TODAS CONTAS RECORRENTES | Tabela Reduzida | Provisório |
@@ -221,7 +221,7 @@ Tabelas SQLite previstas (DER do `.memory-bank/systemPatterns.md`): `empresas`, 
 | Todos os Cadastros | empresas/pagadores/bancos | `GET /api/empresas\|pagadores\|bancos` | `empresas`, `pagadores`, `bancos` | validação CNPJ/CPF | Não iniciada |
 | Form Empresa (2 etapas) | contatos, endereço | `POST /api/empresas` | `empresas`, `telefones_empresa` | — | Não iniciada |
 | Form Pagador | nome, CPF, função | `POST /api/pagadores` | `pagadores` | validação CPF | Não iniciada |
-| Form Banco | febraban, agência, conta, Pix | `POST /api/bancos` | `bancos` | — | Não iniciada |
+| Form Banco | febraban, agência, conta, Pix | `GET/POST/PUT/DELETE /api/bancos` | `bancos` | — | **Concluída** (Entrega 3.1) |
 | Todas as Mensagens | avisos + vigência | `GET /api/avisos` | `avisos` | dias úteis, expiração | Não iniciada |
 | Criar Mensagem | texto, vigência, dias | `POST /api/avisos` | `avisos` | — | Não iniciada |
 | Gráficos | agregados por período | `GET /api/dashboard/resumo` | consultas agregadas | totais por categoria/mês | Não iniciada |
@@ -311,8 +311,9 @@ aguardar aprovação → próxima**.
 |---|---------|----------|----------|
 | 1 | Estrutura de navegação + Submenu Controle | `navegacao.ts`, `componentes.ts`, navegação segura Electron, submenu Controle | **Concluída** (aprovada) |
 | 2 | Navegação completa + todos os submenus | componente genérico de submenu, submenus Cadastros, Novo Cadastro, Mensagens e Recorrentes, integração de destinos (§2.3) | **Concluída** (aprovada) |
-| 2.1 | Barra de navegação global | barra desktop 6 botões + menu lateral compacto (hambúrguer→X, véu, estabilidade dos cartões) — §4.1 | **Concluída** (aguardando aprovação) |
-| 3 | Funcionalidades financeiras | pool abaixo — sequência a reavaliar e aprovar após a Entrega 2.1 | Não iniciada |
+| 2.1 | Barra de navegação global | barra desktop 6 botões + menu lateral compacto (hambúrguer→X, véu, estabilidade dos cartões) — §4.1 | **Concluída** (aprovada — commit `b349235`) |
+| 3.1 | Fundação SQLite + Cadastro de Banco | SQLite WAL + migrações + backup, API `/api/bancos`, formulário Banco (Stitch), integração ponta a ponta | **Concluída** (aguardando validação) |
+| 3.2+ | Demais funcionalidades financeiras | pool abaixo — uma entrega por vez, após validação da anterior | Não iniciada |
 
 Pool de referência das funcionalidades financeiras (ordem provisória, sujeita à reavaliação):
 Cadastros (Banco → Pagador → Empresa), Inserir Conta, Todas as Contas + baixa rápida, Pagos,

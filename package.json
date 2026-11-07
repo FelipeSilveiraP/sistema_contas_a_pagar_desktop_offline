@@ -2,7 +2,7 @@
   "name": "findesk",
   "private": true,
   "version": "0.1.0",
-  "description": "FinDesk - Contas a Pagar Chaveiro Universal",
+  "description": "Sistema de Contas a Pagar — Chaveiro Universal",
   "scripts": {
     "build:css": "tailwindcss -i frontend/css/tailwind.input.css -o frontend/dist/tailwind.css --minify",
     "build:ts": "esbuild frontend/ts/main.ts --bundle --outfile=frontend/dist/app.js --format=iife --target=es2022",

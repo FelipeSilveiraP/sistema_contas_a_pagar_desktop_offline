@@ -31,11 +31,11 @@ function registrarBotoes(): void {
       evento.preventDefault();
       const chave = ancora.dataset.path ?? "";
       const nome = MODULOS[chave] ?? chave;
-      console.info(`[FinDesk] módulo "${nome}" acionado`);
+      console.info(`[ContasAPagar] módulo "${nome}" acionado`);
       acionarModulo(chave);
     });
   });
-  console.info(`[FinDesk] ${Object.keys(MODULOS).length} botões do menu registrados`);
+  console.info(`[ContasAPagar] ${Object.keys(MODULOS).length} botões do menu registrados`);
 }
 
 function registrarAtalhos(): void {
@@ -67,11 +67,11 @@ async function iniciar(): Promise<void> {
     const contas = await buscarContas(cfg);
     document.body.dataset.apiStatus = "ok";
     document.title += " - API OK";
-    console.info("[FinDesk] API:", status, "| contas de teste:", contas.length);
+    console.info("[ContasAPagar] API:", status, "| contas de teste:", contas.length);
   } catch (erro) {
     document.body.dataset.apiStatus = "erro";
     document.title += " - API OFFLINE";
-    console.error("[FinDesk] falha na API:", erro);
+    console.error("[ContasAPagar] falha na API:", erro);
   }
 }
 

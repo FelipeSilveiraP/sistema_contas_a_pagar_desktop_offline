@@ -13,7 +13,7 @@ public class StatusController {
     public Map<String, String> status() {
         return Map.of(
                 "status", "ok",
-                "app", "findesk",
+                "app", "contas-a-pagar",
                 "fase", "1"
         );
     }

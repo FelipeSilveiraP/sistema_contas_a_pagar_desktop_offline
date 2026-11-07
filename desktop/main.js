@@ -18,7 +18,10 @@ const TELAS = new Map([
   ["mensagens", path.join(__dirname, "..", "frontend", "html", "mensagens.html")],
   ["recorrentes", path.join(__dirname, "..", "frontend", "html", "recorrentes.html")],
   ["novo-cadastro", path.join(__dirname, "..", "frontend", "html", "novo-cadastro.html")],
+  ["form-banco", path.join(__dirname, "..", "frontend", "html", "form-banco.html")],
 ]);
+
+const NOME_APP = "Sistema de Contas a Pagar — Chaveiro Universal";
 
 function portaLivre() {
   return new Promise((resolver, rejeitar) => {
@@ -65,7 +68,7 @@ async function iniciarBackend() {
   processoBackend.stderr.on("data", (d) => console.error("[backend]", d.toString().trim()));
   processoBackend.on("exit", (codigo) => {
     if (!encerrando) {
-      dialog.showErrorBox("FinDesk", `O backend encerrou inesperadamente (código ${codigo}).`);
+      dialog.showErrorBox(NOME_APP, `O backend encerrou inesperadamente (código ${codigo}).`);
       app.quit();
     }
   });
@@ -81,7 +84,7 @@ function criarJanela() {
     minWidth: 480,
     minHeight: 480,
     center: true,
-    title: "FinDesk - Contas a Pagar",
+    title: NOME_APP,
     backgroundColor: "#fcf9f8",
     autoHideMenuBar: true,
     webPreferences: {
@@ -132,12 +135,12 @@ if (!instanciaUnica) {
         criarJanela();
       } catch (erro) {
         encerrarBackend();
-        dialog.showErrorBox("FinDesk - Falha ao iniciar", String(erro.message || erro));
+        dialog.showErrorBox(`${NOME_APP} — Falha ao iniciar`, String(erro.message || erro));
         app.quit();
       }
     })
     .catch((erro) => {
-      dialog.showErrorBox("FinDesk", String(erro));
+      dialog.showErrorBox(NOME_APP, String(erro));
       app.quit();
     });
 

@@ -1,8 +1,8 @@
-# FinDesk — Sistema de Contas a Pagar (Chaveiro Universal)
+# Sistema de Contas a Pagar — Chaveiro Universal
 
 Aplicativo desktop offline para gestão de contas a pagar de pequenos negócios: cadastro de contas, controle de vencimentos, baixas de pagamento, contas recorrentes, cadastros, quadro de avisos e indicadores. Desenvolvido para operar **100% sem internet**, com interface fiel a um design aprovado no Google Stitch e backend em Java com regras de negócio isoladas da interface.
 
-> **Status:** Fase 1 concluída (interface + comunicação local). Funcionalidades financeiras ainda não estão conectadas a banco de dados — os dados exibidos são **simulados**. Detalhes na seção [Status do desenvolvimento](#status-do-desenvolvimento).
+> **Status:** Fase 3 em andamento — Entrega 3.1 concluída (fundação SQLite + Cadastro de Banco funcional de ponta a ponta). Os demais módulos financeiros ainda não estão conectados a banco de dados — os dados de contas exibidos são **simulados**. Detalhes na seção [Status do desenvolvimento](#status-do-desenvolvimento).
 
 ---
 
@@ -12,8 +12,8 @@ Aplicativo desktop offline para gestão de contas a pagar de pequenos negócios:
 - [Tecnologias](#tecnologias)
 - [Arquitetura](#arquitetura)
 - [API REST local](#api-rest-local)
-- [Funcionalidades da Fase 1](#funcionalidades-da-fase-1)
-- [Próximas fases](#próximas-fases)
+- [Funcionalidades implementadas](#funcionalidades-implementadas)
+- [Próximas entregas (Fase 3)](#próximas-entregas-fase-3)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Requisitos e execução local](#requisitos-e-execução-local)
 - [Segurança e funcionamento offline](#segurança-e-funcionamento-offline)
@@ -43,7 +43,7 @@ Substituir o controle de contas a pagar em planilha Excel/VBA por um aplicativo 
 | Compilação TS | esbuild + `tsc` (typecheck em modo estrito) |
 | Backend | Java 21 + Spring Boot 3.3 |
 | Comunicação | API REST local (JSON) sobre HTTP em `127.0.0.1` |
-| Banco de dados | SQLite (previsto para a Fase 2) |
+| Banco de dados | SQLite (WAL, `user_version` para migrações) |
 | Build Java | Maven |
 | Testes | JUnit 5 + Spring MockMvc |
 
@@ -59,7 +59,7 @@ Substituir o controle de contas a pagar em planilha Excel/VBA por um aplicativo 
 ┌──────────────▼───────────────┐
 │  Spring Boot (backend Java)  │  regras de negócio e API REST
 │  controllers → services      │  independente do Electron
-│  → repositories → SQLite     │  (camada de dados na Fase 2)
+│  → repositories → SQLite     │  (camada de dados SQLite local)
 └──────────────────────────────┘
 ```
 
@@ -67,7 +67,7 @@ Decisões principais:
 
 - **Separação real entre UI e regra de negócio:** o frontend consome a API e não contém lógica financeira; o backend não conhece o Electron — requisito para a futura versão web.
 - **Processo único:** o Electron escolhe uma porta livre, gera um token por execução, aguarda o backend responder e o encerra junto com a janela (sem processos órfãos; instância única garantida).
-- **Backend legado:** o núcleo financeiro Java anterior (models, repositórios, serviço, DDL SQLite) está preservado no histórico Git e será reaproveitado na Fase 2.
+- **Backend legado:** o núcleo financeiro Java anterior (models, repositórios, serviço, DDL SQLite) está preservado no histórico Git e foi reaproveitado seletivamente na Entrega 3.1 (conexão SQLite WAL, esquema e modelo de banco).
 
 ## API REST local
 
@@ -75,13 +75,20 @@ Decisões principais:
 |---|---|---|---|
 | GET | `/api/status` | Saúde da API | Implementado |
 | GET | `/api/contas` | Lista de contas | Implementado com **dados simulados** |
+| GET | `/api/bancos` | Lista bancos cadastrados | Implementado (SQLite) |
+| GET | `/api/bancos/{id}` | Consulta um banco | Implementado (SQLite) |
+| POST | `/api/bancos` | Cadastra banco | Implementado (SQLite) |
+| PUT | `/api/bancos/{id}` | Atualiza banco | Implementado (SQLite) |
+| DELETE | `/api/bancos/{id}` | Exclui banco (409 se vinculado a registros financeiros) | Implementado (SQLite) |
 
 - Endereço fixo `127.0.0.1` (não exposto na rede local); porta dinâmica por execução.
 - Autenticação: header `X-FinDesk-Token` com valor aleatório gerado a cada inicialização — sem token, a resposta é `401`.
 - CORS restrito às origens da aplicação local.
 - Erros padronizados em JSON, sem vazamento de detalhes internos.
 
-## Funcionalidades da Fase 1
+## Funcionalidades implementadas
+
+**Fase 1 — estrutura:**
 
 - Janela desktop própria (Electron) abrindo com dois cliques via comando de desenvolvimento.
 - **Menu Principal recuperado do Google Stitch** (HTML original), executado offline.
@@ -92,16 +99,36 @@ Decisões principais:
 - CSP (Content-Security-Policy) ativa na página, sem avisos de segurança do Electron.
 - Compilação com verificação de tipos estrita (`tsc --noEmit`) e build reproduzível.
 
-## Próximas fases
+**Fases 2–3 — navegação e persistência (Entregas 1 a 3.1):**
+
+- Navegação completa entre as telas (Menu Principal → 5 módulos → submenus), com pilha de histórico.
+- **Navbar global responsiva:** barra desktop de 6 botões e menu compacto hambúrguer→X com VOLTAR (§4.1 do plano de telas).
+- **Fundação SQLite:** banco local em `%LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar\contas_a_pagar.db`, modo WAL, integridade referencial, consultas parametrizadas, transações e migrações versionadas (`PRAGMA user_version`) sem recriação destrutiva.
+- **Backup e restauração:** snapshot consistente via `VACUUM INTO` (copia segura em modo WAL), backup diário automático, backup pré-migração, rotação (últimos 8) e restauração com verificação de integridade.
+- **Cadastro de Banco funcional de ponta a ponta:** formulário Stitch (instituição, código bancário, agência, conta, chave Pix), validação no backend, confirmação de sucesso, erros por campo, confirmação ao sair com alterações não salvas e CRUD completo via API.
+
+## Próximas entregas (Fase 3)
+
+| Entrega | Escopo |
+|---|---|
+| 3.2 | Cadastro de Pagador (CPF) |
+| 3.3 | Cadastro de Empresa (2 etapas + telefones) |
+| 3.4 | Todos os Cadastros (tabela multi-filtro + edição) |
+| 3.5 | Inserir Conta (2 etapas) |
+| 3.6 | Controle de Boletos e Baixa Rápida |
+| 3.7 | Contas Pagas |
+| 3.8 | Contas Recorrentes (propagação do VBA original) |
+| 3.9 | Mensagens |
+| 3.10 | Gráficos e Relatórios |
+
+**Fases seguintes (não iniciadas):**
 
 | Fase | Escopo |
 |---|---|
-| 2 | SQLite (WAL, integridade referencial), `BigDecimal` para valores, cadastros (contas, empresas, pagadores, bancos), backup/restauração |
-| 3 | Fluxo financeiro: pendentes, pagas, baixa com transação atômica e auditoria, vencimentos, contas recorrentes (regras do VBA original) |
-| 4 | Mensagens/avisos, filtros, gráficos e relatórios |
-| 5 | Testes completos, logs com rotação, empacotamento Windows (Electron Forge + JRE via `jpackage`), instalação e atualização |
+| 4 | Filtros avançados, gráficos consolidados e impressão |
+| 5 | Testes finais, logs com rotação, empacotamento Windows (Electron Forge + JRE via `jpackage`), instalação e atualização |
 
-Nenhuma dessas fases está concluída nesta versão.
+As entregas 3.2+ não foram iniciadas; cada entrega é validada antes da próxima.
 
 ## Estrutura do projeto
 
@@ -166,30 +193,33 @@ Todos os comandos acima foram executados e verificados nesta fase.
 - **Token por execução:** valor aleatório a cada inicialização, exposto ao renderer via `contextBridge` (sem `nodeIntegration`); não é gravado em logs.
 - **CSP ativa** na página e permissões padrão do Electron endurecidas (`contextIsolation`).
 - **Repositório sem credenciais:** arquivos de ambiente (`.env`), planilhas financeiras, bancos SQLite, logs e scripts de integração local são ignorados pelo `.gitignore`; `.env.example` contém apenas nomes de variáveis fictícias.
-- **Próximos passos de segurança (Fase 2+):** transações ACID no SQLite, auditoria de operações financeiras, backup automático com teste de restauração.
+- **Transações ACID e migrações no SQLite:** escritas em transação, WAL contra desligamento súbito, esquema versionado sem recriação destrutiva.
+- **Backup com consistência WAL:** snapshots via `VACUUM INTO` (não é cópia simples de arquivo), backup diário e pré-migração, restauração com verificação de integridade.
+- **Próximos passos de segurança (Entregas 3.2+):** auditoria de operações financeiras, validação CPF/CNPJ nos cadastros.
 
 ## Interface
 
 Menu Principal recuperado do Google Stitch e executado no Electron durante a Fase 1.
 Os dados exibidos (empresas, valores, datas) são **mockups do design original** — não há dados reais da empresa nesta tela.
 
-![Menu Principal — FinDesk em execução no Electron](docs/menu-principal.png)
+![Menu Principal — Sistema de Contas a Pagar — Chaveiro Universal em execução no Electron](docs/menu-principal.png)
 
 ## Status do desenvolvimento
 
 | Marco | Situação |
 |---|---|
 | Fase 0 — Auditoria e planejamento | Concluída |
-| Fase 1 — Interface + API local | **Concluída** (branch `develop`) |
-| Fase 2 — Banco de dados e cadastros | Não iniciada |
-| Fase 3 — Fluxo financeiro completo | Não iniciada |
-| Fase 4 — Mensagens, filtros, gráficos | Não iniciada |
+| Fase 1 — Interface + API local | Concluída |
+| Fases 2–3 — Navegação completa + navbar global | Concluídas (Entregas 1, 2 e 2.1) |
+| Entrega 3.1 — Fundação SQLite + Cadastro de Banco | **Concluída** (aguardando validação) |
+| Entregas 3.2–3.10 — demais módulos financeiros | Não iniciadas |
+| Fase 4 — Filtros, gráficos e impressão | Não iniciada |
 | Fase 5 — Testes finais e instalador Windows | Não iniciada |
 
 Limitações desta versão:
 
-- dados de contas **simulados** (sem persistência);
-- nenhum módulo financeiro está em produção;
+- dados de contas **simulados** (módulos financeiros ainda sem persistência);
+- apenas o cadastro de banco está em produção;
 - o instalador definitivo ainda não foi gerado;
 - validação de layout pendente na resolução real do monitor da empresa.
 

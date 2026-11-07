@@ -1,4 +1,11 @@
-export type Tela = "menu" | "controle" | "cadastros" | "mensagens" | "recorrentes" | "novo-cadastro";
+export type Tela =
+  | "menu"
+  | "controle"
+  | "cadastros"
+  | "mensagens"
+  | "recorrentes"
+  | "novo-cadastro"
+  | "form-banco";
 
 const CHAVE_PILHA = "findesk.pilha-navegacao";
 

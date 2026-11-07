@@ -60,6 +60,7 @@ const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   recorrentes: "controle",
   cadastros: "cadastros",
   "novo-cadastro": "cadastros",
+  "form-banco": "cadastros",
   mensagens: "mensagens",
 };
 
@@ -101,7 +102,7 @@ function definirMenu(raiz: HTMLElement, aberto: boolean): void {
 }
 
 function acionar(item: ItemNav): void {
-  console.info(`[FinDesk] nav "${item.rotulo}" acionada`);
+  console.info(`[ContasAPagar] nav "${item.rotulo}" acionada`);
   if (item.destino) {
     void irPara(item.destino);
     return;
@@ -158,7 +159,7 @@ ${ITENS_NAV.filter((item) => item.noPainel)
 
   raiz.querySelector(".nav-hamburguer")?.addEventListener("click", () => {
     definirMenu(raiz, !menuEstaAberto(raiz));
-    console.info(`[FinDesk] menu lateral ${menuEstaAberto(raiz) ? "aberto" : "fechado"}`);
+    console.info(`[ContasAPagar] menu lateral ${menuEstaAberto(raiz) ? "aberto" : "fechado"}`);
   });
 
   document.addEventListener("keydown", (evento) => {
@@ -171,5 +172,5 @@ ${ITENS_NAV.filter((item) => item.noPainel)
     void voltar();
   });
 
-  console.info(`[FinDesk] navbar global montada (tela: ${tela}, módulo ativo: ${moduloAtivo ?? "nenhum"})`);
+  console.info(`[ContasAPagar] navbar global montada (tela: ${tela}, módulo ativo: ${moduloAtivo ?? "nenhum"})`);
 }

@@ -29,3 +29,43 @@ export function buscarStatus(cfg: FinDeskConfig): Promise<StatusApi> {
 export function buscarContas(cfg: FinDeskConfig): Promise<ContaResumo[]> {
   return get<ContaResumo[]>(cfg, "/api/contas");
 }
+
+export interface BancoDados {
+  id: number;
+  instituicao: string;
+  codigoBanco: string;
+  agencia: string;
+  conta: string;
+  chavePix: string | null;
+}
+
+export class ErroValidacaoApi extends Error {
+  constructor(public campos: Record<string, string>) {
+    super("dados invalidos");
+  }
+}
+
+export class ErroApi extends Error {
+  constructor(public status: number) {
+    super(`HTTP ${status}`);
+  }
+}
+
+export async function criarBanco(
+  cfg: FinDeskConfig,
+  dados: { instituicao: string; codigoBanco: string; agencia: string; conta: string; chavePix?: string }
+): Promise<BancoDados> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/bancos`, {
+    method: "POST",
+    headers: { "X-FinDesk-Token": cfg.token, "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  if (resposta.status === 400) {
+    const corpo = (await resposta.json()) as { campos?: Record<string, string> };
+    throw new ErroValidacaoApi(corpo.campos ?? {});
+  }
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+  return (await resposta.json()) as BancoDados;
+}

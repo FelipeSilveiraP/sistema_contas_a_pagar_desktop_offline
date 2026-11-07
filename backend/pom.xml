@@ -14,11 +14,12 @@
     <groupId>com.chaveiro</groupId>
     <artifactId>findesk-backend</artifactId>
     <version>0.1.0</version>
-    <name>FinDesk Backend</name>
-    <description>API REST local do FinDesk - Contas a Pagar</description>
+    <name>Sistema de Contas a Pagar - Chaveiro Universal (Backend)</name>
+    <description>API REST local do Sistema de Contas a Pagar - Chaveiro Universal</description>
 
     <properties>
         <java.version>21</java.version>
+        <sqlite.version>3.45.2.0</sqlite.version>
     </properties>
 
     <dependencies>
@@ -29,6 +30,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>${sqlite.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

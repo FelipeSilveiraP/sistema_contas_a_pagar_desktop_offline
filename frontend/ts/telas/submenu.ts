@@ -23,7 +23,7 @@ function cartaoHtml(botao: BotaoSubmenu, ultimo: boolean): string {
 }
 
 function acionarBotao(botao: BotaoSubmenu): void {
-  console.info(`[FinDesk] opção "${botao.rotulo}" acionada`);
+  console.info(`[ContasAPagar] opção "${botao.rotulo}" acionada`);
   if (botao.destino) {
     void irPara(botao.destino);
     return;
@@ -58,10 +58,10 @@ async function verificarApi(): Promise<void> {
     const cfg = await window.finDesk.config();
     const status = await buscarStatus(cfg);
     document.body.dataset.apiStatus = "ok";
-    console.info("[FinDesk] API:", status);
+    console.info("[ContasAPagar] API:", status);
   } catch (erro) {
     document.body.dataset.apiStatus = "erro";
-    console.error("[FinDesk] falha na API:", erro);
+    console.error("[ContasAPagar] falha na API:", erro);
   }
 }
 
@@ -76,6 +76,6 @@ export function iniciarSubmenu(tela: Tela, config: ConfigSubmenu): void {
   montarNavbar(tela);
   registrarOpcoes(config);
   registrarAtalhosSubmenu(config);
-  console.info(`[FinDesk] submenu "${tela}" (${config.botoes.length} opções) iniciado`);
+  console.info(`[ContasAPagar] submenu "${tela}" (${config.botoes.length} opções) iniciado`);
   void verificarApi();
 }

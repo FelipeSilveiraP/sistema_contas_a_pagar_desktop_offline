@@ -1,6 +1,14 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
+
+// Banco de dados isolado: os testes nunca tocam a base real do usuario
+const BANCO_SMOKE = path.join(os.tmpdir(), "contas-a-pagar-smoke.db");
+for (const sufixo of ["", "-wal", "-shm"]) {
+  try { fs.unlinkSync(BANCO_SMOKE + sufixo); } catch { /* nao existia */ }
+}
+process.env.FINDESK_DB_PATH = BANCO_SMOKE;
 
 const SAIDA = path.join(__dirname, "..", "docs", "responsivo");
 const RESOLUCOES = [
@@ -74,7 +82,7 @@ const SUBMENUS = [
     botoes: [
       { sel: 'a[data-modulo="empresa"]', nome: "CADASTRAR NOVA EMPRESA", tipo: "provisorio" },
       { sel: 'a[data-modulo="pagador"]', nome: "CADASTRAR NOVO PAGADOR", tipo: "provisorio" },
-      { sel: 'a[data-modulo="banco"]', nome: "CADASTRAR NOVO BANCO", tipo: "provisorio" },
+      { sel: 'a[data-modulo="banco"]', nome: "CADASTRAR NOVO BANCO", tipo: "nav", destino: "form-banco" },
     ],
   },
 ];
@@ -319,7 +327,7 @@ async function medirTela() {
   return JSON.parse(
     await js(`(() => {
       const grade = document.querySelector(".submenu-grade, .menu-grade");
-      const colunas = getComputedStyle(grade).gridTemplateColumns.split(" ").filter(Boolean).length;
+      const colunas = grade ? getComputedStyle(grade).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
       const doc = document.documentElement;
       const barra = document.querySelector(".nav-barra");
       const hamb = document.querySelector(".nav-hamburguer");
@@ -499,7 +507,6 @@ async function executar() {
   // 7. Atalhos nos submenus (regressão)
   for (const [tela, chaves] of [
     ["mensagens", [["1", "TODAS AS MENSAGENS"], ["2", "CRIAR NOVA MENSAGEM"]]],
-    ["novo-cadastro", [["1", "CADASTRAR NOVA EMPRESA"], ["2", "CADASTRAR NOVO PAGADOR"], ["3", "CADASTRAR NOVO BANCO"]]],
   ]) {
     await js(`window.finDesk.navegar('${tela}')`);
     await esperarTela(tela);
@@ -514,6 +521,155 @@ async function executar() {
     teste(`Escape em ${tela} volta ao Menu`, await esperarTela("menu"));
     await prepararPagina();
   }
+
+  // 7b. Atalhos em Novo Cadastro (1 e 2 provisorios; 3 navega ao form-banco)
+  await js("window.finDesk.navegar('novo-cadastro')");
+  await esperarTela("novo-cadastro");
+  await prepararPagina();
+  for (const [teclaAlvo, nome] of [["1", "CADASTRAR NOVA EMPRESA"], ["2", "CADASTRAR NOVO PAGADOR"]]) {
+    await js("window.__alertas = []");
+    await tecla(teclaAlvo);
+    const alertas = await lerAlertas();
+    teste(`Atalho ${teclaAlvo} em novo-cadastro (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
+  }
+  await js("window.__alertas = []");
+  await tecla("3");
+  teste("Atalho 3 em novo-cadastro navega para o form-banco", await esperarTela("form-banco"));
+  await prepararPagina();
+  await tecla("Escape");
+  teste("Escape em form-banco volta a novo-cadastro", await esperarTela("novo-cadastro"));
+  await prepararPagina();
+
+  // 7c. Formulario de Banco (Entrega 3.1) — validacao, CRUD pela API, dirty-form
+  await definirTamanho(1536, 864);
+  await js("window.finDesk.navegar('form-banco')");
+  await esperarTela("form-banco");
+  await prepararPagina();
+  const camposForm = JSON.parse(
+    await js(`JSON.stringify({
+      instituicao: !!document.getElementById('campo-instituicao'),
+      codigoBanco: !!document.getElementById('campo-codigo-banco'),
+      agencia: !!document.getElementById('campo-agencia'),
+      conta: !!document.getElementById('campo-conta'),
+      chavePix: !!document.getElementById('campo-chave-pix'),
+      salvar: !!document.getElementById('btn-salvar'),
+      cancelar: !!document.getElementById('btn-cancelar'),
+      navbar: !!document.querySelector('#nav-global .nav-barra'),
+    })`)
+  );
+  teste("Form Banco: campos, acoes e navbar presentes", Object.values(camposForm).every(Boolean), JSON.stringify(camposForm));
+  teste("Form Banco: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 132, 0)", await corBotaoNav("cadastros"));
+
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const errosVazio = JSON.parse(
+    await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
+  );
+  teste(
+    "Form Banco: submit vazio mostra erros nos campos obrigatorios",
+    ["instituicao", "codigoBanco", "agencia", "conta"].every((c) => errosVazio.includes(c)),
+    JSON.stringify(errosVazio)
+  );
+  await js(`(() => { for (const id of ['campo-instituicao','campo-agencia','campo-conta']) document.getElementById(id).value = 'x'; document.getElementById('campo-codigo-banco').value = 'ABC'; return true; })()`);
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const erroCodigo = await js(`!document.querySelector('[data-erro-campo="codigoBanco"]').classList.contains('hidden')`);
+  teste("Form Banco: codigo bancario com letras e recusado", erroCodigo === true);
+
+  const nomeBanco = `BANCO SMOKE ${Date.now()}`;
+  await js(`(() => {
+    document.getElementById('campo-instituicao').value = ${JSON.stringify(nomeBanco)};
+    document.getElementById('campo-codigo-banco').value = '001';
+    document.getElementById('campo-agencia').value = '1234-5';
+    document.getElementById('campo-conta').value = '98765-4';
+    document.getElementById('campo-chave-pix').value = 'pix@exemplo.com';
+    for (const id of ['campo-instituicao','campo-codigo-banco','campo-agencia','campo-conta','campo-chave-pix'])
+      document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-salvar");
+  const salvoOk = await esperarPredicado(`document.body.dataset.bancoSalvo !== undefined`, 10000);
+  teste("Form Banco: salvar com dados validos confirma cadastro", salvoOk);
+  const feedback = await js(`document.getElementById('feedback-banco').textContent`);
+  teste("Form Banco: mensagem de sucesso exibida", String(feedback).includes("sucesso"), String(feedback));
+  teste("Form Banco: campos limpos apos salvar", (await js(`document.getElementById('campo-instituicao').value`)) === "");
+
+  const cfg = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
+  const lista = JSON.parse(
+    await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfg.port}/api/bancos', { headers: { 'X-FinDesk-Token': '${cfg.token}' } });
+      return JSON.stringify(await r.json());
+    })()`)
+  );
+  const encontrado = lista.find((b) => b.instituicao === nomeBanco);
+  teste("Form Banco: registro persistido consultavel pela API", Boolean(encontrado), JSON.stringify(encontrado ?? null));
+
+  if (encontrado) {
+    const statusDelete = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfg.port}/api/bancos/${encontrado.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfg.token}' } });
+      return r.status;
+    })()`);
+    teste("API DELETE exclui o banco de teste (204)", statusDelete === 204, String(statusDelete));
+    const statusApos = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfg.port}/api/bancos/${encontrado.id}', { headers: { 'X-FinDesk-Token': '${cfg.token}' } });
+      return r.status;
+    })()`);
+    teste("API GET apos exclusao retorna 404", statusApos === 404, String(statusApos));
+  }
+
+  // fluxo de navegacao completo pela UI (Menu -> Cadastros -> Novo Cadastro -> Banco)
+  await js("window.finDesk.navegar('menu')");
+  await esperarTela("menu");
+  await prepararPagina();
+  teste("Fluxo UI: Menu -> cadastros", await navegarPor('a[data-path="cadastros"]', "cadastros"));
+  teste("Fluxo UI: cadastros -> novo-cadastro", await navegarPor('a[data-modulo="novo-cadastro"]', "novo-cadastro"));
+  teste("Fluxo UI: novo-cadastro -> banco (form-banco)", await navegarPor('a[data-modulo="banco"]', "form-banco"));
+
+  // dirty-form: confirmacao ao abandonar com alteracoes nao salvas
+  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
+  await js(`(() => { const el = document.getElementById('campo-instituicao'); el.value = 'Alteracao nao salva'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar('.nav-barra button[data-nav="voltar"]');
+  await esperar(400);
+  const confirmas1 = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
+  teste("Form Banco: VOLTAR com alteracoes nao salvas pede confirmacao", confirmas1.length === 1);
+  teste("Form Banco: cancelamento da confirmacao mantem na tela", (await js("document.body.dataset.tela")) === "form-banco");
+  await js("window.__confirmResposta = true");
+  await clicar('.nav-barra button[data-nav="voltar"]');
+  teste("Form Banco: confirmacao aceita VOLTAR a novo-cadastro", await esperarTela("novo-cadastro"));
+  await prepararPagina();
+  await navegarPor('a[data-modulo="banco"]', "form-banco");
+  await js(`window.__confirmas = []; window.__confirmResposta = true; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
+  await js(`(() => { const el = document.getElementById('campo-instituicao'); el.value = 'x'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btn-cancelar");
+  await esperar(400);
+  const confirmas2 = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
+  teste("Form Banco: CANCELAR sujo pede confirmacao e sai", confirmas2.length === 1 && (await js("document.body.dataset.tela")) !== "form-banco");
+
+  // estabilidade dos campos com menu lateral aberto + capturas
+  await js(`window.confirm = () => true; 'ok'`);
+  await js("window.finDesk.navegar('form-banco')");
+  await esperarTela("form-banco");
+  await prepararPagina();
+  await definirTamanho(480, 800);
+  const camposAntes = JSON.parse(await js(`JSON.stringify([...document.querySelectorAll('.form-campo')].map(el => { const r = el.getBoundingClientRect(); return [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)]; }))`));
+  await abrirMenu();
+  const camposAberto = JSON.parse(await js(`JSON.stringify([...document.querySelectorAll('.form-campo')].map(el => { const r = el.getBoundingClientRect(); return [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)]; }))`));
+  await fecharMenu();
+  teste("Form Banco: campos estaveis com menu lateral aberto (480x800)", JSON.stringify(camposAntes) === JSON.stringify(camposAberto));
+  await capturar("form-banco-480x800.png");
+  await definirTamanho(768, 800);
+  await capturar("form-banco-768x800.png");
+  await definirTamanho(1536, 864);
+  await capturar("form-banco-1536x864.png");
+  teste("Form Banco: barra desktop visivel a partir de 900px", (await medirTela()).barraVisivel === true);
+  await definirTamanho(480, 800);
+  teste("Form Banco: hamburguer visivel abaixo de 900px", (await medirTela()).hambVisivel === true);
+  await definirTamanho(1536, 864);
+  await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
+  await js("window.confirm = () => true; 'ok'");
+  await js("window.finDesk.navegar('menu')");
+  await esperarTela("menu");
+  await prepararPagina();
   await js("window.finDesk.navegar('controle')");
   await esperarTela("controle");
   await prepararPagina();

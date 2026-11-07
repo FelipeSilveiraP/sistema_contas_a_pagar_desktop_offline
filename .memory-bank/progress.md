@@ -15,10 +15,11 @@
 ## Entregas incrementais
 - [x] 1. Estrutura de navegação + Submenu Controle (APROVADA)
 - [x] 2. Navegação completa + todos os submenus agrupados (APROVADA — commit `f4fcbaf`)
-- [x] 2.1. Barra de navegação global responsiva (APROVADA — commit de preservação local; sem push)
-      — barra desktop 6 botões + menu lateral hambúrguer→X + véu; estabilidade dos cartões comprovada
-- [ ] 3. Pool financeiro (Cadastros, Inserir Conta, Boletos+baixa, Pagos, Recorrentes, Mensagens,
-      Gráficos) — sequência a reavaliar/aprovar
+- [x] 2.1. Barra de navegação global responsiva (APROVADA — commit `b349235`)
+- [x] 3.1. Fundação SQLite + Cadastro de Banco (CONCLUÍDA — aguardando validação do usuário)
+      — SQLite WAL + migrações + backup/restauração, API `/api/bancos`, form Banco (Stitch), nome oficial
+- [ ] 3.2–3.10. Pagador, Empresa, Todos os Cadastros, Inserir Conta, Boletos, Pagos, Recorrentes,
+      Mensagens, Gráficos — NÃO iniciar sem autorização (uma entrega por vez)
 
 ## Validação da Entrega 2.1 (2026-11-07; correção VOLTAR no painel revalidada)
 - [x] Smoke `desktop/smoke.js`: 199/199 — ordem dos 6 botões (barra e painel), destinos
@@ -37,11 +38,23 @@
 ## Auditoria final da Entrega 2.1 (2026-11-07)
 - [x] Diff dos 28 arquivos modificados + 5 novos auditado (navbar, CSS, HTMLs, smoke, docs)
 - [x] Segurança: 0 credenciais no repo; `.env`/`vba/`/scripts de prototipação git-ignored; `.env.example`
-      sem chave real; token API é `dev-token-local` via env `FINDESK_API_TOKEN` (loopback 127.0.0.1)
+      sem chave real; (posteriormente na 3.1: default `dev-token-local` removido — token aleatório
+      por inicialização via `FINDESK_API_TOKEN`)
 - [x] Regressão final: `npm run build` (tsc + tailwind + esbuild) OK; JUnit 4/4 OK
 
+## Validação da Entrega 3.1 (2026-11-07)
+- [x] JUnit 35/35 — CRUD Banco, validações por campo, 404, FK→409, SQL injection inofensivo,
+      persistência ao reabrir, transações; backup/restauração (`VACUUM INTO`, integridade, rotação);
+      API MockMvc (201/200/204/400/404/409) + segurança de token (válido/ausente/inválido)
+- [x] Smoke `desktop/smoke.js`: 220/220 — regressão completa (navbar, submenus, atalhos, estabilidade,
+      responsividade, offline) + form Banco (campos, validações, save/feedback, CRUD via API,
+      dirty-form VOLTAR/CANCELAR/ESC, fluxo Menu→Cadastros→Novo Cadastro→Banco, breakpoints da navbar)
+- [x] Persistência com reinício real (`desktop/teste-persistencia.js`): 8/8 — cadastra fictício,
+      encerra processo, reabre, confere dados intactos, remove e verifica token ausente dos logs
+- [x] Auditoria final: diff auditado, 0 credenciais, sem bancos versionados, build/tsc/esbuild OK
+- [x] Capturas: `docs/responsivo/form-banco-{1536x864,768x800,480x800}.png`
+
 ## Pendências
-- [ ] Iniciar Entrega 3.1 (fundação SQLite + Cadastro de Banco) — SOMENTE após autorização do usuário
+- [ ] Validação do usuário na Entrega 3.1 (conferir form-banco contra a tela Stitch real)
+- [ ] Iniciar Entrega 3.2 (Pagador) — SOMENTE após autorização do usuário
 - [ ] Push ao GitHub (AGUARDA autorização explícita; nada publicado ainda)
-- [ ] Sequência Fase 3 (3.2+): Pagador → Empresa → Tabela Todos os Cadastros → Inserir Conta →
-      Boletos/baixa → Pagos → Recorrentes → Mensagens → Gráficos (uma entrega por vez)
