@@ -105,7 +105,7 @@ Decisões principais:
 - **Navbar global responsiva:** barra desktop de 6 botões e menu compacto hambúrguer→X com VOLTAR (§4.1 do plano de telas).
 - **Fundação SQLite:** banco local em `%LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar\contas_a_pagar.db`, modo WAL, integridade referencial, consultas parametrizadas, transações e migrações versionadas (`PRAGMA user_version`) sem recriação destrutiva.
 - **Backup e restauração:** snapshot consistente via `VACUUM INTO` (copia segura em modo WAL), backup diário automático, backup pré-migração, rotação (últimos 8) e restauração com verificação de integridade.
-- **Cadastro de Banco funcional de ponta a ponta:** formulário Stitch (instituição, código bancário, agência, conta, chave Pix), validação no backend, confirmação de sucesso, erros por campo, confirmação ao sair com alterações não salvas e CRUD completo via API.
+- **Cadastro de Banco funcional de ponta a ponta:** formulário Stitch (instituição bancária obrigatória, chave Pix opcional), validação no backend, confirmação de sucesso, erros por campo, confirmação ao sair com alterações não salvas e CRUD completo via API.
 
 ## Próximas entregas (Fase 3)
 

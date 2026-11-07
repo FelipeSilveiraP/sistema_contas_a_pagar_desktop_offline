@@ -30,8 +30,8 @@ public class BancoRepository {
     }
 
     public List<Banco> listar() throws SQLException {
-        String sql = "SELECT id_banco, instituicao, codigo_banco, agencia, conta, chave_pix"
-                + " FROM bancos ORDER BY instituicao, agencia, conta";
+        String sql = "SELECT id_banco, instituicao, chave_pix"
+                + " FROM bancos ORDER BY instituicao";
         try (Connection conn = conexao.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -44,7 +44,7 @@ public class BancoRepository {
     }
 
     public Optional<Banco> buscarPorId(long id) throws SQLException {
-        String sql = "SELECT id_banco, instituicao, codigo_banco, agencia, conta, chave_pix"
+        String sql = "SELECT id_banco, instituicao, chave_pix"
                 + " FROM bancos WHERE id_banco = ?";
         try (Connection conn = conexao.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -56,8 +56,8 @@ public class BancoRepository {
     }
 
     public Banco inserir(Banco dados) throws SQLException {
-        String sql = "INSERT INTO bancos (instituicao, codigo_banco, agencia, conta, chave_pix)"
-                + " VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO bancos (instituicao, chave_pix)"
+                + " VALUES (?, ?)";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -72,8 +72,7 @@ public class BancoRepository {
                 }
                 conn.commit();
                 log.info("banco cadastrado (id={})", id);
-                return new Banco(id, dados.instituicao(), dados.codigoBanco(),
-                        dados.agencia(), dados.conta(), dados.chavePix());
+                return new Banco(id, dados.instituicao(), dados.chavePix());
             } catch (SQLException erro) {
                 conn.rollback();
                 throw erro;
@@ -84,13 +83,13 @@ public class BancoRepository {
     }
 
     public boolean atualizar(long id, Banco dados) throws SQLException {
-        String sql = "UPDATE bancos SET instituicao = ?, codigo_banco = ?, agencia = ?, conta = ?, chave_pix = ?"
+        String sql = "UPDATE bancos SET instituicao = ?, chave_pix = ?"
                 + " WHERE id_banco = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 preencher(stmt, dados);
-                stmt.setLong(6, id);
+                stmt.setLong(3, id);
                 int linhas = stmt.executeUpdate();
                 conn.commit();
                 if (linhas > 0) {
@@ -136,19 +135,13 @@ public class BancoRepository {
 
     private static void preencher(PreparedStatement stmt, Banco dados) throws SQLException {
         stmt.setString(1, dados.instituicao());
-        stmt.setString(2, dados.codigoBanco());
-        stmt.setString(3, dados.agencia());
-        stmt.setString(4, dados.conta());
-        stmt.setString(5, dados.chavePix());
+        stmt.setString(2, dados.chavePix());
     }
 
     private static Banco paraRegistro(ResultSet rs) throws SQLException {
         return new Banco(
                 rs.getLong("id_banco"),
                 rs.getString("instituicao"),
-                rs.getString("codigo_banco"),
-                rs.getString("agencia"),
-                rs.getString("conta"),
                 rs.getString("chave_pix")
         );
     }

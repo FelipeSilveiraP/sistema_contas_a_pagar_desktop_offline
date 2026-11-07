@@ -4,20 +4,11 @@ import { montarNavbar } from "../navbar";
 
 interface CamposFormulario {
   instituicao: string;
-  codigoBanco: string;
-  agencia: string;
-  conta: string;
   chavePix: string;
 }
 
-const AGENCIA_CONTA = /^[0-9A-Za-z./-]{1,20}$/;
-const SOMENTE_DIGITOS = /^\d{1,5}$/;
-
 const ID_CAMPOS: Record<keyof CamposFormulario, string> = {
   instituicao: "campo-instituicao",
-  codigoBanco: "campo-codigo-banco",
-  agencia: "campo-agencia",
-  conta: "campo-conta",
   chavePix: "campo-chave-pix",
 };
 
@@ -28,9 +19,6 @@ function campo(nome: keyof CamposFormulario): HTMLInputElement {
 function lerCampos(): CamposFormulario {
   return {
     instituicao: campo("instituicao").value.trim(),
-    codigoBanco: campo("codigoBanco").value.trim(),
-    agencia: campo("agencia").value.trim(),
-    conta: campo("conta").value.trim(),
     chavePix: campo("chavePix").value.trim(),
   };
 }
@@ -39,15 +27,6 @@ function validar(dados: CamposFormulario): Record<string, string> {
   const erros: Record<string, string> = {};
   if (dados.instituicao.length < 2 || dados.instituicao.length > 120) {
     erros.instituicao = "informe a instituicao bancaria (2 a 120 caracteres)";
-  }
-  if (!SOMENTE_DIGITOS.test(dados.codigoBanco)) {
-    erros.codigoBanco = "codigo bancario deve conter apenas digitos (ate 5)";
-  }
-  if (!AGENCIA_CONTA.test(dados.agencia)) {
-    erros.agencia = "informe a agencia (ate 20 caracteres)";
-  }
-  if (!AGENCIA_CONTA.test(dados.conta)) {
-    erros.conta = "informe a conta (ate 20 caracteres)";
   }
   if (dados.chavePix && (dados.chavePix.length > 77 || dados.chavePix.includes(" "))) {
     erros.chavePix = "chave Pix invalida (ate 77 caracteres, sem espacos)";
@@ -108,9 +87,6 @@ function iniciar(): void {
       const cfg = await window.finDesk!.config();
       const criado = await criarBanco(cfg, {
         instituicao: dados.instituicao,
-        codigoBanco: dados.codigoBanco,
-        agencia: dados.agencia,
-        conta: dados.conta,
         chavePix: dados.chavePix || undefined,
       });
       sujo = false;

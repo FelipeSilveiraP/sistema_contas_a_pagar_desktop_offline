@@ -3,9 +3,17 @@ const crypto = require("crypto");
 const path = require("path");
 const net = require("net");
 const fs = require("fs");
+const os = require("os");
 
 const JAR = path.join(__dirname, "..", "backend", "target", "findesk-backend-0.1.0.jar");
 const resultados = [];
+
+// Banco de dados isolado: os testes nunca tocam a base real do usuario
+const BANCO_TESTE = path.join(os.tmpdir(), "contas-a-pagar-persistencia.db");
+for (const sufixo of ["", "-wal", "-shm"]) {
+  try { fs.unlinkSync(BANCO_TESTE + sufixo); } catch { /* nao existia */ }
+}
+process.env.FINDESK_DB_PATH = BANCO_TESTE;
 
 function teste(nome, ok, detalhe = "") {
   resultados.push({ nome, ok, detalhe });
@@ -76,7 +84,8 @@ async function main() {
 
   console.log("=== Teste de persistencia: fechar e reabrir o aplicativo ===\n");
   const nome = `BANCO TESTE PERSISTENCIA ${Date.now()}`;
-  const dados = { instituicao: nome, codigoBanco: "001", agencia: "1234-5", conta: "98765-4", chavePix: "pix@exemplo.com" };
+  const dados = { instituicao: nome, chavePix: "pix@exemplo.com" };
+  const dadosPagador = { nome: `PAGADOR PERSISTENCIA ${Date.now()}`, cpf: "529.982.247-25", funcao: "Gerente" };
 
   console.log("1. Abrindo o aplicativo (backend)...");
   const primeira = await subirBackend();
@@ -90,6 +99,13 @@ async function main() {
   teste("Cadastro retorna 201 com id", criado.status === 201 && registro.id > 0, `id=${registro.id}`);
   const consulta1 = await (await api(primeira.porta, primeira.token, `/api/bancos/${registro.id}`)).json();
   teste("Cadastro confirmado antes de fechar", consulta1.instituicao === nome, consulta1.instituicao);
+
+  const criadoPag = await api(primeira.porta, primeira.token, "/api/pagadores", {
+    method: "POST",
+    body: JSON.stringify(dadosPagador),
+  });
+  const registroPag = await criadoPag.json();
+  teste("Cadastro de pagador retorna 201 com id", criadoPag.status === 201 && registroPag.id > 0, `id=${registroPag.id}`);
 
   console.log("3. Fechando o aplicativo (processo encerrado)...");
   await encerrarBackend(primeira);
@@ -105,10 +121,18 @@ async function main() {
     "Dados preservados apos reinicializacao",
     resposta2.status === 200 &&
       consulta2.instituicao === nome &&
-      consulta2.codigoBanco === dados.codigoBanco &&
-      consulta2.agencia === dados.agencia &&
-      consulta2.conta === dados.conta,
+      consulta2.chavePix === dados.chavePix,
     JSON.stringify(consulta2)
+  );
+
+  const respostaPag = await api(segunda.porta, segunda.token, `/api/pagadores/${registroPag.id}`);
+  const consultaPag = await respostaPag.json();
+  teste(
+    "Pagador preservado apos reinicializacao",
+    respostaPag.status === 200 &&
+      consultaPag.nome === dadosPagador.nome &&
+      consultaPag.cpf === "52998224725",
+    JSON.stringify(consultaPag)
   );
 
   console.log("6. Limpando o registro ficticio...");
@@ -116,6 +140,8 @@ async function main() {
   teste("Exclusao de limpeza retorna 204", exclusao.status === 204, String(exclusao.status));
   const aposExclusao = await api(segunda.porta, segunda.token, `/api/bancos/${registro.id}`);
   teste("Registro ficticio removido (404)", aposExclusao.status === 404, String(aposExclusao.status));
+  const exclusaoPag = await api(segunda.porta, segunda.token, `/api/pagadores/${registroPag.id}`, { method: "DELETE" });
+  teste("Exclusao de limpeza do pagador retorna 204", exclusaoPag.status === 204, String(exclusaoPag.status));
 
   await encerrarBackend(segunda);
   teste("Backend encerrado ao final do teste", true);

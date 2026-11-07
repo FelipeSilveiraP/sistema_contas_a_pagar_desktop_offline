@@ -1,13 +1,16 @@
 import { iniciarMenu } from "./telas/menu";
 import { iniciarSubmenu } from "./telas/submenu";
 import { iniciarFormBanco } from "./telas/form-banco";
+import { iniciarFormPagador } from "./telas/form-pagador";
 import { SUBMENUS, TelaSubmenu } from "./submenus-config";
 
-const tela = (document.body.dataset.tela ?? "menu") as TelaSubmenu | "menu" | "form-banco";
+const tela = (document.body.dataset.tela ?? "menu") as TelaSubmenu | "menu" | "form-banco" | "form-pagador";
 if (tela === "menu") {
   iniciarMenu();
 } else if (tela === "form-banco") {
   iniciarFormBanco();
+} else if (tela === "form-pagador") {
+  iniciarFormPagador();
 } else if (SUBMENUS[tela]) {
   iniciarSubmenu(tela, SUBMENUS[tela]);
 } else {

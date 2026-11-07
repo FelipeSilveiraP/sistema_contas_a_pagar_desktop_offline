@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 1;
+    private static final int VERSAO_ATUAL = 4;
 
     private final ConnectionFactory conexao;
 
@@ -85,6 +85,48 @@ public class DatabaseInitializer {
                 )
                 """,
                 "CREATE INDEX IF NOT EXISTS idx_bancos_instituicao ON bancos(instituicao)",
+            };
+            case 2 -> new String[] {
+                // Cadastro de Banco reduzido a instituicao + chave Pix: reconstrucao da
+                // tabela preservando id, instituicao e chave_pix dos cadastros existentes.
+                """
+                CREATE TABLE bancos_v2 (
+                    id_banco INTEGER PRIMARY KEY AUTOINCREMENT,
+                    instituicao TEXT NOT NULL,
+                    chave_pix TEXT
+                )
+                """,
+                "INSERT INTO bancos_v2 (id_banco, instituicao, chave_pix)"
+                        + " SELECT id_banco, instituicao, chave_pix FROM bancos",
+                "DROP TABLE bancos",
+                "ALTER TABLE bancos_v2 RENAME TO bancos",
+                "CREATE INDEX IF NOT EXISTS idx_bancos_instituicao ON bancos(instituicao)",
+            };
+            case 3 -> new String[] {
+                """
+                CREATE TABLE IF NOT EXISTS pagadores (
+                    id_pagador INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    cpf TEXT NOT NULL,
+                    funcao TEXT
+                )
+                """,
+            };
+            case 4 -> new String[] {
+                // CPF passa a opcional (validado apenas quando preenchido) e funcao
+                // aceita ate 100 caracteres: reconstrucao preservando os cadastros.
+                """
+                CREATE TABLE pagadores_v4 (
+                    id_pagador INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL,
+                    cpf TEXT,
+                    funcao TEXT
+                )
+                """,
+                "INSERT INTO pagadores_v4 (id_pagador, nome, cpf, funcao)"
+                        + " SELECT id_pagador, nome, cpf, funcao FROM pagadores",
+                "DROP TABLE pagadores",
+                "ALTER TABLE pagadores_v4 RENAME TO pagadores",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

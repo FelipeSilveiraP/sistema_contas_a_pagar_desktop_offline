@@ -36,61 +36,37 @@ class BancoServiceTest {
     }
 
     private Banco dadosValidos() {
-        return new Banco(null, "Banco do Brasil", "001", "1234-5", "98765-4", "11999990000");
+        return new Banco(null, "Banco do Brasil", "11999990000");
     }
 
     @Test
     void deveCadastrarBancoValidoComCamposNormalizados() {
-        Banco criado = service.cadastrar(new Banco(null, "  Itau  ", "341", "0001", "12345-6", "  contato@exemplo.com "));
+        Banco criado = service.cadastrar(new Banco(null, "  Itau  ", "  contato@exemplo.com "));
 
         assertThat(criado.id()).isNotNull();
         assertThat(criado.instituicao()).isEqualTo("Itau");
-        assertThat(criado.codigoBanco()).isEqualTo("341");
         assertThat(criado.chavePix()).isEqualTo("contato@exemplo.com");
     }
 
     @Test
-    void deveManterZerosAEsquerdaDoCodigoBanco() {
-        Banco criado = service.cadastrar(dadosValidos());
-
-        assertThat(criado.codigoBanco()).isEqualTo("001");
-    }
-
-    @Test
     void deveAceitarChavePixOpcionalAusente() {
-        Banco criado = service.cadastrar(new Banco(null, "Caixa Economica", "104", "0001", "87654-3", null));
+        Banco criado = service.cadastrar(new Banco(null, "Caixa Economica", null));
 
         assertThat(criado.chavePix()).isNull();
     }
 
     @Test
     void deveRecusarCadastroSemInstituicao() {
-        assertThatThrownBy(() -> service.cadastrar(new Banco(null, "", "001", "1234", "999", null)))
+        assertThatThrownBy(() -> service.cadastrar(new Banco(null, "", null)))
                 .isInstanceOf(DadosInvalidosException.class)
                 .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
                         .containsKey("instituicao"));
     }
 
     @Test
-    void deveRecusarCodigoBancoComLetras() {
-        assertThatThrownBy(() -> service.cadastrar(new Banco(null, "Banco X", "ABC", "1234", "999", null)))
-                .isInstanceOf(DadosInvalidosException.class)
-                .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
-                        .containsKey("codigoBanco"));
-    }
-
-    @Test
-    void deveRecusarAgenciaVazia() {
-        assertThatThrownBy(() -> service.cadastrar(new Banco(null, "Banco X", "001", "", "999", null)))
-                .isInstanceOf(DadosInvalidosException.class)
-                .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
-                        .containsKey("agencia"));
-    }
-
-    @Test
     void deveRecusarChavePixComEspacos() {
         assertThatThrownBy(() -> service.cadastrar(
-                new Banco(null, "Banco X", "001", "1234", "999", "chave invalida")))
+                new Banco(null, "Banco X", "chave invalida")))
                 .isInstanceOf(DadosInvalidosException.class)
                 .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
                         .containsKey("chavePix"));
@@ -109,10 +85,10 @@ class BancoServiceTest {
         Banco criado = service.cadastrar(dadosValidos());
 
         Banco atualizado = service.atualizar(criado.id(),
-                new Banco(null, "Itau", "341", "4321", "11111-2", null));
+                new Banco(null, "Itau", "pix@itau.com.br"));
 
         assertThat(atualizado.instituicao()).isEqualTo("Itau");
-        assertThat(service.buscarPorId(criado.id()).conta()).isEqualTo("11111-2");
+        assertThat(service.buscarPorId(criado.id()).chavePix()).isEqualTo("pix@itau.com.br");
     }
 
     @Test
@@ -148,6 +124,35 @@ class BancoServiceTest {
     }
 
     @Test
+    void devePreservarDadosAoMigrarDeV1ParaV2() throws Exception {
+        ConnectionFactory conexaoV1 = new ConnectionFactory(pastaTemporaria.resolve("contas_migracao.db").toString());
+        try (Connection conn = conexaoV1.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE bancos (id_banco INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + " instituicao TEXT NOT NULL, codigo_banco TEXT NOT NULL, agencia TEXT NOT NULL,"
+                    + " conta TEXT NOT NULL, chave_pix TEXT)");
+            stmt.execute("INSERT INTO bancos (instituicao, codigo_banco, agencia, conta, chave_pix)"
+                    + " VALUES ('Banco Antigo', '001', '1234-5', '98765-4', 'pix@exemplo.com')");
+            stmt.execute("PRAGMA user_version = 1");
+        }
+
+        DatabaseInitializer initializer = new DatabaseInitializer(conexaoV1);
+        initializer.inicializar();
+
+        assertThat(initializer.lerVersao()).isEqualTo(initializer.getVersaoAtual());
+        BancoService serviceMigrado = new BancoService(new BancoRepository(conexaoV1));
+        List<Banco> bancos = serviceMigrado.listar();
+        assertThat(bancos).hasSize(1);
+        Banco preservado = bancos.get(0);
+        assertThat(preservado.id()).isEqualTo(1L);
+        assertThat(preservado.instituicao()).isEqualTo("Banco Antigo");
+        assertThat(preservado.chavePix()).isEqualTo("pix@exemplo.com");
+
+        Banco novo = serviceMigrado.cadastrar(new Banco(null, "Banco Novo", null));
+        assertThat(novo.id()).isEqualTo(2L);
+    }
+
+    @Test
     void deveRecusarExclusaoQuandoBancoEstiverVinculadoARegistrosFinanceiros() throws Exception {
         Banco criado = service.cadastrar(dadosValidos());
         try (Connection conn = conexao.getConnection();
@@ -168,7 +173,7 @@ class BancoServiceTest {
         String malicioso = "'; DROP TABLE bancos; --";
 
         Banco criado = service.cadastrar(
-                new Banco(null, malicioso, "001", "1234", "999", null));
+                new Banco(null, malicioso, null));
 
         assertThat(service.buscarPorId(criado.id()).instituicao()).isEqualTo(malicioso);
         List<Banco> todos = service.listar();

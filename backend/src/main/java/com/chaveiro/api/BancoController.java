@@ -21,8 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/bancos")
 public class BancoController {
 
-    public record BancoRequest(String instituicao, String codigoBanco, String agencia,
-                               String conta, String chavePix) {
+    public record BancoRequest(String instituicao, String chavePix) {
     }
 
     private final BancoService service;
@@ -59,7 +58,6 @@ public class BancoController {
     }
 
     private static Banco paraModelo(BancoRequest requisicao) {
-        return new Banco(null, requisicao.instituicao(), requisicao.codigoBanco(),
-                requisicao.agencia(), requisicao.conta(), requisicao.chavePix());
+        return new Banco(null, requisicao.instituicao(), requisicao.chavePix());
     }
 }

@@ -34,23 +34,23 @@ class BancoApiTest {
     @Autowired
     private BancoService service;
 
-    private String corpo(String instituicao, String codigo, String agencia, String conta, String pix) throws Exception {
-        return json.writeValueAsString(new BancoController.BancoRequest(instituicao, codigo, agencia, conta, pix));
+    private String corpo(String instituicao, String pix) throws Exception {
+        return json.writeValueAsString(new BancoController.BancoRequest(instituicao, pix));
     }
 
     private long cadastrarExemplo() {
-        return service.cadastrar(new Banco(null, "Banco API Teste", "001", "1234-5", "98765-4", null)).id();
+        return service.cadastrar(new Banco(null, "Banco API Teste", null)).id();
     }
 
     @Test
     void deveCadastrarBancoERetornar201ComCorpo() throws Exception {
         mvc.perform(post("/api/bancos").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpo("Banco Novo", "341", "0001", "12345-6", "pix@exemplo.com")))
+                        .content(corpo("Banco Novo", "pix@exemplo.com")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.instituicao").value("Banco Novo"))
-                .andExpect(jsonPath("$.codigoBanco").value("341"));
+                .andExpect(jsonPath("$.chavePix").value("pix@exemplo.com"));
     }
 
     @Test
@@ -84,7 +84,7 @@ class BancoApiTest {
 
         mvc.perform(put("/api/bancos/" + id).header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpo("Banco Atualizado", "237", "4321", "11111-2", null)))
+                        .content(corpo("Banco Atualizado", "pix@atualizado.com")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.instituicao").value("Banco Atualizado"));
 
@@ -107,12 +107,11 @@ class BancoApiTest {
     void deveRetornar400ComCamposInvalidos() throws Exception {
         mvc.perform(post("/api/bancos").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpo("", "ABC", "", "", "chave invalida")))
+                        .content(corpo("", "chave invalida")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erro").value("dados invalidos"))
                 .andExpect(jsonPath("$.campos.instituicao").exists())
-                .andExpect(jsonPath("$.campos.codigoBanco").exists())
-                .andExpect(jsonPath("$.campos.agencia").exists());
+                .andExpect(jsonPath("$.campos.chavePix").exists());
     }
 
     @Test
@@ -130,7 +129,7 @@ class BancoApiTest {
     void deveAplicarTokenCorretamenteNoCadastro() throws Exception {
         mvc.perform(post("/api/bancos").header("X-FinDesk-Token", "outro-token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpo("Banco X", "001", "1", "1", null)))
+                        .content(corpo("Banco X", null)))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -139,7 +138,7 @@ class BancoApiTest {
         String malicioso = "x'; DROP TABLE bancos; --";
         String resposta = mvc.perform(post("/api/bancos").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpo(malicioso, "001", "1234", "999", null)))
+                        .content(corpo(malicioso, null)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         JsonNode criado = json.readTree(resposta);

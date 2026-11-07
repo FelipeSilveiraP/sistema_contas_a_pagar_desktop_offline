@@ -10,7 +10,8 @@ type TelaFinDesk =
   | "mensagens"
   | "recorrentes"
   | "novo-cadastro"
-  | "form-banco";
+  | "form-banco"
+  | "form-pagador";
 
 interface Window {
   finDesk?: {

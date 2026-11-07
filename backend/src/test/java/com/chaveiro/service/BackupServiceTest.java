@@ -40,7 +40,7 @@ class BackupServiceTest {
 
     @Test
     void deveCriarBackupConsistenteComDadosFicticios() throws Exception {
-        service.cadastrar(new Banco(null, "Banco Backup", "001", "1234", "98765-4", null));
+        service.cadastrar(new Banco(null, "Banco Backup", null));
 
         Path backup = backupService.criarBackup("teste");
 
@@ -51,7 +51,7 @@ class BackupServiceTest {
 
     @Test
     void deveRestaurarDadosAposPerdaDoBancoOriginal() throws Exception {
-        Banco criado = service.cadastrar(new Banco(null, "Banco Restaurado", "341", "0001", "11111-2", null));
+        Banco criado = service.cadastrar(new Banco(null, "Banco Restaurado", null));
         Path backup = backupService.criarBackup("teste");
 
         try (Connection conn = conexao.getConnection();

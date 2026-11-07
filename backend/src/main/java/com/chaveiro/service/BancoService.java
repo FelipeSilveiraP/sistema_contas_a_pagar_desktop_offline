@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,15 +13,12 @@ import org.springframework.stereotype.Service;
 /**
  * Validacoes e regras de negocio do cadastro de bancos.
  * Regras sao pragmaticas: validam o que e obrigatorio sem rejeitar
- * dados bancarios legitimos (agencias/contas com digitos, chaves Pix variadas).
+ * dados bancarios legitimos (chaves Pix variadas).
  */
 @Service
 public class BancoService {
 
     private static final Logger log = LoggerFactory.getLogger(BancoService.class);
-
-    private static final Pattern AGENCIA_CONTA = Pattern.compile("[0-9A-Za-z./-]{1,20}");
-    private static final Pattern SOMENTE_DIGITOS = Pattern.compile("\\d{1,5}");
 
     private final BancoRepository repository;
 
@@ -89,9 +85,6 @@ public class BancoService {
         return new Banco(
                 id,
                 dados.instituicao() == null ? "" : dados.instituicao().trim(),
-                dados.codigoBanco() == null ? "" : dados.codigoBanco().trim(),
-                dados.agencia() == null ? "" : dados.agencia().trim(),
-                dados.conta() == null ? "" : dados.conta().trim(),
                 dados.chavePix() == null || dados.chavePix().isBlank() ? null : dados.chavePix().trim()
         );
     }
@@ -101,15 +94,6 @@ public class BancoService {
 
         if (banco.instituicao().length() < 2 || banco.instituicao().length() > 120) {
             erros.put("instituicao", "informe a instituicao bancaria (2 a 120 caracteres)");
-        }
-        if (!SOMENTE_DIGITOS.matcher(banco.codigoBanco()).matches()) {
-            erros.put("codigoBanco", "codigo bancario deve conter apenas digitos (ate 5)");
-        }
-        if (banco.agencia().isEmpty() || !AGENCIA_CONTA.matcher(banco.agencia()).matches()) {
-            erros.put("agencia", "informe a agencia (ate 20 caracteres)");
-        }
-        if (banco.conta().isEmpty() || !AGENCIA_CONTA.matcher(banco.conta()).matches()) {
-            erros.put("conta", "informe a conta (ate 20 caracteres)");
         }
         if (banco.chavePix() != null) {
             if (banco.chavePix().length() > 77 || banco.chavePix().contains(" ")) {

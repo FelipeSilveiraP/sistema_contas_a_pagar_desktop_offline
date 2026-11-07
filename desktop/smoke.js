@@ -81,7 +81,7 @@ const SUBMENUS = [
     volta: "cadastros",
     botoes: [
       { sel: 'a[data-modulo="empresa"]', nome: "CADASTRAR NOVA EMPRESA", tipo: "provisorio" },
-      { sel: 'a[data-modulo="pagador"]', nome: "CADASTRAR NOVO PAGADOR", tipo: "provisorio" },
+      { sel: 'a[data-modulo="pagador"]', nome: "CADASTRAR NOVO PAGADOR", tipo: "nav", destino: "form-pagador" },
       { sel: 'a[data-modulo="banco"]', nome: "CADASTRAR NOVO BANCO", tipo: "nav", destino: "form-banco" },
     ],
   },
@@ -522,17 +522,22 @@ async function executar() {
     await prepararPagina();
   }
 
-  // 7b. Atalhos em Novo Cadastro (1 e 2 provisorios; 3 navega ao form-banco)
+  // 7b. Atalhos em Novo Cadastro (1 provisorio; 2 e 3 navegam aos forms)
   await js("window.finDesk.navegar('novo-cadastro')");
   await esperarTela("novo-cadastro");
   await prepararPagina();
-  for (const [teclaAlvo, nome] of [["1", "CADASTRAR NOVA EMPRESA"], ["2", "CADASTRAR NOVO PAGADOR"]]) {
+  for (const [teclaAlvo, nome] of [["1", "CADASTRAR NOVA EMPRESA"]]) {
     await js("window.__alertas = []");
     await tecla(teclaAlvo);
     const alertas = await lerAlertas();
     teste(`Atalho ${teclaAlvo} em novo-cadastro (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
   }
-  await js("window.__alertas = []");
+  await tecla("2");
+  teste("Atalho 2 em novo-cadastro navega para o form-pagador", await esperarTela("form-pagador"));
+  await prepararPagina();
+  await tecla("Escape");
+  teste("Escape em form-pagador volta a novo-cadastro", await esperarTela("novo-cadastro"));
+  await prepararPagina();
   await tecla("3");
   teste("Atalho 3 em novo-cadastro navega para o form-banco", await esperarTela("form-banco"));
   await prepararPagina();
@@ -548,9 +553,6 @@ async function executar() {
   const camposForm = JSON.parse(
     await js(`JSON.stringify({
       instituicao: !!document.getElementById('campo-instituicao'),
-      codigoBanco: !!document.getElementById('campo-codigo-banco'),
-      agencia: !!document.getElementById('campo-agencia'),
-      conta: !!document.getElementById('campo-conta'),
       chavePix: !!document.getElementById('campo-chave-pix'),
       salvar: !!document.getElementById('btn-salvar'),
       cancelar: !!document.getElementById('btn-cancelar'),
@@ -566,24 +568,21 @@ async function executar() {
     await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
   );
   teste(
-    "Form Banco: submit vazio mostra erros nos campos obrigatorios",
-    ["instituicao", "codigoBanco", "agencia", "conta"].every((c) => errosVazio.includes(c)),
+    "Form Banco: submit vazio mostra erro no campo obrigatorio",
+    errosVazio.includes("instituicao") && !errosVazio.includes("chavePix"),
     JSON.stringify(errosVazio)
   );
-  await js(`(() => { for (const id of ['campo-instituicao','campo-agencia','campo-conta']) document.getElementById(id).value = 'x'; document.getElementById('campo-codigo-banco').value = 'ABC'; return true; })()`);
+  await js(`(() => { document.getElementById('campo-instituicao').value = 'Banco Teste'; document.getElementById('campo-chave-pix').value = 'chave invalida'; return true; })()`);
   await clicar("#btn-salvar");
   await esperar(400);
-  const erroCodigo = await js(`!document.querySelector('[data-erro-campo="codigoBanco"]').classList.contains('hidden')`);
-  teste("Form Banco: codigo bancario com letras e recusado", erroCodigo === true);
+  const erroPix = await js(`!document.querySelector('[data-erro-campo="chavePix"]').classList.contains('hidden')`);
+  teste("Form Banco: chave Pix com espacos e recusada", erroPix === true);
 
   const nomeBanco = `BANCO SMOKE ${Date.now()}`;
   await js(`(() => {
     document.getElementById('campo-instituicao').value = ${JSON.stringify(nomeBanco)};
-    document.getElementById('campo-codigo-banco').value = '001';
-    document.getElementById('campo-agencia').value = '1234-5';
-    document.getElementById('campo-conta').value = '98765-4';
     document.getElementById('campo-chave-pix').value = 'pix@exemplo.com';
-    for (const id of ['campo-instituicao','campo-codigo-banco','campo-agencia','campo-conta','campo-chave-pix'])
+    for (const id of ['campo-instituicao','campo-chave-pix'])
       document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
@@ -665,6 +664,85 @@ async function executar() {
   await definirTamanho(480, 800);
   teste("Form Banco: hamburguer visivel abaixo de 900px", (await medirTela()).hambVisivel === true);
   await definirTamanho(1536, 864);
+
+  // 7d. Formulario de Pagador (Entrega 3.2) — validacao, CRUD pela API, capturas
+  await js("window.finDesk.navegar('form-pagador')");
+  await esperarTela("form-pagador");
+  await prepararPagina();
+  const camposPagador = JSON.parse(
+    await js(`JSON.stringify({
+      nome: !!document.getElementById('campo-nome'),
+      cpf: !!document.getElementById('campo-cpf'),
+      funcao: !!document.getElementById('campo-funcao'),
+      salvar: !!document.getElementById('btn-salvar'),
+      cancelar: !!document.getElementById('btn-cancelar'),
+      navbar: !!document.querySelector('#nav-global .nav-barra'),
+    })`)
+  );
+  teste("Form Pagador: campos, acoes e navbar presentes", Object.values(camposPagador).every(Boolean), JSON.stringify(camposPagador));
+  teste("Form Pagador: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 132, 0)", await corBotaoNav("cadastros"));
+
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const errosPagVazio = JSON.parse(
+    await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
+  );
+  teste(
+    "Form Pagador: submit vazio mostra erro so em nome (cpf e funcao opcionais)",
+    errosPagVazio.includes("nome") && !errosPagVazio.includes("cpf") && !errosPagVazio.includes("funcao"),
+    JSON.stringify(errosPagVazio)
+  );
+  await js(`(() => { document.getElementById('campo-nome').value = 'Pagador Teste'; document.getElementById('campo-cpf').value = '12345678900'; return true; })()`);
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const erroCpf = await js(`!document.querySelector('[data-erro-campo="cpf"]').classList.contains('hidden')`);
+  teste("Form Pagador: CPF preenchido com digitos invalidos e recusado", erroCpf === true);
+
+  const nomePagador = `PAGADOR SMOKE ${Date.now()}`;
+  await js(`(() => {
+    document.getElementById('campo-nome').value = ${JSON.stringify(nomePagador)};
+    document.getElementById('campo-cpf').value = '529.982.247-25';
+    document.getElementById('campo-funcao').value = 'Gerente';
+    for (const id of ['campo-nome','campo-cpf','campo-funcao'])
+      document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-salvar");
+  const pagadorSalvoOk = await esperarPredicado(`document.body.dataset.pagadorSalvo !== undefined`, 10000);
+  teste("Form Pagador: salvar com dados validos confirma cadastro", pagadorSalvoOk);
+  const feedbackPag = await js(`document.getElementById('feedback-pagador').textContent`);
+  teste("Form Pagador: mensagem de sucesso exibida", String(feedbackPag).includes("sucesso"), String(feedbackPag));
+  teste("Form Pagador: campos limpos apos salvar", (await js(`document.getElementById('campo-nome').value`)) === "");
+
+  const cfgPag = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
+  const listaPag = JSON.parse(
+    await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgPag.port}/api/pagadores', { headers: { 'X-FinDesk-Token': '${cfgPag.token}' } });
+      return JSON.stringify(await r.json());
+    })()`)
+  );
+  const encontradoPag = listaPag.find((p) => p.nome === nomePagador && p.cpf === "52998224725");
+  teste("Form Pagador: registro persistido consultavel pela API", Boolean(encontradoPag), JSON.stringify(encontradoPag ?? null));
+
+  if (encontradoPag) {
+    const statusDeletePag = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgPag.port}/api/pagadores/${encontradoPag.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgPag.token}' } });
+      return r.status;
+    })()`);
+    teste("API DELETE exclui o pagador de teste (204)", statusDeletePag === 204, String(statusDeletePag));
+    const statusAposPag = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgPag.port}/api/pagadores/${encontradoPag.id}', { headers: { 'X-FinDesk-Token': '${cfgPag.token}' } });
+      return r.status;
+    })()`);
+    teste("API GET pagador apos exclusao retorna 404", statusAposPag === 404, String(statusAposPag));
+  }
+
+  await definirTamanho(480, 800);
+  await capturar("form-pagador-480x800.png");
+  await definirTamanho(768, 800);
+  await capturar("form-pagador-768x800.png");
+  await definirTamanho(1536, 864);
+  await capturar("form-pagador-1536x864.png");
   await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
   await js("window.confirm = () => true; 'ok'");
   await js("window.finDesk.navegar('menu')");

@@ -16,7 +16,7 @@
 <h1 class="font-headline text-base sm:text-lg lg:text-xl font-bold uppercase tracking-tight text-white">CADASTRAR NOVO BANCO</h1>
 </div>
 <div class="border-b-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-2 sm:px-6 font-headline text-xs sm:text-sm font-bold text-[#1c1b1b]">
-Cadastre a conta bancária da instituição usada na movimentação financeira da oficina.
+Cadastre a instituição bancária usada na movimentação financeira da oficina.
 </div>
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6">
 <div class="flex flex-col gap-1.5">
@@ -25,21 +25,6 @@ Cadastre a conta bancária da instituição usada na movimentação financeira d
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="instituicao"></p>
 </div>
 <div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-codigo-banco">Código Bancário</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-codigo-banco" name="codigoBanco" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Ex.: 001" required>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="codigoBanco"></p>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-agencia">Agência</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-agencia" name="agencia" type="text" maxlength="20" autocomplete="off" placeholder="Ex.: 1234-5" required>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="agencia"></p>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-conta">Conta</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-conta" name="conta" type="text" maxlength="20" autocomplete="off" placeholder="Ex.: 98765-4" required>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="conta"></p>
-</div>
-<div class="flex flex-col gap-1.5 sm:col-span-2">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-chave-pix">Chave Pix (opcional)</label>
 <input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-chave-pix" name="chavePix" type="text" maxlength="77" autocomplete="off" placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="chavePix"></p>
