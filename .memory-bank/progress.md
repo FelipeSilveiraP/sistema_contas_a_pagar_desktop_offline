@@ -16,9 +16,11 @@
 - [x] 1. Estrutura de navegação + Submenu Controle (APROVADA)
 - [x] 2. Navegação completa + todos os submenus agrupados (APROVADA — commit `f4fcbaf`)
 - [x] 2.1. Barra de navegação global responsiva (APROVADA — commit `b349235`)
-- [x] 3.1. Fundação SQLite + Cadastro de Banco (CONCLUÍDA — aguardando validação do usuário)
+- [x] 3.1. Fundação SQLite + Cadastro de Banco (APROVADA tecnicamente — aguardando validação visual)
       — SQLite WAL + migrações + backup/restauração, API `/api/bancos`, form Banco (Stitch), nome oficial
-- [ ] 3.2–3.10. Pagador, Empresa, Todos os Cadastros, Inserir Conta, Boletos, Pagos, Recorrentes,
+- [x] 3.2. Cadastro de Pagador (IMPLEMENTADA — aguardando validação do usuário) — nome/CPF/função,
+      migração v3 `pagadores`, API `/api/pagadores`, form-pagador conectado ao botão/atalho 2
+- [ ] 3.3–3.10. Empresa, Todos os Cadastros, Inserir Conta, Boletos, Pagos, Recorrentes,
       Mensagens, Gráficos — NÃO iniciar sem autorização (uma entrega por vez)
 
 ## Validação da Entrega 2.1 (2026-11-07; correção VOLTAR no painel revalidada)
@@ -54,7 +56,39 @@
 - [x] Auditoria final: diff auditado, 0 credenciais, sem bancos versionados, build/tsc/esbuild OK
 - [x] Capturas: `docs/responsivo/form-banco-{1536x864,768x800,480x800}.png`
 
+## Validação final da Entrega 3.1 (2026-11-07)
+- [x] Implementação técnica APROVADA pelo usuário (condicionada apenas à validação visual do form-banco)
+- [x] Preservar sem alterações: API REST, SQLite, regras de validação, testes, backup/restauração,
+      navbar global, responsividade, nome oficial do aplicativo
+- [x] Regra permanente registrada: testes automatizados com bancos temporários/isolados via
+      `FINDESK_DB_PATH`; sem dados de teste no banco operacional; sem operações destrutivas nele
+- [x] Falha Stitch (404) registrada; configuração MCP preservada — sem mudanças de credenciais/config
+- [x] `ad6280f` preservado em `feature/entrega-3.1-sqlite-banco`; sem push; `main` intocada
+- [ ] Aguardar avaliação visual do usuário (comparação com design Stitch) → somente ajustes pontuais
+
+## Correção do Banco + início da Fase 3 (2026-11-07)
+- [x] Banco reduzido a instituição (obrigatória) + chave Pix (opcional) — removidos código bancário,
+      agência e conta; migração v2 reconstrói tabela preservando id/instituição/chavePix dos dados
+- [x] Backend (model/repo/service/controller/API), frontend (html/ts/api) e validações atualizados
+- [x] JUnit 33/33 (inclui teste de preservação v1→v2); smoke 220/220; persistência 8/8 —
+      `teste-persistencia.js` agora usa `FINDESK_DB_PATH` em temp (regra de isolamento)
+- [x] Capturas form-banco regeneradas (1536x864/768x800/480x800)
+- [x] Levantamento do Pagador (3.2) apresentado: plano-telas (nome/CPF/função) × DER legado PF/PJ
+      × VBA (nome do responsável); aguardando aprovação do usuário
+
+## Entrega 3.2 — Pagador (2026-11-07)
+- [x] Escopo aprovado via pergunta: simplista (nome, CPF, função=cargo); DER PF/PJ legado descartado
+- [x] Migração v3 (aditiva) + model/repo/service/controller + API `/api/pagadores`
+- [x] Validações: nome 2–120, CPF obrigatório com dígitos verificadores (espelhado no frontend),
+      função opcional ≤60; CPF normalizado para dígitos
+- [x] form-pagador.html/.ts (vermelho `#dc2626`, navbar CADASTROS, dirty-form, feedback);
+      botão + atalho 2 de Novo Cadastro conectados (submenu-config, navbar, main.ts, main.js)
+- [x] JUnit 56/56 (PagadorServiceTest 13, PagadorApiTest 10 novos); smoke 232/232 (bloco form-pagador:
+      campos, validações, save/feedback, CRUD via API, atalho 2/Escape, breakpoints navbar);
+      persistência 11/11 (pagador no ciclo fechar/reabrir); todos os testes em bancos temporários
+- [x] Capturas: `docs/responsivo/form-pagador-{1536x864,768x800,480x800}.png`
+
 ## Pendências
-- [ ] Validação do usuário na Entrega 3.1 (conferir form-banco contra a tela Stitch real)
-- [ ] Iniciar Entrega 3.2 (Pagador) — SOMENTE após autorização do usuário
+- [ ] Validação da correção do Banco + da Entrega 3.2 (Pagador) pelo usuário
+- [ ] Iniciar Entrega 3.3 (Empresa) — SOMENTE após validação
 - [ ] Push ao GitHub (AGUARDA autorização explícita; nada publicado ainda)
