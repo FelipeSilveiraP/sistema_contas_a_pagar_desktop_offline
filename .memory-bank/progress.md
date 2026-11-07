@@ -92,3 +92,16 @@
 - [ ] Validação da correção do Banco + da Entrega 3.2 (Pagador) pelo usuário
 - [ ] Iniciar Entrega 3.3 (Empresa) — SOMENTE após validação
 - [ ] Push ao GitHub (AGUARDA autorização explícita; nada publicado ainda)
+
+## Fase 3 — correção crítica + módulos (2026-11-07)
+- [x] ETAPA 1: causa raiz dos inputs identificada (janela sem ativação/z-order) e corrigida em
+      `criarJanela`; launcher `EXECUTAR_SISTEMA.bat` corrigido (abria JavaFX legado)
+- [x] Regressão de entrada real `desktop/smoke-real.js` + `entrada-real.ps1` (SendInput):
+      18/18 × 2 ciclos (clique/digitação/TAB/edição/navbar/bloqueios/relaunch)
+- [x] Banco simplificado (instituição + Pix, migração v2) e Pagador (nome/CPF opcional validado/
+      função ≤100, migrações v3–v4) — commit `cd9e95a`
+- [x] Empresa (2 etapas + telefones 1FN, migração v5 `empresas`/`telefones_empresa`, CNPJ/email/
+      telefone validados, API `/api/empresas`) — JUnit 80/80, smoke 246/246
+- [ ] Todos os Cadastros (tabela multi-filtro + edição)
+- [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos
+- [ ] Push ao GitHub (AGUARDA autorização; nada publicado)

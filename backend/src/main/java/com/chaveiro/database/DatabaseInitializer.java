@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 4;
+    private static final int VERSAO_ATUAL = 5;
 
     private final ConnectionFactory conexao;
 
@@ -127,6 +127,29 @@ public class DatabaseInitializer {
                         + " SELECT id_pagador, nome, cpf, funcao FROM pagadores",
                 "DROP TABLE pagadores",
                 "ALTER TABLE pagadores_v4 RENAME TO pagadores",
+            };
+            case 5 -> new String[] {
+                // Empresas/fornecedores + telefones (1FN), conforme DER legado.
+                """
+                CREATE TABLE IF NOT EXISTS empresas (
+                    id_empresa INTEGER PRIMARY KEY AUTOINCREMENT,
+                    cnpj TEXT UNIQUE,
+                    razao_social TEXT NOT NULL,
+                    nome_representante TEXT,
+                    email TEXT,
+                    logradouro TEXT,
+                    data_cadastro TEXT DEFAULT (date('now'))
+                )
+                """,
+                """
+                CREATE TABLE IF NOT EXISTS telefones_empresa (
+                    id_telefone INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_empresa INTEGER NOT NULL,
+                    numero TEXT NOT NULL,
+                    tipo TEXT DEFAULT 'Comercial',
+                    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE CASCADE
+                )
+                """,
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

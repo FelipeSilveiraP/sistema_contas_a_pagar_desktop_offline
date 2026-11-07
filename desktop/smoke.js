@@ -80,7 +80,7 @@ const SUBMENUS = [
     origem: "cadastros",
     volta: "cadastros",
     botoes: [
-      { sel: 'a[data-modulo="empresa"]', nome: "CADASTRAR NOVA EMPRESA", tipo: "provisorio" },
+      { sel: 'a[data-modulo="empresa"]', nome: "CADASTRAR NOVA EMPRESA", tipo: "nav", destino: "form-empresa" },
       { sel: 'a[data-modulo="pagador"]', nome: "CADASTRAR NOVO PAGADOR", tipo: "nav", destino: "form-pagador" },
       { sel: 'a[data-modulo="banco"]', nome: "CADASTRAR NOVO BANCO", tipo: "nav", destino: "form-banco" },
     ],
@@ -522,16 +522,16 @@ async function executar() {
     await prepararPagina();
   }
 
-  // 7b. Atalhos em Novo Cadastro (1 provisorio; 2 e 3 navegam aos forms)
+  // 7b. Atalhos em Novo Cadastro (os 3 navegam aos forms)
   await js("window.finDesk.navegar('novo-cadastro')");
   await esperarTela("novo-cadastro");
   await prepararPagina();
-  for (const [teclaAlvo, nome] of [["1", "CADASTRAR NOVA EMPRESA"]]) {
-    await js("window.__alertas = []");
-    await tecla(teclaAlvo);
-    const alertas = await lerAlertas();
-    teste(`Atalho ${teclaAlvo} em novo-cadastro (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
-  }
+  await tecla("1");
+  teste("Atalho 1 em novo-cadastro navega para o form-empresa", await esperarTela("form-empresa"));
+  await prepararPagina();
+  await tecla("Escape");
+  teste("Escape em form-empresa volta a novo-cadastro", await esperarTela("novo-cadastro"));
+  await prepararPagina();
   await tecla("2");
   teste("Atalho 2 em novo-cadastro navega para o form-pagador", await esperarTela("form-pagador"));
   await prepararPagina();
@@ -743,6 +743,98 @@ async function executar() {
   await capturar("form-pagador-768x800.png");
   await definirTamanho(1536, 864);
   await capturar("form-pagador-1536x864.png");
+
+  // 7e. Formulario de Empresa (2 etapas) — validacao, CRUD pela API, capturas
+  await js("window.finDesk.navegar('form-empresa')");
+  await esperarTela("form-empresa");
+  await prepararPagina();
+  const camposEmpresa = JSON.parse(
+    await js(`JSON.stringify({
+      razaoSocial: !!document.getElementById('campo-razao-social'),
+      cnpj: !!document.getElementById('campo-cnpj'),
+      representante: !!document.getElementById('campo-representante'),
+      email: !!document.getElementById('campo-email'),
+      logradouro: !!document.getElementById('campo-logradouro'),
+      addTelefone: !!document.getElementById('btn-add-telefone'),
+      proxima: !!document.getElementById('btn-proxima'),
+      salvar: !!document.getElementById('btn-salvar'),
+      cancelar: !!document.getElementById('btn-cancelar'),
+    })`)
+  );
+  teste("Form Empresa: campos, acoes e navbar presentes", Object.values(camposEmpresa).every(Boolean), JSON.stringify(camposEmpresa));
+  teste("Form Empresa: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 132, 0)", await corBotaoNav("cadastros"));
+
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const errosEmpVazio = JSON.parse(
+    await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
+  );
+  teste(
+    "Form Empresa: submit vazio mostra erro em razao social (demais opcionais)",
+    errosEmpVazio.includes("razaoSocial") && !errosEmpVazio.includes("cnpj") && !errosEmpVazio.includes("email"),
+    JSON.stringify(errosEmpVazio)
+  );
+  await js(`(() => { document.getElementById('campo-razao-social').value = 'Empresa Teste'; document.getElementById('campo-cnpj').value = '11222333000182'; return true; })()`);
+  await clicar("#btn-salvar");
+  await esperar(400);
+  const erroCnpj = await js(`!document.querySelector('[data-erro-campo="cnpj"]').classList.contains('hidden')`);
+  teste("Form Empresa: CNPJ com digitos invalidos e recusado", erroCnpj === true);
+
+  await js(`(() => {
+    document.getElementById('campo-cnpj').value = '11.222.333/0001-81';
+    document.getElementById('campo-email').value = 'contato@empresa.com.br';
+    return true;
+  })()`);
+  await clicar("#btn-proxima");
+  await esperar(300);
+  teste("Form Empresa: etapa 2 exibida apos PROXIMA", (await js(`document.getElementById('etapa-2').classList.contains('hidden')`)) === false);
+  teste("Form Empresa: etapa 1 oculta na etapa 2", (await js(`document.getElementById('etapa-1').classList.contains('hidden')`)) === true);
+  await clicar("#btn-add-telefone");
+  await esperar(200);
+  await js(`(() => {
+    document.querySelector('.linha-telefone .tel-numero').value = '(11) 3333-4444';
+    document.querySelector('.linha-telefone .tel-numero').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+
+  const nomeEmpresa = `EMPRESA SMOKE ${Date.now()}`;
+  await js(`(() => { document.getElementById('campo-razao-social').value = ${JSON.stringify(nomeEmpresa)}; document.getElementById('campo-razao-social').dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btn-salvar");
+  const empresaSalvaOk = await esperarPredicado(`document.body.dataset.empresaSalva !== undefined`, 10000);
+  teste("Form Empresa: salvar com dados validos confirma cadastro", empresaSalvaOk);
+  const feedbackEmp = await js(`document.getElementById('feedback-empresa').textContent`);
+  teste("Form Empresa: mensagem de sucesso exibida", String(feedbackEmp).includes("sucesso"), String(feedbackEmp));
+  teste("Form Empresa: volta a etapa 1 apos salvar", (await js(`document.getElementById('etapa-1').classList.contains('hidden')`)) === false);
+
+  const cfgEmp = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
+  const listaEmp = JSON.parse(
+    await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgEmp.port}/api/empresas', { headers: { 'X-FinDesk-Token': '${cfgEmp.token}' } });
+      return JSON.stringify(await r.json());
+    })()`)
+  );
+  const encontradaEmp = listaEmp.find((e) => e.razaoSocial === nomeEmpresa && e.telefones.length === 1);
+  teste("Form Empresa: registro com telefone persistido pela API", Boolean(encontradaEmp), JSON.stringify(encontradaEmp ?? null));
+
+  if (encontradaEmp) {
+    const statusDelEmp = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgEmp.port}/api/empresas/${encontradaEmp.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgEmp.token}' } });
+      return r.status;
+    })()`);
+    teste("API DELETE exclui a empresa de teste (204)", statusDelEmp === 204, String(statusDelEmp));
+    const statusAposEmp = await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgEmp.port}/api/empresas/${encontradaEmp.id}', { headers: { 'X-FinDesk-Token': '${cfgEmp.token}' } });
+      return r.status;
+    })()`);
+    teste("API GET empresa apos exclusao retorna 404", statusAposEmp === 404, String(statusAposEmp));
+  }
+
+  await definirTamanho(480, 800);
+  await capturar("form-empresa-480x800.png");
+  await definirTamanho(768, 800);
+  await capturar("form-empresa-768x800.png");
+  await definirTamanho(1536, 864);
+  await capturar("form-empresa-1536x864.png");
   await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
   await js("window.confirm = () => true; 'ok'");
   await js("window.finDesk.navegar('menu')");

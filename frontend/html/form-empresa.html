@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastro de Empresa — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head>
+<body class="submenu-body bg-[#fcf9f8] text-[#1c1b1b] antialiased" data-tela="form-empresa">
+<div class="submenu-wrap">
+<header id="nav-global"></header>
+<main class="w-full">
+<form id="form-empresa" class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0_0_#1c1b1b]" novalidate>
+<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-4 border-[#1c1b1b] bg-[#f59e0b] px-4 py-2.5 sm:px-6">
+<span class="material-symbols-outlined text-xl sm:text-2xl text-[#1c1b1b] font-bold">apartment</span>
+<h1 class="font-headline text-base sm:text-lg lg:text-xl font-bold uppercase tracking-tight text-[#1c1b1b]">CADASTRAR NOVA EMPRESA</h1>
+</div>
+<div class="border-b-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-2 sm:px-6 font-headline text-xs sm:text-sm font-bold text-[#1c1b1b]">
+Cadastre a empresa/fornecedora usada nas despesas da oficina.
+</div>
+<div class="border-b-2 border-[#1c1b1b] bg-white px-4 py-2 sm:px-6">
+<p class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" id="etapa-rotulo">Etapa 1 de 2 — Identificação</p>
+</div>
+<fieldset class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="etapa-1">
+<div class="flex flex-col gap-1.5 sm:col-span-2">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-razao-social">Razão Social</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-razao-social" name="razaoSocial" type="text" maxlength="120" autocomplete="off" placeholder="Ex.: Silca Chaves do Brasil" required>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="razaoSocial"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-cnpj">CNPJ (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-cnpj" name="cnpj" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cnpj"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-representante">Nome do Representante (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-representante" name="nomeRepresentante" type="text" maxlength="120" autocomplete="off" placeholder="Ex.: João da Silva">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="nomeRepresentante"></p>
+</div>
+</fieldset>
+<fieldset class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="etapa-2">
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-email">E-mail (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-email" name="email" type="text" maxlength="120" autocomplete="off" placeholder="contato@empresa.com.br">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="email"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-logradouro">Logradouro (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-logradouro" name="logradouro" type="text" maxlength="120" autocomplete="off" placeholder="Rua, número, bairro">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="logradouro"></p>
+</div>
+<div class="flex flex-col gap-1.5 sm:col-span-2">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">Telefones de Contato (opcional)</label>
+<div class="flex flex-col gap-2" id="lista-telefones"></div>
+<button class="inline-flex items-center gap-2 px-4 py-2 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-xs uppercase tracking-wider shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#1c1b1b] transition-all cursor-pointer self-start" id="btn-add-telefone" type="button">
+<span class="material-symbols-outlined text-base leading-none font-bold">add</span>
+<span>Adicionar telefone</span>
+</button>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="telefones"></p>
+</div>
+</fieldset>
+<div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
+<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-empresa" role="status"></p>
+<div class="flex flex-wrap items-center gap-3">
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-proxima" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_forward</span>
+<span>Próxima etapa</span>
+</button>
+<button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
+<span>Salvar</span>
+</button>
+<button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-voltar-etapa" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_back</span>
+<span>Etapa anterior</span>
+</button>
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-cancelar" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">close</span>
+<span>Cancelar</span>
+</button>
+</div>
+</div>
+</form>
+</main>
+</div>
+<script src="../dist/app.js"></script>
+</body></html>

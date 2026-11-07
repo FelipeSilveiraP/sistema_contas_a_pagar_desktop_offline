@@ -6,7 +6,8 @@ export type Tela =
   | "recorrentes"
   | "novo-cadastro"
   | "form-banco"
-  | "form-pagador";
+  | "form-pagador"
+  | "form-empresa";
 
 const CHAVE_PILHA = "findesk.pilha-navegacao";
 

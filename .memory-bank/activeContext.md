@@ -1,12 +1,28 @@
 # Active Context
 
 ## Foco Atual
-**Banco corrigido + Entrega 3.2 (Pagador) implementada — aguardando validação do usuário**
-(branch `feature/entrega-3.1-sqlite-banco`, `ad6280f` preservado + mudanças NÃO commitadas, NENHUM push).
-Banco: só instituição + chave Pix (migração v2 preservou dados). Pagador: nome/CPF/função aprovados
-pelo usuário (cargo/função); migração v3 (`pagadores`); API `/api/pagadores`; form-pagador ligado ao
-botão/atalho 2 de Novo Cadastro. Testes: JUnit 56/56, smoke 232/232, persistência 11/11 (bancos
-temporários). NÃO iniciar Entrega 3.3 (Empresa) sem validação desta.
+**Fase 3 avançando por módulo — interação corrigida; Empresa implementada** (branch
+`feature/entrega-3.1-sqlite-banco`, commits locais, NENHUM push, `main` intacta).
+Bugs de input RESOLVIDOS: janela subia sem ativação/z-order (cliques caíam em outra janela;
+"trocar de janela" resolvia) — `criarJanela` agora usa `show:false` + `ready-to-show` com
+`show/focus/moveTop`. Regressão real: `desktop/smoke-real.js` (SendInput) 18/18 × 2 ciclos.
+Feitos: Banco (instituição+Pix), Pagador (nome/CPF opcional validado/função ≤100), Empresa
+(2 etapas + telefones 1FN). Testes: JUnit 80/80, smoke 246/246, smoke-real 18/18×2, persistência 11/11.
+Próximo: Todos os Cadastros (tabela multi-filtro + edição) → Inserir Conta → demais financeiros.
+
+## ETAPA 1 — Causa raiz dos inputs não clicáveis (2026-11-07)
+- **Sintoma:** formulários renderizavam mas nenhum clique/digitação/cursor funcionava; alt-tab
+  ("trocar de janela") ou reiniciar consertava
+- **Diagnóstico:** DOM/CSS/JS exonerados (hit-test limpo, sem overlays, sem preventDefault em mouse,
+  sem disabled/readonly); com eventos REAIS (SendInput) quando a janela está ativada, tudo funciona;
+  com a janela visível mas sem ativação, os cliques caem em OUTRA janela e o app não ativa
+- **Causa:** `criarJanela` usava `show:true` padrão — a janela sobe sem foco nem topo de z-order
+- **Correção:** `show:false` + `ready-to-show` → `show()+setAlwaysOnTop(nudge)+moveTop()+focus()`;
+  `did-finish-load` → `focus()`; launcher `EXECUTAR_SISTEMA.bat` apontava para o JavaFX legado —
+  agora abre o Electron
+- **Testes:** `desktop/smoke-real.js` (entrada real, 2 ciclos com fechar/reabrir): clique nos inputs,
+  digitação, TAB, backspace/edição, troca de formulário, navbar hambúrguer/véu/ESC, bloqueios
+  invisíveis (elementFromPoint), estabilidade dos campos
 
 ## Entrega 3.1 (fundação SQLite + Banco)
 - **Nome oficial:** "Sistema de Contas a Pagar — Chaveiro Universal" em janela Electron, títulos das

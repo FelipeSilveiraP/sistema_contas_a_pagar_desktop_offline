@@ -92,3 +92,46 @@ export async function criarPagador(
   }
   return (await resposta.json()) as PagadorDados;
 }
+
+export interface TelefoneEmpresaDados {
+  numero: string;
+  tipo: string | null;
+}
+
+export interface EmpresaDados {
+  id: number;
+  cnpj: string | null;
+  razaoSocial: string;
+  nomeRepresentante: string | null;
+  email: string | null;
+  logradouro: string | null;
+  telefones: TelefoneEmpresaDados[];
+}
+
+export interface EmpresaEntrada {
+  cnpj?: string;
+  razaoSocial: string;
+  nomeRepresentante?: string;
+  email?: string;
+  logradouro?: string;
+  telefones?: { numero: string; tipo?: string }[];
+}
+
+export async function criarEmpresa(
+  cfg: FinDeskConfig,
+  dados: EmpresaEntrada
+): Promise<EmpresaDados> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/empresas`, {
+    method: "POST",
+    headers: { "X-FinDesk-Token": cfg.token, "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  if (resposta.status === 400) {
+    const corpo = (await resposta.json()) as { campos?: Record<string, string> };
+    throw new ErroValidacaoApi(corpo.campos ?? {});
+  }
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+  return (await resposta.json()) as EmpresaDados;
+}
