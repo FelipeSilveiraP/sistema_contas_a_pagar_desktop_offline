@@ -19,6 +19,7 @@ const TELAS = new Map([
   ["recorrentes", path.join(__dirname, "..", "frontend", "html", "recorrentes.html")],
   ["novo-cadastro", path.join(__dirname, "..", "frontend", "html", "novo-cadastro.html")],
   ["form-banco", path.join(__dirname, "..", "frontend", "html", "form-banco.html")],
+  ["form-pagador", path.join(__dirname, "..", "frontend", "html", "form-pagador.html")],
 ]);
 
 const NOME_APP = "Sistema de Contas a Pagar — Chaveiro Universal";
@@ -87,6 +88,7 @@ function criarJanela() {
     title: NOME_APP,
     backgroundColor: "#fcf9f8",
     autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -95,6 +97,22 @@ function criarJanela() {
   });
   janela.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   janela.webContents.on("will-navigate", (evento) => evento.preventDefault());
+  // A janela so aparece quando estiver pronta e ATIVADA pelo SO: sem isso ela
+  // sobe sem foco/z-order (cliques caem em outra janela ate o usuario trocar
+  // de janela) e os inputs ficam impossiveis de usar.
+  janela.once("ready-to-show", () => {
+    janela.show();
+    janela.setAlwaysOnTop(true);
+    janela.moveTop();
+    janela.setAlwaysOnTop(false);
+    janela.focus();
+    janela.webContents.focus();
+  });
+  janela.webContents.on("did-finish-load", () => {
+    if (!janela || janela.isDestroyed()) return;
+    janela.focus();
+    janela.webContents.focus();
+  });
   janela.loadFile(path.join(__dirname, "..", "frontend", "html", "menu.html"));
   janela.on("closed", () => {
     janela = null;

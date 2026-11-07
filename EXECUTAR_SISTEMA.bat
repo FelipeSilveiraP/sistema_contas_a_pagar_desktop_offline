@@ -7,18 +7,18 @@ echo           SISTEMA DE CONTAS A PAGAR - CHAVEIRO UNIVERSAL
 echo                       MODO 100%% OFFLINE (DESKTOP)
 echo ======================================================================
 echo.
-echo [*] Inicializando o ambiente e abrindo a interface grafica JavaFX...
+echo [*] Iniciando a interface do sistema...
 echo.
 
-set MAVEN_CMD=%USERPROFILE%\apache-maven-3.9.6\bin\mvn.cmd
+cd /d "%~dp0"
 
-if not exist "%MAVEN_CMD%" (
-    echo [ERRO] Maven portatil nao localizado em: %MAVEN_CMD%
+if not exist "backend\target\findesk-backend-0.1.0.jar" (
+    echo [ERRO] Backend nao compilado. Execute: mvn -f backend/pom.xml package
     pause
     exit /b 1
 )
 
-call "%MAVEN_CMD%" javafx:run
+call npx electron desktop\main.js
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
