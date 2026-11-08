@@ -20,9 +20,9 @@
       — SQLite WAL + migrações + backup/restauração, API `/api/bancos`, form Banco (Stitch), nome oficial
 - [x] 3.2. Cadastro de Pagador (IMPLEMENTADA — aguardando validação do usuário) — nome/CPF/função,
       migração v3 `pagadores`, API `/api/pagadores`, form-pagador conectado ao botão/atalho 2
-- [x] Governança de Agentes & Instalação de Skills (CONCLUÍDA — 2026-11-08) — 14 skills locais
-      preservadas, 9 skills especializadas instaladas em `.agents/skills/`, `AGENTS.md` na raiz
-      com arquitetura oficial, regras de segurança, matriz de skills por tarefa e isolamento de banco.
+- [x] Governança de Agentes & Recuperação das GSD (CONCLUÍDA — 2026-11-08) — 3 GSD recuperadas
+      e adaptadas ao OpenCode, java-observability-logging atualizada para Spring Boot/SLF4J,
+      AGENTS.md alinhado (Processo GSD vs Conhecimento Técnico), 23 skills funcionais ativas.
 - [ ] 3.3–3.10. Empresa, Todos os Cadastros, Inserir Conta, Boletos, Pagos, Recorrentes,
       Mensagens, Gráficos — NÃO iniciar sem autorização (uma entrega por vez)
 

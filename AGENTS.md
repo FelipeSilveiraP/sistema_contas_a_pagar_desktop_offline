@@ -73,11 +73,19 @@ Para otimizar o consumo de tokens da API e manter o contexto contínuo entre ses
 
 ---
 
-## 7. Mapeamento e Utilização Seletiva de Skills
+## 7. Organização e Utilização Seletiva de Skills
 
-Para evitar sobrecarga de contexto, carregue e consulte apenas as skills necessárias para o trabalho atual:
+O ecossistema adota a separação estrita entre **Processo de Desenvolvimento (GSD)** e **Conhecimento Técnico Especializado**:
 
-| Tipo de Trabalho | Skills Prioritárias a Consultar |
+### 7.1 Fases do Ciclo de Desenvolvimento (GSD Process)
+* **Planejamento:** `gsd-plan-phase`, `project-memory-bank`, `project-architecture-map`
+* **Execução:** `gsd-execute-phase` acompanhada da skill técnica especializada da tarefa
+* **Verificação:** `gsd-verify-work`, `desktop-smoke-testing`, `tdd-junit5-assertj`, `debugging-and-error-recovery`
+
+### 7.2 Roteamento de Skills Técnicas por Especialidade
+Carregue e consulte apenas as skills técnicas necessárias para o escopo imediato:
+
+| Tipo de Trabalho Técnico | Skills Especializadas |
 |---|---|
 | **Corrigir inicialização do Electron** | `electron-desktop-lifecycle`, `desktop-electron-java-bridge` |
 | **Criar formulários e telas** | `vanilla-typescript-dom`, `frontend-ui-engineering`, `spring-boot-rest-craft` |
@@ -85,6 +93,6 @@ Para evitar sobrecarga de contexto, carregue e consulte apenas as skills necess�
 | **Alterar SQLite e esquemas** | `sqlite-financial-integrity`, `sqlite-crash-resilience`, `tdd-junit5-assertj` |
 | **Implementar pagamentos e finanças** | `sqlite-financial-integrity`, `desktop-security-guard`, `java-modern-craft` |
 | **Diagnosticar bugs e travamentos** | `debugging-and-error-recovery`, `java-global-exception-safety`, `desktop-smoke-testing` |
-| **Planejar próximas entregas** | `planning-and-task-breakdown`, `project-memory-bank`, `ponytail` |
-| **Revisar código contra complexidade** | `ponytail-review`, `java-modern-craft` |
+| **Observabilidade e Logs** | `java-observability-logging` |
+| **Revisar código contra complexidade** | `ponytail-review`, `ponytail`, `java-modern-craft` |
 

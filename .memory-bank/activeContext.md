@@ -79,10 +79,11 @@ Testes: smoke 246/246, smoke-real 2 ciclos APROVADO (inclui hover real + captura
 - Correção do Banco (19 arquivos) + Memory Bank no working tree, NÃO commitados — commit aguarda ordem
 - `main`/`develop`/`feature/navbar-global` preservadas; NADA publicado (push AGUARDA autorização)
 
-## Auditoria de Skills & Governança de Agentes (2026-11-08)
-- Realizada auditoria completa das skills locais (`.agents/skills/`) e pesquisa técnica no GitHub.
-- Instaladas 9 skills especializadas aprovadas cobrindo Electron (`electron-desktop-lifecycle`), Vanilla TS (`vanilla-typescript-dom`), Spring Boot 3.3 / Java 21 (`spring-boot-rest-craft`), SQLite integridade (`sqlite-financial-integrity`), Integração Desktop (`desktop-electron-java-bridge`), Smoke tests (`desktop-smoke-testing`), UI Engineering (`frontend-ui-engineering`), Planejamento (`planning-and-task-breakdown`) e Debugging sistemático (`debugging-and-error-recovery`).
-- Criado `AGENTS.md` na raiz com instruções permanentes, matriz de skills por tarefa e regras de isolamento de banco.
+## Recuperação das GSD & Governança de Agentes (2026-11-08)
+- Recuperadas e adaptadas funcionalmente as 3 skills GSD (`gsd-plan-phase`, `gsd-execute-phase`, `gsd-verify-work`) para o OpenCode, eliminando dependências do Claude Code e integrando-as ao Memory Bank e suíte de testes.
+- Corrigida a skill `java-observability-logging` (removido JavaFX, adicionado Spring Boot 3.3, SLF4J, MDC, rotação de arquivos e proteção LGPD).
+- Atualizado `AGENTS.md` na raiz com separação estrita entre Processo (GSD) e Conhecimento Técnico Especializado.
+- Total de 23 skills funcionais ativas sob `.agents/skills/`.
 
 ## Pendências
 1. Validação do usuário: correção do Banco (instituição + Pix) + Entrega 3.2 (Pagador); capturas em
