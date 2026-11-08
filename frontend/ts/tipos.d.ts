@@ -22,6 +22,7 @@ interface Window {
     estadoInicializacao: () => Promise<{ estado: "aguardando" | "pronto" | "falhou" }>;
     onInicializacao: (callback: (estado: { estado: "aguardando" | "pronto" | "falhou" }) => void) => void;
     reiniciarBackend: () => Promise<{ ok: boolean }>;
+    repararFoco: () => Promise<boolean>;
     fecharAplicativo: () => Promise<void>;
   };
 }

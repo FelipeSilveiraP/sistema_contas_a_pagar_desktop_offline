@@ -51,7 +51,7 @@ O sistema é uma aplicação desktop híbrida, 100% offline, composta por 3 cama
 Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 1. **Tipagem e Compilação:** Executar `npm run typecheck` e compilação Java sem erros.
 2. **Testes Unitários e de Integração:** Executar suíte JUnit 5 no backend (`backend/src/test`).
-3. **Smoke Tests:** Executar `desktop/smoke.js` e `desktop/smoke-real.js` (testes de entrada real via PowerShell `SendInput` para mouse e teclado no Windows).
+3. **Smoke Tests:** Executar `desktop/smoke.js`, `desktop/smoke-real.js` e `desktop/smoke-dev.js` (os dois �ltimos com entrada real via PowerShell `SendInput`; o smoke-dev reproduz o cenario real de `npm run dev` e e a regressao obrigatoria do bug de foco/interacao dos inputs).
 4. **Teste de Persistência:** Validar ciclo de cold start com `desktop/teste-persistencia.js`.
 
 ---

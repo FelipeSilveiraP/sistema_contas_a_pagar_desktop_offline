@@ -3,7 +3,8 @@ param(
   [Parameter(Mandatory = $true)][string]$Acao,
   [int]$X = 0,
   [int]$Y = 0,
-  [string]$Texto = $env:ENTRADA_TEXTO
+  [string]$Texto = $env:ENTRADA_TEXTO,
+  [string]$Titulo = "Chaveiro Universal"
 )
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -20,6 +21,8 @@ public struct ENTRADA_UNIAO { [FieldOffset(0)] public MOUSEINPUT mi; [FieldOffse
 public struct INPUT { public uint type; public ENTRADA_UNIAO u; }
 [StructLayout(LayoutKind.Sequential)]
 public struct POINT { public int x; public int y; }
+[StructLayout(LayoutKind.Sequential)]
+public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
 public static class Entrada {
   [DllImport("user32.dll", SetLastError = true)]
   public static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
@@ -35,6 +38,12 @@ public static class Entrada {
   public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder s, int n);
   [DllImport("user32.dll")]
   public static extern bool SetProcessDPIAware();
+  [DllImport("user32.dll")]
+  public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+  [DllImport("user32.dll")]
+  public static extern bool SetForegroundWindow(IntPtr hWnd);
+  [DllImport("user32.dll")]
+  public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
 }
 '@
 
@@ -98,6 +107,17 @@ switch ($Acao) {
       (MontarMouse 0x8004 $X $Y)
     )
   }
+  "clicar-px" {
+    # -X/-Y em pixeis fisicos do desktop; normaliza aqui (processo DPI-aware)
+    $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+    $nx = [int](($X / $b.Width) * 65535)
+    $ny = [int](($Y / $b.Height) * 65535)
+    Enviar @(
+      (MontarMouse 0x8001 $nx $ny),
+      (MontarMouse 0x8002 $nx $ny),
+      (MontarMouse 0x8004 $nx $ny)
+    )
+  }
   "digitar" {
     foreach ($ch in $Texto.ToCharArray()) {
       $scan = [uint16][char]$ch
@@ -111,6 +131,9 @@ switch ($Acao) {
   "tab" {
     Enviar @((MontarTeclaVk 0x09 0x0000), (MontarTeclaVk 0x09 0x0002))
   }
+  "enter" {
+    Enviar @((MontarTeclaVk 0x0D 0x0000), (MontarTeclaVk 0x0D 0x0002))
+  }
   "esc" {
     Enviar @((MontarTeclaVk 0x1B 0x0000), (MontarTeclaVk 0x1B 0x0002))
   }
@@ -122,6 +145,31 @@ switch ($Acao) {
     $sb = New-Object System.Text.StringBuilder 256
     [void][Entrada]::GetWindowText($h, $sb, 256)
     Write-Output $sb.ToString()
+  }
+  "minimizar" {
+    $p = Get-Process | Where-Object { $_.MainWindowTitle -like "*$Titulo*" } | Select-Object -First 1
+    if (-not $p) { throw "janela '$Titulo' nao encontrada" }
+    [void][Entrada]::ShowWindow($p.MainWindowHandle, 6)
+    Write-Output "minimizada"
+  }
+  "restaurar" {
+    $p = Get-Process | Where-Object { $_.MainWindowTitle -like "*$Titulo*" } | Select-Object -First 1
+    if (-not $p) { throw "janela '$Titulo' nao encontrada" }
+    [void][Entrada]::ShowWindow($p.MainWindowHandle, 9)
+    Write-Output "restaurada"
+  }
+  "ativar-janela" {
+    $p = Get-Process | Where-Object { $_.MainWindowTitle -like "*$Titulo*" } | Select-Object -First 1
+    if (-not $p) { throw "janela '$Titulo' nao encontrada" }
+    [void][Entrada]::SetForegroundWindow($p.MainWindowHandle)
+    Write-Output $p.MainWindowTitle
+  }
+  "rect-janela" {
+    $p = Get-Process | Where-Object { $_.MainWindowTitle -like "*$Titulo*" } | Select-Object -First 1
+    if (-not $p) { throw "janela '$Titulo' nao encontrada" }
+    $r = New-Object RECT
+    [void][Entrada]::GetWindowRect($p.MainWindowHandle, [ref]$r)
+    Write-Output ("{0},{1},{2},{3}" -f $r.Left, $r.Top, $r.Right, $r.Bottom)
   }
   "janela-no-ponto" {
     $p = New-Object POINT

@@ -136,6 +136,18 @@
       leituras estáveis; `rectsCartoesEstavel`; restore de janela minimizada em capturar/definirTamanho)
 - [x] Checkpoint local (commit) — sem push
 
+## Bug crítico de interação — inputs mortos após navegação (2026-11-08)
+- [x] Reprodução real OBRIGATÓRIA via `npm run dev` + SendInput (`desktop/smoke-dev.js`):
+      pré-fix 61/83 — digitação morre após o 1º diálogo nativo de dirty-form (hasFocus=false)
+- [x] Causa raiz provada por timeline de eventos (diálogo → blur → nav → widget sem foco da página;
+      teclado engolido, mouse funciona; minimizar/restaurar re-sincroniza)
+- [x] Correção: `confirmar()`/`aviso()` em `componentes.ts` → `findesk:reparar-foco` (blur→focus na
+      janela); todos os 13 usos de `window.confirm` + `window.alert` migrados
+- [x] Sonda de diagnóstico permanente opt-in (`FINDESK_DIAG_DIR`) + canal rect/estado
+- [x] Regressão incorporada: smoke-dev 83/83 (3 ciclos); smoke 265/265; smoke-real APROVADO;
+      JUnit 80/80; evidências em `docs/diagnostico-*/`
+- [ ] Validação do usuário no uso manual (`npm run dev`)
+
 ## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos

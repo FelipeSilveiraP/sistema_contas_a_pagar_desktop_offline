@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld("finDesk", {
   onInicializacao: (callback) =>
     ipcRenderer.on("findesk:inicializacao", (_evento, estado) => callback(estado)),
   reiniciarBackend: () => ipcRenderer.invoke("findesk:reiniciar-backend"),
+  repararFoco: () => ipcRenderer.invoke("findesk:reparar-foco"),
   fecharAplicativo: () => ipcRenderer.invoke("findesk:fechar"),
 });

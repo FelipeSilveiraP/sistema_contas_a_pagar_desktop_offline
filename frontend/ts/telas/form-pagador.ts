@@ -1,4 +1,5 @@
 import { buscarStatus, criarPagador, ErroValidacaoApi } from "../api";
+import { confirmar } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 
@@ -129,7 +130,7 @@ function iniciar(): void {
   });
 
   document.getElementById("btn-cancelar")?.addEventListener("click", () => {
-    if (sujo && !window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
+    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
     void voltar();
   });
 
@@ -138,7 +139,7 @@ function iniciar(): void {
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
       if (!alvo || !sujo) return;
-      if (!window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
+      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
         evento.preventDefault();
         evento.stopPropagation();
       }
@@ -150,7 +151,7 @@ function iniciar(): void {
     "keydown",
     (evento) => {
       if (evento.key !== "Escape" || !sujo) return;
-      if (!window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
+      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
         evento.preventDefault();
         evento.stopPropagation();
       }

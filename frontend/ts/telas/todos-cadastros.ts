@@ -16,6 +16,7 @@ import {
   EmpresaDados,
 } from "../api";
 import { montarNavbar } from "../navbar";
+import { confirmar } from "../componentes";
 import { cnpjValido } from "./form-empresa";
 import { cpfValido } from "./form-pagador";
 
@@ -305,7 +306,7 @@ async function salvarPainel(): Promise<void> {
 
 async function excluirSelecionado(): Promise<void> {
   if (selecionadoId === null) return;
-  if (!window.confirm(`Excluir definitivamente este ${ROTULOS[tipo].toLowerCase()}? Esta acao nao pode ser desfeita.`)) {
+  if (!confirmar(`Excluir definitivamente este ${ROTULOS[tipo].toLowerCase()}? Esta acao nao pode ser desfeita.`)) {
     return;
   }
   try {
@@ -405,7 +406,7 @@ function iniciar(): void {
   document.getElementById("btn-edt-salvar")!.addEventListener("click", () => void salvarPainel());
   document.getElementById("btn-edt-excluir")!.addEventListener("click", () => void excluirSelecionado());
   document.getElementById("btn-edt-cancelar")!.addEventListener("click", () => {
-    if (sujo && !window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
+    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
     fecharPainel();
   });
 
@@ -414,7 +415,7 @@ function iniciar(): void {
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
       if (!alvo || !sujo) return;
-      if (!window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
+      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
         evento.preventDefault();
         evento.stopPropagation();
       }
@@ -426,7 +427,7 @@ function iniciar(): void {
     "keydown",
     (evento) => {
       if (evento.key !== "Escape" || !sujo) return;
-      if (!window.confirm("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
+      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
         evento.preventDefault();
         evento.stopPropagation();
       }

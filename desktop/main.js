@@ -20,6 +20,120 @@ function marco(nome) {
 }
 marco("processo-inicio");
 
+// Diagnostico opcional (FINDESK_DIAG_DIR): registro de eventos de foco/entrada
+// para investigar perda de interacao dos inputs. Sem o env, nada e gravado.
+const DIAG_DIR = process.env.FINDESK_DIAG_DIR || null;
+const DIAG_EVENTOS = DIAG_DIR ? path.join(DIAG_DIR, "eventos.jsonl") : null;
+const DIAG_PEDIDOS = DIAG_DIR ? path.join(DIAG_DIR, "requisicoes.jsonl") : null;
+const DIAG_RESPOSTAS = DIAG_DIR ? path.join(DIAG_DIR, "respostas.jsonl") : null;
+
+function diagLinha(obj) {
+  if (!DIAG_EVENTOS) return;
+  try {
+    fs.appendFileSync(DIAG_EVENTOS, JSON.stringify({ t: Date.now(), ...obj }) + "\n");
+  } catch {
+    // diagnostico nunca deve derrubar o app
+  }
+}
+
+function diagResponder(obj) {
+  if (!DIAG_RESPOSTAS) return;
+  try {
+    fs.appendFileSync(DIAG_RESPOSTAS, JSON.stringify(obj) + "\n");
+  } catch {
+    // idem
+  }
+}
+
+function diagPontoNormalizado(cx, cy) {
+  const conteudo = janela.getContentBounds();
+  const fisico = screen.dipToScreenPoint({ x: Math.round(conteudo.x + cx), y: Math.round(conteudo.y + cy) });
+  const display = screen.getPrimaryDisplay();
+  const origem = screen.dipToScreenPoint({ x: 0, y: 0 });
+  const fim = screen.dipToScreenPoint({ x: display.bounds.width, y: display.bounds.height });
+  return {
+    x: Math.round(((fisico.x - origem.x) / (fim.x - origem.x)) * 65535),
+    y: Math.round(((fisico.y - origem.y) / (fim.y - origem.y)) * 65535),
+    px: fisico.x,
+    py: fisico.y,
+  };
+}
+
+function diagColetarRenderer() {
+  if (!DIAG_DIR || !janela || janela.isDestroyed()) return;
+  janela.webContents
+    .executeJavaScript(
+      `(() => { try { return JSON.stringify(window.__diagColetar ? window.__diagColetar() : []); } catch { return "[]"; } })()`
+    )
+    .then((texto) => {
+      try {
+        for (const evento of JSON.parse(texto || "[]")) {
+          diagLinha({ camada: "renderer", ...evento });
+        }
+      } catch {
+        // resposta invalida
+      }
+    })
+    .catch(() => {
+      // pagina carregando
+    });
+}
+
+function diagProcessarPedidos() {
+  if (!DIAG_PEDIDOS || !janela || janela.isDestroyed()) return;
+  let linhas;
+  try {
+    if (!fs.existsSync(DIAG_PEDIDOS)) return;
+    linhas = fs.readFileSync(DIAG_PEDIDOS, "utf8").split("\n").filter((l) => l.trim());
+    if (!linhas.length) return;
+    fs.writeFileSync(DIAG_PEDIDOS, "");
+  } catch {
+    return;
+  }
+  for (const linha of linhas) {
+    let pedido;
+    try {
+      pedido = JSON.parse(linha);
+    } catch {
+      continue;
+    }
+    if (pedido.acao === "rect") {
+      janela.webContents
+        .executeJavaScript(
+          `(() => { const el = document.querySelector(${JSON.stringify(pedido.seletor)}); if (!el) return null; const r = el.getBoundingClientRect(); return JSON.stringify({ x: r.x + r.width / 2, y: r.y + r.height / 2 }); })()`
+        )
+        .then((texto) => {
+          const p = texto ? JSON.parse(texto) : null;
+          diagResponder({ id: pedido.id, ok: Boolean(p), ponto: p ? diagPontoNormalizado(p.x, p.y) : null });
+        })
+        .catch(() => diagResponder({ id: pedido.id, ok: false, ponto: null }));
+    } else if (pedido.acao === "estado") {
+      janela.webContents
+        .executeJavaScript(
+          `(() => {
+            const a = document.activeElement;
+            const campo = (id) => { const el = document.getElementById(id); return el && typeof el.value === "string" ? el.value.length : null; };
+            return JSON.stringify({
+              tela: document.body.dataset.tela || null,
+              pronto: document.body.dataset.pronto || null,
+              hasFocus: document.hasFocus(),
+              ativo: a ? a.tagName + (a.id ? "#" + a.id : "") : null,
+              menuAberto: document.getElementById("nav-global") ? document.getElementById("nav-global").dataset.menuAberto : null,
+              comprimentos: {
+                campoInstituicao: campo("campo-instituicao"),
+                campoNome: campo("campo-nome"),
+                campoRazao: campo("campo-razao-social"),
+                campoPesquisa: campo("campo-pesquisa"),
+              },
+            });
+          })()`
+        )
+        .then((texto) => diagResponder({ id: pedido.id, ok: true, estado: JSON.parse(texto) }))
+        .catch(() => diagResponder({ id: pedido.id, ok: false, estado: null }));
+    }
+  }
+}
+
 const TELAS = new Map([
   ["menu", path.join(__dirname, "..", "frontend", "html", "menu.html")],
   ["controle", path.join(__dirname, "..", "frontend", "html", "controle.html")],
@@ -156,6 +270,23 @@ function criarJanela() {
   });
   janela.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   janela.webContents.on("will-navigate", (evento) => evento.preventDefault());
+  if (DIAG_DIR) {
+    for (const evento of ["focus", "blur", "minimize", "restore", "show", "hide"]) {
+      janela.on(evento, () => diagLinha({ camada: "janela", tipo: evento, focada: janela.isFocused() }));
+    }
+    janela.webContents.on("before-input-event", (_evento, entrada) => {
+      diagLinha({
+        camada: "electron",
+        tipo: "before-input",
+        entradaTipo: entrada.type,
+        tecla: entrada.key && entrada.key.length > 1 ? entrada.key : "*",
+      });
+    });
+    setInterval(() => {
+      diagProcessarPedidos();
+      diagColetarRenderer();
+    }, 250);
+  }
   // A janela so aparece quando estiver pronta e ATIVADA pelo SO: sem isso ela
   // sobe sem foco/z-order e os inputs ficam impossiveis de usar.
   janela.once("ready-to-show", () => {
@@ -170,6 +301,7 @@ function criarJanela() {
   });
   janela.webContents.on("did-finish-load", () => {
     if (!janela || janela.isDestroyed()) return;
+    diagLinha({ camada: "janela", tipo: "did-finish-load", url: janela.webContents.getURL().split("/").pop(), focada: janela.isFocused() });
     janela.focus();
     janela.webContents.focus();
     marco("interface-carregada");
@@ -193,6 +325,19 @@ function encerrarBackend() {
 }
 
 ipcMain.handle("findesk:config", () => ({ port: porta, token }));
+
+// Reparo de foco da pagina apos fechar dialogos modais nativos (alert/confirm):
+// o Chromium/Windows devolve a janela como ativa sem re-emitir o ciclo de foco
+// do widget (document.hasFocus() fica falso e o teclado e engolido). Um ciclo
+// blur->focus na janela re-sincroniza o foco da pagina (mesmo mecanismo que
+// restaura o uso apos minimizar/restaurar — ver smoke-dev.js).
+ipcMain.handle("findesk:reparar-foco", () => {
+  if (!janela || janela.isDestroyed()) return false;
+  janela.blur();
+  janela.focus();
+  janela.webContents.focus();
+  return true;
+});
 
 ipcMain.handle("findesk:navegar", (_evento, tela) => {
   const destino = TELAS.get(tela);
@@ -245,6 +390,8 @@ if (!instanciaUnica) {
     });
 
   app.on("before-quit", encerrarBackend);
+  app.on("browser-window-focus", () => diagLinha({ camada: "app", tipo: "browser-window-focus" }));
+  app.on("browser-window-blur", () => diagLinha({ camada: "app", tipo: "browser-window-blur" }));
   app.on("window-all-closed", () => {
     app.quit();
   });

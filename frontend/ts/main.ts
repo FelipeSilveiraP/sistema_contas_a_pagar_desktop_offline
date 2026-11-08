@@ -1,5 +1,9 @@
 // Despacho por tela com carregamento sob demanda: cada pagina importa somente
 // o modulo que utiliza (chunks ESM gerados pelo esbuild --splitting).
+import { iniciarDiagnostico } from "./diagnostico";
+
+iniciarDiagnostico();
+
 const tela = document.body.dataset.tela ?? "menu";
 
 async function iniciar(): Promise<void> {

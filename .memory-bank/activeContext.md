@@ -1,9 +1,32 @@
 # Active Context
 
 ## Foco Atual
-**Escopo integral autorizado em execução — Módulo 3.4 (Todos os Cadastros) CONCLUÍDO (2026-11-08);
-próximo: Módulo 3.5 (Inserir Conta).** Plano mestre registrado abaixo; execução incremental módulo
-a módulo com checkpoints locais; push AGUARDA autorização.
+**BUG CRÍTICO DE INTERAÇÃO CORRIGIDO (2026-11-08) — causa raiz provada por evidência; aguardando
+validação do usuário.** Novos módulos SUSPENSOS até a validação (ordem do usuário). Após validação:
+retomar Módulo 3.5 (Inserir Conta) conforme plano mestre abaixo.
+
+## Bug crítico de interação — causa raiz e correção (2026-11-08)
+- **Sintoma:** inputs paravam de aceitar cliques/digitação após navegar entre formulários (intermitente;
+  "às vezes o primeiro form funciona"); botões/navegação continuavam funcionando; alt-tab/minimizar
+  "consertavam" temporariamente. Correção anterior (ativação no ready-to-show) não resolvia.
+- **Reprodução real comprovada** (`desktop/smoke-dev.js` sob `npm run dev` + SendInput real):
+  pré-fix 61/83 — a 1ª digitação funciona; TODAS após o 1º diálogo de dirty-form morriam.
+- **Causa raiz (evidência, não hipótese):** ao abrir diálogo modal nativo (`window.confirm`/`alert`),
+  a janela recebe `blur` (`document.hasFocus()=false`); ao fechar o diálogo + navegar, a janela volta
+  a ficar ATIVA mas o widget do Chromium **não re-emite o ciclo de foco da página** (sem `focus`/
+  `win-focus`); `keydown` chega ao elemento mas sem inserção de texto (`input` nunca dispara); cliques
+  funcionam (mouse), teclado é engolido. Ciclos completos de ativação (minimizar/restaurar, alt-tab)
+  re-sincronizam — por isso parecia "intermitente".
+- **Correção (mínima, estrutural, sem timers):** helpers `confirmar()`/`aviso()` em
+  `componentes.ts` (todo `window.confirm`/`window.alert` dos forms passa por eles) → após o fechamento
+  do diálogo chamam `findesk:reparar-foco` (IPC): `janela.blur(); janela.focus(); webContents.focus()`
+  no main — mesmo mecanismo provado de recuperação. `window.focus()` do renderer NÃO bastava (testado).
+- **Instrumentação de diagnóstico (permanente, opt-in):** `FINDESK_DIAG_DIR` ativa log JSONL de
+  eventos (janela/app/electron/renderer: focus/blur, before-input, pointerdown, focusin, input com
+  tamanho — nunca valores); sonda `frontend/ts/diagnostico.ts` + canal de comandos (rect/estado).
+- **Provas:** smoke-dev **83/83** (3 ciclos: `npm run dev`, ordens alternadas, minimizar/restaurar,
+  troca de janelas, fechar/reabrir completo, diálogos dirty-form reais); smoke 265/265; smoke-real
+  2 ciclos APROVADO; JUnit 80/80. Evidências em `docs/diagnostico-*/` (pré e pós-fix).
 
 ### Navbar desktop (aguardando validação visual do usuário)
 (branch `feature/entrega-3.1-sqlite-banco`, commit local, NENHUM push, `main` intacta). Removido o
