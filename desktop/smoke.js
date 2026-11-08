@@ -1083,10 +1083,10 @@ async function executar() {
     JSON.stringify(contaCriadaIc ?? null)
   );
 
-  // duplicidade: mesmo documento de novo -> dialogo de confirmacao (cancelar e forcar)
+  // duplicidade: mesmo documento de novo (mesmo mes de vencimento) -> dialogo
   await js(`(() => {
     document.getElementById('campo-valor').value = '999,00';
-    document.getElementById('campo-vencimento').value = '2027-01-15';
+    document.getElementById('campo-vencimento').value = '2026-12-20';
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);

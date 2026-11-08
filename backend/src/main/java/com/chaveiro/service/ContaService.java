@@ -4,6 +4,7 @@ import com.chaveiro.model.Conta;
 import com.chaveiro.repository.ContaRepository;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -102,6 +103,12 @@ public class ContaService {
         try {
             Conta candidata = comRazaoSocialResolvida(nova);
             for (Conta existente : repository.listar(null)) {
+                // Fiel ao VBA: a comparacao ocorre apenas dentro do MES do vencimento
+                // (cada mes era uma aba da planilha legada). Evita falsos positivos em
+                // recorrencias mensais (ex.: aluguel) — aprovado pelo usuario.
+                if (!YearMonth.from(existente.vencimento()).equals(YearMonth.from(candidata.vencimento()))) {
+                    continue;
+                }
                 if (possivelDuplicata(existente, candidata)) {
                     return existente;
                 }
@@ -128,7 +135,8 @@ public class ContaService {
     }
 
     /**
-     * Regra VBA cmdInserir_Click ("filtro ultra-sensivel"):
+     * Regra VBA cmdInserir_Click ("filtro ultra-sensivel"), aplicada apenas a
+     * contas do MESMO MES de vencimento (escopo da aba mensal do legado):
      * documento identico (nao vazio), OU fornecedor com nome parecido
      * E (vencimento em ate 5 dias OU valor com diferenca de ate R$ 150,00).
      */

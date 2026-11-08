@@ -167,7 +167,9 @@
       PAGO; regra para 3.6/3.7 registrada (pagamento + status na mesma transação, UNIQUE(id_conta))
 - [x] smoke-dev confirmado no fluxo real `npm run dev` (83 critérios preservados)
 - [ ] Defeito de digitação: pendente validação manual do usuário (não declarar resolvido)
-- [ ] Escopo do scan de duplicidade: decisão pendente (global vs mês do VBA vs ±31 dias)
+- [x] Escopo do scan de duplicidade decidido pelo usuário: fiel ao VBA (mês do vencimento);
+      implementado + teste que documenta o escopo (`naoDeveCompararDuplicidadesDeMesesDiferentes`)
+- [x] Revalidação pós-ajuste: JUnit 102/102, smoke 285/285, smoke-dev 83/83
 
 ## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)

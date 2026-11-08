@@ -97,19 +97,30 @@ class ContaServiceTest {
     void deveDetectarDuplicataPorDocumentoIdenticoNaoVazio() {
         service.cadastrar(conta("Auto Posto Central", "100.00", "2026-12-10", "DOC-77"), false);
 
+        // mesmo mes; nomes, datas (>5d) e valores (>R$150) distintos: so o documento identico dispara
         assertThatThrownBy(() -> service.cadastrar(
-                conta("Outro Fornecedor", "999.99", "2027-01-01", "doc-77"), false))
+                conta("Outro Fornecedor", "999.99", "2026-12-28", "doc-77"), false))
                 .isInstanceOf(PossivelDuplicataException.class);
+    }
+
+    @Test
+    void naoDeveCompararDuplicidadesDeMesesDiferentes() {
+        // fiel ao VBA: a comparacao e restrita ao mes do vencimento
+        service.cadastrar(conta("Auto Posto Central", "100.00", "2026-12-10", "DOC-MES"), false);
+
+        Conta outroMes = service.cadastrar(
+                conta("Auto Posto Central", "100.00", "2027-01-10", "DOC-MES"), false);
+        assertThat(outroMes.id()).isNotNull();
     }
 
     @Test
     void naoDeveConsiderarDuplicataSemDocumentoQuandoDemaisCamposDiferem() {
         service.cadastrar(conta("Auto Posto Central", "100.00", "2026-12-10", null), false);
 
-        // fornecedor diferente, vencimento distante e valor distante: nao e duplicata
+        // mesmo mes, mas fornecedor diferente e valor distante: nao e duplicata
         // (a clausula de documento igual nao se aplica a documentos vazios)
         Conta segunda = service.cadastrar(
-                conta("Padaria Nova Aurora", "900.00", "2027-06-20", null), false);
+                conta("Padaria Nova Aurora", "900.00", "2026-12-28", null), false);
         assertThat(segunda.id()).isNotNull();
     }
 
@@ -123,11 +134,12 @@ class ContaServiceTest {
     }
 
     @Test
-    void deveDetectarDuplicataPorNomeParecidoEValorParecidoMesmoComVencimentoDistante() {
+    void deveDetectarDuplicataPorNomeParecidoEValorParecidoComVencimentoDistanteNoMesmoMes() {
         service.cadastrar(conta("Auto Posto Central", "200.00", "2026-12-10", "A1"), false);
 
+        // 18 dias de diferenca (fora da janela de 5), mas valor parecido e mesmo mes
         assertThatThrownBy(() -> service.cadastrar(
-                conta("Auto Posto Central", "300.00", "2027-03-01", "B2"), false))
+                conta("Auto Posto Central", "300.00", "2026-12-28", "B2"), false))
                 .isInstanceOf(PossivelDuplicataException.class);
     }
 
