@@ -3,6 +3,7 @@ package com.chaveiro.repository;
 import com.chaveiro.database.ConnectionFactory;
 import com.chaveiro.model.Empresa;
 import com.chaveiro.model.Empresa.TelefoneEmpresa;
+import com.chaveiro.service.ConflitoIntegridadeException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -167,6 +168,13 @@ public class EmpresaRepository {
                 return linhas > 0;
             } catch (SQLException erro) {
                 conn.rollback();
+                int codigo = erro.getErrorCode();
+                boolean violacaoDeForeignKey = (codigo == 19 || codigo == 787)
+                        && erro.getMessage() != null
+                        && erro.getMessage().toLowerCase().contains("foreign key");
+                if (violacaoDeForeignKey) {
+                    throw new ConflitoIntegridadeException("empresa vinculada a contas a pagar");
+                }
                 throw erro;
             } finally {
                 conn.setAutoCommit(true);

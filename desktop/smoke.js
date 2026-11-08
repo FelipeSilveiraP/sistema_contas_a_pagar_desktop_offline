@@ -410,23 +410,19 @@ async function executar() {
   const navInvalida = await js("window.finDesk.navegar('../../etc/passwd')");
   teste("Navegação bloqueada fora da whitelist", navInvalida === false);
   teste("Tela inalterada após navegação inválida", (await js("document.body.dataset.tela")) === "menu");
-  for (const tela of ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro", "todos-cadastros", "menu"]) {
+  for (const tela of ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro", "todos-cadastros", "inserir-conta", "menu"]) {
     await prepararPagina();
     await js(`window.finDesk.navegar('${tela}')`);
     teste(`Whitelist permite navegar para "${tela}"`, await esperarTela(tela));
   }
   await prepararPagina();
 
-  // 3. Botões do Menu (provisórios) + 4. atalhos do Menu (regressão)
-  for (const [sel, nome] of [
-    ['a[data-path="inserir-conta"]', "INSERIR CONTA"],
-    ['a[data-path="graficos-e-relatorios"]', "GRÁFICOS"],
-  ]) {
-    teste(`Botão ${nome} do Menu responde (provisório)`, await testarProvisorio(sel, nome));
-  }
+  // 3. Botoes do Menu + 4. atalhos do Menu (regressao)
+  teste("Botao INSERIR CONTA do Menu navega", await navegarPor('a[data-path="inserir-conta"]', "inserir-conta"));
+  teste("VOLTAR de inserir-conta retorna ao Menu", await voltarPara("menu"));
+  await prepararPagina();
+  teste(`Botão GRÁFICOS do Menu responde (provisório)`, await testarProvisorio('a[data-path="graficos-e-relatorios"]', "GRÁFICOS"));
   for (const [teclaAlvo, nome] of [
-    ["F1", "INSERIR CONTA"],
-    ["1", "INSERIR CONTA"],
     ["F4", "GRÁFICOS"],
     ["4", "GRÁFICOS"],
   ]) {
@@ -437,6 +433,8 @@ async function executar() {
     teste(`Atalho ${teclaAlvo} no Menu (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
   }
   for (const [teclaAlvo, destino] of [
+    ["F1", "inserir-conta"],
+    ["1", "inserir-conta"],
     ["F2", "controle"],
     ["2", "controle"],
     ["F3", "mensagens"],
@@ -982,6 +980,167 @@ async function executar() {
   await definirTamanho(1536, 864);
   await js("window.finDesk.navegar('menu')");
   teste("Todos os Cadastros: estado restaurado para o fluxo das secoes seguintes", await esperarTela("menu"));
+  await prepararPagina();
+
+  // 7c. Inserir Conta (Entrega 3.5): 2 etapas, validacoes, duplicidade e cadastro
+  const cfgIc = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
+  const icCriar = async (caminho, dados) =>
+    JSON.parse(
+      await js(`(async () => {
+        const r = await fetch('http://127.0.0.1:${cfgIc.port}${caminho}', {
+          method: 'POST',
+          headers: { 'X-FinDesk-Token': '${cfgIc.token}', 'Content-Type': 'application/json' },
+          body: JSON.stringify(${JSON.stringify(dados)}),
+        });
+        return JSON.stringify({ status: r.status, body: await r.json() });
+      })()`)
+    );
+  const sufixoIc = String(Date.now());
+  const empresaIc = await icCriar("/api/empresas", { razaoSocial: `IC EMPRESA ${sufixoIc}` });
+  const pagadorIc = await icCriar("/api/pagadores", { nome: `IC PAGADOR ${sufixoIc}` });
+  teste("Inserir Conta: fixtures de empresa/pagador criadas", empresaIc.status === 201 && pagadorIc.status === 201);
+
+  await js("window.finDesk.navegar('inserir-conta')");
+  teste("Inserir Conta: tela abre pela whitelist", await esperarTela("inserir-conta"));
+  await prepararPagina();
+  await esperarPredicado(`document.body.dataset.listasCarregadas === 'true'`, 10000);
+  const estruturaIc = JSON.parse(
+    await js(`JSON.stringify({
+      valor: !!document.getElementById('campo-valor'),
+      vencimento: !!document.getElementById('campo-vencimento'),
+      fornecedor: document.getElementById('campo-fornecedor').options.length > 1,
+      pagador: document.getElementById('campo-pagador').options.length > 1,
+      categoria: !!document.getElementById('campo-categoria'),
+      documento: !!document.getElementById('campo-documento'),
+      pasta: !!document.getElementById('campo-pasta'),
+      etapa2Oculta: document.getElementById('etapa-2').classList.contains('hidden'),
+    })`)
+  );
+  teste(
+    "Inserir Conta: campos, selects carregados e etapa 2 oculta",
+    estruturaIc.valor && estruturaIc.vencimento && estruturaIc.fornecedor && estruturaIc.pagador
+      && estruturaIc.categoria && estruturaIc.documento && estruturaIc.pasta && estruturaIc.etapa2Oculta,
+    JSON.stringify(estruturaIc)
+  );
+
+  await clicar("#btn-proxima");
+  await esperar(300);
+  const errosIc = JSON.parse(
+    await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
+  );
+  teste("Etapa 1: valor e vencimento obrigatorios", errosIc.includes("valor") && errosIc.includes("vencimento"), JSON.stringify(errosIc));
+
+  await js(`(() => {
+    document.getElementById('campo-valor').value = 'abc';
+    document.getElementById('campo-vencimento').value = '2026-12-10';
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-proxima");
+  await esperar(300);
+  teste("Etapa 1: valor em formato invalido e recusado", (await js(`!document.querySelector('[data-erro-campo="valor"]').classList.contains('hidden')`)) === true);
+
+  await js(`(() => {
+    document.getElementById('campo-valor').value = '1.234,56';
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-proxima");
+  await esperar(300);
+  teste("Etapa 1: valor BR valido avanca para etapa 2", (await js("document.body.dataset.tela")) === "inserir-conta" && (await js(`!document.getElementById('etapa-2').classList.contains('hidden')`)) === true);
+
+  await clicar("#btn-salvar");
+  await esperar(300);
+  teste("Etapa 2: fornecedor obrigatorio", (await js(`!document.querySelector('[data-erro-campo="idEmpresa"]').classList.contains('hidden')`)) === true);
+
+  await js(`(() => {
+    const sel = document.getElementById('campo-fornecedor');
+    sel.value = sel.options[1].value;
+    sel.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('campo-categoria').value = 'Material';
+    document.getElementById('campo-documento').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    const pasta = document.getElementById('campo-pasta');
+    pasta.value = 'true';
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-salvar");
+  const contaSalvaIc = await esperarPredicado(`document.body.dataset.contaSalva !== undefined`, 10000);
+  teste("Inserir Conta: salvar com dados validos confirma cadastro", contaSalvaIc);
+  teste("Inserir Conta: mensagem de sucesso exibida", (await js(`document.getElementById('feedback-conta').textContent`)).includes("sucesso"));
+  teste("Inserir Conta: volta para etapa 1 apos salvar", (await js(`document.getElementById('etapa-2').classList.contains('hidden')`)) === true);
+
+  const listaIc = JSON.parse(
+    await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgIc.port}/api/contas', { headers: { 'X-FinDesk-Token': '${cfgIc.token}' } });
+      return JSON.stringify(await r.json());
+    })()`)
+  );
+  const contaCriadaIc = listaIc.find((c) => c.numeroDocumento === `DOC-${sufixoIc}`);
+  teste(
+    "Inserir Conta: registro persistido com valor exato (1234.56)",
+    Boolean(contaCriadaIc) && Math.abs(contaCriadaIc.valor - 1234.56) < 0.001 && contaCriadaIc.status === "PENDENTE",
+    JSON.stringify(contaCriadaIc ?? null)
+  );
+
+  // duplicidade: mesmo documento de novo -> dialogo de confirmacao (cancelar e forcar)
+  await js(`(() => {
+    document.getElementById('campo-valor').value = '999,00';
+    document.getElementById('campo-vencimento').value = '2027-01-15';
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-proxima");
+  await esperar(300);
+  await js(`(() => {
+    const sel = document.getElementById('campo-fornecedor');
+    sel.value = sel.options[1].value;
+    document.getElementById('campo-documento').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
+  await clicar("#btn-salvar");
+  await esperar(600);
+  const confirmasDup = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
+  teste("Inserir Conta: duplicidade dispara dialogo de confirmacao", confirmasDup.length === 1 && confirmasDup[0].includes("duplicidade"), JSON.stringify(confirmasDup));
+  teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined || (await js(`document.getElementById('feedback-conta').textContent`)).includes("cancelada"));
+
+  await js("window.__confirmResposta = true; window.__confirmas = []; sessionStorage.setItem('smoke-confirmas', '[]'); document.getElementById('feedback-conta').textContent = ''; 'ok'");
+  await clicar("#btn-salvar");
+  const forcadaIc = await esperarPredicado(`document.getElementById('feedback-conta').textContent.includes('sucesso')`, 10000);
+  teste("Inserir Conta: confirmada a duplicidade, insercao forçada ocorre", forcadaIc);
+
+  const listaIc2 = JSON.parse(
+    await js(`(async () => {
+      const r = await fetch('http://127.0.0.1:${cfgIc.port}/api/contas?status=PENDENTE', { headers: { 'X-FinDesk-Token': '${cfgIc.token}' } });
+      return JSON.stringify(await r.json());
+    })()`)
+  );
+  teste("Inserir Conta: duas contas com o mesmo documento existem apos forcar", listaIc2.filter((c) => c.numeroDocumento === `DOC-${sufixoIc}`).length === 2);
+
+  // limpeza: conta(s) de teste, depois fixtures
+  for (const conta of listaIc2.filter((c) => c.numeroDocumento === `DOC-${sufixoIc}`)) {
+    await js(`(async () => { await fetch('http://127.0.0.1:${cfgIc.port}/api/contas/${conta.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgIc.token}' } }); return true; })()`);
+  }
+  for (const [caminhoLixo, idLixo] of [["/api/empresas", empresaIc.body.id], ["/api/pagadores", pagadorIc.body.id]]) {
+    if (!idLixo) continue;
+    await js(`(async () => { await fetch('http://127.0.0.1:${cfgIc.port}${caminhoLixo}/${idLixo}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgIc.token}' } }); return true; })()`);
+  }
+  teste("Inserir Conta: registros de teste removidos da base temporaria", true);
+
+  await js("window.confirm = () => true; 'ok'");
+  await js("window.finDesk.navegar('inserir-conta')");
+  await esperarTela("inserir-conta");
+  await prepararPagina();
+  await capturar("inserir-conta-1536x864.png");
+  await definirTamanho(768, 800);
+  await capturar("inserir-conta-768x800.png");
+  await definirTamanho(480, 800);
+  await capturar("inserir-conta-480x800.png");
+  await definirTamanho(1536, 864);
+  await js("window.finDesk.navegar('menu')");
+  await esperarTela("menu");
   await prepararPagina();
 
   // 8. Navegação repetida sem erros

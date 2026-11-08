@@ -4,12 +4,35 @@ export interface StatusApi {
   fase: string;
 }
 
-export interface ContaResumo {
+export interface ContaDados {
   id: number;
-  empresa: string;
+  idEmpresa: number;
+  razaoSocial: string;
+  idPagador: number | null;
+  nomePagador: string | null;
+  categoria: string | null;
+  numeroDocumento: string | null;
   valor: number;
   vencimento: string;
+  boletoNaPasta: boolean;
   status: string;
+}
+
+export interface ContaEntrada {
+  idEmpresa: number;
+  idPagador?: number;
+  categoria?: string;
+  numeroDocumento?: string;
+  valor: string;
+  vencimento: string;
+  boletoNaPasta?: boolean;
+  forcar?: boolean;
+}
+
+export class ErroDuplicidadeApi extends Error {
+  constructor(public existente: ContaDados) {
+    super("possivel duplicidade");
+  }
 }
 
 async function get<T>(cfg: FinDeskConfig, caminho: string): Promise<T> {
@@ -26,8 +49,8 @@ export function buscarStatus(cfg: FinDeskConfig): Promise<StatusApi> {
   return get<StatusApi>(cfg, "/api/status");
 }
 
-export function buscarContas(cfg: FinDeskConfig): Promise<ContaResumo[]> {
-  return get<ContaResumo[]>(cfg, "/api/contas");
+export function buscarContas(cfg: FinDeskConfig): Promise<ContaDados[]> {
+  return get<ContaDados[]>(cfg, "/api/contas");
 }
 
 export interface BancoDados {
@@ -208,4 +231,32 @@ export function excluirPagador(cfg: FinDeskConfig, id: number): Promise<void> {
 
 export function excluirEmpresa(cfg: FinDeskConfig, id: number): Promise<void> {
   return excluir(cfg, `/api/empresas/${id}`);
+}
+
+export async function criarConta(cfg: FinDeskConfig, dados: ContaEntrada): Promise<ContaDados> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/contas`, {
+    method: "POST",
+    headers: { "X-FinDesk-Token": cfg.token, "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  if (resposta.status === 400) {
+    const corpo = (await resposta.json()) as { campos?: Record<string, string> };
+    throw new ErroValidacaoApi(corpo.campos ?? {});
+  }
+  if (resposta.status === 409) {
+    const corpo = (await resposta.json()) as { tipo?: string; existente?: ContaDados };
+    if (corpo.tipo === "possivel_duplicata" && corpo.existente) {
+      throw new ErroDuplicidadeApi(corpo.existente);
+    }
+    throw new ErroApi(409);
+  }
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+  return (await resposta.json()) as ContaDados;
+}
+
+export function listarContas(cfg: FinDeskConfig, status?: string): Promise<ContaDados[]> {
+  const consulta = status ? `?status=${encodeURIComponent(status)}` : "";
+  return get<ContaDados[]>(cfg, `/api/contas${consulta}`);
 }

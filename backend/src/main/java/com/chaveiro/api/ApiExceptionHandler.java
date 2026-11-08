@@ -2,6 +2,7 @@ package com.chaveiro.api;
 
 import com.chaveiro.service.ConflitoIntegridadeException;
 import com.chaveiro.service.DadosInvalidosException;
+import com.chaveiro.service.PossivelDuplicataException;
 import com.chaveiro.service.RecursoNaoEncontradoException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,6 +35,15 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ConflitoIntegridadeException.class)
     public ResponseEntity<Map<String, String>> conflito(ConflitoIntegridadeException erro) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("erro", erro.getMessage()));
+    }
+
+    @ExceptionHandler(PossivelDuplicataException.class)
+    public ResponseEntity<Map<String, Object>> possivelDuplicata(PossivelDuplicataException erro) {
+        Map<String, Object> corpo = new LinkedHashMap<>();
+        corpo.put("erro", "possivel duplicidade de conta");
+        corpo.put("tipo", "possivel_duplicata");
+        corpo.put("existente", erro.getExistente());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(corpo);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

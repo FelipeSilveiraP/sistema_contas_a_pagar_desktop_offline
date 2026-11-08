@@ -38,6 +38,11 @@ async function iniciar(): Promise<void> {
       iniciarTodosCadastros();
       return;
     }
+    case "inserir-conta": {
+      const { iniciarInserirConta } = await import("./telas/inserir-conta");
+      iniciarInserirConta();
+      return;
+    }
     default: {
       const { iniciarSubmenu } = await import("./telas/submenu");
       const { SUBMENUS } = await import("./submenus-config");

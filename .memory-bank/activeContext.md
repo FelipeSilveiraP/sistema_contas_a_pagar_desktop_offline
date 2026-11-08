@@ -1,9 +1,33 @@
 # Active Context
 
 ## Foco Atual
-**BUG CRÍTICO DE INTERAÇÃO CORRIGIDO (2026-11-08) — causa raiz provada por evidência; aguardando
-validação do usuário.** Novos módulos SUSPENSOS até a validação (ordem do usuário). Após validação:
-retomar Módulo 3.5 (Inserir Conta) conforme plano mestre abaixo.
+**Escopo integral em execução — Módulo 3.5 (Inserir Conta) CONCLUÍDO (2026-11-08), validado por
+testes; próximo: Módulo 3.6 (Boletos/Todas as Contas).** Bug de interação validado pelo usuário.
+Escopo integral autorizado (prosseguir módulo a módulo); push AGUARDA autorização.
+
+## Módulo 3.5 — Inserir Conta (2026-11-08)
+- **Migração v7** `contas_a_pagar`: `valor_centavos` INTEGER (precisão monetária exata; zero float),
+  FK `id_empresa` RESTRICT (409 em exclusão de empresa vinculada), FK `id_pagador` SET NULL,
+  `status` CHECK (PENDENTE/PAGO), índices vencimento/status
+- **Backend:** model/repo/service/controller `/api/contas` (GET lista com `?status=`, GET id, POST
+  com `forcar`, PUT, DELETE); DTO `ContaRequest`; nomes do join (razaoSocial/nomePagador) na resposta
+- **Duplicidade VBA (ultra-sensível):** doc idêntico não vazio OU (nome parecido E vencimento ±5d
+  OU valor dif ≤ R$150) → 409 `{tipo:"possivel_duplicata", existente}`; frontend oferece
+  `confirmar()` → insere com `forcar:true`; nome do fornecedor resolvido via FK (a API não envia)
+- **Frontend:** `inserir-conta.html`/`telas/inserir-conta.ts` — 2 etapas (Valor/Vencimento →
+  Fornecedor/Categoria/Nº Doc/Pagador/Pasta), identidade amarela `#ffe600`, selects de
+  empresas/pagadores, datalist de categorias já usadas, valor no formato BR (parse exato p/
+  string decimal), dirty-form com `confirmar()` (helper do fix de foco)
+- **Navegação:** botão INSERIR CONTA do Menu + atalhos F1/1 agora navegam (eram provisórios);
+  whitelist/dispatch/Tela unidos
+- **Removido:** mock `ContasController` da Fase 1 (disputava `GET /api/contas`; substituído pela
+  implementação real — teste atualizado)
+- **Testes:** JUnit 99/99 (ContaServiceTest 12: regra de duplicidade + limites ±5d/R$150; ContaApiTest
+  7: 201/400/409 duplicata+forcar/PUT/DELETE/409 FK); smoke 285/285 (bloco Inserir Conta: etapas,
+  validações, valor BR, duplicidade cancelar/forçar, persistência, capturas 3 resoluções);
+  smoke-real APROVADO; smoke-dev 83/83 (regressão de foco intacta)
+- **Aprendizado operacional:** `mvn test` NÃO reempacota o jar — após mudanças no backend rodar
+  `mvn -f backend/pom.xml package` antes de `npm run dev`/smokes (senão o app usa jar obsoleto)
 
 ## Bug crítico de interação — causa raiz e correção (2026-11-08)
 - **Sintoma:** inputs paravam de aceitar cliques/digitação após navegar entre formulários (intermitente;

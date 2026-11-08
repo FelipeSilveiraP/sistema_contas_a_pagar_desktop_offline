@@ -1,6 +1,6 @@
 import { Tela } from "./navegacao";
 
-export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros">;
+export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros" | "inserir-conta">;
 
 export interface BotaoSubmenu {
   chave: string;

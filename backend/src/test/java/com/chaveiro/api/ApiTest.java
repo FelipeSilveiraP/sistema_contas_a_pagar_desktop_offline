@@ -32,10 +32,11 @@ class ApiTest {
     }
 
     @Test
-    void deveManterContasMockDaFase1() throws Exception {
+    void deveListarContasPelaApiReal() throws Exception {
+        // mock da Fase 1 substituido pela implementacao real (Entrega 3.5)
         mvc.perform(get("/api/contas").header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3));
+                .andExpect(jsonPath("$").isArray());
     }
 
     @Test

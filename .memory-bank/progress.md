@@ -148,6 +148,18 @@
       JUnit 80/80; evidências em `docs/diagnostico-*/`
 - [ ] Validação do usuário no uso manual (`npm run dev`)
 
+## Módulo 3.5 — Inserir Conta (2026-11-08)
+- [x] Migração v7 `contas_a_pagar` (valor em centavos exatos, FKs empresa RESTRICT/pagador SET NULL,
+      status PENDENTE/PAGO, índices)
+- [x] Backend CRUD `/api/contas` + filtro de duplicidade VBA (doc idêntico OU nome parecido com
+      vencimento ±5d/valor ≤R$150) com 409 `possivel_duplicata` + `forcar`
+- [x] Form 2 etapas (Valor/Vencimento → Fornecedor/Categoria/Doc/Pagador/Pasta), selects e datalist,
+      valor BR exato, diálogo de duplicidade via `confirmar()`
+- [x] Menu INSERIR CONTA + F1/1 navegam (antes provisórios); mock ContasController removido
+- [x] JUnit 99/99; smoke 285/285; smoke-real APROVADO; smoke-dev 83/83; capturas
+      `inserir-conta-{1536x864,768x800,480x800}.png`
+- [x] Checkpoint local — sem push
+
 ## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos

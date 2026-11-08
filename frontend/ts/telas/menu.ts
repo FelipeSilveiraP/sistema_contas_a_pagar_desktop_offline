@@ -11,6 +11,7 @@ const MODULOS: Record<string, string> = {
 };
 
 const DESTINOS: Record<string, Tela> = {
+  "inserir-conta": "inserir-conta",
   "controle-de-contas": "controle",
   cadastros: "cadastros",
   "mensagens-e-avisos": "mensagens",

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 6;
+    private static final int VERSAO_ATUAL = 7;
 
     private final ConnectionFactory conexao;
 
@@ -155,6 +155,28 @@ public class DatabaseInitializer {
                 // Indices para as ordenacoes das listas (consultas sob demanda).
                 "CREATE INDEX IF NOT EXISTS idx_pagadores_nome ON pagadores(nome)",
                 "CREATE INDEX IF NOT EXISTS idx_empresas_razao ON empresas(razao_social)",
+            };
+            case 7 -> new String[] {
+                // Contas a pagar: valor em CENTAVOS (inteiro) para precisao monetaria
+                // exata; status limitado aos valores do sistema legado (PENDENTE/PAGO).
+                """
+                CREATE TABLE IF NOT EXISTS contas_a_pagar (
+                    id_conta INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_empresa INTEGER NOT NULL,
+                    id_pagador INTEGER,
+                    categoria TEXT,
+                    numero_documento TEXT,
+                    valor_centavos INTEGER NOT NULL CHECK (valor_centavos > 0),
+                    vencimento TEXT NOT NULL,
+                    boleto_na_pasta INTEGER NOT NULL DEFAULT 0,
+                    status TEXT NOT NULL DEFAULT 'PENDENTE' CHECK (status IN ('PENDENTE', 'PAGO')),
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE RESTRICT,
+                    FOREIGN KEY (id_pagador) REFERENCES pagadores(id_pagador) ON DELETE SET NULL
+                )
+                """,
+                "CREATE INDEX IF NOT EXISTS idx_contas_vencimento ON contas_a_pagar(vencimento)",
+                "CREATE INDEX IF NOT EXISTS idx_contas_status ON contas_a_pagar(status)",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
