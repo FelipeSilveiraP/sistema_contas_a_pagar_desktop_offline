@@ -23,6 +23,12 @@
 - [x] Governança de Agentes & Recuperação das GSD (CONCLUÍDA — 2026-11-08) — 3 GSD recuperadas
       e adaptadas ao OpenCode, java-observability-logging atualizada para Spring Boot/SLF4J,
       AGENTS.md alinhado (Processo GSD vs Conhecimento Técnico), 23 skills funcionais ativas.
+- [x] Auditoria final das skills (2026-11-08, 2ª passada) — divergências do relatório corrigidas:
+      `ask_question`→`question` (gsd-execute), testes durante desenvolvimento + `todowrite`
+      (controle de progresso), links `../../../.memory-bank/` corrigidos (gsd-plan/gsd-verify);
+      carregamento validado 23/23 (frontmatters, comandos reais, zero ferramentas inexistentes);
+      histórico Git comparado (stubs 3fb01ba vs recuperadas c72fe78 — sem versão original completa
+      no repo); java-observability-logging confirmada sem JavaFX.
 - [ ] 3.3–3.10. Empresa, Todos os Cadastros, Inserir Conta, Boletos, Pagos, Recorrentes,
       Mensagens, Gráficos — NÃO iniciar sem autorização (uma entrega por vez)
 

@@ -39,8 +39,8 @@ Diretrizes para planejar e estruturar fases de entrega no **Sistema de Contas a 
 
 ### Etapa 2: Triangulação com o Contexto Persistente
 Antes de escrever código ou planos abstratos, consultar:
-1. [`.memory-bank/activeContext.md`](../../.memory-bank/activeContext.md) (foco atual e decisões consolidadas).
-2. [`.memory-bank/systemPatterns.md`](../../.memory-bank/systemPatterns.md) (invariantes arquiteturais).
+1. [`.memory-bank/activeContext.md`](../../../.memory-bank/activeContext.md) (foco atual e decisões consolidadas).
+2. [`.memory-bank/systemPatterns.md`](../../../.memory-bank/systemPatterns.md) (invariantes arquiteturais).
 3. Esquema atual do SQLite (tabelas existentes e versão em `PRAGMA user_version`).
 4. Especificações de telas e contratos de API já implementados para manter consistência cromática e estrutural.
 

@@ -74,16 +74,29 @@ Testes: smoke 246/246, smoke-real 2 ciclos APROVADO (inclui hover real + captura
 - Helper `medirTela` do smoke tolerante a páginas sem grade (form-banco)
 
 ## Git
-- `feature/entrega-3.1-sqlite-banco` (a partir de `feature/navbar-global` = `b349235`); HEAD = `ad6280f`
-  (commit de preservação — não alterar)
-- Correção do Banco (19 arquivos) + Memory Bank no working tree, NÃO commitados — commit aguarda ordem
-- `main`/`develop`/`feature/navbar-global` preservadas; NADA publicado (push AGUARDA autorização)
+- `feature/entrega-3.1-sqlite-banco` (a partir de `feature/navbar-global` = `b349235`); HEAD = `c72fe78`
+  (governança de skills) — commits de preservação `ad6280f`/`d1558b3` intactos
+- Working tree limpo antes da auditoria de skills (entregas 3.1/3.2/Banco/navbar já commitadas)
+- Branch à frente de `origin` em 4+ commits — NADA publicado (push AGUARDA autorização)
+- `main`/`develop`/`feature/navbar-global` preservadas
 
 ## Recuperação das GSD & Governança de Agentes (2026-11-08)
 - Recuperadas e adaptadas funcionalmente as 3 skills GSD (`gsd-plan-phase`, `gsd-execute-phase`, `gsd-verify-work`) para o OpenCode, eliminando dependências do Claude Code e integrando-as ao Memory Bank e suíte de testes.
 - Corrigida a skill `java-observability-logging` (removido JavaFX, adicionado Spring Boot 3.3, SLF4J, MDC, rotação de arquivos e proteção LGPD).
 - Atualizado `AGENTS.md` na raiz com separação estrita entre Processo (GSD) e Conhecimento Técnico Especializado.
 - Total de 23 skills funcionais ativas sob `.agents/skills/`.
+- **Auditoria final (2026-11-08, 2ª passada):** estado real divergia do relatório — 3 correções aplicadas:
+  (a) `gsd-execute-phase` referenciava `ask_question` (ferramenta do Antigravity/Claude) → substituída
+  pela ferramenta `question` do OpenCode; (b) GSD Execute complementada com testes durante o
+  desenvolvimento (checkpoint) e controle de progresso via `todowrite` (disponível no OpenCode);
+  (c) links relativos `../../.memory-bank/` corrigidos para `../../../.memory-bank/` em `gsd-plan-phase`
+  e `gsd-verify-work` (apontavam para `.agents/.memory-bank/` inexistente). Histórico Git auditado:
+  as GSD só existem como stubs "desativadas" (3fb01ba) e versões recuperadas (c72fe78) — não há
+  versão original completa no repositório; conteúdo útil reconstruído nas versões atuais.
+  Validação de carregamento: 23/23 skills reconhecidas pelo OpenCode (frontmatters válidos),
+  comandos referenciados existem (`backend/pom.xml`, `desktop/smoke*.js`, `npm run typecheck`),
+  zero referências a ferramentas inexistentes, zero JavaFX fora da nota histórica do
+  `project-architecture-map` (tag `legado-javafx`).
 
 ## Pendências
 1. Validação do usuário: correção do Banco (instituição + Pix) + Entrega 3.2 (Pagador); capturas em

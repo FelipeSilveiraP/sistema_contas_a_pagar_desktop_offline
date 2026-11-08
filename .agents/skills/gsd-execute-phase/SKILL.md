@@ -51,9 +51,11 @@ Para cada tarefa definida no plano:
 Imediatamente após modificar arquivos, executar a verificação da camada:
 * **Frontend TypeScript:** Executar `npm run typecheck` e conferir se não há erros de tipagem.
 * **Backend Java:** Executar `mvn compile` no diretório correspondente.
+* **Testes durante o desenvolvimento:** Testar enquanto implementa, não só no final — suíte JUnit da camada (`mvn -f backend/pom.xml test`) quando tocar backend/regras; `node desktop/smoke.js` quando tocar UI/navegação. Todos os testes com `FINDESK_DB_PATH` temporário.
 * **Se o checkpoint falhar:** **Pare a linha imediatamente.** Não avance para a tarefa seguinte acumulando erros. Corrija o problema no escopo atual.
 
 ### Passo 4: Registro de Progresso
+- Durante a sessão, manter o controle de progresso na lista de tarefas do OpenCode (`todowrite`), marcando cada tarefa concluída em tempo real.
 - Concluída a tarefa com sucesso, atualizar o status em `.memory-bank/activeContext.md`.
 - Se a entrega atingir um marco estável, criar commit local limpo e sem misturar arquivos de trabalho.
 
@@ -64,4 +66,4 @@ Imediatamente após modificar arquivos, executar a verificação da camada:
 Se durante a execução surgir uma divergência inesperada (ex.: campo que não constava no modelo, conflito de chave estrangeira ou limitação técnica):
 1. **Não adivinhe:** Interrompa a execução da tarefa atual.
 2. **Isole o problema:** Registre a causa exata do bloqueio com evidências objetivas.
-3. **Consulte o proprietário:** Formule a dúvida de forma direta e estruturada via `ask_question` ou mensagem clara, propondo alternativas viáveis.
+3. **Consulte o proprietário:** Formule a dúvida de forma direta e estruturada via a ferramenta de pergunta do OpenCode (`question`) ou mensagem clara, propondo alternativas viáveis.

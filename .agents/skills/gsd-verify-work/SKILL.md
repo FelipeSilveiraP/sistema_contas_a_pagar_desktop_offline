@@ -80,5 +80,5 @@ node desktop/teste-persistencia.js
    - Nunca mascarar testes quebrando ou remover asserções para fazer a suíte passar.
 2. **Coleta de Evidências e Registro:**
    - Registrar evidências visuais (capturas de tela em `docs/responsivo/` nas resoluções 1536x864, 768x800 e 480x800).
-   - Atualizar [`.memory-bank/progress.md`](../../.memory-bank/progress.md) e [`.memory-bank/activeContext.md`](../../.memory-bank/activeContext.md).
+   - Atualizar [`.memory-bank/progress.md`](../../../.memory-bank/progress.md) e [`.memory-bank/activeContext.md`](../../../.memory-bank/activeContext.md).
    - Apresentar o resultado detalhado com evidências para validação humana do proprietário.
