@@ -1,21 +1,48 @@
-import { iniciarMenu } from "./telas/menu";
-import { iniciarSubmenu } from "./telas/submenu";
-import { iniciarFormBanco } from "./telas/form-banco";
-import { iniciarFormPagador } from "./telas/form-pagador";
-import { iniciarFormEmpresa } from "./telas/form-empresa";
-import { SUBMENUS, TelaSubmenu } from "./submenus-config";
+// Despacho por tela com carregamento sob demanda: cada pagina importa somente
+// o modulo que utiliza (chunks ESM gerados pelo esbuild --splitting).
+const tela = document.body.dataset.tela ?? "menu";
 
-const tela = (document.body.dataset.tela ?? "menu") as TelaSubmenu | "menu" | "form-banco" | "form-pagador" | "form-empresa";
-if (tela === "menu") {
-  iniciarMenu();
-} else if (tela === "form-banco") {
-  iniciarFormBanco();
-} else if (tela === "form-pagador") {
-  iniciarFormPagador();
-} else if (tela === "form-empresa") {
-  iniciarFormEmpresa();
-} else if (SUBMENUS[tela]) {
-  iniciarSubmenu(tela, SUBMENUS[tela]);
-} else {
-  console.error("[ContasAPagar] tela desconhecida:", tela);
+async function iniciar(): Promise<void> {
+  switch (tela) {
+    case "menu": {
+      const { iniciarMenu } = await import("./telas/menu");
+      iniciarMenu();
+      return;
+    }
+    case "carregando": {
+      const { iniciarCarregando } = await import("./telas/carregando");
+      iniciarCarregando();
+      return;
+    }
+    case "form-banco": {
+      const { iniciarFormBanco } = await import("./telas/form-banco");
+      iniciarFormBanco();
+      return;
+    }
+    case "form-pagador": {
+      const { iniciarFormPagador } = await import("./telas/form-pagador");
+      iniciarFormPagador();
+      return;
+    }
+    case "form-empresa": {
+      const { iniciarFormEmpresa } = await import("./telas/form-empresa");
+      iniciarFormEmpresa();
+      return;
+    }
+    default: {
+      const { iniciarSubmenu } = await import("./telas/submenu");
+      const { SUBMENUS } = await import("./submenus-config");
+      const config = (SUBMENUS as Record<string, Parameters<typeof iniciarSubmenu>[1]>)[tela];
+      if (config) {
+        iniciarSubmenu(tela as Parameters<typeof iniciarSubmenu>[0], config);
+      } else {
+        console.error("[ContasAPagar] tela desconhecida:", tela);
+      }
+    }
+  }
 }
+
+void iniciar().then(() => {
+  // Sinal de prontidao: componentes da tela ja inicializados.
+  document.body.dataset.pronto = "true";
+});

@@ -5,7 +5,7 @@
   "description": "Sistema de Contas a Pagar — Chaveiro Universal",
   "scripts": {
     "build:css": "tailwindcss -i frontend/css/tailwind.input.css -o frontend/dist/tailwind.css --minify",
-    "build:ts": "esbuild frontend/ts/main.ts --bundle --outfile=frontend/dist/app.js --format=iife --target=es2022",
+    "build:ts": "esbuild frontend/ts/main.ts --bundle --outdir=frontend/dist --entry-names=app --format=esm --splitting --target=es2022",
     "typecheck": "tsc --noEmit",
     "build": "npm run typecheck && npm run build:css && npm run build:ts",
     "app": "electron desktop/main.js",

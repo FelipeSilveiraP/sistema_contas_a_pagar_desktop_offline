@@ -1,14 +1,16 @@
 # Active Context
 
 ## Foco Atual
-**Fase 3 avançando por módulo — interação corrigida; Empresa implementada** (branch
-`feature/entrega-3.1-sqlite-banco`, commits locais, NENHUM push, `main` intacta).
-Bugs de input RESOLVIDOS: janela subia sem ativação/z-order (cliques caíam em outra janela;
-"trocar de janela" resolvia) — `criarJanela` agora usa `show:false` + `ready-to-show` com
-`show/focus/moveTop`. Regressão real: `desktop/smoke-real.js` (SendInput) 18/18 × 2 ciclos.
-Feitos: Banco (instituição+Pix), Pagador (nome/CPF opcional validado/função ≤100), Empresa
-(2 etapas + telefones 1FN). Testes: JUnit 80/80, smoke 246/246, smoke-real 18/18×2, persistência 11/11.
-Próximo: Todos os Cadastros (tabela multi-filtro + edição) → Inserir Conta → demais financeiros.
+**Boot otimizado: tela de carregamento + lazy loading ESM — inputs liberados com prontidão real**
+(branch `feature/entrega-3.1-sqlite-banco`, commits locais, NENHUM push, `main` intacta).
+Demora dos inputs = boot do backend (~8-10s) sem janela; agora a janela sobe em <1s com
+"Iniciando o sistema..." e a interface é liberada somente quando API+SQLite prontos
+(`inicializado` no `/api/status`). Lazy loading: esbuild ESM `--splitting` — cada página carrega
+só o seu chunk (app.js 1,2KB + chunks por tela); ESM em `file://` validado com o CSP real.
+Sinal `body.dataset.pronto` marca componentes inicializados. Erro de boot: UI com
+Tentar novamente/Fechar (sem expor tokens/caminhos). Testes: smoke-boot 17/17×2 (entrada real,
+inclui capturas `carregando-*.png`), smoke 246/246, smoke-real 18/18×2, JUnit 80/80
+(banco de teste agora aleatório por execução — isolamento), 0 processos órfãos, ~361MB em uso.
 
 ## ETAPA 1 — Causa raiz dos inputs não clicáveis (2026-11-07)
 - **Sintoma:** formulários renderizavam mas nenhum clique/digitação/cursor funcionava; alt-tab

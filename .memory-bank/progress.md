@@ -88,10 +88,19 @@
       persistência 11/11 (pagador no ciclo fechar/reabrir); todos os testes em bancos temporários
 - [x] Capturas: `docs/responsivo/form-pagador-{1536x864,768x800,480x800}.png`
 
-## Pendências
-- [ ] Validação da correção do Banco + da Entrega 3.2 (Pagador) pelo usuário
-- [ ] Iniciar Entrega 3.3 (Empresa) — SOMENTE após validação
-- [ ] Push ao GitHub (AGUARDA autorização explícita; nada publicado ainda)
+## Boot + lazy loading (2026-11-07)
+- [x] Diagnóstico com marcos `[startup]` (sem tokens): ANTES janela visível só +9,4s (backend
+      primeiro); DEPOIS janela +0,9s com tela de carregamento; menu liberado por prontidão real
+- [x] `carregando.html`/`carregando.ts` (neobrutalista, spinner CSS nativo) + estado de erro com
+      Tentar novamente/Fechar; liberação somente com API respondendo `inicializado=true` (SQLite ok)
+- [x] Lazy loading ESM: esbuild `--splitting` (chunks por tela; app.js 1,2KB), `type="module"` nos
+      HTMLs; ESM em `file://` + CSP validado; `dataset.pronto` sinaliza componentes prontos
+- [x] Migration v6: índices `idx_pagadores_nome`, `idx_empresas_razao`; JUnit com banco aleatório
+      por execução (isolamento); `aguardarBackend` gateado por `inicializado`
+- [x] smoke-boot.js (entrada real, 2 ciclos): 17/17 — carregamento, erro, cliques/digitação
+      imediatos nos 3 forms, TAB, foco, capturas `carregando-{1,2}.png`; smoke 246/246,
+      smoke-real 18/18×2; 0 órfãos; ~361MB (Electron+Java em uso)
+- [ ] Próximo: Todos os Cadastros (tabela multi-filtro + edição) → Inserir Conta → demais
 
 ## Fase 3 — correção crítica + módulos (2026-11-07)
 - [x] ETAPA 1: causa raiz dos inputs identificada (janela sem ativação/z-order) e corrigida em
@@ -102,6 +111,8 @@
       função ≤100, migrações v3–v4) — commit `cd9e95a`
 - [x] Empresa (2 etapas + telefones 1FN, migração v5 `empresas`/`telefones_empresa`, CNPJ/email/
       telefone validados, API `/api/empresas`) — JUnit 80/80, smoke 246/246
+
+## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos
 - [ ] Push ao GitHub (AGUARDA autorização; nada publicado)

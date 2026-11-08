@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 5;
+    private static final int VERSAO_ATUAL = 6;
 
     private final ConnectionFactory conexao;
 
@@ -150,6 +150,11 @@ public class DatabaseInitializer {
                     FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE CASCADE
                 )
                 """,
+            };
+            case 6 -> new String[] {
+                // Indices para as ordenacoes das listas (consultas sob demanda).
+                "CREATE INDEX IF NOT EXISTS idx_pagadores_nome ON pagadores(nome)",
+                "CREATE INDEX IF NOT EXISTS idx_empresas_razao ON empresas(razao_social)",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

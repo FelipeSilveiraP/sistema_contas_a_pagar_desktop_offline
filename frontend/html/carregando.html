@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head>
+<body class="submenu-body bg-[#fcf9f8] text-[#1c1b1b] antialiased items-center justify-center" data-tela="carregando">
+<main class="w-full max-w-xl px-4">
+<div class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0_0_#1c1b1b]">
+<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-4 border-[#1c1b1b] bg-[#16a34a] px-4 py-2.5 sm:px-6">
+<span class="material-symbols-outlined text-xl sm:text-2xl text-white font-bold">account_balance</span>
+<h1 class="font-headline text-sm sm:text-base lg:text-lg font-bold uppercase tracking-tight text-white">Sistema de Contas a Pagar — Chaveiro Universal</h1>
+</div>
+<div class="flex flex-col items-center gap-5 px-6 py-10">
+<div id="iniciando" class="flex flex-col items-center gap-5">
+<div class="w-14 h-14 border-4 border-[#1c1b1b] bg-[#16a34a] shadow-[4px_4px_0_0_#1c1b1b] animate-spin" aria-hidden="true"></div>
+<p class="font-headline text-base sm:text-lg font-bold uppercase tracking-wider text-[#1c1b1b]">Iniciando o sistema...</p>
+</div>
+<div id="erro-inicializacao" class="hidden flex flex-col items-center gap-4">
+<span class="material-symbols-outlined text-5xl text-[#b6212a] font-bold">error</span>
+<p class="font-headline text-sm sm:text-base font-bold uppercase tracking-wider text-[#b6212a] text-center">Não foi possível iniciar o banco de dados local.</p>
+<div class="flex flex-wrap items-center justify-center gap-3">
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#16a34a] text-white border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-tentar-novamente" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">refresh</span>
+<span>Tentar novamente</span>
+</button>
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-fechar" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">close</span>
+<span>Fechar</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

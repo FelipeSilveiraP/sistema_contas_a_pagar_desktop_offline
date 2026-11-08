@@ -17,6 +17,13 @@ public class InicializadorBanco implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(InicializadorBanco.class);
 
+    /** Sinaliza que SQLite/migracoes terminaram (usado pelo /api/status). */
+    private static volatile boolean pronto = false;
+
+    public static boolean estaPronto() {
+        return pronto;
+    }
+
     private final DatabaseInitializer initializer;
     private final BackupService backupService;
 
@@ -34,6 +41,7 @@ public class InicializadorBanco implements ApplicationRunner {
             }
             initializer.inicializar();
             backupService.backupDiarioSeNecessario();
+            pronto = true;
             log.info("banco SQLite pronto (esquema v{})", initializer.getVersaoAtual());
         } catch (Exception erro) {
             log.error("falha critica ao inicializar o banco de dados", erro);

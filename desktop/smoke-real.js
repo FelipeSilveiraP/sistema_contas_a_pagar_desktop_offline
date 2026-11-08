@@ -85,7 +85,7 @@ async function digitarReal(texto) {
 
 async function ciclo() {
   await esperarPredicado("!!document.body && !!document.body.dataset.tela");
-  await esperarPredicado(`document.body.dataset.apiStatus !== undefined`);
+  await esperarPredicado(`document.body.dataset.apiStatus !== undefined`, 30000);
   await js(`window.confirm = () => true; 'ok'`);
 
   // 1. nada invisivel bloqueia os inputs do form-banco (verificado no proprio form)

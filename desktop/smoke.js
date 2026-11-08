@@ -109,8 +109,9 @@ async function esperarTela(tela, timeoutMs = 15000) {
   const inicio = Date.now();
   while (Date.now() - inicio < timeoutMs) {
     try {
-      const atual = await js("document.body ? (document.body.dataset.tela || '') : ''");
-      if (atual === tela) return true;
+      // tela + componentes inicializados (dataset.pronto setado pelo main.ts)
+      const pronta = await js(`document.body && document.body.dataset.tela === ${JSON.stringify(tela)} && document.body.dataset.pronto === 'true'`);
+      if (pronta) return true;
     } catch {
       // contexto ainda em carregamento
     }
@@ -231,9 +232,9 @@ function simetriaCentral(rects, largura) {
   return Math.abs(esquerda - (largura - direita)) < 2;
 }
 
-async function corBotaoNav(chave) {
-  return js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="${chave}"]')).backgroundColor`);
-}
+  async function corBotaoNav(chave) {
+    return js(`(() => { const el = document.querySelector('.nav-barra button[data-nav="${chave}"]'); return el ? getComputedStyle(el).backgroundColor : ''; })()`);
+  }
 
 async function capturar(nome) {
   const imagem = await janela.webContents.capturePage();
@@ -374,8 +375,8 @@ async function executar() {
 
   console.log("\n=== SMOKE TEST — navbar global + navegação completa ===\n");
 
-  // 1. Abertura do Menu + API + segurança
-  teste("Abertura do Menu Principal", await esperarPredicado("document.body.dataset.tela === 'menu'"));
+    // 1. Abertura do Menu + API + segurança
+    teste("Abertura do Menu Principal", await esperarPredicado("document.body.dataset.tela === 'menu'", 30000));
   teste(
     "Comunicação com a API (menu)",
     await esperarPredicado("document.body.dataset.apiStatus === 'ok'", 30000),
@@ -1107,8 +1108,9 @@ async function executar() {
   app.quit();
 }
 
-executar().catch((erro) => {
-  console.error("ERRO FATAL NO SMOKE:", erro);
-  app.exitCode = 1;
-  app.quit();
+  executar().catch((erro) => {
+    console.error("ERRO FATAL NO SMOKE:", erro);
+    if (errosConsole.length) console.error("console do renderer:", errosConsole.slice(0, 8).join(" | "));
+    app.exitCode = 1;
+    app.quit();
 });
