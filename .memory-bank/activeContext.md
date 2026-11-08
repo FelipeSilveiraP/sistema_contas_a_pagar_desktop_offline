@@ -79,6 +79,11 @@ Testes: smoke 246/246, smoke-real 2 ciclos APROVADO (inclui hover real + captura
 - Correção do Banco (19 arquivos) + Memory Bank no working tree, NÃO commitados — commit aguarda ordem
 - `main`/`develop`/`feature/navbar-global` preservadas; NADA publicado (push AGUARDA autorização)
 
+## Auditoria de Skills & Governança de Agentes (2026-11-08)
+- Realizada auditoria completa das skills locais (`.agents/skills/`) e pesquisa técnica no GitHub.
+- Instaladas 9 skills especializadas aprovadas cobrindo Electron (`electron-desktop-lifecycle`), Vanilla TS (`vanilla-typescript-dom`), Spring Boot 3.3 / Java 21 (`spring-boot-rest-craft`), SQLite integridade (`sqlite-financial-integrity`), Integração Desktop (`desktop-electron-java-bridge`), Smoke tests (`desktop-smoke-testing`), UI Engineering (`frontend-ui-engineering`), Planejamento (`planning-and-task-breakdown`) e Debugging sistemático (`debugging-and-error-recovery`).
+- Criado `AGENTS.md` na raiz com instruções permanentes, matriz de skills por tarefa e regras de isolamento de banco.
+
 ## Pendências
 1. Validação do usuário: correção do Banco (instituição + Pix) + Entrega 3.2 (Pagador); capturas em
    `docs/responsivo/form-{banco,pagador}-{1536x864,768x800,480x800}.png`
