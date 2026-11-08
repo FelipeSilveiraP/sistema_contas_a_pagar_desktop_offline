@@ -116,3 +116,13 @@
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos
 - [ ] Push ao GitHub (AGUARDA autorização; nada publicado)
+
+## Navbar desktop redesenhada (2026-11-08)
+- [x] Design de referência do usuário implementado em `navbar.ts` + `tailwind.input.css` (barra
+      unida, borda 3px, sombra rígida 6px, seta VOLTAR, quadrados de ícones coloridos SVG,
+      ativo azul #2165EF, hover #eee, focus-visible, compacto ≤1100px e em páginas de 2 botões)
+- [x] Breakpoint barra/hambúrguer unificado em 851px; painel compacto preservado (VOLTAR primeiro,
+      X/ESC/clique fora, véu, estabilidade dos cartões); `data-nav`/histórico reutilizados
+- [x] Regressões: smoke 246/246 (ordem, destaque ativo, breakpoints, overflow), smoke-real
+      APROVADO, smoke-boot APROVADO; capturas nav-{1920x1080,1536x864,1280x720,960x540} + compacto
+- [ ] Aguardando validação visual do usuário

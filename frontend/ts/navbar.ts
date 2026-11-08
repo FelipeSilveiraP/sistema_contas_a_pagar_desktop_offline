@@ -9,20 +9,41 @@ interface ItemNav {
   icone: string;
   cor: string;
   corTexto: string;
+  svg: string;
+  quadrado?: string;
   destino?: Tela;
   provisorio?: string;
   noPainel: boolean;
 }
 
 const ITENS_NAV: ItemNav[] = [
-  { chave: "voltar", rotulo: "VOLTAR", icone: "arrow_back", cor: "", corTexto: "", noPainel: true },
-  { chave: "menu", rotulo: "MENU PRINCIPAL", icone: "home", cor: "", corTexto: "", noPainel: true },
+  {
+    chave: "voltar",
+    rotulo: "VOLTAR",
+    icone: "arrow_back",
+    cor: "",
+    corTexto: "",
+    svg: '<path d="M20 12H4M11 5l-7 7 7 7"/>',
+    noPainel: true,
+  },
+  {
+    chave: "menu",
+    rotulo: "MENU PRINCIPAL",
+    icone: "home",
+    cor: "",
+    corTexto: "",
+    svg: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10"/><path d="M10 21v-7h4v7"/>',
+    quadrado: "icone-amarelo",
+    noPainel: true,
+  },
   {
     chave: "cadastros",
     rotulo: "CADASTROS",
     icone: "badge",
     cor: "bg-[#FF8400]",
     corTexto: "text-[#FF8400]",
+    svg: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 6a3 3 0 0 1 0 6"/><path d="M18 15a5 5 0 0 1 3 5"/>',
+    quadrado: "icone-laranja",
     destino: "cadastros",
     noPainel: true,
   },
@@ -32,6 +53,8 @@ const ITENS_NAV: ItemNav[] = [
     icone: "checklist",
     cor: "bg-[#38BDF8]",
     corTexto: "text-[#38BDF8]",
+    svg: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="white"/><circle cx="15" cy="12" r="2" fill="white"/><circle cx="9" cy="18" r="2" fill="white"/>',
+    quadrado: "icone-branco",
     destino: "controle",
     noPainel: true,
   },
@@ -41,6 +64,8 @@ const ITENS_NAV: ItemNav[] = [
     icone: "forum",
     cor: "bg-[#FF5E89]",
     corTexto: "text-[#FF5E89]",
+    svg: '<rect x="3" y="5" width="18" height="14" rx="0"/><path d="m3 7 9 7 9-7"/>',
+    quadrado: "icone-rosa",
     destino: "mensagens",
     noPainel: true,
   },
@@ -50,6 +75,8 @@ const ITENS_NAV: ItemNav[] = [
     icone: "bar_chart",
     cor: "bg-[#00FF66]",
     corTexto: "text-[#00FF66]",
+    svg: '<path d="M5 20v-6h3v6M11 20V9h3v11M17 20V4h3v16"/>',
+    quadrado: "icone-verde",
     provisorio: "GRÁFICOS",
     noPainel: true,
   },
@@ -66,23 +93,20 @@ const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   mensagens: "mensagens",
 };
 
-const CLASSE_BOTAO =
-  "nav-botao inline-flex items-center gap-2 px-3 py-2 whitespace-nowrap border-4 border-[#1c1b1b] shadow-[4px_4px_0_0_#1c1b1b] font-headline font-bold text-xs uppercase tracking-wider text-[#1c1b1b] cursor-pointer transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b]";
-
 const CLASSE_ITEM_PAINEL =
-  "nav-item flex items-center gap-3 w-full px-4 py-3 text-left font-headline font-bold text-sm uppercase tracking-wider text-[#1c1b1b] cursor-pointer transition-colors border-b-2 border-[#1c1b1b] last:border-b-0";
+  "nav-item-painel flex items-center gap-3 w-full px-4 py-3 text-left font-headline font-bold text-sm uppercase tracking-wider text-[#1c1b1b] cursor-pointer transition-colors border-b-2 border-[#1c1b1b] last:border-b-0";
 
 function iconeHtml(nome: string, classe: string): string {
   return `<span class="material-symbols-outlined ${classe}">${nome}</span>`;
 }
 
 function botaoBarraHtml(item: ItemNav, ativo: boolean): string {
-  const fundo = ativo ? item.cor : "bg-white";
-  const corIcone = ativo ? "text-[#1c1b1b]" : item.corTexto;
-  return `<button class="${CLASSE_BOTAO} ${fundo}" data-nav="${item.chave}" type="button">${iconeHtml(
-    item.icone,
-    `text-lg leading-none font-bold ${corIcone}`
-  )}<span>${item.rotulo}</span></button>`;
+  const classeAtivo = ativo ? " ativo" : "";
+  const atual = ativo ? ' aria-current="page"' : "";
+  if (item.chave === "voltar") {
+    return `<button class="nav-item nav-voltar${classeAtivo}" type="button" data-nav="${item.chave}" aria-label="Voltar"${atual}><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></button>`;
+  }
+  return `<button class="nav-item${classeAtivo}" type="button" data-nav="${item.chave}"${atual}><span class="nav-icone ${item.quadrado}"><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></span><span>${item.rotulo}</span></button>`;
 }
 
 function itemPainelHtml(item: ItemNav, ativo: boolean): string {
@@ -130,9 +154,9 @@ export function montarNavbar(tela: Tela): void {
 
   raiz.dataset.menuAberto = "false";
   raiz.innerHTML = `
-<div class="nav-barra w-full gap-2 justify-between">
-${ITENS_NAV.map((item) => botaoBarraHtml(item, item.chave === moduloAtivo)).join("")}
-</div>
+<nav class="barra-navegacao nav-barra" aria-label="Navegação principal">
+${ITENS_NAV.map((item) => botaoBarraHtml(item, item.chave === moduloAtivo)).join("\n")}
+</nav>
 <button class="nav-hamburguer relative z-[60] flex-col items-center justify-center gap-1.5 w-14 h-14 bg-white border-4 border-[#1c1b1b] shadow-[4px_4px_0_0_#1c1b1b] cursor-pointer transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b]" aria-label="Abrir menu de navegação" aria-expanded="false" type="button">
 <span class="nav-hamburguer__linha"></span>
 <span class="nav-hamburguer__linha"></span>

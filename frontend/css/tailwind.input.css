@@ -74,6 +74,197 @@
 
 /* ===== Navbar global (barra desktop + menu lateral compacto) ===== */
 
+/* CONTAINER PRINCIPAL (design de referencia do usuario) */
+
+.barra-navegacao {
+  display: flex;
+  align-items: stretch;
+
+  width: max-content;
+  max-width: 100%;
+
+  margin: 0 auto;
+
+  background: var(--branco-nav, #ffffff);
+
+  border: 3px solid var(--preto-nav, #111111);
+
+  box-shadow: 6px 6px 0 var(--preto-nav, #111111);
+
+  font-family: Arial, Helvetica, sans-serif;
+
+  box-sizing: border-box;
+}
+
+/* BOTOES */
+
+.barra-navegacao .nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  min-height: 48px;
+
+  padding: 8px 14px;
+
+  background: var(--branco-nav, #ffffff);
+  color: var(--preto-nav, #111111);
+
+  border: none;
+  border-right: 3px solid var(--preto-nav, #111111);
+
+  font-size: 14px;
+  font-weight: 900;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition: background-color 0.15s ease;
+
+  box-sizing: border-box;
+}
+
+/* ULTIMO BOTAO NAO PRECISA DE DIVISORIA */
+
+.barra-navegacao .nav-item:last-child {
+  border-right: none;
+}
+
+/* BOTAO VOLTAR */
+
+.barra-navegacao .nav-voltar {
+  min-width: 54px;
+  padding: 8px 12px;
+}
+
+.barra-navegacao .nav-voltar > svg {
+  width: 27px;
+  height: 27px;
+
+  fill: none;
+  stroke: var(--preto-nav, #111111);
+  stroke-width: 3;
+
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+/* QUADRADOS COLORIDOS DOS ICONES */
+
+.nav-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 33px;
+  height: 33px;
+
+  flex-shrink: 0;
+
+  border: 3px solid var(--preto-nav, #111111);
+
+  box-sizing: border-box;
+}
+
+/* SVG DOS ICONES */
+
+.nav-icone svg {
+  width: 23px;
+  height: 23px;
+
+  fill: none;
+  stroke: var(--preto-nav, #111111);
+
+  stroke-width: 2.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+/* CORES DOS ICONES */
+
+.icone-amarelo {
+  background: #ffe500;
+}
+
+.icone-laranja {
+  background: #ff8400;
+}
+
+.icone-branco {
+  background: #ffffff;
+}
+
+.icone-rosa {
+  background: #fa78b8;
+}
+
+.icone-verde {
+  background: #35e87d;
+}
+
+/* BOTAO ATIVO */
+
+.barra-navegacao .nav-item.ativo {
+  background: #2165ef;
+  color: #ffffff;
+}
+
+/* HOVER */
+
+.barra-navegacao .nav-item:not(.ativo):hover {
+  background: #eeeeee;
+}
+
+/* FOCO PARA NAVEGACAO POR TECLADO */
+
+.barra-navegacao .nav-item:focus-visible {
+  outline: 3px solid #2165ef;
+  outline-offset: -5px;
+}
+
+/* RESPONSIVIDADE INTERMEDIARIA */
+
+@media (max-width: 1100px) {
+  .barra-navegacao .nav-item {
+    gap: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .nav-icone {
+    width: 30px;
+    height: 30px;
+  }
+
+  .nav-icone svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* Paginas com 2 botoes tem o wrap mais estreito (56rem): itens compactos
+   para a barra nunca estourar a largura disponivel */
+[data-botoes="2"] .barra-navegacao .nav-item {
+  gap: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+[data-botoes="2"] .nav-icone {
+  width: 30px;
+  height: 30px;
+}
+
+[data-botoes="2"] .nav-icone svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Exibicao da barra (desktop) x hamburguer (compacto) */
+
 .nav-barra {
   display: none;
 }
@@ -136,11 +327,11 @@
 
 /* A barra cabe a partir de 900px (largura necessária para 6 botões);
    abaixo disso vale o botão flutuante com menu lateral */
-@media (min-width: 900px) {
+@media (min-width: 851px) {
   .nav-barra { display: flex; }
 }
 
-@media (max-width: 899px) {
+@media (max-width: 850px) {
   .nav-hamburguer { display: inline-flex; }
 }
 
