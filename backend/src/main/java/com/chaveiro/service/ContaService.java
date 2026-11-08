@@ -156,6 +156,10 @@ public class ContaService {
         }
         String na = a.trim().toLowerCase();
         String nb = b.trim().toLowerCase();
+        // nomes vazios nunca sao "parecidos" (contains("") seria sempre verdadeiro)
+        if (na.isEmpty() || nb.isEmpty()) {
+            return false;
+        }
         return na.contains(nb) || nb.contains(na);
     }
 

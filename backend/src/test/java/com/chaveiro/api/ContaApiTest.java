@@ -166,4 +166,46 @@ class ContaApiTest {
                         .content(corpo(99999L, "10.00", "2026-12-10", null, true)))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void naoDevePermitirTrocarStatusViaPut() throws Exception {
+        // Invariante para a integracao financeira (3.6/3.7): o status da conta nao
+        // pode ser alterado por PUT — a baixa sera uma operacao transacional propria
+        // (pagamento + status na mesma transacao). Hoje nenhum caminho seta PAGO.
+        long idEmpresa = cadastrarEmpresa();
+        String criado = mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo(idEmpresa, "10.00", "2026-12-10", "ST-" + sufixo(), true)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(criado).get("id").asLong();
+
+        String corpoComStatus = json.writeValueAsString(java.util.Map.of(
+                "idEmpresa", idEmpresa,
+                "valor", "10.00",
+                "vencimento", "2026-12-10",
+                "boletoNaPasta", false,
+                "forcar", true,
+                "status", "PAGO"));
+        mvc.perform(put("/api/contas/" + id).header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoComStatus))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/contas/" + id).header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PENDENTE"));
+    }
+
+    @Test
+    void forcarNaoBypassaValidacaoDeValor() throws Exception {
+        // forcar pula somente o filtro de duplicidade; validacoes e integridade
+        // (CHECK valor > 0, FKs) continuam obrigatorias
+        long idEmpresa = cadastrarEmpresa();
+        mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpo(idEmpresa, "0.00", "2026-12-10", null, true)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.valor").exists());
+    }
 }

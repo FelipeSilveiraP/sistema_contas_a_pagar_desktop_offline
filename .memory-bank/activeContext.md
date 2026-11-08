@@ -248,9 +248,18 @@ capturas nas 3 resoluções.
 (recomendado) vs modal/inline na tabela; (2) layout da aba "Todos" com colunas genéricas vs
 exibição por tipo separada.
 
+## Verificação da 3.5 a pedido do usuário (2026-11-08)
+- **Expressão de duplicidade revisada:** `DUP = DocIgual OU (NomesParecidos E (Vencimento≤5d OU |ΔValor|≤R$150))` — precedência: `OU` externo mais fraco; `E` interno; `DocIgual` = ambos não-vazios e iguais sem distinção de maiúsculas. Falsos positivos documentados (por design do VBA "ultra-sensível", sempre com confirmação): mesmo doc em fornecedores diferentes; mesmo fornecedor com 2 boletos legítimos na mesma semana; mesmo fornecedor com valores próximos em datas distantes — **este último é divergência do VBA, que comparava só dentro da mês do vencimento** (ver pendência 2). Guard adicionado: nomes vazios nunca contam como parecidos. `forcar` pula APENAS o filtro de duplicidade (validações + FK/CHECK continuam; testes provam).
+- **Status PAGO inalterável por vias transversais:** POST fixa PENDENTE; PUT não toca a coluna `status` (guardado por teste `naoDevePermitirTrocarStatusViaPut`); nenhum caminho atual seta PAGO. Invariante registrada (padrão 18): quando o módulo de pagamentos entrar (3.6/3.7), baixa = `pagamentos` + status na MESMA transação + `UNIQUE(id_conta)` contra duplicados.
+- **Regressão de foco:** `smoke-dev.js` inicia o app por `cmd /c npm run dev` (mesmo fluxo do usuário), entrada exclusivamente SendInput/sem `focus()`, 83 critérios em 3 ciclos — preservado e executado (83/83).
+- **Status do defeito de digitação:** corrigido e provado em testes automatizados; **NÃO considerado definitivamente resolvido — pendente validação manual do usuário** (uso real via `npm run dev`).
+- JUnit 101/101 após as guardas novas.
+
 ## Pendências
 1. Validação do usuário: correção do Banco (instituição + Pix) + Entrega 3.2 (Pagador) + Entrega 3.3
    (Empresa) + navbar hover; capturas em `docs/responsivo/form-{banco,pagador}-{1536x864,768x800,480x800}.png`
-2. Push ao GitHub — AGUARDA autorização explícita
-3. Próxima entrega: **Todos os Cadastros** (tabela multi-filtro + edição) — planejamento GSD
-   apresentado em 2026-11-08 (ver seção acima); NÃO executar sem autorização
+2. **Decisão do usuário (comportamento financeiro):** escopo do scan de duplicidade — atual global
+   (mais sensível) vs fiel ao VBA (só o mês do vencimento) vs janela ±31 dias; pendente definição
+3. **Validação manual do defeito de digitação** (`npm run dev` real) — até lá NÃO declarar resolvido
+4. Push ao GitHub — AGUARDA autorização explícita
+5. Próxima entrega: **Módulo 3.6 Boletos/Todas as Contas** — autorizado; executar conforme plano mestre

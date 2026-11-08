@@ -160,6 +160,15 @@
       `inserir-conta-{1536x864,768x800,480x800}.png`
 - [x] Checkpoint local — sem push
 
+## Verificação da 3.5 a pedido do usuário (2026-11-08)
+- [x] Expressão de duplicidade revisada e apresentada (precedência, falsos positivos, guard de nomes
+      vazios); `forcar` provado incapaz de violar validações/FKs/CHECKs
+- [x] Invariante de status financeiro: PUT não altera `status` (teste guarda); nenhum caminho seta
+      PAGO; regra para 3.6/3.7 registrada (pagamento + status na mesma transação, UNIQUE(id_conta))
+- [x] smoke-dev confirmado no fluxo real `npm run dev` (83 critérios preservados)
+- [ ] Defeito de digitação: pendente validação manual do usuário (não declarar resolvido)
+- [ ] Escopo do scan de duplicidade: decisão pendente (global vs mês do VBA vs ±31 dias)
+
 ## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos
