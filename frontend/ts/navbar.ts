@@ -90,6 +90,7 @@ const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   "form-banco": "cadastros",
   "form-pagador": "cadastros",
   "form-empresa": "cadastros",
+  "todos-cadastros": "cadastros",
   mensagens: "mensagens",
 };
 

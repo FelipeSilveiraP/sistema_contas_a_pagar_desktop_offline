@@ -29,6 +29,11 @@ async function iniciar(): Promise<void> {
       iniciarFormEmpresa();
       return;
     }
+    case "todos-cadastros": {
+      const { iniciarTodosCadastros } = await import("./telas/todos-cadastros");
+      iniciarTodosCadastros();
+      return;
+    }
     default: {
       const { iniciarSubmenu } = await import("./telas/submenu");
       const { SUBMENUS } = await import("./submenus-config");

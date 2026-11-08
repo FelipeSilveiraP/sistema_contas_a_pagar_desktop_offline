@@ -135,3 +135,77 @@ export async function criarEmpresa(
   }
   return (await resposta.json()) as EmpresaDados;
 }
+
+export function listarBancos(cfg: FinDeskConfig): Promise<BancoDados[]> {
+  return get<BancoDados[]>(cfg, "/api/bancos");
+}
+
+export function listarPagadores(cfg: FinDeskConfig): Promise<PagadorDados[]> {
+  return get<PagadorDados[]>(cfg, "/api/pagadores");
+}
+
+export function listarEmpresas(cfg: FinDeskConfig): Promise<EmpresaDados[]> {
+  return get<EmpresaDados[]>(cfg, "/api/empresas");
+}
+
+async function atualizar<T>(cfg: FinDeskConfig, caminho: string, dados: unknown): Promise<T> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}${caminho}`, {
+    method: "PUT",
+    headers: { "X-FinDesk-Token": cfg.token, "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  if (resposta.status === 400) {
+    const corpo = (await resposta.json()) as { campos?: Record<string, string> };
+    throw new ErroValidacaoApi(corpo.campos ?? {});
+  }
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+  return (await resposta.json()) as T;
+}
+
+export function atualizarBanco(
+  cfg: FinDeskConfig,
+  id: number,
+  dados: { instituicao: string; chavePix?: string }
+): Promise<BancoDados> {
+  return atualizar<BancoDados>(cfg, `/api/bancos/${id}`, dados);
+}
+
+export function atualizarPagador(
+  cfg: FinDeskConfig,
+  id: number,
+  dados: { nome: string; cpf: string; funcao?: string }
+): Promise<PagadorDados> {
+  return atualizar<PagadorDados>(cfg, `/api/pagadores/${id}`, dados);
+}
+
+export function atualizarEmpresa(
+  cfg: FinDeskConfig,
+  id: number,
+  dados: EmpresaEntrada
+): Promise<EmpresaDados> {
+  return atualizar<EmpresaDados>(cfg, `/api/empresas/${id}`, dados);
+}
+
+async function excluir(cfg: FinDeskConfig, caminho: string): Promise<void> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}${caminho}`, {
+    method: "DELETE",
+    headers: { "X-FinDesk-Token": cfg.token },
+  });
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+}
+
+export function excluirBanco(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/bancos/${id}`);
+}
+
+export function excluirPagador(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/pagadores/${id}`);
+}
+
+export function excluirEmpresa(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/empresas/${id}`);
+}

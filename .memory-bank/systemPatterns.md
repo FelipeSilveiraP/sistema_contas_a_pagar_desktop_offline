@@ -1,10 +1,14 @@
 # System Patterns & Architectural Decisions
 
-## Stack Tecnológica
+## Stack Tecnológica (legado JavaFX — preservado por histórico; NÃO é a stack atual)
 * **Linguagem:** Java 21 LTS (Eclipse Adoptium OpenJDK).
 * **UI Framework:** JavaFX 21.0.2 via FXML e CSS nativo (`-fx-*`).
 * **Banco de Dados Local:** SQLite 3.45.2 via JDBC puro.
 * **Testes Automatizados:** JUnit 5 (Jupiter) + AssertJ 3.25.3.
+
+> **Nota de consistência (2026-11-08):** os itens 1–10 abaixo referem-se à fase JavaFX legada
+> (incluindo "sem Spring" e PF/PJ em Pagador, ambos superados). A stack oficial vigente está em
+> `AGENTS.md` e nos itens 11–16 (Electron + TypeScript puro + Spring Boot 3.3 + SQLite WAL).
 
 ## Padrões Arquiteturais Consolidados
 1. **Model Layer (DER Refinado):** Java 21 `record` para dados imutáveis (`Conta`, `Empresa`, `TelefoneEmpresa`, `Pagador`, `NotaFiscal`, `CategoriaConta`, `FormaPagamento`, `Banco`, `Pagamento`, `BoletoRecorrente`, `Aviso`, `AuditoriaOperacao`).

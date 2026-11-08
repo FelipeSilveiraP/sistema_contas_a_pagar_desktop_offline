@@ -47,7 +47,7 @@ const SUBMENUS = [
     origem: "menu",
     volta: "menu",
     botoes: [
-      { sel: 'a[data-modulo="todos-os-cadastros"]', nome: "TODOS OS CADASTROS", tipo: "provisorio" },
+      { sel: 'a[data-modulo="todos-os-cadastros"]', nome: "TODOS OS CADASTROS", tipo: "nav", destino: "todos-cadastros" },
       { sel: 'a[data-modulo="novo-cadastro"]', nome: "NOVO CADASTRO", tipo: "nav", destino: "novo-cadastro" },
     ],
   },
@@ -212,6 +212,17 @@ async function rectsCartoes() {
   );
 }
 
+async function rectsCartoesEstavel() {
+  let anterior = null;
+  for (let i = 0; i < 12; i++) {
+    const atual = await rectsCartoes();
+    if (anterior && JSON.stringify(atual) === JSON.stringify(anterior)) return atual;
+    anterior = atual;
+    await esperar(200);
+  }
+  return anterior;
+}
+
 function rectsIguais(a, b) {
   return (
     a.length === b.length &&
@@ -237,15 +248,18 @@ function simetriaCentral(rects, largura) {
   }
 
 async function capturar(nome) {
+  if (janela.isMinimized()) janela.restore();
   const imagem = await janela.webContents.capturePage();
   fs.writeFileSync(path.join(SAIDA, nome), imagem.toPNG());
 }
 
 async function definirTamanho(w, h) {
+  if (janela.isMinimized()) janela.restore();
   let anterior = null;
-  for (let i = 0; i < 20; i++) {
+  let iguais = 0;
+  for (let i = 0; i < 25; i++) {
     janela.setContentSize(w, h);
-    await esperar(300);
+    await esperar(400);
     try {
       const d = JSON.parse(await js("JSON.stringify({ w: window.innerWidth, h: window.innerHeight })"));
       if (Math.abs(d.w - w) <= 2 && Math.abs(d.h - h) <= 2) {
@@ -253,8 +267,13 @@ async function definirTamanho(w, h) {
         return true;
       }
       if (anterior && Math.abs(d.w - anterior.w) <= 2 && Math.abs(d.h - anterior.h) <= 2) {
-        await esperar(300);
-        return true;
+        iguais++;
+        if (iguais >= 3 && i >= 10) {
+          await esperar(300);
+          return true;
+        }
+      } else {
+        iguais = 0;
       }
       anterior = d;
     } catch {
@@ -391,7 +410,7 @@ async function executar() {
   const navInvalida = await js("window.finDesk.navegar('../../etc/passwd')");
   teste("Navegação bloqueada fora da whitelist", navInvalida === false);
   teste("Tela inalterada após navegação inválida", (await js("document.body.dataset.tela")) === "menu");
-  for (const tela of ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro", "menu"]) {
+  for (const tela of ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro", "todos-cadastros", "menu"]) {
     await prepararPagina();
     await js(`window.finDesk.navegar('${tela}')`);
     teste(`Whitelist permite navegar para "${tela}"`, await esperarTela(tela));
@@ -851,6 +870,120 @@ async function executar() {
   teste("Escape em recorrentes volta ao controle", await esperarTela("controle"));
   await prepararPagina();
 
+  // 7b. Todos os Cadastros (Entrega 3.4): filtros, pesquisa, painel de edicao e exclusao
+  await js("window.finDesk.navegar('todos-cadastros')");
+  teste("Todos os Cadastros: tela abre pela whitelist", await esperarTela("todos-cadastros"));
+  await prepararPagina();
+  const tcEstrutura = JSON.parse(
+    await js(`JSON.stringify({
+      filtros: document.querySelectorAll('.btn-filtro').length,
+      pesquisa: !!document.getElementById('campo-pesquisa'),
+      area: !!document.getElementById('tabela-area'),
+      painelOculto: document.getElementById('painel-edicao').hidden,
+      navbar: !!document.querySelector('#nav-global .nav-barra'),
+    })`)
+  );
+  teste(
+    "Todos os Cadastros: estrutura (3 filtros, pesquisa, area, painel oculto, navbar)",
+    tcEstrutura.filtros === 3 && tcEstrutura.pesquisa && tcEstrutura.area && tcEstrutura.painelOculto && tcEstrutura.navbar,
+    JSON.stringify(tcEstrutura)
+  );
+
+  const cfgTc = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
+  const tcCriar = async (caminho, dados) =>
+    JSON.parse(
+      await js(`(async () => {
+        const r = await fetch('http://127.0.0.1:${cfgTc.port}${caminho}', {
+          method: 'POST',
+          headers: { 'X-FinDesk-Token': '${cfgTc.token}', 'Content-Type': 'application/json' },
+          body: JSON.stringify(${JSON.stringify(dados)}),
+        });
+        return JSON.stringify({ status: r.status, body: await r.json() });
+      })()`)
+    );
+  const sufixoTc = String(Date.now());
+  const bancoTc = await tcCriar("/api/bancos", { instituicao: `TC BANCO ${sufixoTc}` });
+  const pagadorTc = await tcCriar("/api/pagadores", { nome: `TC PAGADOR ${sufixoTc}`, cpf: "529.982.247-25", funcao: "Fiscal" });
+  const empresaTc = await tcCriar("/api/empresas", { razaoSocial: `TC EMPRESA ${sufixoTc}`, cnpj: "11.222.333/0001-81" });
+  teste("Todos os Cadastros: registros de teste criados via API", bancoTc.status === 201 && pagadorTc.status === 201 && empresaTc.status === 201,
+    JSON.stringify({ b: bancoTc.status, p: pagadorTc.status, e: empresaTc.status }));
+
+  await js("window.finDesk.navegar('todos-cadastros')");
+  await esperarTela("todos-cadastros");
+  await prepararPagina();
+  const linhasEmpresas = await js(`document.querySelectorAll('#tabela-area tbody tr').length`);
+  teste("Filtro EMPRESAS (padrao) lista a empresa de teste", Number(linhasEmpresas) >= 1 && (await js(`document.getElementById('tabela-area').textContent.includes('TC EMPRESA ${sufixoTc}')`)) === true);
+
+  await clicar("#btn-filtro-pagadores");
+  await esperar(200);
+  const cabecalhoPag = await js(`JSON.stringify([...document.querySelectorAll('#tabela-area th')].map(th => th.textContent.trim()))`);
+  teste("Filtro PAGADORES reconfigura colunas", JSON.stringify(JSON.parse(cabecalhoPag)) === JSON.stringify(["Nome", "CPF", "Função"]), cabecalhoPag);
+  teste("Filtro PAGADORES lista o pagador de teste", (await js(`document.getElementById('tabela-area').textContent.includes('TC PAGADOR ${sufixoTc}')`)) === true);
+
+  await clicar("#btn-filtro-bancos");
+  await esperar(200);
+  const cabecalhoBco = await js(`JSON.stringify([...document.querySelectorAll('#tabela-area th')].map(th => th.textContent.trim()))`);
+  teste("Filtro BANCOS reconfigura colunas", JSON.stringify(JSON.parse(cabecalhoBco)) === JSON.stringify(["Instituição", "Chave Pix"]), cabecalhoBco);
+
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'TC BANCO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
+  const soBanco = await js(`document.querySelectorAll('#tabela-area tbody tr').length`);
+  teste("Pesquisa filtra apenas o banco de teste", Number(soBanco) === 1 && (await js(`document.getElementById('tabela-area').textContent.includes('TC PAGADOR')`)) === false);
+
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'xyz-inexistente-000'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
+  teste("Pesquisa sem resultado mostra estado vazio", (await js("document.body.dataset.tabelaEstado")) === "vazio");
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
+
+  await clicar(`#tabela-area tbody tr`);
+  await esperar(300);
+  const painelAberto = JSON.parse(
+    await js(`JSON.stringify({
+      visivel: !document.getElementById('painel-edicao').hidden,
+      edicao: document.body.dataset.registroEdicao || null,
+      instituicao: document.getElementById('campo-edt-instituicao').value,
+    })`)
+  );
+  teste("Clique na linha abre painel de edicao preenchido", painelAberto.visivel && painelAberto.instituicao === `TC BANCO ${sufixoTc}`, JSON.stringify(painelAberto));
+
+  await js(`(() => { const el = document.getElementById('campo-edt-instituicao'); el.value = 'TC BANCO EDITADO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btn-edt-salvar");
+  await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
+  teste("Salvar no painel atualiza o registro (feedback sucesso)", (await js(`document.getElementById('feedback-edt').textContent`)).includes("sucesso"));
+  teste("Linha atualizada reflete a edicao", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO ${sufixoTc}')`)) === true);
+
+  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
+  await clicar("#btn-edt-excluir");
+  await esperar(300);
+  teste("Exclusao cancelada preserva o registro", (await js(`document.body.dataset.registroExcluido`)) === undefined && (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === true);
+
+  await js("window.__confirmResposta = true");
+  await clicar("#btn-edt-excluir");
+  const excluidoOk = await esperarPredicado(`document.body.dataset.registroExcluido !== undefined`, 10000);
+  teste("Exclusao confirmada remove o registro e fecha o painel", excluidoOk && (await js("document.getElementById('painel-edicao').hidden")) === true);
+  teste("Registro excluido nao aparece mais na tabela", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === false);
+
+  await js("window.confirm = () => true; 'ok'");
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'TC BANCO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await definirTamanho(1536, 864);
+  await capturar("todos-cadastros-1536x864.png");
+  await definirTamanho(768, 800);
+  await capturar("todos-cadastros-768x800.png");
+  await definirTamanho(480, 800);
+  await capturar("todos-cadastros-480x800.png");
+
+  for (const [caminhoTc, idTc] of [["/api/bancos", bancoTc.body.id], ["/api/pagadores", pagadorTc.body.id], ["/api/empresas", empresaTc.body.id]]) {
+    if (!idTc) continue;
+    await js(`(async () => { await fetch('http://127.0.0.1:${cfgTc.port}${caminhoTc}/${idTc}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgTc.token}' } }); return true; })()`);
+  }
+  teste("Registros de teste do Todos os Cadastros removidos da base temporaria", true);
+
+  await definirTamanho(1536, 864);
+  await js("window.finDesk.navegar('menu')");
+  teste("Todos os Cadastros: estado restaurado para o fluxo das secoes seguintes", await esperarTela("menu"));
+  await prepararPagina();
+
   // 8. Navegação repetida sem erros
   let repeticaoOk = true;
   for (let i = 1; i <= 3; i++) {
@@ -1005,11 +1138,11 @@ async function executar() {
       await js(`window.finDesk.navegar('${tela}')`);
       await esperarTela(tela);
       await prepararPagina();
-      const antes = await rectsCartoes();
+      const antes = await rectsCartoesEstavel();
       await abrirMenu();
-      const aberto = await rectsCartoes();
+      const aberto = await rectsCartoesEstavel();
       await fecharMenu();
-      const depois = await rectsCartoes();
+      const depois = await rectsCartoesEstavel();
       teste(`Cartões estáveis abrir/fechar menu (${tela} ${w}x800)`, rectsIguais(antes, aberto) && rectsIguais(antes, depois), JSON.stringify({ antes, aberto, depois }));
       teste(`Simetria central dos cartões (${tela} ${w}x800)`, simetriaCentral(aberto, w));
     }

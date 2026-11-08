@@ -1,0 +1,135 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Todos os Cadastros — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head><body class="submenu-body bg-[#fcf9f8] text-[#1c1b1b] antialiased" data-tela="todos-cadastros">
+<div class="submenu-wrap">
+<header id="nav-global"></header>
+<main class="w-full flex flex-col gap-4 sm:gap-5">
+<section class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0_0_#1c1b1b]">
+<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-4 border-[#1c1b1b] bg-[#ea580c] px-4 py-2.5 sm:px-6">
+<span class="material-symbols-outlined text-xl sm:text-2xl text-white font-bold">folder</span>
+<h1 class="font-headline text-base sm:text-lg lg:text-xl font-bold uppercase tracking-tight text-white">TODOS OS CADASTROS</h1>
+</div>
+<div class="border-b-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-2 sm:px-6 font-headline text-xs sm:text-sm font-bold text-[#1c1b1b]">
+Consulte, edite ou exclua os cadastros de Empresas, Pagadores e Bancos.
+</div>
+<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-2 border-[#1c1b1b] bg-white px-4 py-3 sm:px-6">
+<button class="btn-filtro inline-flex items-center gap-2 px-4 py-2 border-4 border-[#1c1b1b] font-headline font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-filtro-empresas" data-tipo="empresas" type="button" aria-pressed="true">
+<span class="material-symbols-outlined text-base leading-none font-bold">apartment</span>
+<span>Empresas</span>
+</button>
+<button class="btn-filtro inline-flex items-center gap-2 px-4 py-2 border-4 border-[#1c1b1b] font-headline font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-filtro-pagadores" data-tipo="pagadores" type="button" aria-pressed="false">
+<span class="material-symbols-outlined text-base leading-none font-bold">person</span>
+<span>Pagadores</span>
+</button>
+<button class="btn-filtro inline-flex items-center gap-2 px-4 py-2 border-4 border-[#1c1b1b] font-headline font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-filtro-bancos" data-tipo="bancos" type="button" aria-pressed="false">
+<span class="material-symbols-outlined text-base leading-none font-bold">account_balance</span>
+<span>Bancos</span>
+</button>
+<label class="sr-only" for="campo-pesquisa">Pesquisar cadastros</label>
+<input class="form-campo flex-1 min-w-[12rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-pesquisa" type="search" maxlength="120" autocomplete="off" placeholder="Pesquisar...">
+</div>
+<div class="p-4 sm:p-6" id="tabela-area">
+<p class="font-headline text-sm font-bold text-[#1c1b1b]" id="tabela-estado" role="status">Carregando cadastros...</p>
+</div>
+</section>
+<section class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0_0_#1c1b1b]" id="painel-edicao" hidden>
+<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-4 border-[#1c1b1b] bg-[#1c1b1b] px-4 py-2.5 sm:px-6">
+<span class="material-symbols-outlined text-xl sm:text-2xl text-white font-bold">edit</span>
+<h2 class="font-headline text-base sm:text-lg font-bold uppercase tracking-tight text-white" id="painel-titulo">EDITAR REGISTRO</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="painel-campos">
+<div class="flex flex-col gap-1.5 painel-grupo" id="grupo-empresas" hidden>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-razao">Razão Social</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-razao" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="razaoSocial"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-cnpj">CNPJ (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cnpj" type="text" maxlength="18" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cnpj"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-representante">Representante (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-representante" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="nomeRepresentante"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-email">E-mail (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-email" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="email"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-logradouro">Logradouro (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-logradouro" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="logradouro"></p>
+</div>
+<div class="flex flex-col gap-2 sm:col-span-2">
+<div class="flex items-center justify-between gap-2">
+<span class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">Telefones</span>
+<button class="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-xs uppercase tracking-wider shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer" id="btn-add-telefone-edt" type="button">
+<span class="material-symbols-outlined text-base leading-none font-bold">add</span>
+<span>Telefone</span>
+</button>
+</div>
+<div class="flex flex-col gap-2" id="lista-telefones-edt"></div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="telefones"></p>
+</div>
+</div>
+<div class="flex flex-col gap-4 sm:gap-5 sm:col-span-2 painel-grupo" id="grupo-pagadores" hidden>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-nome">Nome</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-nome" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="nome"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-cpf">CPF</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cpf" type="text" maxlength="14" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cpf"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-funcao">Função (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-funcao" type="text" maxlength="60" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="funcao"></p>
+</div>
+</div>
+<div class="flex flex-col gap-4 sm:gap-5 sm:col-span-2 painel-grupo" id="grupo-bancos" hidden>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-instituicao">Instituição Bancária</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-instituicao" type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="instituicao"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-chave-pix">Chave Pix (opcional)</label>
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-chave-pix" type="text" maxlength="77" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="chavePix"></p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
+<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-edt" role="status"></p>
+<div class="flex flex-wrap items-center gap-3">
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#ea580c] text-white border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-edt-salvar" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
+<span>Salvar</span>
+</button>
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#b6212a] text-white border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-edt-excluir" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">delete</span>
+<span>Excluir</span>
+</button>
+<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-edt-cancelar" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">close</span>
+<span>Cancelar</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

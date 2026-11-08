@@ -121,6 +121,21 @@
 - [x] Empresa (2 etapas + telefones 1FN, migração v5 `empresas`/`telefones_empresa`, CNPJ/email/
       telefone validados, API `/api/empresas`) — JUnit 80/80, smoke 246/246
 
+## Módulo 3.4 — Todos os Cadastros (2026-11-08, escopo integral)
+- [x] Tela `todos-cadastros` (tabela multi-filtro EMPRESAS/PAGADORES/BANCOS + pesquisa client-side +
+      estados loading/empty/error) — identidade laranja `#ea580c`, navbar CADASTROS, DOM seguro
+- [x] Painel de edição inferior (clique na linha) com os 3 tipos, telefones editáveis (empresa),
+      validação espelhada (cnpjValido/cpfValido reutilizados), exclusão com `window.confirm`
+      (404/409 amigáveis), dirty-form
+- [x] Plumbagem: `Tela`/whitelist/dispatch/`MODULO_DA_TELA`/`destino` do botão (antes morto)
+- [x] `api.ts`: listar/atualizar/excluir para as 3 entidades (ErroValidacaoApi/ErroApi)
+- [x] Testes: typecheck+build OK; smoke 265/265 (bloco novo: filtros, pesquisa, empty, painel,
+      edição PUT, exclusão cancelar/confirmar, capturas 3 resoluções); smoke-real 2 ciclos APROVADO;
+      JUnit 80/80 (regressão backend intacto). Capturas `todos-cadastros-{1536x864,768x800,480x800}.png`
+- [x] Harness smoke corrigido (corrida de resize: `definirTamanho` só aceita tamanho errado após 3
+      leituras estáveis; `rectsCartoesEstavel`; restore de janela minimizada em capturar/definirTamanho)
+- [x] Checkpoint local (commit) — sem push
+
 ## Pendências
 - [ ] Todos os Cadastros (tabela multi-filtro + edição)
 - [ ] Inserir Conta (2 etapas), Controle, Pagamentos, Pagos, Recorrentes, Mensagens, Gráficos
