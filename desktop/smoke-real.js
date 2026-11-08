@@ -6,6 +6,7 @@
 const { app, screen, BrowserWindow } = require("electron");
 const { execFileSync, spawnSync } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 require("./main.js");
 
 let janela = null;
@@ -177,6 +178,34 @@ async function ciclo() {
   const aberto = await js(`JSON.stringify([...document.querySelectorAll('.form-campo')].map(el => { const r = el.getBoundingClientRect(); return [+r.x.toFixed(1), +r.y.toFixed(1), +r.width.toFixed(1), +r.height.toFixed(1)]; }))`);
   teste("Campos dos forms nao se movem com o menu aberto (480x800)", antes === aberto, `${antes} vs ${aberto}`);
   await janela.setSize(1500, 950);
+
+  // 9. hover real: botao fica branco por padrao e pinta com a cor do
+  //    botao respectivo da tela do Menu
+  await js("window.finDesk.navegar('controle')");
+  await esperarPredicado(`document.body.dataset.tela === 'controle' && document.body.dataset.pronto === 'true'`);
+  await esperar(400);
+  const corPadrao = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="cadastros"]')).backgroundColor`);
+  teste("Botao CADASTROS branco por padrao (sem cor fixa)", corPadrao === "rgb(255, 255, 255)", corPadrao);
+
+  const pCad = await pontoRealDoSeletor('.nav-barra button[data-nav="cadastros"]');
+  entradaReal("mover", pCad);
+  await esperar(500);
+  const corHoverCad = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="cadastros"]')).backgroundColor`);
+  teste("Hover real CADASTROS pinta com a cor do Menu (#FF8400)", corHoverCad === "rgb(255, 132, 0)", corHoverCad);
+  const imagemHover = await janela.webContents.capturePage();
+  fs.writeFileSync(path.join(__dirname, "..", "docs", "responsivo", "nav-hover-cadastros.png"), imagemHover.toPNG());
+
+  const pControle = await pontoRealDoSeletor('.nav-barra button[data-nav="controle"]');
+  entradaReal("mover", pControle);
+  await esperar(500);
+  const corHoverControle = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="controle"]')).backgroundColor`);
+  teste("Hover real CONTROLE pinta com a cor do Menu (#38BDF8)", corHoverControle === "rgb(56, 189, 248)", corHoverControle);
+
+  const pFora = await pontoRealDoSeletor("main");
+  entradaReal("mover", pFora);
+  await esperar(500);
+  const corAposSair = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="cadastros"]')).backgroundColor`);
+  teste("Ao sair do hover o botao volta ao branco", corAposSair === "rgb(255, 255, 255)", corAposSair);
 }
 
 async function main() {

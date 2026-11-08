@@ -444,7 +444,7 @@ async function executar() {
     JSON.stringify(ordem) === JSON.stringify(["voltar", "menu", "cadastros", "controle", "mensagens", "graficos"]),
     JSON.stringify(ordem)
   );
-  teste("Destaque ativo: CONTROLE em azul #2165EF", (await corBotaoNav("controle")) === "rgb(33, 101, 239)", await corBotaoNav("controle"));
+  teste("Botao CONTROLE com fundo branco por padrao", (await corBotaoNav("controle")) === "rgb(255, 255, 255)", await corBotaoNav("controle"));
 
   // GRÁFICOS = provisório; MENU PRINCIPAL navega; destinos a partir de tela profunda
   teste("Navbar GRÁFICOS responde (provisório)", await testarProvisorio('.nav-barra button[data-nav="graficos"]', "GRÁFICOS"));
@@ -453,9 +453,9 @@ async function executar() {
   teste("Navbar MENU PRINCIPAL navega ao Menu", await esperarTela("menu"));
   teste("Menu Principal aprovado permanece sem navbar", (await js("!!document.getElementById('nav-global')")) === false);
   teste("Pilha profunda: Menu → cadastros", await navegarPor('a[data-path="cadastros"]', "cadastros"));
-  teste("Destaque ativo: CADASTROS em azul #2165EF", (await corBotaoNav("cadastros")) === "rgb(33, 101, 239)");
+  teste("Botao CADASTROS com fundo branco por padrao", (await corBotaoNav("cadastros")) === "rgb(255, 255, 255)");
   teste("Pilha profunda: cadastros → novo-cadastro", await navegarPor('a[data-modulo="novo-cadastro"]', "novo-cadastro"));
-  teste("Destaque ativo em tela filha: CADASTROS (novo-cadastro)", (await corBotaoNav("cadastros")) === "rgb(33, 101, 239)");
+  teste("Botao CADASTROS branco tambem em tela filha", (await corBotaoNav("cadastros")) === "rgb(255, 255, 255)");
   await prepararPagina();
   await clicar('.nav-barra button[data-nav="controle"]');
   teste("Da tela profunda (novo-cadastro), CONTROLE navega direto", await esperarTela("controle"));
@@ -463,7 +463,7 @@ async function executar() {
   await prepararPagina();
   await clicar('.nav-barra button[data-nav="mensagens"]');
   teste("Da tela profunda, MENSAGENS navega direto", await esperarTela("mensagens"));
-  teste("Destaque ativo: MENSAGENS em azul #2165EF", (await corBotaoNav("mensagens")) === "rgb(33, 101, 239)");
+  teste("Botao MENSAGENS com fundo branco por padrao", (await corBotaoNav("mensagens")) === "rgb(255, 255, 255)");
   await prepararPagina();
   await clicar('.nav-barra button[data-nav="menu"]');
   teste("Da tela profunda, MENU PRINCIPAL navega direto", await esperarTela("menu"));
@@ -561,7 +561,7 @@ async function executar() {
     })`)
   );
   teste("Form Banco: campos, acoes e navbar presentes", Object.values(camposForm).every(Boolean), JSON.stringify(camposForm));
-  teste("Form Banco: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(33, 101, 239)", await corBotaoNav("cadastros"));
+  teste("Form Banco: botao CADASTROS branco na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 255, 255)", await corBotaoNav("cadastros"));
 
   await clicar("#btn-salvar");
   await esperar(400);
@@ -681,7 +681,7 @@ async function executar() {
     })`)
   );
   teste("Form Pagador: campos, acoes e navbar presentes", Object.values(camposPagador).every(Boolean), JSON.stringify(camposPagador));
-  teste("Form Pagador: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(33, 101, 239)", await corBotaoNav("cadastros"));
+  teste("Form Pagador: botao CADASTROS branco na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 255, 255)", await corBotaoNav("cadastros"));
 
   await clicar("#btn-salvar");
   await esperar(400);
@@ -763,7 +763,7 @@ async function executar() {
     })`)
   );
   teste("Form Empresa: campos, acoes e navbar presentes", Object.values(camposEmpresa).every(Boolean), JSON.stringify(camposEmpresa));
-  teste("Form Empresa: destaque ativo CADASTROS na navbar", (await corBotaoNav("cadastros")) === "rgb(33, 101, 239)", await corBotaoNav("cadastros"));
+  teste("Form Empresa: botao CADASTROS branco na navbar", (await corBotaoNav("cadastros")) === "rgb(255, 255, 255)", await corBotaoNav("cadastros"));
 
   await clicar("#btn-salvar");
   await esperar(400);

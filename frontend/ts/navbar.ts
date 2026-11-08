@@ -101,12 +101,11 @@ function iconeHtml(nome: string, classe: string): string {
 }
 
 function botaoBarraHtml(item: ItemNav, ativo: boolean): string {
-  const classeAtivo = ativo ? " ativo" : "";
   const atual = ativo ? ' aria-current="page"' : "";
   if (item.chave === "voltar") {
-    return `<button class="nav-item nav-voltar${classeAtivo}" type="button" data-nav="${item.chave}" aria-label="Voltar"${atual}><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></button>`;
+    return `<button class="nav-item nav-voltar" type="button" data-nav="${item.chave}" aria-label="Voltar"${atual}><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></button>`;
   }
-  return `<button class="nav-item${classeAtivo}" type="button" data-nav="${item.chave}"${atual}><span class="nav-icone ${item.quadrado}"><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></span><span>${item.rotulo}</span></button>`;
+  return `<button class="nav-item" type="button" data-nav="${item.chave}"${atual}><span class="nav-icone ${item.quadrado}"><svg viewBox="0 0 24 24" aria-hidden="true">${item.svg}</svg></span><span>${item.rotulo}</span></button>`;
 }
 
 function itemPainelHtml(item: ItemNav, ativo: boolean): string {

@@ -126,3 +126,12 @@
 - [x] Regressões: smoke 246/246 (ordem, destaque ativo, breakpoints, overflow), smoke-real
       APROVADO, smoke-boot APROVADO; capturas nav-{1920x1080,1536x864,1280x720,960x540} + compacto
 - [ ] Aguardando validação visual do usuário
+
+## Navbar: hover por módulo, sem cor fixa (2026-11-08)
+- [x] Removido o azul fixo do módulo ativo (CADASTROS ficava constantemente azul nas telas-filhas);
+      botões agora BRANCOS por padrão e hover pinta com a cor do botão respectivo do Menu
+      (MENU `#FFE600`, CADASTROS `#FF8400`, CONTROLE `#38BDF8`, MENSAGENS `#FF5E89`, GRÁFICOS
+      `#00FF66`, VOLTAR neutro) — CSS por `data-nav`, `aria-current` mantido sem efeito visual
+- [x] Hover verificado com mouse REAL do Windows (smoke-real): branco → cor no hover → branco ao
+      sair; captura `nav-hover-cadastros.png`; smoke 246/246 + smoke-real 2 ciclos APROVADO
+- [ ] Aguardando validação visual do usuário

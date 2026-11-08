@@ -86,6 +86,10 @@ function MontarTeclaVk([uint16]$vk, [uint32]$flags) {
 }
 
 switch ($Acao) {
+  "mover" {
+    # 0x8001 = MOVE absoluto (sem clique) — para testar hover real
+    Enviar @((MontarMouse 0x8001 $X $Y))
+  }
   "clicar" {
     # -X/-Y ja chegam normalizados em 0..65535 (calculo DPI-aware feito pelo Electron)
     Enviar @(

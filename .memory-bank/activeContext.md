@@ -1,16 +1,14 @@
 # Active Context
 
 ## Foco Atual
-**Navbar desktop redesenhada (design de referência do usuário) — aguardando validação visual**
-(branch `feature/entrega-3.1-sqlite-banco`, commits locais, push da rama feito antes; este novo
-trabalho NÃO publicado, `main` intacta). Barra única unida: borda preta 3px, sombra rígida 6px,
-VOLTAR só seta, quadrados de ícones 33px (amarelo/laranja/branco/rosa/verde), módulo ativo
-azul `#2165EF` com texto branco, ordem VOLTAR→MENU→CADASTROS→CONTROLE→MENSAGENS→GRÁFICOS.
-Adaptado em `navbar.ts` (componente global; mesma navegação/histórico/data-nav). Breakpoint da
-barra 851px (abaixo: hambúrguer preservado). Itens compactos em páginas de 2 botões (wrap 56rem)
-para não estourar largura. Testes: smoke 246/246, smoke-real APROVADO, smoke-boot APROVADO.
-Aguardando validação visual do usuário (referência visual = imagem; comparação feita pelo código
-fornecido, já que o modelo não lê imagens).
+**Navbar desktop: botões brancos por padrão + hover na cor do módulo do Menu — aguardando validação**
+(branch `feature/entrega-3.1-sqlite-banco`, commit local, NENHUM push, `main` intacta). Removido o
+preenchimento azul fixo do módulo ativo (o CADASTROS ficava constantemente azul nas telas-filhas);
+agora todo botão tem fundo branco e o hover pinta com a cor do botão respectivo da tela do Menu
+(MENU PRINCIPAL `#FFE600`, CADASTROS `#FF8400`, CONTROLE `#38BDF8`, MENSAGENS `#FF5E89`,
+GRÁFICOS `#00FF66`, VOLTAR neutro `#eee`). Hover validado com mouse REAL do Windows.
+Testes: smoke 246/246, smoke-real 2 ciclos APROVADO (inclui hover real + captura
+`nav-hover-cadastros.png`). Aguardando validação visual.
 
 ## ETAPA 1 — Causa raiz dos inputs não clicáveis (2026-11-07)
 - **Sintoma:** formulários renderizavam mas nenhum clique/digitação/cursor funcionava; alt-tab

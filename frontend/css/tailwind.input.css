@@ -205,16 +205,29 @@
   background: #35e87d;
 }
 
-/* BOTAO ATIVO */
+/* HOVER: cor do botao respectivo da tela do Menu (fundos brancos por padrao) */
 
-.barra-navegacao .nav-item.ativo {
-  background: #2165ef;
-  color: #ffffff;
+.barra-navegacao .nav-item[data-nav="menu"]:hover {
+  background: #ffe600;
 }
 
-/* HOVER */
+.barra-navegacao .nav-item[data-nav="cadastros"]:hover {
+  background: #ff8400;
+}
 
-.barra-navegacao .nav-item:not(.ativo):hover {
+.barra-navegacao .nav-item[data-nav="controle"]:hover {
+  background: #38bdf8;
+}
+
+.barra-navegacao .nav-item[data-nav="mensagens"]:hover {
+  background: #ff5e89;
+}
+
+.barra-navegacao .nav-item[data-nav="graficos"]:hover {
+  background: #00ff66;
+}
+
+.barra-navegacao .nav-item[data-nav="voltar"]:hover {
   background: #eeeeee;
 }
 
