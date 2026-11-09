@@ -2,6 +2,7 @@ import { buscarStatus, criarPagador, ErroValidacaoApi } from "../api";
 import { confirmar } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
+import { mascaraCPF } from "../mascaras";
 
 interface CamposFormulario {
   nome: string;
@@ -87,6 +88,7 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("form-pagador");
+  mascaraCPF(campo("cpf"));
   const formulario = document.getElementById("form-pagador") as HTMLFormElement;
   let sujo = false;
 

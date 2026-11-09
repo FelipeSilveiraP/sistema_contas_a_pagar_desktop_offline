@@ -42,10 +42,16 @@ public class ContaRepository {
     }
 
     public List<Conta> listar(String status) throws SQLException {
-        String sql = "SELECT " + COLUNAS
-                + (status == null || status.isBlank()
-                        ? " ORDER BY c.vencimento, c.id_conta"
-                        : " WHERE c.status = ? ORDER BY c.vencimento, c.id_conta");
+        return listar(status, false);
+    }
+
+    /** fixas=true: apenas contas geradas por recorrencia (id_recorrente preenchido). */
+    public List<Conta> listar(String status, boolean fixas) throws SQLException {
+        String condicoes = " WHERE " + (status == null || status.isBlank() ? "1=1" : "c.status = ?");
+        if (fixas) {
+            condicoes += " AND c.id_recorrente IS NOT NULL";
+        }
+        String sql = "SELECT " + COLUNAS + condicoes + " ORDER BY c.vencimento, c.id_conta";
         try (Connection conn = conexao.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             if (status != null && !status.isBlank()) {

@@ -417,6 +417,10 @@ export async function criarConta(cfg: FinDeskConfig, dados: ContaEntrada): Promi
   return (await resposta.json()) as ContaDados;
 }
 
+export function listarContasFixas(cfg: FinDeskConfig): Promise<ContaDados[]> {
+  return get<ContaDados[]>(cfg, "/api/contas?fixas=true");
+}
+
 export function listarContas(cfg: FinDeskConfig, status?: string): Promise<ContaDados[]> {
   const consulta = status ? `?status=${encodeURIComponent(status)}` : "";
   return get<ContaDados[]>(cfg, `/api/contas${consulta}`);

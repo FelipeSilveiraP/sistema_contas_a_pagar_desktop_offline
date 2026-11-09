@@ -48,6 +48,15 @@ public class ContaService {
         }
     }
 
+    public List<Conta> listarFixas() {
+        try {
+            return repository.listar(null, true);
+        } catch (SQLException erro) {
+            log.error("falha ao listar contas", erro);
+            throw new IllegalStateException("falha ao consultar as contas", erro);
+        }
+    }
+
     public Conta buscarPorId(long id) {
         try {
             return repository.buscarPorId(id)

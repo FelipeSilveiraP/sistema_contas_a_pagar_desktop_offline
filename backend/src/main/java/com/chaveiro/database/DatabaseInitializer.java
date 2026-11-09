@@ -276,8 +276,7 @@ public class DatabaseInitializer {
                     id_aviso INTEGER PRIMARY KEY AUTOINCREMENT,
                     data_inicio TEXT NOT NULL,
                     data_fim TEXT NOT NULL,
-                    dia_semana TEXT NOT NULL DEFAULT 'TODOS'
-                        CHECK (dia_semana IN ('TODOS','DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO')),
+                    dia_semana TEXT NOT NULL DEFAULT 'TODOS',
                     titulo TEXT NOT NULL,
                     mensagem TEXT NOT NULL,
                     criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))

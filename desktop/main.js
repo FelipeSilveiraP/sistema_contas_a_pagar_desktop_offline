@@ -147,6 +147,12 @@ const TELAS = new Map([
   ["todos-cadastros", path.join(__dirname, "..", "frontend", "html", "todos-cadastros.html")],
   ["inserir-conta", path.join(__dirname, "..", "frontend", "html", "inserir-conta.html")],
   ["todas-as-contas", path.join(__dirname, "..", "frontend", "html", "todas-as-contas.html")],
+  ["pagos", path.join(__dirname, "..", "frontend", "html", "pagos.html")],
+  ["recorrentes-tabela", path.join(__dirname, "..", "frontend", "html", "recorrentes-tabela.html")],
+  ["form-recorrente", path.join(__dirname, "..", "frontend", "html", "form-recorrente.html")],
+  ["todas-as-mensagens", path.join(__dirname, "..", "frontend", "html", "todas-as-mensagens.html")],
+  ["criar-mensagem", path.join(__dirname, "..", "frontend", "html", "criar-mensagem.html")],
+  ["graficos", path.join(__dirname, "..", "frontend", "html", "graficos.html")],
 ]);
 
 const NOME_APP = "Sistema de Contas a Pagar — Chaveiro Universal";

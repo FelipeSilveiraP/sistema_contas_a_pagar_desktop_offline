@@ -1,0 +1,99 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastrar Conta Recorrente — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head><body class="bg-[#1c1b1b] text-[#1c1b1b] min-h-screen w-full font-headline antialiased" data-tela="form-recorrente">
+<header id="nav-global"></header>
+<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<div class="bg-[#7c3aed] border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] p-4 sm:p-5 flex items-center gap-4">
+<div class="w-12 h-12 bg-white border-[3px] border-[#121212] shadow-[3px_3px_0px_0px_#121212] flex items-center justify-center p-1.5 flex-shrink-0 text-[#7c3aed]">
+<span class="material-symbols-outlined text-2xl">autorenew</span>
+</div>
+<div>
+<h1 class="text-lg sm:text-xl font-bold uppercase tracking-tight text-white drop-shadow-[2px_2px_0px_#121212]">CADASTRAR CONTA RECORRENTE</h1>
+</div>
+</div>
+<form class="p-4 sm:p-6 flex flex-col gap-5 bg-white border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212]" id="recorrente-form" novalidate>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center gap-1" for="fornecedor"><span>EMPRESA / FORNECEDOR RECORRENTE</span><span class="text-[#7c3aed]">*</span></label>
+<div class="relative flex items-center">
+<span class="absolute left-3.5 material-symbols-outlined text-[20px] text-neutral-500">store</span>
+<input class="w-full pl-12 pr-4 py-2.5 text-sm sm:text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all uppercase placeholder:normal-case font-bold" id="fornecedor" placeholder="Ex: Aluguel Galpão, Enel Energia, Internet Fibra..." type="text" maxlength="120" autocomplete="off">
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="nomeEmpresa"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center gap-1"><span>TIPO DE CONTA</span><span class="text-[#7c3aed]">*</span></label>
+<div class="grid grid-cols-2 gap-4">
+<label class="cursor-pointer">
+<input class="peer sr-only" name="tipo_pessoa" type="radio" value="PF">
+<div class="px-4 py-2.5 text-center text-xs sm:text-sm uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all flex items-center justify-center gap-2 font-bold select-none">
+<span class="material-symbols-outlined text-[18px]">person</span> PESSOA FÍSICA
+</div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="tipo_pessoa" type="radio" value="PJ">
+<div class="px-4 py-2.5 text-center text-xs sm:text-sm uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all flex items-center justify-center gap-2 font-bold select-none">
+<span class="material-symbols-outlined text-[18px]">domain</span> PESSOA JURÍDICA
+</div>
+</label>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center justify-between" for="valor_previsto"><span>VALOR (R$)</span><span class="text-[#7c3aed]">*</span></label>
+<div class="relative flex items-center">
+<span class="absolute left-3.5 text-sm font-bold text-[#1c1b1b]">R$</span>
+<input class="w-full pl-12 pr-4 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="valor_previsto" placeholder="0,00" type="text" autocomplete="off">
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="valor"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center justify-between" for="dia_vencimento"><span>DIA DO VENCIMENTO</span><span class="text-[#7c3aed]">*</span></label>
+<div class="relative flex items-center">
+<span class="absolute left-3.5 material-symbols-outlined text-[20px] text-neutral-500">calendar_today</span>
+<input class="w-full pl-12 pr-16 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="dia_vencimento" max="31" min="1" placeholder="10" type="number">
+<span class="absolute right-3 text-xs text-neutral-500 font-bold uppercase">(1 A 31)</span>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="dia"></p>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center gap-1"><span>PERIODICIDADE</span><span class="text-[#7c3aed]">*</span></label>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+<label class="cursor-pointer"><input class="peer sr-only" name="periodicidade" type="radio" value="MENSAL" checked=""><div class="py-2 px-1 text-center text-xs uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all font-bold">MENSAL</div></label>
+<label class="cursor-pointer"><input class="peer sr-only" name="periodicidade" type="radio" value="BIMESTRAL"><div class="py-2 px-1 text-center text-xs uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all font-bold">BIMESTRAL</div></label>
+<label class="cursor-pointer"><input class="peer sr-only" name="periodicidade" type="radio" value="TRIMESTRAL"><div class="py-2 px-1 text-center text-xs uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all font-bold">TRIMESTRAL</div></label>
+<label class="cursor-pointer"><input class="peer sr-only" name="periodicidade" type="radio" value="ANUAL"><div class="py-2 px-1 text-center text-xs uppercase border-2 border-[#121212] peer-checked:bg-[#7c3aed] peer-checked:text-white bg-white text-[#1c1b1b] peer-checked:shadow-[3px_3px_0px_0px_#121212] shadow-[2px_2px_0px_0px_#121212] transition-all font-bold">ANUAL</div></label>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="periodicidade"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center gap-1" for="formato_cobranca"><span>FORMATO DE PAGAMENTO</span><span class="text-[#7c3aed]">*</span></label>
+<div class="relative">
+<select class="w-full px-4 py-2.5 text-sm sm:text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] appearance-none uppercase font-bold" id="formato_cobranca">
+<option value="BOLETO">BOLETO BANCÁRIO</option>
+<option value="PIX">PIX AGENDADO</option>
+<option value="CARTAO">CARTÃO CORPORATIVO</option>
+<option value="DEBITO">DÉBITO EM CONTA</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#121212]">
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</div>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="formaPagamento"></p>
+</div>
+<div class="pt-4 border-t-4 border-[#121212] flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+<button class="w-full sm:w-auto px-6 py-2.5 bg-white text-[#1c1b1b] text-xs sm:text-sm uppercase border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-center font-bold cursor-pointer" id="btn-cancelar" type="button">← CANCELAR</button>
+<button class="w-full sm:w-auto px-8 py-3 bg-[#7c3aed] text-white text-sm sm:text-base uppercase border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-center font-bold cursor-pointer flex items-center justify-center gap-2" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-xl">save</span> SALVAR RECORRÊNCIA
+</button>
+</div>
+<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-recorrente" role="status"></p>
+</form>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

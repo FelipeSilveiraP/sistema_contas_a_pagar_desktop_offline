@@ -15,6 +15,7 @@ const DESTINOS: Record<string, Tela> = {
   "controle-de-contas": "controle",
   cadastros: "cadastros",
   "mensagens-e-avisos": "mensagens",
+  "graficos-e-relatorios": "graficos",
 };
 
 function acionarModulo(chave: string): void {
@@ -72,7 +73,7 @@ async function iniciar(): Promise<void> {
   } catch (erro) {
     document.body.dataset.apiStatus = "erro";
     document.title += " - API OFFLINE";
-    console.error("[ContasAPagar] falha na API:", erro);
+    console.warn("[ContasAPagar] sonda de API nao concluida (navegacao ou indisponibilidade):", erro instanceof Error ? erro.message : erro);
   }
 }
 

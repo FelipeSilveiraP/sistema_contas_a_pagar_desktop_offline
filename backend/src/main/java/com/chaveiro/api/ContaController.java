@@ -52,8 +52,9 @@ public class ContaController {
     }
 
     @GetMapping
-    public List<Conta> listar(@RequestParam(required = false) String status) {
-        return service.listar(status);
+    public List<Conta> listar(@RequestParam(required = false) String status,
+                             @RequestParam(required = false) Boolean fixas) {
+        return Boolean.TRUE.equals(fixas) ? service.listarFixas() : service.listar(status);
     }
 
     @GetMapping("/{id}")

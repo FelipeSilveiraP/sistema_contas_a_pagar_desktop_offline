@@ -43,6 +43,36 @@ async function iniciar(): Promise<void> {
       iniciarInserirConta();
       return;
     }
+    case "pagos": {
+      const { iniciarPagos } = await import("./telas/pagos");
+      iniciarPagos();
+      return;
+    }
+    case "recorrentes-tabela": {
+      const { iniciarRecorrentesTabela } = await import("./telas/recorrentes-tabela");
+      iniciarRecorrentesTabela();
+      return;
+    }
+    case "form-recorrente": {
+      const { iniciarFormRecorrente } = await import("./telas/form-recorrente");
+      iniciarFormRecorrente();
+      return;
+    }
+    case "todas-as-mensagens": {
+      const { iniciarTodasAsMensagens } = await import("./telas/todas-as-mensagens");
+      iniciarTodasAsMensagens();
+      return;
+    }
+    case "criar-mensagem": {
+      const { iniciarCriarMensagem } = await import("./telas/criar-mensagem");
+      iniciarCriarMensagem();
+      return;
+    }
+    case "graficos": {
+      const { iniciarGraficos } = await import("./telas/graficos");
+      iniciarGraficos();
+      return;
+    }
     case "todas-as-contas": {
       const { iniciarTodasAsContas } = await import("./telas/todas-as-contas");
       iniciarTodasAsContas();

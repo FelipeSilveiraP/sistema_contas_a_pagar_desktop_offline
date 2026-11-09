@@ -77,7 +77,7 @@ const ITENS_NAV: ItemNav[] = [
     corTexto: "text-[#00FF66]",
     svg: '<path d="M5 20v-6h3v6M11 20V9h3v11M17 20V4h3v16"/>',
     quadrado: "icone-verde",
-    provisorio: "GRÁFICOS",
+    destino: "graficos", provisorio: "GRÁFICOS",
     noPainel: true,
   },
 ];
@@ -86,6 +86,9 @@ const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   controle: "controle",
   recorrentes: "controle",
   "todas-as-contas": "controle",
+  pagos: "controle",
+  "recorrentes-tabela": "controle",
+  "form-recorrente": "controle",
   cadastros: "cadastros",
   "novo-cadastro": "cadastros",
   "form-banco": "cadastros",
@@ -93,6 +96,9 @@ const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   "form-empresa": "cadastros",
   "todos-cadastros": "cadastros",
   mensagens: "mensagens",
+  "todas-as-mensagens": "mensagens",
+  "criar-mensagem": "mensagens",
+  graficos: "graficos",
 };
 
 const CLASSE_ITEM_PAINEL =

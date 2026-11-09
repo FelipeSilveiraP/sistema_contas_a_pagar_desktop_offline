@@ -10,7 +10,13 @@ export type Tela =
   | "form-empresa"
   | "todos-cadastros"
   | "inserir-conta"
-  | "todas-as-contas";
+  | "todas-as-contas"
+  | "pagos"
+  | "recorrentes-tabela"
+  | "form-recorrente"
+  | "todas-as-mensagens"
+  | "criar-mensagem"
+  | "graficos";
 
 const CHAVE_PILHA = "findesk.pilha-navegacao";
 

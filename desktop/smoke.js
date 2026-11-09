@@ -37,7 +37,7 @@ const SUBMENUS = [
     botoes: [
       { sel: 'a[data-modulo="todas-as-contas"]', nome: "TODAS AS CONTAS", tipo: "nav", destino: "todas-as-contas" },
       { sel: 'a[data-modulo="contas-recorrentes"]', nome: "CONTAS RECORRENTES", tipo: "nav", destino: "recorrentes" },
-      { sel: 'a[data-modulo="pagos"]', nome: "PAGOS", tipo: "provisorio" },
+      { sel: 'a[data-modulo="pagos"]', nome: "PAGOS", tipo: "nav", destino: "pagos" },
     ],
   },
   {
@@ -58,8 +58,8 @@ const SUBMENUS = [
     origem: "menu",
     volta: "menu",
     botoes: [
-      { sel: 'a[data-modulo="todas-as-mensagens"]', nome: "TODAS AS MENSAGENS", tipo: "provisorio" },
-      { sel: 'a[data-modulo="criar-nova-mensagem"]', nome: "CRIAR NOVA MENSAGEM", tipo: "provisorio" },
+      { sel: 'a[data-modulo="todas-as-mensagens"]', nome: "TODAS AS MENSAGENS", tipo: "nav", destino: "todas-as-mensagens" },
+      { sel: 'a[data-modulo="criar-nova-mensagem"]', nome: "CRIAR NOVA MENSAGEM", tipo: "nav", destino: "criar-mensagem" },
     ],
   },
   {
@@ -69,8 +69,8 @@ const SUBMENUS = [
     origem: "controle",
     volta: "controle",
     botoes: [
-      { sel: 'a[data-modulo="todas-contas-recorrentes"]', nome: "TODAS CONTAS RECORRENTES", tipo: "provisorio" },
-      { sel: 'a[data-modulo="cadastrar-nova-recorrente"]', nome: "CADASTRAR NOVA CONTA RECORRENTE", tipo: "provisorio" },
+      { sel: 'a[data-modulo="todas-contas-recorrentes"]', nome: "TODAS CONTAS RECORRENTES", tipo: "nav", destino: "recorrentes-tabela" },
+      { sel: 'a[data-modulo="cadastrar-nova-recorrente"]', nome: "CADASTRAR NOVA CONTA RECORRENTE", tipo: "nav", destino: "form-recorrente" },
     ],
   },
   {
@@ -421,20 +421,14 @@ async function executar() {
   teste("Botao INSERIR CONTA do Menu navega", await navegarPor('a[data-path="inserir-conta"]', "inserir-conta"));
   teste("VOLTAR de inserir-conta retorna ao Menu", await voltarPara("menu"));
   await prepararPagina();
-  teste(`Botão GRÁFICOS do Menu responde (provisório)`, await testarProvisorio('a[data-path="graficos-e-relatorios"]', "GRÁFICOS"));
-  for (const [teclaAlvo, nome] of [
-    ["F4", "GRÁFICOS"],
-    ["4", "GRÁFICOS"],
-  ]) {
-    await prepararPagina();
-    await js("window.__alertas = []");
-    await tecla(teclaAlvo);
-    const alertas = await lerAlertas();
-    teste(`Atalho ${teclaAlvo} no Menu (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
-  }
+  teste("Botão GRÁFICOS do Menu navega", await navegarPor('a[data-path="graficos-e-relatorios"]', "graficos"));
+  teste("VOLTAR de graficos retorna ao Menu", await voltarPara("menu"));
+  await prepararPagina();
   for (const [teclaAlvo, destino] of [
     ["F1", "inserir-conta"],
     ["1", "inserir-conta"],
+    ["F4", "graficos"],
+    ["4", "graficos"],
     ["F2", "controle"],
     ["2", "controle"],
     ["F3", "mensagens"],
@@ -464,7 +458,8 @@ async function executar() {
   teste("Botao CONTROLE com fundo branco por padrao", (await corBotaoNav("controle")) === "rgb(255, 255, 255)", await corBotaoNav("controle"));
 
   // GRÁFICOS = provisório; MENU PRINCIPAL navega; destinos a partir de tela profunda
-  teste("Navbar GRÁFICOS responde (provisório)", await testarProvisorio('.nav-barra button[data-nav="graficos"]', "GRÁFICOS"));
+  teste("Navbar GRÁFICOS navega", await navegarPor('.nav-barra button[data-nav="graficos"]', "graficos"));
+  teste("VOLTAR de graficos (navbar) retorna", await voltarPara("controle"));
   await prepararPagina();
   await clicar('.nav-barra button[data-nav="menu"]');
   teste("Navbar MENU PRINCIPAL navega ao Menu", await esperarTela("menu"));
@@ -524,20 +519,19 @@ async function executar() {
 
   // 7. Atalhos nos submenus (regressão)
   for (const [tela, chaves] of [
-    ["mensagens", [["1", "TODAS AS MENSAGENS"], ["2", "CRIAR NOVA MENSAGEM"]]],
+    ["mensagens", [["1", "todas-as-mensagens"], ["2", "criar-mensagem"]]],
   ]) {
     await js(`window.finDesk.navegar('${tela}')`);
     await esperarTela(tela);
     await prepararPagina();
-    for (const [teclaAlvo, nome] of chaves) {
-      await js("window.__alertas = []");
+    for (const [teclaAlvo, destino] of chaves) {
       await tecla(teclaAlvo);
-      const alertas = await lerAlertas();
-      teste(`Atalho ${teclaAlvo} em ${tela} (${nome})`, alertas.length === 1 && alertas[0].includes(nome));
+      teste(`Atalho ${teclaAlvo} em ${tela} navega para ${destino}`, await esperarTela(destino));
+      await prepararPagina();
+      await tecla("Escape");
+      teste(`Escape de ${destino} retorna a ${tela}`, await esperarTela(tela));
+      await prepararPagina();
     }
-    await tecla("Escape");
-    teste(`Escape em ${tela} volta ao Menu`, await esperarTela("menu"));
-    await prepararPagina();
   }
 
   // 7b. Atalhos em Novo Cadastro (os 3 navegam aos forms)

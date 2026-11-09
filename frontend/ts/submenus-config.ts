@@ -1,6 +1,6 @@
 import { Tela } from "./navegacao";
 
-export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros" | "inserir-conta" | "todas-as-contas">;
+export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros" | "inserir-conta" | "todas-as-contas" | "pagos" | "recorrentes-tabela" | "form-recorrente" | "todas-as-mensagens" | "criar-mensagem" | "graficos">;
 
 export interface BotaoSubmenu {
   chave: string;
@@ -70,6 +70,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         selo: "check",
         seloTexto: "text-[#1c1b1b]",
         icone: SVG.pago,
+        destino: "pagos",
       },
     ],
   },
@@ -106,6 +107,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         selo: "mail",
         seloTexto: "text-white",
         icone: SVG.envelope,
+        destino: "todas-as-mensagens",
       },
       {
         chave: "criar-nova-mensagem",
@@ -114,6 +116,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         selo: "edit_note",
         seloTexto: "text-white",
         icone: SVG.editar,
+        destino: "criar-mensagem",
       },
     ],
   },
@@ -128,6 +131,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         seloTexto: "text-[#1c1b1b]",
         icone: SVG.recorrente,
         traco: "3",
+        destino: "recorrentes-tabela",
       },
       {
         chave: "cadastrar-nova-recorrente",
@@ -136,6 +140,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         selo: "add_circle",
         seloTexto: "text-white",
         icone: SVG.circuloMais,
+        destino: "form-recorrente",
       },
     ],
   },

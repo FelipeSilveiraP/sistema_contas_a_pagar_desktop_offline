@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Contas Pagas — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black" data-tela="pagos">
+<header id="nav-global"></header>
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<header class="w-full flex flex-col gap-4">
+<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border">
+<div class="flex items-center gap-4">
+<div class="h-6 w-[2px] bg-[#1c1b1b] hidden sm:block"></div>
+<h1 class="text-lg sm:text-xl font-bold tracking-tight uppercase flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-xl sm:text-2xl font-bold">task_alt</span>CONTAS PAGAS</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-mono font-bold text-neutral-500 uppercase">TOTAL PAGO</span>
+<span class="bg-[#4dffb2] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]" id="tableSummaryAmount">R$ 0,00</span>
+</div>
+</div>
+<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border">
+<div class="relative flex-1 min-w-[240px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border" id="searchInput" placeholder="Pesquisar empresa, banco ou documento..." type="text">
+</div>
+<div class="flex flex-wrap items-center gap-2" id="filterPillsGroup">
+<button class="filter-btn active-filter bg-[#1c1b1b] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="TODOS" type="button">TODOS</button>
+</div>
+</div>
+</header>
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="billsTable">
+<thead>
+<tr class="text-black border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b bg-[#10b981]">
+<th class="py-3.5 px-4 w-36 whitespace-nowrap font-black font-headline">DATA PAGAMENTO</th>
+<th class="py-3.5 px-4 min-w-[200px] font-black font-headline">NOME DA EMPRESA</th>
+<th class="py-3.5 px-4 w-44 whitespace-nowrap font-black font-headline">DATA VENCIMENTO</th>
+<th class="py-3.5 px-4 w-36 text-right whitespace-nowrap font-black font-headline">VALOR PAGO</th>
+<th class="py-3.5 px-4 min-w-[170px] whitespace-nowrap font-black font-headline">BANCO</th>
+</tr>
+</thead>
+<tbody class="divide-[#1c1b1b] text-sm font-semibold divide-y" id="tableBody"></tbody>
+</table>
+</div>
+<div id="selectionEmptyState" class="p-6 text-center">
+<p class="font-mono text-sm font-bold text-neutral-500 uppercase">Nenhuma conta paga registrada — a baixa é feita em "Todas as Contas".</p>
+</div>
+</main>
+<section class="w-full bg-white border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4 hidden" id="selectionDetailBox">
+<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
+<div class="flex flex-wrap items-center gap-3">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b] font-bold">task_alt</span>
+<div class="flex flex-col">
+<span class="text-xs font-mono font-bold text-neutral-500 uppercase tracking-wider">DETALHE DO PAGAMENTO</span>
+<h2 class="text-base sm:text-lg font-bold text-[#1c1b1b] uppercase tracking-tight" id="detailProvider">—</h2>
+</div>
+<span class="bg-[#4dffb2] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-2.5 py-1 uppercase shadow-[2px_2px_0px_0px_#1c1b1b]" id="detailStatusText">PAGO</span>
+</div>
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" id="btnCloseSelection" type="button">
+<span class="material-symbols-outlined text-sm font-bold">close</span>
+<span>FECHAR</span>
+</button>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+<div><span class="block text-xs font-mono font-bold text-neutral-500 uppercase">Documento</span><span class="font-mono font-bold text-sm" id="detailDoc">—</span></div>
+<div><span class="block text-xs font-mono font-bold text-neutral-500 uppercase">Vencimento</span><span class="font-mono font-bold text-sm" id="detailDate">—</span></div>
+<div><span class="block text-xs font-mono font-bold text-neutral-500 uppercase">Valor pago</span><span class="font-mono font-bold text-sm" id="detailAmount">—</span></div>
+<div><span class="block text-xs font-mono font-bold text-neutral-500 uppercase">Categoria</span><span class="font-mono font-bold text-sm" id="detailCategory">—</span></div>
+<div><span class="block text-xs font-mono font-bold text-neutral-500 uppercase">Banco</span><span class="font-mono font-bold text-sm" id="detailBank">—</span></div>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center gap-1" id="btnUnpayAction" type="button"><span class="material-symbols-outlined text-sm font-bold">close</span>ESTORNAR</button>
+</div>
+</section>
+<section class="w-full bg-white border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4 hidden" id="editorContainer">
+<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
+<div class="flex flex-wrap items-center gap-3">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b] font-bold">edit_note</span>
+<div class="flex flex-col">
+<span class="text-xs font-mono font-bold text-neutral-500 uppercase tracking-wider">PAINEL DE EDIÇÃO DIRETA</span>
+<h2 class="text-base sm:text-lg font-bold text-[#1c1b1b] uppercase tracking-tight flex items-center gap-2 flex-wrap">
+<span>EDITAR PAGAMENTO:</span>
+<span class="text-[#153eb5] font-black" id="editorRecordName">—</span>
+</h2>
+</div>
+</div>
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" id="btnClearSelection" type="button">
+<span class="material-symbols-outlined text-sm font-bold">close</span>
+<span>LIMPAR SELEÇÃO</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end pt-1">
+<div class="md:col-span-4 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="fieldSelect">
+<span class="material-symbols-outlined text-sm">tune</span> CAMPO A ALTERAR
+</label>
+<select class="w-full bg-[#fcf9f8] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 focus:bg-white focus:outline-none focus:ring-0 uppercase cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b]" id="fieldSelect">
+<option value="dataPagamento">DATA PAGAMENTO</option>
+<option value="valorPago" selected="">VALOR PAGO</option>
+<option value="banco">BANCO</option>
+</select>
+</div>
+<div class="md:col-span-5 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="newValueInput">
+<span class="material-symbols-outlined text-sm">edit</span> NOVO VALOR DO CAMPO
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2 focus:bg-[#fff9d6] focus:outline-none focus:ring-0 uppercase shadow-[2px_2px_0px_0px_#1c1b1b]" id="newValueInput" placeholder="Digite o novo valor..." type="text">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="edicao"></p>
+</div>
+<div class="md:col-span-3 flex items-center gap-2 pt-1 sm:pt-0">
+<button class="flex-1 bg-[#FFE600] hover:bg-[#ebd300] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap" id="btnApplyChange" type="button">
+<span class="material-symbols-outlined text-base font-bold">check</span>
+<span>APLICAR ALTERAÇÃO</span>
+</button>
+<button class="bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center cursor-pointer whitespace-nowrap" id="btnCancelEdit" type="button">
+<span>CANCELAR</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

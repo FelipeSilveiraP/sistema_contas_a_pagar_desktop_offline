@@ -61,7 +61,7 @@ async function verificarApi(): Promise<void> {
     console.info("[ContasAPagar] API:", status);
   } catch (erro) {
     document.body.dataset.apiStatus = "erro";
-    console.error("[ContasAPagar] falha na API:", erro);
+    console.warn("[ContasAPagar] sonda de API nao concluida (navegacao ou indisponibilidade):", erro instanceof Error ? erro.message : erro);
   }
 }
 

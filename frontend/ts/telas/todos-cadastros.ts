@@ -17,6 +17,7 @@ import {
 } from "../api";
 import { montarNavbar } from "../navbar";
 import { confirmar } from "../componentes";
+import { mascaraCPF, mascaraCNPJ, mascaraTelefone } from "../mascaras";
 import { cnpjValido } from "./form-empresa";
 import { cpfValido } from "./form-pagador";
 
@@ -158,6 +159,7 @@ function adicionarLinhaTelefone(numero = "", tipo = ""): void {
 </button>`;
   (linha.querySelector(".tel-numero") as HTMLInputElement).value = numero;
   (linha.querySelector(".tel-tipo") as HTMLInputElement).value = tipo;
+  mascaraTelefone(linha.querySelector(".tel-numero") as HTMLInputElement);
   linha.querySelector(".tel-remover")!.addEventListener("click", () => {
     linha.remove();
     atualizarSujo(true);
@@ -373,6 +375,8 @@ async function carregarListas(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("todos-cadastros");
+  mascaraCPF(document.getElementById("campo-edt-cpf") as HTMLInputElement);
+  mascaraCNPJ(document.getElementById("campo-edt-cnpj") as HTMLInputElement);
 
   document.querySelectorAll<HTMLButtonElement>(".btn-filtro").forEach((botao) => {
     botao.addEventListener("click", () => {

@@ -1,13 +1,34 @@
 # Active Context
 
 ## Foco Atual
-**Escopo integral (diretiva definitiva) em execução contínua.** Stitch MCP FUNCIONAL (chave no
-`.env`, header `X-Goog-Api-Key`) — 14 HTMLs originais baixados em `docs/stitch/` (+ `.raw.html`
-decodificados). Concluído até aqui: Inserir Conta fiel ao Stitch (migração v8, máscaras, toast,
-anexo PDF), backend completo de pagamentos/recorrências/avisos/dashboard (migrações v9–v11),
-tela Todas as Contas (baixa rápida atômica + painel de edição + exclusão). Próximo: telas
-Pagos, Recorrentes (tabela+form), Mensagens (tabela+form), Gráficos + máscaras nos forms
-existentes + auditoria carregamento + matriz final.
+**Escopo integral: TODAS as telas implementadas (2026-11-08) — regressão completa verde.**
+Pendente: validação visual/final do usuário (matriz abaixo) e validação manual do bug de foco.
+
+## Conclusão das telas (2026-11-08)
+- **Pagos** (`pagos.html`/`pagos.ts` — ref `pagos-tabela-verde`): tabela verde, total pago,
+  seleção com detalhe, editor de pagamento (data/valor/banco) e estorno confirmado.
+- **Recorrentes** (`recorrentes-tabela.html` — ref `recorrentes-tabela-reduzida`): contas fixas
+  geradas (filtro `?fixas=true`), filtros TODOS/A VENCER/HOJE/ATRASADOS, editor de campo.
+- **Form Recorrente** (`form-recorrente.html` — ref `form-recorrente`, roxo #7c3aed): fornecedor,
+  PF/PJ, valor (máscara), dia 1–31, periodicidade (4 pills), formato de pagamento; salva e gera
+  12 competências com anti-duplicação.
+- **Mensagens** (`todas-as-mensagens.html` + `criar-mensagem.html` — refs correspondentes):
+  tabela com filtros TODOS/ATIVOS/EXPIRADOS/CRONOLÓGICO + editor + exclusão; form com
+  vigência (datas + botão [HOJE]), dias da semana múltiplos (DOM–SÁB + [DIAS ÚTEIS]/[TODOS]),
+  título/conteúdo; toast + retorno.
+- **Gráficos** (`graficos.html` — ref `graficos`): KPIs (pago/a vencer/atraso), seletor
+  ESTE MÊS/ÚLTIMOS 3/ESTE ANO, FLUXO MENSAL (6 meses, barras CSS) e POR CATEGORIA, IMPRIMIR,
+  dados reais do SQLite (estados vazios corretos).
+- **Máscaras** aplicadas em form-pagador (CPF), form-empresa (CNPJ + telefones) e painel de
+  edição dos cadastros (CPF/CNPJ/telefone).
+- **Botões:** TODOS os destinos conectados (menu, submenus, navbar) — zero provisórios restantes.
+- **Auditoria carregamento:** prontidão real (`inicializado` = SQLite + API prontos), erros com
+  Tentar novamente/Fechar, sem timers como critério; sem splash por formulário; nunca usada para
+  mascarar foco. Conforme.
+- **Regressão (2026-11-08):** JUnit 120/120; smoke 298/298; smoke-real APROVADO (2 ciclos);
+  smoke-dev 83/83 (`npm run dev`, 3 ciclos — foco OK).
+- **Observação:** o campo "status" do editor do Stitch em contas operacionaliza via baixa/estorno
+  (invariante conta↔pagamento preservada); dias de aviso aceitam múltiplos (referência Stitch).
 
 ## Diretiva definitiva — decisões consolidadas (2026-11-08)
 - **Hierarquia:** Stitch = design; Briefing/decisões = requisitos; VBA = regras de negócio;

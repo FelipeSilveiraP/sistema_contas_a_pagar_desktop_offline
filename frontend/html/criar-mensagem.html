@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Criar Nova Mensagem — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black" data-tela="criar-mensagem">
+<header id="nav-global"></header>
+<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[8px_8px_0px_0px_#000000] p-6 sm:p-8">
+<div class="flex items-center gap-3.5 pb-5 mb-6 border-b-[3px] border-[#1c1b1b]">
+<div class="w-12 h-12 bg-[#dc2626] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[3px_3px_0px_0px_#1c1b1b] flex-shrink-0">
+<span class="material-symbols-outlined text-2xl text-white">mark_email_unread</span>
+</div>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">CRIAR NOVA MENSAGEM</h1>
+</div>
+</div>
+<form class="flex flex-col gap-6" id="form-mensagem" novalidate>
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">event_repeat</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">1. DADOS DO LEMBRETE</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="dt_inicio">DATA INÍCIO LEMBRETE <span class="text-[#dc2626]">*</span></label>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-1.5 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-hoje" type="button">[HOJE]</button>
+</div>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold uppercase text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="dt_inicio" type="date">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="dataInicio"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="dt_fim">DATA FINAL LEMBRETE <span class="text-[#dc2626]">*</span></label>
+<span class="font-mono text-xs text-[#7c775f] uppercase">[EXPIRAÇÃO]</span>
+</div>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold uppercase text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="dt_fim" type="date">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="dataFim"></p>
+</div>
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">DIAS DA SEMANA <span class="text-[#dc2626]">*</span></label>
+<div class="flex items-center gap-2">
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-dias-uteis" type="button">[DIAS ÚTEIS]</button>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-todos-dias" type="button">[TODOS OS DIAS]</button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-2 pt-1" id="days-container">
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="DOMINGO" type="button">DOM</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="SEGUNDA" type="button">SEG</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="TERCA" type="button">TER</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="QUARTA" type="button">QUA</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="QUINTA" type="button">QUI</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="SEXTA" type="button">SEX</button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase transition-all cursor-pointer flex items-center justify-center" data-day="SABADO" type="button">SÁB</button>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="diaSemana"></p>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">edit_note</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">2. CONTEÚDO DA MENSAGEM</h2>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="msg_titulo">TÍTULO DA MENSAGEM <span class="text-[#dc2626]">*</span></label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-bold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="msg_titulo" maxlength="100" placeholder="Ex: Reunião de equipe" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="titulo"></p>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="msg_corpo">MENSAGEM / CONTEÚDO <span class="text-[#dc2626]">*</span></label>
+<textarea class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all min-h-[8rem]" id="msg_corpo" maxlength="500" placeholder="Escreva o recado para a equipe..."></textarea>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="mensagem"></p>
+</div>
+</section>
+<div class="pt-4 border-t-[3px] border-[#1c1b1b] flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+<button class="w-full sm:w-auto px-6 py-3 bg-white text-[#1c1b1b] text-xs sm:text-sm font-bold uppercase tracking-wider border-2 border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer" id="btn-cancelar" type="button">← CANCELAR</button>
+<button class="w-full sm:w-auto px-8 py-3 bg-[#dc2626] text-white text-sm sm:text-base font-bold uppercase tracking-wider border-2 border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-xl">save</span> SALVAR MENSAGEM
+</button>
+</div>
+<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-mensagem" role="status"></p>
+</form>
+</main>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

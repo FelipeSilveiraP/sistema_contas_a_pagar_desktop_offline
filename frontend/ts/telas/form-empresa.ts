@@ -2,6 +2,7 @@ import { buscarStatus, criarEmpresa, ErroValidacaoApi } from "../api";
 import { confirmar } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
+import { mascaraCNPJ, mascaraTelefone } from "../mascaras";
 
 interface CamposFormulario {
   razaoSocial: string;
@@ -126,6 +127,7 @@ function adicionarLinhaTelefone(): void {
 <button class="inline-flex items-center justify-center w-10 h-10 bg-white border-4 border-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer tel-remover" type="button" aria-label="Remover telefone">
 <span class="material-symbols-outlined text-base leading-none font-bold">delete</span>
 </button>`;
+  mascaraTelefone(linha.querySelector(".tel-numero") as HTMLInputElement);
   linha.querySelector(".tel-remover")!.addEventListener("click", () => linha.remove());
   lista.appendChild(linha);
 }
@@ -143,6 +145,7 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("form-empresa");
+  mascaraCNPJ(campo("cnpj"));
   const formulario = document.getElementById("form-empresa") as HTMLFormElement;
   let sujo = false;
 

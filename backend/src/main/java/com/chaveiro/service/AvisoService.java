@@ -24,7 +24,6 @@ public class AvisoService {
 
     private static final Set<String> DIAS = Set.of(
             "TODOS", "DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO");
-
     private final AvisoRepository repository;
 
     public AvisoService(AvisoRepository repository) {
@@ -86,23 +85,31 @@ public class AvisoService {
         }
     }
 
-    /** Vigencia legada: data entre inicio e fim E dia da semana confere (ou TODOS). */
+    /** Vigencia legada: data entre inicio e fim E dia da semana confere (ou TODOS).
+     *  dia_semana aceita multiplos dias separados por virgula (design Stitch). */
     public static boolean ativoEm(Aviso aviso, LocalDate data) {
         if (data.isBefore(aviso.dataInicio()) || data.isAfter(aviso.dataFim())) {
             return false;
         }
-        if ("TODOS".equals(aviso.diaSemana())) {
+        String dias = aviso.diaSemana() == null ? "TODOS" : aviso.diaSemana().toUpperCase();
+        if ("TODOS".equals(dias)) {
             return true;
         }
-        return switch (data.getDayOfWeek()) {
-            case SUNDAY -> "DOMINGO".equals(aviso.diaSemana());
-            case MONDAY -> "SEGUNDA".equals(aviso.diaSemana());
-            case TUESDAY -> "TERCA".equals(aviso.diaSemana());
-            case WEDNESDAY -> "QUARTA".equals(aviso.diaSemana());
-            case THURSDAY -> "QUINTA".equals(aviso.diaSemana());
-            case FRIDAY -> "SEXTA".equals(aviso.diaSemana());
-            case SATURDAY -> "SABADO".equals(aviso.diaSemana());
+        String hoje = switch (data.getDayOfWeek()) {
+            case SUNDAY -> "DOMINGO";
+            case MONDAY -> "SEGUNDA";
+            case TUESDAY -> "TERCA";
+            case WEDNESDAY -> "QUARTA";
+            case THURSDAY -> "QUINTA";
+            case FRIDAY -> "SEXTA";
+            case SATURDAY -> "SABADO";
         };
+        for (String dia : dias.split(",")) {
+            if (hoje.equals(dia.trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Aviso normalizar(Aviso dados) {
@@ -124,7 +131,16 @@ public class AvisoService {
             erros.put("dataFim", "o fim da vigencia deve ser igual ou posterior ao inicio");
         }
         if (!DIAS.contains(dados.diaSemana())) {
-            erros.put("diaSemana", "dia da semana invalido");
+            boolean todosValidos = true;
+            for (String dia : dados.diaSemana().split(",")) {
+                if (!DIAS.contains(dia.trim())) {
+                    todosValidos = false;
+                    break;
+                }
+            }
+            if (!todosValidos) {
+                erros.put("diaSemana", "dia da semana invalido");
+            }
         }
         if (dados.titulo().length() < 2 || dados.titulo().length() > 100) {
             erros.put("titulo", "informe o titulo (2 a 100 caracteres)");
