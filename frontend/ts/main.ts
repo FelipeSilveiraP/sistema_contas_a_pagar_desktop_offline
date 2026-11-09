@@ -43,6 +43,11 @@ async function iniciar(): Promise<void> {
       iniciarInserirConta();
       return;
     }
+    case "todas-as-contas": {
+      const { iniciarTodasAsContas } = await import("./telas/todas-as-contas");
+      iniciarTodasAsContas();
+      return;
+    }
     default: {
       const { iniciarSubmenu } = await import("./telas/submenu");
       const { SUBMENUS } = await import("./submenus-config");

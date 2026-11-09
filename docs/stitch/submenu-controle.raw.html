@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Controle - SeleÃ§Ã£o de Modo</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&amp;family=Space+Grotesk:wght@500;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "background": "#fcf9f8",
+            "surface": "#ffffff",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"],
+            "body": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    body {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body class="bg-[#fcf9f8] font-body text-black min-h-screen flex flex-col justify-between p-6 sm:p-8 select-none antialiased">
+<!-- Top Navigation & Header -->
+<header class="w-full flex items-center justify-between max-w-6xl mx-auto">
+<!-- Back Button -->
+<button class="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white text-black border-4 border-black font-mono font-bold text-sm tracking-wider shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_#000] transition-all cursor-pointer" id="btn-back" onclick="window.history.back()">
+<span class="material-symbols-outlined text-lg leading-none font-black">arrow_back</span>
+<span class="">VOLTAR</span>
+</button>
+<!-- Badge / Title -->
+</header>
+<!-- Central Action Buttons Module (Identical to Home Screen Neo-brutalist Architecture) -->
+<main class="flex-1 flex items-center justify-center my-6 sm:my-8 w-full">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 w-full max-w-6xl px-2"><a class="group flex flex-col border-4 border-black shadow-[8px_8px_0_#000] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0_#000] active:translate-x-1 active:translate-y-1 transition-all cursor-pointer no-underline overflow-hidden active:shadow-[2px_2px_0_#000] select-none" href="#todas-as-contas" id="btn-card-todas"><div class="bg-[#2563eb] h-60 sm:h-72 flex items-center justify-center relative p-6"><div class="w-24 h-24 sm:w-28 sm:h-28 bg-white border-4 border-black shadow-[4px_4px_0_#000] flex items-center justify-center group-hover:scale-105 transition-transform duration-200"><svg class="w-12 h-12 sm:w-14 sm:h-14 text-black" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><rect height="16" rx="1" width="13" x="3" y="4"></rect><path d="M7 4V2a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1h-2"></path><line x1="6" x2="13" y1="9" y2="9"></line><line x1="6" x2="13" y1="13" y2="13"></line><line x1="6" x2="10" y1="17" y2="17"></line></svg></div></div><div class="border-t-4 border-black bg-white px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between"><span class="font-black text-lg sm:text-xl tracking-wider text-black font-display uppercase">TODAS AS CONTAS</span><div class="w-8 h-8 sm:w-9 sm:h-9 bg-[#2563eb] border-2 sm:border-[2.5px] border-black shadow-[2px_2px_0_#000] flex items-center justify-center shrink-0 ml-2"><span class="material-symbols-outlined text-base sm:text-lg text-white font-bold">receipt_long</span></div></div></a><a class="group flex flex-col border-4 border-black shadow-[8px_8px_0_#000] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0_#000] transition-all cursor-pointer no-underline overflow-hidden" href="#contas-recorrentes" id="btn-card-recorrentes"><div class="bg-[#38bdf8] h-60 sm:h-72 flex items-center justify-center relative p-6"><div class="w-24 h-24 sm:w-28 sm:h-28 bg-white border-4 border-black shadow-[4px_4px_0_#000] flex items-center justify-center group-hover:scale-105 transition-transform duration-200"><svg class="w-12 h-12 sm:w-14 sm:h-14 text-black" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-15.5-6.36L3 8"></path><polyline points="3 3 3 8 8 8"></polyline><path d="M3 12a9 9 0 0 0 15.5 6.36L21 16"></path><polyline points="21 21 21 16 16 16"></polyline></svg></div></div><div class="border-t-4 border-black bg-white px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between"><span class="font-black text-lg sm:text-xl tracking-wider text-black font-display uppercase">CONTAS RECORRENTES EM TODOS OS MÃŠSES</span><div class="w-8 h-8 sm:w-9 sm:h-9 bg-[#38bdf8] border-2 sm:border-[2.5px] border-black shadow-[2px_2px_0_#000] flex items-center justify-center shrink-0 ml-2"><span class="material-symbols-outlined text-base sm:text-lg text-black font-bold">autorenew</span></div></div></a><a class="group flex flex-col border-4 border-black shadow-[8px_8px_0_#000] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0_#000] transition-all cursor-pointer no-underline overflow-hidden" href="#pagos" id="btn-card-pagos"><div class="bg-[#10b981] h-60 sm:h-72 flex items-center justify-center relative p-6"><div class="w-24 h-24 sm:w-28 sm:h-28 bg-white border-4 border-black shadow-[4px_4px_0_#000] flex items-center justify-center group-hover:scale-105 transition-transform duration-200 p-2"><img alt="Ãcone Neobrutalista Pagos" class="w-14 h-14 sm:w-16 sm:h-16 object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xu5LoC1ESg_hgy6SQi-haxlWVhEA9gk7EySoAyHVjw1it4XEBrqKPn7doDsxJPI-Dw1_9IsRYtq0cu3eSTNPAUs8OUx-rcr7Au1AR-RAgG1R2zldwidjFG7IyKqUTAuH_JcL1NqkG56VT8liD_6DkH1txns2XaTkThecTev4oByRbEDAleN6K_ynDX_BZ6DNlj1Ke-da6vjQKbl-EdBmpDkHQGyuCL2--GEHjluV0FwL6vm5Gym1SeNA"></div></div><div class="border-t-4 border-black bg-white px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between"><span class="font-black text-lg sm:text-xl tracking-wider text-black font-display uppercase">contas PAGaS</span><div class="w-8 h-8 sm:w-9 sm:h-9 bg-[#10b981] border-2 sm:border-[2.5px] border-black shadow-[2px_2px_0_#000] flex items-center justify-center shrink-0 ml-2"><span class="material-symbols-outlined text-base sm:text-lg text-black font-bold">check</span></div></div></a></div>
+</main>
+<!-- Keyboard Shortcuts & Status Footer -->
+<script>
+    // Keyboard navigation shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.history.back();
+      } else if (e.key === '1') {
+        const btn1 = document.getElementById('btn-card-recorrentes');
+        if (btn1) btn1.click();
+      } else if (e.key === '2') {
+        const btn2 = document.getElementById('btn-card-todas');
+        if (btn2) btn2.click();
+      }
+    });
+  </script>
+
+
+</body></html>

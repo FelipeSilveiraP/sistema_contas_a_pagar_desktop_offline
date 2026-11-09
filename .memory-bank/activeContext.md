@@ -1,9 +1,29 @@
 # Active Context
 
 ## Foco Atual
-**Escopo integral em execução — Módulo 3.5 (Inserir Conta) CONCLUÍDO (2026-11-08), validado por
-testes; próximo: Módulo 3.6 (Boletos/Todas as Contas).** Bug de interação validado pelo usuário.
-Escopo integral autorizado (prosseguir módulo a módulo); push AGUARDA autorização.
+**Escopo integral (diretiva definitiva) em execução contínua.** Stitch MCP FUNCIONAL (chave no
+`.env`, header `X-Goog-Api-Key`) — 14 HTMLs originais baixados em `docs/stitch/` (+ `.raw.html`
+decodificados). Concluído até aqui: Inserir Conta fiel ao Stitch (migração v8, máscaras, toast,
+anexo PDF), backend completo de pagamentos/recorrências/avisos/dashboard (migrações v9–v11),
+tela Todas as Contas (baixa rápida atômica + painel de edição + exclusão). Próximo: telas
+Pagos, Recorrentes (tabela+form), Mensagens (tabela+form), Gráficos + máscaras nos forms
+existentes + auditoria carregamento + matriz final.
+
+## Diretiva definitiva — decisões consolidadas (2026-11-08)
+- **Hierarquia:** Stitch = design; Briefing/decisões = requisitos; VBA = regras de negócio;
+  DER = modelagem. Stitch MCP: `get_screen` devolve `htmlCode` (arquivo baixável).
+- **Máscaras obrigatórias** (módulo `mascaras.ts`): moeda por centavos (digitacao "123456" →
+  "R$ 1.234,56"), CPF, CNPJ, telefone, CEP, data dd/mm/aaaa — reutilizáveis, cursor preservado.
+- **Pagamento:** integral único por conta (UNIQUE id_conta), valor pago pode diferir (juros/
+  desconto), baixa/estorno ATÔMICOS (pagamento + status na mesma transação), correção via PUT.
+- **Recorrência:** dia preservado; dia inexistente → último dia do mês; 12 competências;
+  anti-duplicação (mesmo nome+vencimento); exclusão remove só contas geradas NÃO pagas.
+- **Status financeiro:** imutável via PUT (padrão 18); no editor do Stitch, o campo "status"
+  operacionaliza via baixa/estorno (mantém consistência conta↔pagamento).
+- **Inserir Conta (Stitch real):** etapa 1 = vencimento+tipo PF/PJ+nome empresa+doc+valor+na pasta;
+  etapa 2 = categoria(select)+documento cobrança(select)+empresa emissora(select opcional FK)+
+  pagador responsável(texto)+anexo NF PDF (≤15MB no SQLite). nome_empresa/pagador = texto livre
+  (VBA); emissora = vínculo opcional (FK SET NULL preserva histórico).
 
 ## Módulo 3.5 — Inserir Conta (2026-11-08)
 - **Migração v7** `contas_a_pagar`: `valor_centavos` INTEGER (precisão monetária exata; zero float),

@@ -1,0 +1,251 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastros - Oficina do Chaveiro</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary": "#dc2626",
+            "primary-container": "#dc2626",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-6 sm:py-8 px-4 sm:px-6 lg:px-8 font-headline antialiased">
+<div class="w-full max-w-[780px] flex flex-col gap-5 sm:gap-6">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between gap-4 pb-1">
+<button class="inline-flex items-center gap-2 bg-white border-[3px] border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#000000] hover:bg-[#f0edec] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-lg leading-none">arrow_back</span>
+<span>VOLTAR</span>
+</button>
+</header>
+<!-- Main Form Container -->
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[8px_8px_0px_0px_#000000] p-6 sm:p-8">
+<!-- Title Header -->
+<div class="flex items-center gap-3.5 pb-5 mb-6 border-b-[3px] border-[#1c1b1b]">
+<div class="w-12 h-12 bg-[#dc2626] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[3px_3px_0px_0px_#1c1b1b] flex-shrink-0">
+<span class="material-symbols-outlined text-2xl text-white">person_add</span>
+</div>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">
+            INSERIR NOVO CADASTRO - PAGADOR
+          </h1>
+</div>
+</div>
+<form class="flex flex-col gap-6" id="form-cadastro" onsubmit="event.preventDefault(); salvarPagador();">
+<!-- 1. IDENTIFICAÃ‡ÃƒO PRINCIPAL -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">badge</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">1. DADOS PRINCIPAIS</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- NOME COMPLETO DO PAGADOR -->
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="nome_pagador">
+                NOME COMPLETO DO PAGADOR <span class="text-[#dc2626]">*</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="nome_pagador" name="nome_pagador" placeholder="EX: CARLOS EDUARDO DA SILVA (BALCÃƒO OFICINA)" required="" type="text">
+</div>
+<!-- CPF / CNPJ -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="documento" id="label_documento">
+                CPF / CNPJ <span class="text-[#dc2626]">*</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="documento" maxlength="18" name="documento" oninput="mascaraDoc(this)" placeholder="000.000.000-00 ou CNPJ" required="" type="text">
+</div>
+<!-- DATA CADASTRO -->
+
+<!-- TIPO DE PESSOA (PF / PJ) -->
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                TIPO DE PESSOA (PF / PJ) <span class="text-[#dc2626]">*</span>
+</label>
+<div class="grid grid-cols-2 gap-3 max-w-md">
+<button class="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" id="btn-pf" onclick="selecionarTipo('PF')" type="button">
+<span class="">PESSOA FÃSICA (PF)</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase hover:bg-[#f6f3f2] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" id="btn-pj" onclick="selecionarTipo('PJ')" type="button">
+<span class="">PESSOA JURÃDICA (PJ)</span>
+</button>
+</div>
+<input id="tipo_pessoa" name="tipo_pessoa" type="hidden" value="PF">
+</div>
+</div>
+</section>
+<!-- 2. CONTATOS TELEFÃ”NICOS -->
+<section class="flex flex-col gap-3">
+<div class="flex items-center justify-between pb-2 border-b-2 border-[#1c1b1b]">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">call</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">2. CONTATOS TELEFÃ”NICOS</h2>
+</div>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Linha 1: Telefone Principal -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]">
+<div class="w-full sm:w-1/3 relative">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] cursor-pointer appearance-none pr-8" name="tipo_telefone_1">
+<option value="celular">CELULAR (WHATSAPP)</option>
+<option value="fixo">TELEFONE FIXO</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-lg text-[#1c1b1b]">expand_more</span>
+</div>
+<div class="w-full sm:flex-1 relative">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[3px_3px_0px_0px_#dc2626] transition-all" id="telefone_1" maxlength="15" name="telefone_1" oninput="formatTelefone(this)" placeholder="(11) 98765-4321" required="" type="text">
+</div>
+</div>
+<!-- Linha 2: Telefone SecundÃ¡rio (Opcional) -->
+<div class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]" id="container-tel-secundario">
+<div class="w-full sm:w-1/3 relative">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] cursor-pointer appearance-none pr-8" name="tipo_telefone_2">
+<option value="fixo">TELEFONE FIXO</option>
+<option value="celular">CELULAR (WHATSAPP)</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-lg text-[#1c1b1b]">expand_more</span>
+</div>
+<div class="w-full sm:flex-1 relative">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[3px_3px_0px_0px_#dc2626] transition-all" id="telefone_2" maxlength="15" name="telefone_2" oninput="formatTelefone(this)" placeholder="(11) 3456-7890" type="text">
+</div>
+<button class="inline-flex items-center justify-center bg-white hover:bg-[#ba1a1a] hover:text-white border-2 border-[#1c1b1b] px-3 py-2 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="ocultarTelefoneSecundario()" title="Remover telefone secundÃ¡rio" type="button">
+<span class="material-symbols-outlined text-lg leading-none">delete</span>
+<span class="sm:hidden ml-1">REMOVER</span>
+</button>
+</div>
+<!-- BotÃ£o Adicionar Outro Telefone -->
+<div id="btn-add-tel-wrap">
+<button class="inline-flex items-center gap-2 bg-white hover:bg-[#f6f3f2] border-2 border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="mostrarTelefoneSecundario()" type="button">
+<span class="material-symbols-outlined text-base">add</span>
+<span>+ ADICIONAR OUTRO TELEFONE</span>
+</button>
+</div>
+</div>
+</section>
+<!-- RODAPÃ‰ DE AÃ‡Ã•ES -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t-2 border-[#1c1b1b] mt-2">
+<button class="bg-white hover:bg-[#f6f3f2] border-[3px] border-[#1c1b1b] px-6 py-3 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center" onclick="window.history.back()" type="button">
+            CANCELAR
+          </button>
+<button class="bg-[#dc2626] hover:bg-[#b91c1c] text-white border-[3px] border-[#1c1b1b] px-8 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[4px_4px_0px_0px_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2" type="submit">
+<span class="material-symbols-outlined text-xl">save</span>
+<span>SALVAR PAGADOR</span>
+</button>
+</div>
+</form>
+</main>
+</div>
+<script>
+    function definirDataHoje() {
+      const hoje = new Date();
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const ano = hoje.getFullYear();
+      document.getElementById('data_cadastro').value = `${dia}/${mes}/${ano}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      definirDataHoje();
+    });
+
+    function selecionarTipo(tipo) {
+      const btnPf = document.getElementById('btn-pf');
+      const btnPj = document.getElementById('btn-pj');
+      const hiddenTipo = document.getElementById('tipo_pessoa');
+      const inputDoc = document.getElementById('documento');
+
+      hiddenTipo.value = tipo;
+      inputDoc.value = '';
+
+      if (tipo === 'PF') {
+        btnPf.className = 'flex items-center justify-center gap-2 py-2.5 px-4 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        btnPj.className = 'flex items-center justify-center gap-2 py-2.5 px-4 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase hover:bg-[#f6f3f2] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        inputDoc.placeholder = '000.000.000-00';
+        inputDoc.maxLength = 14;
+      } else {
+        btnPj.className = 'flex items-center justify-center gap-2 py-2.5 px-4 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        btnPf.className = 'flex items-center justify-center gap-2 py-2.5 px-4 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase hover:bg-[#f6f3f2] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        inputDoc.placeholder = '00.000.000/0001-00';
+        inputDoc.maxLength = 18;
+      }
+    }
+
+    function mascaraDoc(input) {
+      const tipo = document.getElementById('tipo_pessoa').value;
+      let v = input.value.replace(/\D/g, "");
+
+      if (tipo === 'PF') {
+        if (v.length > 11) v = v.substring(0, 11);
+        v = v.replace(/^(\d{3})(\d)/, "$1.$2");
+        v = v.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+        v = v.replace(/\.(\d{3})(\d)/, ".$1-$2");
+      } else {
+        if (v.length > 14) v = v.substring(0, 14);
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+        v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+      }
+      input.value = v;
+    }
+
+    function formatTelefone(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (v.length > 11) v = v.substring(0, 11);
+      if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+      } else if (v.length > 6) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
+      }
+      input.value = v;
+    }
+
+    function mostrarTelefoneSecundario() {
+      const container = document.getElementById('container-tel-secundario');
+      const btnAdd = document.getElementById('btn-add-tel-wrap');
+      container.classList.remove('hidden');
+      btnAdd.classList.add('hidden');
+      document.getElementById('telefone_2').focus();
+    }
+
+    function ocultarTelefoneSecundario() {
+      const container = document.getElementById('container-tel-secundario');
+      const btnAdd = document.getElementById('btn-add-tel-wrap');
+      const tel2 = document.getElementById('telefone_2');
+      tel2.value = '';
+      container.classList.add('hidden');
+      btnAdd.classList.remove('hidden');
+    }
+
+    function salvarPagador() {
+      const form = document.getElementById('form-cadastro');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      alert('Pagador cadastrado com sucesso!');
+      window.history.back();
+    }
+  </script>
+
+
+</body></html>

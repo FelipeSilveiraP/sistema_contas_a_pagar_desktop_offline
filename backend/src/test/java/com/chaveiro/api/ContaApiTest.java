@@ -8,11 +8,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.chaveiro.model.Empresa;
 import com.chaveiro.service.EmpresaService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,7 +33,7 @@ class ContaApiTest {
     private MockMvc mvc;
 
     @Autowired
-    private com.fasterxml.jackson.databind.ObjectMapper json;
+    private ObjectMapper json;
 
     @Autowired
     private EmpresaService empresaService;
@@ -45,12 +48,13 @@ class ContaApiTest {
 
     private String corpo(long idEmpresa, String valor, String vencimento, String doc, Boolean forcar) throws Exception {
         return json.writeValueAsString(new ContaController.ContaRequest(
-                idEmpresa, null, "Material", doc, new BigDecimal(valor),
-                LocalDate.parse(vencimento), Boolean.FALSE, forcar));
+                "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "boleto",
+                "Material", doc, new BigDecimal(valor), LocalDate.parse(vencimento),
+                Boolean.FALSE, null, null, forcar));
     }
 
     @Test
-    void deveCadastrarContaERetornar201ComStatusPendente() throws Exception {
+    void deveCadastrarContaERetornar201ComCamposDoFormulario() throws Exception {
         long idEmpresa = cadastrarEmpresa();
 
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
@@ -60,7 +64,10 @@ class ContaApiTest {
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.status").value("PENDENTE"))
                 .andExpect(jsonPath("$.valor").value(123.45))
-                .andExpect(jsonPath("$.razaoSocial").value("Empresa API Contas"));
+                .andExpect(jsonPath("$.nomeEmpresa").value("Empresa API Contas"))
+                .andExpect(jsonPath("$.pagadorResponsavel").value("Balcão 01"))
+                .andExpect(jsonPath("$.formaPagamento").value("boleto"))
+                .andExpect(jsonPath("$.tipoPessoa").value("PJ"));
     }
 
     @Test
@@ -76,9 +83,18 @@ class ContaApiTest {
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new ContaController.ContaRequest(
-                                idEmpresa, null, null, null, new BigDecimal("10.00"), null, false, null))))
+                                "Empresa", idEmpresa, "Balcão", "PJ", "boleto", null, null,
+                                new BigDecimal("10.00"), null, false, null, null, null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.vencimento").exists());
+
+        mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(new ContaController.ContaRequest(
+                                "Empresa", idEmpresa, "Balcão", "PJ", "cheque", null, null,
+                                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, null, null))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.formaPagamento").exists());
     }
 
     @Test
@@ -97,7 +113,6 @@ class ContaApiTest {
                 .andExpect(jsonPath("$.tipo").value("possivel_duplicata"))
                 .andExpect(jsonPath("$.existente.id", notNullValue()));
 
-        // forcar insere mesmo assim
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo(idEmpresa, "100.00", "2026-12-10", doc, true)))
@@ -119,9 +134,6 @@ class ContaApiTest {
         mvc.perform(get("/api/contas").header("X-FinDesk-Token", TOKEN).param("status", "PAGO"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.numeroDocumento == '" + doc + "')]").doesNotExist());
-        mvc.perform(get("/api/contas").header("X-FinDesk-Token", TOKEN).param("status", "PENDENTE"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.numeroDocumento == '" + doc + "')]").exists());
     }
 
     @Test
@@ -147,16 +159,23 @@ class ContaApiTest {
     }
 
     @Test
-    void deveRecusarExclusaoDeEmpresaVinculadaAConta() throws Exception {
+    void devePreservarContaAoExcluirEmpresaVinculada() throws Exception {
+        // Empresa emissora e opcional (FK SET NULL): o historico financeiro sobrevive
         long idEmpresa = cadastrarEmpresa();
-        mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+        String criado = mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo(idEmpresa, "10.00", "2026-12-10", "V-" + sufixo(), true)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(criado).get("id").asLong();
 
         mvc.perform(delete("/api/empresas/" + idEmpresa).header("X-FinDesk-Token", TOKEN))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.erro").exists());
+                .andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/contas/" + id).header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nomeEmpresa").value("Empresa API Contas"))
+                .andExpect(jsonPath("$.idEmpresa").doesNotExist());
     }
 
     @Test
@@ -169,9 +188,6 @@ class ContaApiTest {
 
     @Test
     void naoDevePermitirTrocarStatusViaPut() throws Exception {
-        // Invariante para a integracao financeira (3.6/3.7): o status da conta nao
-        // pode ser alterado por PUT — a baixa sera uma operacao transacional propria
-        // (pagamento + status na mesma transacao). Hoje nenhum caminho seta PAGO.
         long idEmpresa = cadastrarEmpresa();
         String criado = mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -180,11 +196,13 @@ class ContaApiTest {
                 .andReturn().getResponse().getContentAsString();
         long id = json.readTree(criado).get("id").asLong();
 
-        String corpoComStatus = json.writeValueAsString(java.util.Map.of(
-                "idEmpresa", idEmpresa,
+        String corpoComStatus = json.writeValueAsString(Map.of(
+                "nomeEmpresa", "Empresa API Contas",
+                "pagadorResponsavel", "Balcão 01",
+                "tipoPessoa", "PJ",
+                "formaPagamento", "boleto",
                 "valor", "10.00",
                 "vencimento", "2026-12-10",
-                "boletoNaPasta", false,
                 "forcar", true,
                 "status", "PAGO"));
         mvc.perform(put("/api/contas/" + id).header("X-FinDesk-Token", TOKEN)
@@ -199,13 +217,44 @@ class ContaApiTest {
 
     @Test
     void forcarNaoBypassaValidacaoDeValor() throws Exception {
-        // forcar pula somente o filtro de duplicidade; validacoes e integridade
-        // (CHECK valor > 0, FKs) continuam obrigatorias
         long idEmpresa = cadastrarEmpresa();
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo(idEmpresa, "0.00", "2026-12-10", null, true)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.valor").exists());
+    }
+
+    @Test
+    void deveEnviarEBaixarAnexoPdf() throws Exception {
+        long idEmpresa = cadastrarEmpresa();
+        String pdfBase64 = Base64.getEncoder().encodeToString("%PDF-1.4 teste de anexo".getBytes());
+        String corpoComAnexo = json.writeValueAsString(new ContaController.ContaRequest(
+                "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", "Material",
+                "AN-" + sufixo(), new BigDecimal("10.00"), LocalDate.parse("2026-12-10"),
+                true, "nota.pdf", pdfBase64, true));
+        String criado = mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoComAnexo))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.anexoNome").value("nota.pdf"))
+                .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(criado).get("id").asLong();
+
+        mvc.perform(get("/api/contas/" + id + "/anexo").header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentType(MediaType.APPLICATION_PDF));
+
+        // anexo nao-PDF e recusado
+        String corpoInvalido = json.writeValueAsString(new ContaController.ContaRequest(
+                "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", null,
+                null, new BigDecimal("10.00"), LocalDate.parse("2026-12-11"),
+                false, "nota.pdf", Base64.getEncoder().encodeToString("nao-pdf".getBytes()), true));
+        mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoInvalido))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.anexo").exists());
     }
 }

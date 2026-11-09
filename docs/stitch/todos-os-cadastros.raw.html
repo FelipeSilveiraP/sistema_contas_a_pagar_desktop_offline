@@ -1,0 +1,594 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Oficina do Chaveiro - Controle de Cadastros</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&amp;family=Space+Grotesk:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary-container": "#FFE600",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "sans": ["Space Grotesk", "sans-serif"],
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black">
+<!-- CONTAINER CENTRALIZADO DE LARGURA CONFORTÃVEL -->
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<!-- LINHA 1 (TOPO - FERRAMENTAS, PESQUISA E FILTROS) -->
+<header class="w-full flex flex-col gap-4">
+<!-- Barra de NavegaÃ§Ã£o Superior -->
+<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border shadow-[3px_3px_0px_0px_#1c1b1b]">
+<div class="flex items-center gap-4">
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-base font-bold">arrow_back</span>
+<span>VOLTAR</span>
+</button>
+<div class="h-6 w-[2px] bg-[#1c1b1b] hidden sm:block"></div>
+<h1 class="text-lg sm:text-xl font-bold tracking-tight uppercase flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-xl sm:text-2xl font-bold">folder_shared</span>
+<span>TODOS OS CADASTROS</span>
+</h1>
+</div>
+
+</div>
+<!-- Ãrea de Pesquisa e Filtros Neobrutalistas com os 3 Modos -->
+<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border shadow-[3px_3px_0px_0px_#1c1b1b]">
+<!-- Campo de Pesquisa -->
+<div class="relative flex-1 min-w-[240px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border font-mono" id="searchInput" placeholder="Pesquisar cadastro, documento ou cÃ³digo..." type="text">
+</div>
+<!-- Filtros de Modo de VisualizaÃ§Ã£o (EMPRESAS, PAGADORES, BANCOS) -->
+<div class="flex flex-wrap items-center gap-2" id="categoryTabGroup">
+<button class="category-filter-btn border-2 border-[#1c1b1b] font-mono text-xs font-bold px-4 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 text-white" data-mode="EMPRESAS" type="button" style="background-color: rgb(234, 88, 12);">
+<span class="material-symbols-outlined text-sm font-bold">domain</span>
+<span>EMPRESAS</span>
+</button>
+<button class="category-filter-btn border-2 border-[#1c1b1b] font-mono text-xs font-bold px-4 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 bg-white text-[#1c1b1b] hover:bg-neutral-100" data-mode="PAGADORES" type="button" style="background-color: rgb(255, 255, 255);">
+<span class="material-symbols-outlined text-sm font-bold">badge</span>
+<span>PAGADORES</span>
+</button>
+<button class="category-filter-btn border-2 border-[#1c1b1b] font-mono text-xs font-bold px-4 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 bg-white text-[#1c1b1b] hover:bg-neutral-100" data-mode="BANCOS" type="button" style="background-color: rgb(255, 255, 255);">
+<span class="material-symbols-outlined text-sm font-bold">account_balance</span>
+<span>BANCOS</span>
+</button>
+</div>
+</div>
+</header>
+<!-- LINHA 2 (MEIO - TABELA DINÃ‚MICA COM CORES E ESTRUTURA DEPENDENTES DO MODO) -->
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border shadow-[4px_4px_0px_0px_#1c1b1b]">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="mainTable">
+<thead id="tableHeader">
+        <tr class="text-white border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b-2 font-bold" style="background-color: #ea580c;">
+          <th class="py-3.5 px-4 whitespace-nowrap">DATA INSERÃ‡ÃƒO</th>
+          <th class="py-3.5 px-4 min-w-[200px] whitespace-nowrap">RAZÃƒO SOCIAL</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">NOME FANTASIA</th>
+          <th class="py-3.5 px-4 whitespace-nowrap font-mono">CNPJ</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">NOME DO REPRESENTANTE</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">TELEFONE</th>
+          <th class="py-3.5 px-4 min-w-[220px] whitespace-nowrap">ENDEREÃ‡O</th>
+        </tr>
+      </thead>
+<tbody class="divide-[#1c1b1b] text-sm font-semibold divide-y" id="tableBody"><tr class="bill-row cursor-pointer transition-colors" data-id="emp_1" style="background-color: rgb(255, 237, 213); border-left: 8px solid rgb(234, 88, 12);">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">24/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Silca Chaves do Brasil Ltda</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">Silca Chaves</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">12.345.678/0001-90</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Carlos Eduardo</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">(11) 98765-4321</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Rua das IndÃºstrias, 450 - SP</td>
+        </tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-id="emp_2">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">25/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Gold Distribuidora de Fechaduras ME</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">Gold Chaves &amp; LÃ¢minas</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">98.765.432/0001-10</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Marcos Silva</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">(11) 91234-5678</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Av. Central, 1200 - SP</td>
+        </tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-id="emp_3">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">28/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">AlianÃ§a MetalÃºrgica S.A.</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">AlianÃ§a Cadeados</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">23.456.789/0001-22</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Carlos Eduardo</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">(11) 3456-7890</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Rua do AÃ§o, 88 - Osasco/SP</td>
+        </tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-id="emp_4">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">20/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Enel DistribuiÃ§Ã£o SÃ£o Paulo S.A.</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">Enel Energia</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">61.695.227/0001-93</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Mariana Santos</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">0800 72 72 120</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Av. das NaÃ§Ãµes Unidas, 14401 - SP</td>
+        </tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-id="emp_5">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">18/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Papaiz IndÃºstria e ComÃ©rcio Ltda</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">Papaiz Fechaduras</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">45.678.901/0001-33</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Roberto BalcÃ£o</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">(11) 4344-9000</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Rod. Anchieta, km 15 - SBC/SP</td>
+        </tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-id="emp_6">
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">15/10/2023</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">ManutenÃ§Ã£o &amp; Fresas Chaveiro EIRELI</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">Fresas RÃ¡pido</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">34.567.890/0001-44</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">Marcos Silva</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">(11) 97654-3210</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">Rua VoluntÃ¡rios, 310 - SP</td>
+        </tr></tbody>
+</table>
+</div>
+<!-- Barra de Resumo Inferior da Tabela -->
+<div class="border-[#1c1b1b] bg-[#fcf9f8] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono border-t">
+<span class="text-neutral-700 font-bold uppercase tracking-wider" id="tableSummaryCount">6 CADASTROS LISTADOS</span>
+<div class="flex items-center gap-2">
+<span class="text-[#1c1b1b] font-bold uppercase">TOTAL FILTRADO:</span>
+<span class="text-white px-3 py-1 border-2 border-[#1c1b1b] font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_#1c1b1b] transition-colors" id="tableSummaryBadge" style="background-color: rgb(234, 88, 12);">6 REGISTROS</span>
+</div>
+</div>
+</main>
+<!-- LINHA 3 (INFERIOR - ÃREA DE EDIÃ‡ÃƒO DIRETA ADAPTÃVEL AO MODO) -->
+<section class="w-full">
+<div class="w-full bg-white border-2 border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4" id="editorContainer">
+<!-- CabeÃ§alho Informativo do Registro Selecionado -->
+<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
+<div class="flex flex-wrap items-center gap-3">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b] font-bold">edit_note</span>
+<div class="flex flex-col">
+<span class="text-xs font-mono font-bold text-neutral-500 uppercase tracking-wider">PAINEL DE EDIÃ‡ÃƒO DIRETA</span>
+<h2 class="text-base sm:text-lg font-bold text-[#1c1b1b] uppercase tracking-tight flex items-center gap-2 flex-wrap" id="editorTitle">
+<span>EDITAR REGISTRO:</span>
+<span class="font-black transition-colors" id="editorRecordName" style="color: rgb(234, 88, 12);">Silca Chaves do Brasil Ltda</span>
+</h2>
+</div>
+</div>
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" id="btnClearSelection" type="button">
+<span class="material-symbols-outlined text-sm font-bold">close</span>
+<span>LIMPAR SELEÃ‡ÃƒO</span>
+</button>
+</div>
+<!-- FormulÃ¡rio Neobrutalista de EdiÃ§Ã£o DinÃ¢mica -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end pt-1">
+<!-- Campo a Alterar -->
+<div class="md:col-span-4 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="fieldSelect">
+<span class="material-symbols-outlined text-sm">tune</span> CAMPO A ALTERAR
+</label>
+<select class="w-full bg-[#fcf9f8] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 focus:bg-white focus:outline-none focus:ring-0 uppercase cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b]" id="fieldSelect"><option value="razaoSocial">RazÃ£o Social</option><option value="nomeFantasia">Nome Fantasia</option><option value="cnpj">CNPJ</option><option value="representante">Nome do Representante</option><option value="telefone">Telefone</option><option value="endereco">EndereÃ§o</option><option value="dataInsercao">Data InserÃ§Ã£o</option></select>
+</div>
+<!-- Novo Valor do Campo -->
+<div class="md:col-span-5 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="newValueInput">
+<span class="material-symbols-outlined text-sm">edit</span> NOVO VALOR DO CAMPO
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2 focus:bg-[#fff9d6] focus:outline-none focus:ring-0 uppercase shadow-[2px_2px_0px_0px_#1c1b1b]" id="newValueInput" placeholder="Digite o novo valor..." type="text" value="">
+</div>
+<!-- BotÃµes de AÃ§Ã£o -->
+<div class="md:col-span-3 flex items-center gap-2 pt-1 sm:pt-0">
+<button class="flex-1 text-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap" id="btnApplyChange" style="background-color: rgb(234, 88, 12);" type="button">
+<span class="material-symbols-outlined text-base font-bold">check</span>
+<span>APLICAR ALTERAÃ‡ÃƒO</span>
+</button>
+<button class="bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center cursor-pointer whitespace-nowrap" id="btnCancelEdit" title="Cancelar" type="button">
+<span>CANCELAR</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- SCRIPT DE INTERATIVIDADE COMPLETA E TROCA DE MODOS -->
+<script>
+  // DADOS REALISTAS PARA OS TRÃŠS MODOS
+  const DATABASE = {
+    EMPRESAS: [
+      { id: 'emp_1', dataInsercao: '24/10/2023', razaoSocial: 'Silca Chaves do Brasil Ltda', nomeFantasia: 'Silca Chaves', cnpj: '12.345.678/0001-90', representante: 'Carlos Eduardo', telefone: '(11) 98765-4321', endereco: 'Rua das IndÃºstrias, 450 - SP' },
+      { id: 'emp_2', dataInsercao: '25/10/2023', razaoSocial: 'Gold Distribuidora de Fechaduras ME', nomeFantasia: 'Gold Chaves & LÃ¢minas', cnpj: '98.765.432/0001-10', representante: 'Marcos Silva', telefone: '(11) 91234-5678', endereco: 'Av. Central, 1200 - SP' },
+      { id: 'emp_3', dataInsercao: '28/10/2023', razaoSocial: 'AlianÃ§a MetalÃºrgica S.A.', nomeFantasia: 'AlianÃ§a Cadeados', cnpj: '23.456.789/0001-22', representante: 'Carlos Eduardo', telefone: '(11) 3456-7890', endereco: 'Rua do AÃ§o, 88 - Osasco/SP' },
+      { id: 'emp_4', dataInsercao: '20/10/2023', razaoSocial: 'Enel DistribuiÃ§Ã£o SÃ£o Paulo S.A.', nomeFantasia: 'Enel Energia', cnpj: '61.695.227/0001-93', representante: 'Mariana Santos', telefone: '0800 72 72 120', endereco: 'Av. das NaÃ§Ãµes Unidas, 14401 - SP' },
+      { id: 'emp_5', dataInsercao: '18/10/2023', razaoSocial: 'Papaiz IndÃºstria e ComÃ©rcio Ltda', nomeFantasia: 'Papaiz Fechaduras', cnpj: '45.678.901/0001-33', representante: 'Roberto BalcÃ£o', telefone: '(11) 4344-9000', endereco: 'Rod. Anchieta, km 15 - SBC/SP' },
+      { id: 'emp_6', dataInsercao: '15/10/2023', razaoSocial: 'ManutenÃ§Ã£o & Fresas Chaveiro EIRELI', nomeFantasia: 'Fresas RÃ¡pido', cnpj: '34.567.890/0001-44', representante: 'Marcos Silva', telefone: '(11) 97654-3210', endereco: 'Rua VoluntÃ¡rios, 310 - SP' }
+    ],
+    PAGADORES: [
+      { id: 'pag_1', dataCadastro: '02/10/2023', nome: 'Carlos Eduardo (Oficina Matriz)', doc: '312.874.908-11', tel1: '(11) 98765-4321', tel2: '(11) 3321-4500', tipo: 'PF' },
+      { id: 'pag_2', dataCadastro: '05/10/2023', nome: 'Marcos Silva Chaveiro 24h', doc: '28.941.503/0001-77', tel1: '(11) 91234-5678', tel2: '(11) 97654-3210', tipo: 'PJ' },
+      { id: 'pag_3', dataCadastro: '12/10/2023', nome: 'Caixa BalcÃ£o 01 - Centro', doc: '44.102.399/0001-82', tel1: '(11) 3214-9988', tel2: '(11) 99876-1122', tipo: 'PJ' },
+      { id: 'pag_4', dataCadastro: '16/10/2023', nome: 'Mariana Santos GerÃªncia', doc: '401.765.228-54', tel1: '(11) 98877-6655', tel2: '(11) 3456-0011', tipo: 'PF' },
+      { id: 'pag_5', dataCadastro: '20/10/2023', nome: 'Roberto BalcÃ£o & ServiÃ§os', doc: '198.443.208-09', tel1: '(11) 97412-3366', tel2: '-', tipo: 'PF' },
+      { id: 'pag_6', dataCadastro: '27/10/2023', nome: 'Chaveiro Express Zona Sul', doc: '51.309.812/0001-05', tel1: '(11) 96543-2109', tel2: '(11) 5051-8899', tipo: 'PJ' }
+    ],
+    BANCOS: [
+      { id: 'ban_1', dataCadastro: '10/01/2023', nome: 'Banco ItaÃº Chaveiro PJ', tipo: 'PJ' },
+      { id: 'ban_2', dataCadastro: '15/02/2023', nome: 'Bradesco PF Titular', tipo: 'PF' },
+      { id: 'ban_3', dataCadastro: '03/04/2023', nome: 'Nubank PJ Operacional', tipo: 'PJ' },
+      { id: 'ban_4', dataCadastro: '22/05/2023', nome: 'Banco do Brasil AgÃªncia Central', tipo: 'PJ' },
+      { id: 'ban_5', dataCadastro: '18/08/2023', nome: 'Santander BalcÃ£o Principal', tipo: 'PJ' },
+      { id: 'ban_6', dataCadastro: '09/09/2023', nome: 'Inter CobranÃ§as RÃ¡pidas PF', tipo: 'PF' }
+    ]
+  };
+
+  // CONFIGURAÃ‡ÃƒO VISUAL E DE CAMPOS POR MODO
+  const MODE_CONFIG = {
+    EMPRESAS: {
+      color: '#ea580c',
+      colorLight: '#ffedd5',
+      colorHover: '#fed7aa',
+      colorBorder: '#ea580c',
+      label: 'EMPRESAS',
+      fieldKeyForTitle: 'razaoSocial',
+      fields: [
+        { key: 'razaoSocial', label: 'RazÃ£o Social' },
+        { key: 'nomeFantasia', label: 'Nome Fantasia' },
+        { key: 'cnpj', label: 'CNPJ' },
+        { key: 'representante', label: 'Nome do Representante' },
+        { key: 'telefone', label: 'Telefone' },
+        { key: 'endereco', label: 'EndereÃ§o' },
+        { key: 'dataInsercao', label: 'Data InserÃ§Ã£o' }
+      ]
+    },
+    PAGADORES: {
+      color: '#dc2626',
+      colorLight: '#fee2e2',
+      colorHover: '#fecaca',
+      colorBorder: '#dc2626',
+      label: 'PAGADORES',
+      fieldKeyForTitle: 'nome',
+      fields: [
+        { key: 'nome', label: 'Nome' },
+        { key: 'doc', label: 'CPF / CNPJ' },
+        { key: 'tel1', label: 'Telefone 1 (Celular)' },
+        { key: 'tel2', label: 'Telefone 2 (Fixo / WhatsApp)' },
+        { key: 'tipo', label: 'PF / PJ' },
+        { key: 'dataCadastro', label: 'Data Cadastro' }
+      ]
+    },
+    BANCOS: {
+      color: '#16a34a',
+      colorLight: '#dcfce7',
+      colorHover: '#bbf7d0',
+      colorBorder: '#16a34a',
+      label: 'BANCOS',
+      fieldKeyForTitle: 'nome',
+      fields: [
+        { key: 'nome', label: 'Nome do Banco / Conta' },
+        { key: 'tipo', label: 'PF / PJ' },
+        { key: 'dataCadastro', label: 'Data Cadastro' }
+      ]
+    }
+  };
+
+  let currentMode = 'EMPRESAS';
+  let currentSelectedId = 'emp_1';
+
+  const tableHeader = document.getElementById('tableHeader');
+  const tableBody = document.getElementById('tableBody');
+  const searchInput = document.getElementById('searchInput');
+  const categoryButtons = document.querySelectorAll('.category-filter-btn');
+  const tableSummaryBadge = document.getElementById('tableSummaryBadge');
+  const tableSummaryCount = document.getElementById('tableSummaryCount');
+  const activeCategoryDot = document.getElementById('activeCategoryDot');
+  const activeCategoryBadgeText = document.getElementById('activeCategoryBadgeText');
+
+  // Elementos do painel de ediÃ§Ã£o
+  const editorRecordName = document.getElementById('editorRecordName');
+  const fieldSelect = document.getElementById('fieldSelect');
+  const newValueInput = document.getElementById('newValueInput');
+  const btnApplyChange = document.getElementById('btnApplyChange');
+  const btnCancelEdit = document.getElementById('btnCancelEdit');
+  const btnClearSelection = document.getElementById('btnClearSelection');
+
+  // RENDERIZA CABEÃ‡ALHO DA TABELA CONFORME MODO
+  function renderHeader() {
+    const config = MODE_CONFIG[currentMode];
+    let thHtml = '';
+
+    if (currentMode === 'EMPRESAS') {
+      thHtml = `
+        <tr class="text-white border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b-2 font-bold" style="background-color: ${config.color};">
+          <th class="py-3.5 px-4 whitespace-nowrap">DATA INSERÃ‡ÃƒO</th>
+          <th class="py-3.5 px-4 min-w-[200px] whitespace-nowrap">RAZÃƒO SOCIAL</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">NOME FANTASIA</th>
+          <th class="py-3.5 px-4 whitespace-nowrap font-mono">CNPJ</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">NOME DO REPRESENTANTE</th>
+          <th class="py-3.5 px-4 whitespace-nowrap">TELEFONE</th>
+          <th class="py-3.5 px-4 min-w-[220px] whitespace-nowrap">ENDEREÃ‡O</th>
+        </tr>
+      `;
+    } else if (currentMode === 'PAGADORES') {
+      thHtml = `
+        <tr class="text-white border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b-2 font-bold" style="background-color: ${config.color};">
+          <th class="py-3.5 px-4 whitespace-nowrap">DATA CADASTRO</th>
+          <th class="py-3.5 px-4 min-w-[240px] whitespace-nowrap">NOME DO PAGADOR</th>
+          <th class="py-3.5 px-4 whitespace-nowrap font-mono">CPF / CNPJ</th>
+          <th class="py-3.5 px-4 min-w-[220px] whitespace-nowrap">TELEFONES (CONTATO)</th>
+          <th class="py-3.5 px-4 whitespace-nowrap text-center">PF / PJ</th>
+        </tr>
+      `;
+    } else if (currentMode === 'BANCOS') {
+      thHtml = `
+        <tr class="text-white border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b-2 font-bold" style="background-color: ${config.color};">
+          <th class="py-3.5 px-4 whitespace-nowrap">DATA CADASTRO</th>
+          <th class="py-3.5 px-4 min-w-[320px] whitespace-nowrap">NOME DA CONTA / BANCO</th>
+          <th class="py-3.5 px-4 whitespace-nowrap text-center">PF / PJ</th>
+        </tr>
+      `;
+    }
+
+    tableHeader.innerHTML = thHtml;
+  }
+
+  // RENDERIZA LINHAS DA TABELA
+  function renderTableRows() {
+    const dataList = DATABASE[currentMode];
+    const query = searchInput.value.toLowerCase().trim();
+    const config = MODE_CONFIG[currentMode];
+
+    let visibleCount = 0;
+    tableBody.innerHTML = '';
+
+    dataList.forEach(item => {
+      // Checar se bate com pesquisa
+      let match = false;
+      if (!query) {
+        match = true;
+      } else {
+        const fullString = Object.values(item).join(' ').toLowerCase();
+        if (fullString.includes(query)) match = true;
+      }
+
+      if (!match) return;
+
+      visibleCount++;
+      const isSelected = (item.id === currentSelectedId);
+      const row = document.createElement('tr');
+      row.className = 'bill-row cursor-pointer transition-colors';
+      row.setAttribute('data-id', item.id);
+
+      // Estilo de seleÃ§Ã£o e hover especÃ­fico da paleta de cada modo
+      if (isSelected) {
+        row.style.backgroundColor = config.colorLight;
+        row.style.borderLeft = `8px solid ${config.colorBorder}`;
+      } else {
+        row.className += ' hover:bg-[#fff9d6]';
+      }
+
+      if (currentMode === 'EMPRESAS') {
+        row.innerHTML = `
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell">${item.dataInsercao}</td>
+          <td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">${item.razaoSocial}</div></td>
+          <td class="py-3.5 px-4 font-semibold text-[#1c1b1b] whitespace-nowrap">${item.nomeFantasia}</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">${item.cnpj}</td>
+          <td class="py-3.5 px-4 text-neutral-700 whitespace-nowrap">${item.representante}</td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap">${item.telefone}</td>
+          <td class="py-3.5 px-4 text-xs text-neutral-600 whitespace-nowrap">${item.endereco}</td>
+        `;
+      } else if (currentMode === 'PAGADORES') {
+        const tipoBadge = item.tipo === 'PJ'
+          ? '<span class="inline-block px-2.5 py-0.5 bg-[#1c1b1b] text-white font-mono text-xs font-bold border border-[#1c1b1b]">PJ</span>'
+          : '<span class="inline-block px-2.5 py-0.5 bg-white text-[#1c1b1b] font-mono text-xs font-bold border-2 border-[#1c1b1b]">PF</span>';
+
+        const tel2Badge = item.tel2 && item.tel2 !== '-' 
+          ? `<span class="bg-[#fcf9f8] border border-[#1c1b1b] px-2 py-0.5 rounded text-[11px] font-mono text-neutral-700 font-bold flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">phone_enabled</span>${item.tel2}</span>`
+          : '';
+
+        row.innerHTML = `
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">${item.dataCadastro}</td>
+          <td class="py-3.5 px-4">
+            <div class="font-bold text-[#1c1b1b] flex items-center gap-2">
+              <span class="material-symbols-outlined text-base text-[#dc2626]">person</span>
+              ${item.nome}
+            </div>
+          </td>
+          <td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap font-bold">${item.doc}</td>
+          <td class="py-3.5 px-4 whitespace-nowrap">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="bg-white border-2 border-[#1c1b1b] px-2 py-0.5 text-xs font-mono font-bold text-[#1c1b1b] flex items-center gap-1 shadow-[1px_1px_0px_0px_#1c1b1b]">
+                <span class="material-symbols-outlined text-xs">smartphone</span>${item.tel1}
+              </span>
+              ${tel2Badge}
+            </div>
+          </td>
+          <td class="py-3.5 px-4 whitespace-nowrap text-center">${tipoBadge}</td>
+        `;
+      } else if (currentMode === 'BANCOS') {
+        const tipoBadge = item.tipo === 'PJ'
+          ? '<span class="inline-block px-3 py-1 bg-[#16a34a] text-white font-mono text-xs font-bold border-2 border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b]">CONTA PJ</span>'
+          : '<span class="inline-block px-3 py-1 bg-white text-[#16a34a] font-mono text-xs font-bold border-2 border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b]">CONTA PF</span>';
+
+        row.innerHTML = `
+          <td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">${item.dataCadastro}</td>
+          <td class="py-3.5 px-4">
+            <div class="font-bold text-[#1c1b1b] text-base flex items-center gap-2.5">
+              <span class="material-symbols-outlined text-xl text-[#16a34a]">account_balance_wallet</span>
+              <span>${item.nome}</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 whitespace-nowrap text-center">${tipoBadge}</td>
+        `;
+      }
+
+      row.addEventListener('click', () => {
+        currentSelectedId = item.id;
+        renderTableRows();
+        syncEditorPanel();
+      });
+
+      tableBody.appendChild(row);
+    });
+
+    // Atualiza contadores e rodapÃ©
+    tableSummaryCount.textContent = `${visibleCount} CADASTRO${visibleCount === 1 ? '' : 'S'} LISTADO${visibleCount === 1 ? '' : 'S'}`;
+    tableSummaryBadge.textContent = `${visibleCount} REGISTROS`;
+    tableSummaryBadge.style.backgroundColor = config.color;
+  }
+
+  // ATUALIZA OPÃ‡Ã•ES DO SELECT E CAMPOS DO FORMULÃRIO DE EDIÃ‡ÃƒO
+  function populateEditorSelect() {
+    const config = MODE_CONFIG[currentMode];
+    fieldSelect.innerHTML = '';
+    config.fields.forEach((f, idx) => {
+      const opt = document.createElement('option');
+      opt.value = f.key;
+      opt.textContent = f.label;
+      if (idx === 0) opt.selected = true;
+      fieldSelect.appendChild(opt);
+    });
+  }
+
+  // SINCRONIZA PAINEL DE EDIÃ‡ÃƒO DIRETA
+  function syncEditorPanel() {
+    const config = MODE_CONFIG[currentMode];
+    const dataList = DATABASE[currentMode];
+    const item = dataList.find(d => d.id === currentSelectedId) || dataList[0];
+
+    // Atualiza botÃ£o de aplicar alteraÃ§Ã£o
+    btnApplyChange.style.backgroundColor = config.color;
+
+    if (!item) {
+      editorRecordName.textContent = 'NENHUM SELECIONADO';
+      editorRecordName.style.color = '#737373';
+      newValueInput.value = '';
+      return;
+    }
+
+    // TÃ­tulo do registro no painel
+    const titleValue = item[config.fieldKeyForTitle] || item.nome || 'REGISTRO';
+    editorRecordName.textContent = titleValue;
+    editorRecordName.style.color = config.color;
+
+    // Atualiza o valor do input com base no campo atualmente selecionado
+    const selectedField = fieldSelect.value || config.fields[0].key;
+    newValueInput.value = item[selectedField] || '';
+  }
+
+  // ALTERAÃ‡ÃƒO DO CAMPO NO SELECT
+  fieldSelect.addEventListener('change', () => {
+    const dataList = DATABASE[currentMode];
+    const item = dataList.find(d => d.id === currentSelectedId);
+    if (item) {
+      newValueInput.value = item[fieldSelect.value] || '';
+    }
+  });
+
+  // APLICAR ALTERAÃ‡ÃƒO DIRETA
+  btnApplyChange.addEventListener('click', () => {
+    const dataList = DATABASE[currentMode];
+    const item = dataList.find(d => d.id === currentSelectedId);
+    if (!item) {
+      alert('Selecione um registro na tabela para editar.');
+      return;
+    }
+
+    const field = fieldSelect.value;
+    const val = newValueInput.value.trim();
+    if (!val) {
+      alert('Por favor, informe o novo valor.');
+      return;
+    }
+
+    item[field] = val;
+    renderTableRows();
+    syncEditorPanel();
+
+    // Feedback visual
+    const origText = btnApplyChange.innerHTML;
+    btnApplyChange.innerHTML = '<span class="material-symbols-outlined text-base font-bold">done_all</span><span>ALTERADO!</span>';
+    setTimeout(() => {
+      btnApplyChange.innerHTML = origText;
+    }, 1200);
+  });
+
+  // CANCELAR EDIÃ‡ÃƒO
+  btnCancelEdit.addEventListener('click', () => {
+    syncEditorPanel();
+  });
+
+  // LIMPAR SELEÃ‡ÃƒO
+  btnClearSelection.addEventListener('click', () => {
+    currentSelectedId = null;
+    renderTableRows();
+    syncEditorPanel();
+  });
+
+  // TROCA DE MODO (EMPRESAS / PAGADORES / BANCOS)
+  function switchMode(newMode) {
+    currentMode = newMode;
+    const config = MODE_CONFIG[currentMode];
+
+    // Atualizar botÃµes de filtro no cabeÃ§alho
+    categoryButtons.forEach(btn => {
+      const mode = btn.getAttribute('data-mode');
+      if (mode === currentMode) {
+        btn.style.backgroundColor = config.color;
+        btn.className = 'category-filter-btn border-2 border-[#1c1b1b] font-mono text-xs font-bold px-4 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 text-white';
+      } else {
+        btn.style.backgroundColor = '#ffffff';
+        btn.className = 'category-filter-btn border-2 border-[#1c1b1b] font-mono text-xs font-bold px-4 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5 bg-white text-[#1c1b1b] hover:bg-neutral-100';
+      }
+    });
+
+    // Atualiza badge de categoria no topo
+    activeCategoryDot.style.backgroundColor = config.color;
+    activeCategoryBadgeText.textContent = `MODO ATIVO: ${config.label}`;
+
+    // Selecionar o primeiro registro da lista do novo modo
+    if (DATABASE[currentMode].length > 0) {
+      currentSelectedId = DATABASE[currentMode][0].id;
+    } else {
+      currentSelectedId = null;
+    }
+
+    renderHeader();
+    populateEditorSelect();
+    renderTableRows();
+    syncEditorPanel();
+  }
+
+  // Binds dos botÃµes de modo
+  categoryButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      switchMode(mode);
+    });
+  });
+
+  // Busca em tempo real
+  searchInput.addEventListener('input', () => {
+    renderTableRows();
+  });
+
+  // Tecla Escape para desmarcar
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      currentSelectedId = null;
+      renderTableRows();
+      syncEditorPanel();
+    }
+  });
+
+  // InicializaÃ§Ã£o
+  switchMode('EMPRESAS');
+</script>
+
+
+</body></html>

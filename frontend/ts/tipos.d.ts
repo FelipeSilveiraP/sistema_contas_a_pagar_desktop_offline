@@ -14,7 +14,8 @@ type TelaFinDesk =
   | "form-pagador"
   | "form-empresa"
   | "todos-cadastros"
-  | "inserir-conta";
+  | "inserir-conta"
+  | "todas-as-contas";
 
 interface Window {
   finDesk?: {

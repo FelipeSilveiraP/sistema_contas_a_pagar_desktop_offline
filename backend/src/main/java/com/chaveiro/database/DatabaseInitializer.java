@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 7;
+    private static final int VERSAO_ATUAL = 11;
 
     private final ConnectionFactory conexao;
 
@@ -177,6 +177,113 @@ public class DatabaseInitializer {
                 """,
                 "CREATE INDEX IF NOT EXISTS idx_contas_vencimento ON contas_a_pagar(vencimento)",
                 "CREATE INDEX IF NOT EXISTS idx_contas_status ON contas_a_pagar(status)",
+            };
+            case 8 -> new String[] {
+                // Fidelidade ao formulario Stitch "Inserir Conta": nome da empresa e
+                // pagador responsavel em texto livre (regra VBA), tipo de conta PF/PJ,
+                // documento de cobranca (forma de pagamento), empresa emissora opcional
+                // (FK SET NULL — historico preservado ao excluir cadastro) e anexo de
+                // nota fiscal (PDF) no proprio SQLite (sobrevive a backup VACUUM INTO).
+                """
+                CREATE TABLE contas_a_pagar_v8 (
+                    id_conta INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome_empresa TEXT NOT NULL,
+                    id_empresa INTEGER,
+                    pagador_responsavel TEXT NOT NULL,
+                    tipo_pessoa TEXT NOT NULL DEFAULT 'PJ' CHECK (tipo_pessoa IN ('PF', 'PJ')),
+                    forma_pagamento TEXT NOT NULL,
+                    categoria TEXT,
+                    numero_documento TEXT,
+                    valor_centavos INTEGER NOT NULL CHECK (valor_centavos > 0),
+                    vencimento TEXT NOT NULL,
+                    boleto_na_pasta INTEGER NOT NULL DEFAULT 0,
+                    anexo_nome TEXT,
+                    anexo_pdf BLOB,
+                    status TEXT NOT NULL DEFAULT 'PENDENTE' CHECK (status IN ('PENDENTE', 'PAGO')),
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE SET NULL
+                )
+                """,
+                """
+                INSERT INTO contas_a_pagar_v8
+                    (id_conta, nome_empresa, id_empresa, pagador_responsavel, tipo_pessoa,
+                     forma_pagamento, categoria, numero_documento, valor_centavos, vencimento,
+                     boleto_na_pasta, status, criado_em)
+                SELECT c.id_conta,
+                       COALESCE((SELECT e.razao_social FROM empresas e WHERE e.id_empresa = c.id_empresa), 'NÃO INFORMADO'),
+                       c.id_empresa,
+                       COALESCE((SELECT p.nome FROM pagadores p WHERE p.id_pagador = c.id_pagador), 'NÃO INFORMADO'),
+                       'PJ',
+                       'boleto',
+                       c.categoria,
+                       c.numero_documento,
+                       c.valor_centavos,
+                       c.vencimento,
+                       c.boleto_na_pasta,
+                       c.status,
+                       c.criado_em
+                FROM contas_a_pagar c
+                """,
+                "DROP TABLE contas_a_pagar",
+                "ALTER TABLE contas_a_pagar_v8 RENAME TO contas_a_pagar",
+                "CREATE INDEX IF NOT EXISTS idx_contas_vencimento ON contas_a_pagar(vencimento)",
+                "CREATE INDEX IF NOT EXISTS idx_contas_status ON contas_a_pagar(status)",
+            };
+            case 9 -> new String[] {
+                // Pagamento integral unico por conta (decisao aprovada: sem parciais).
+                // UNIQUE(id_conta) impede duplicidade; valor pago pode diferir do
+                // original (juros/desconto, regra aprovada); banco opcional.
+                """
+                CREATE TABLE IF NOT EXISTS pagamentos (
+                    id_pagamento INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_conta INTEGER NOT NULL UNIQUE,
+                    data_pagamento TEXT NOT NULL,
+                    valor_pago_centavos INTEGER NOT NULL CHECK (valor_pago_centavos > 0),
+                    id_banco INTEGER,
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (id_conta) REFERENCES contas_a_pagar(id_conta) ON DELETE CASCADE,
+                    FOREIGN KEY (id_banco) REFERENCES bancos(id_banco) ON DELETE SET NULL
+                )
+                """,
+                "CREATE INDEX IF NOT EXISTS idx_pagamentos_data ON pagamentos(data_pagamento)",
+            };
+            case 10 -> new String[] {
+                // Contas recorrentes (form roxo do Stitch). O dia configurado e
+                // preservado; em meses sem o dia, gera no ultimo dia do mes.
+                """
+                CREATE TABLE IF NOT EXISTS boletos_recorrentes (
+                    id_recorrente INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome_empresa TEXT NOT NULL,
+                    id_empresa INTEGER,
+                    pagador_responsavel TEXT NOT NULL,
+                    categoria TEXT,
+                    numero_documento TEXT,
+                    valor_centavos INTEGER NOT NULL CHECK (valor_centavos > 0),
+                    dia INTEGER NOT NULL CHECK (dia BETWEEN 1 AND 31),
+                    periodicidade TEXT NOT NULL CHECK (periodicidade IN ('MENSAL','BIMESTRAL','TRIMESTRAL','ANUAL')),
+                    forma_pagamento TEXT,
+                    ativo INTEGER NOT NULL DEFAULT 1,
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    FOREIGN KEY (id_empresa) REFERENCES empresas(id_empresa) ON DELETE SET NULL
+                )
+                """,
+                "ALTER TABLE contas_a_pagar ADD COLUMN id_recorrente INTEGER",
+            };
+            case 11 -> new String[] {
+                // Mensagens/avisos internos (vigencia por periodo + dia da semana).
+                """
+                CREATE TABLE IF NOT EXISTS avisos (
+                    id_aviso INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data_inicio TEXT NOT NULL,
+                    data_fim TEXT NOT NULL,
+                    dia_semana TEXT NOT NULL DEFAULT 'TODOS'
+                        CHECK (dia_semana IN ('TODOS','DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO')),
+                    titulo TEXT NOT NULL,
+                    mensagem TEXT NOT NULL,
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+                )
+                """,
+                "CREATE INDEX IF NOT EXISTS idx_avisos_vigencia ON avisos(data_inicio, data_fim)",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

@@ -35,7 +35,7 @@ const SUBMENUS = [
     origem: "menu",
     volta: "menu",
     botoes: [
-      { sel: 'a[data-modulo="todas-as-contas"]', nome: "TODAS AS CONTAS", tipo: "provisorio" },
+      { sel: 'a[data-modulo="todas-as-contas"]', nome: "TODAS AS CONTAS", tipo: "nav", destino: "todas-as-contas" },
       { sel: 'a[data-modulo="contas-recorrentes"]', nome: "CONTAS RECORRENTES", tipo: "nav", destino: "recorrentes" },
       { sel: 'a[data-modulo="pagos"]', nome: "PAGOS", tipo: "provisorio" },
     ],
@@ -982,7 +982,7 @@ async function executar() {
   teste("Todos os Cadastros: estado restaurado para o fluxo das secoes seguintes", await esperarTela("menu"));
   await prepararPagina();
 
-  // 7c. Inserir Conta (Entrega 3.5): 2 etapas, validacoes, duplicidade e cadastro
+  // 7c. Inserir Conta (design Stitch): etapas, mascaras, validacoes, duplicidade, anexo
   const cfgIc = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
   const icCriar = async (caminho, dados) =>
     JSON.parse(
@@ -997,8 +997,7 @@ async function executar() {
     );
   const sufixoIc = String(Date.now());
   const empresaIc = await icCriar("/api/empresas", { razaoSocial: `IC EMPRESA ${sufixoIc}` });
-  const pagadorIc = await icCriar("/api/pagadores", { nome: `IC PAGADOR ${sufixoIc}` });
-  teste("Inserir Conta: fixtures de empresa/pagador criadas", empresaIc.status === 201 && pagadorIc.status === 201);
+  teste("Inserir Conta: fixture de empresa emissora criada", empresaIc.status === 201);
 
   await js("window.finDesk.navegar('inserir-conta')");
   teste("Inserir Conta: tela abre pela whitelist", await esperarTela("inserir-conta"));
@@ -1006,69 +1005,98 @@ async function executar() {
   await esperarPredicado(`document.body.dataset.listasCarregadas === 'true'`, 10000);
   const estruturaIc = JSON.parse(
     await js(`JSON.stringify({
-      valor: !!document.getElementById('campo-valor'),
-      vencimento: !!document.getElementById('campo-vencimento'),
-      fornecedor: document.getElementById('campo-fornecedor').options.length > 1,
-      pagador: document.getElementById('campo-pagador').options.length > 1,
-      categoria: !!document.getElementById('campo-categoria'),
-      documento: !!document.getElementById('campo-documento'),
-      pasta: !!document.getElementById('campo-pasta'),
-      etapa2Oculta: document.getElementById('etapa-2').classList.contains('hidden'),
+      data: !!document.getElementById('due_date'),
+      tipo: document.querySelectorAll('input[name="account_type"]').length === 2,
+      empresa: !!document.getElementById('company_name'),
+      doc: !!document.getElementById('doc_number'),
+      valor: !!document.getElementById('total_amount'),
+      pasta: document.querySelectorAll('input[name="in_folder"]').length === 2,
+      categoria: document.querySelectorAll('#category option').length >= 6,
+      cobranca: document.querySelectorAll('#payment_method option').length >= 5,
+      emissora: document.getElementById('issuer_company').options.length > 1,
+      pagador: !!document.getElementById('payer_responsavel') || !!document.getElementById('payer_responsible'),
+      anexo: !!document.getElementById('invoice_pdf'),
+      etapa2Oculta: document.getElementById('step-2').classList.contains('hidden'),
+      indicador: (document.getElementById('step-counter-badge').textContent || '').includes('1 DE 2'),
     })`)
   );
   teste(
-    "Inserir Conta: campos, selects carregados e etapa 2 oculta",
-    estruturaIc.valor && estruturaIc.vencimento && estruturaIc.fornecedor && estruturaIc.pagador
-      && estruturaIc.categoria && estruturaIc.documento && estruturaIc.pasta && estruturaIc.etapa2Oculta,
+    "Inserir Conta (Stitch): campos, selects, anexo e indicador de etapas",
+    estruturaIc.data && estruturaIc.tipo && estruturaIc.empresa && estruturaIc.doc && estruturaIc.valor
+      && estruturaIc.pasta && estruturaIc.categoria && estruturaIc.cobranca && estruturaIc.emissora
+      && estruturaIc.pagador && estruturaIc.anexo && estruturaIc.etapa2Oculta && estruturaIc.indicador,
     JSON.stringify(estruturaIc)
   );
 
+  // mascara de moeda por centavos (digitacao sintetica valida a logica da mascara)
+  await js(`(() => {
+    const el = document.getElementById('total_amount');
+    el.value = '123456';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  teste("Mascara moeda: digitacao 123456 formata R$ 1.234,56", (await js(`document.getElementById('total_amount').value`)) === "R$ 1.234,56", await js(`document.getElementById('total_amount').value`));
+  await js(`(() => {
+    const el = document.getElementById('total_amount');
+    el.value = 'abc';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  teste("Mascara moeda: letras sao ignoradas", /^R\$ 0,\d{2}$/.test(await js(`document.getElementById('total_amount').value`)) === true, await js(`document.getElementById('total_amount').value`));
+
+  await js(`(() => {
+    const el = document.getElementById('due_date');
+    el.value = '31/02/2026';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
   await clicar("#btn-proxima");
   await esperar(300);
   const errosIc = JSON.parse(
     await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.dataset.erroCampo))`)
   );
-  teste("Etapa 1: valor e vencimento obrigatorios", errosIc.includes("valor") && errosIc.includes("vencimento"), JSON.stringify(errosIc));
+  teste("Etapa 1: data inexistente e valor invalido recusados", errosIc.includes("vencimento") && errosIc.includes("valor"), JSON.stringify(errosIc));
 
   await js(`(() => {
-    document.getElementById('campo-valor').value = 'abc';
-    document.getElementById('campo-vencimento').value = '2026-12-10';
+    document.getElementById('due_date').value = '20/12/2026';
+    document.getElementById('company_name').value = 'IC EMPRESA ${sufixoIc}';
+    document.getElementById('payer_responsible').value = 'Balcão 01';
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await js(`(() => {
+    const el = document.getElementById('total_amount');
+    el.value = '123456';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
   await clicar("#btn-proxima");
   await esperar(300);
-  teste("Etapa 1: valor em formato invalido e recusado", (await js(`!document.querySelector('[data-erro-campo="valor"]').classList.contains('hidden')`)) === true);
-
-  await js(`(() => {
-    document.getElementById('campo-valor').value = '1.234,56';
-    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
-    return true;
-  })()`);
-  await clicar("#btn-proxima");
-  await esperar(300);
-  teste("Etapa 1: valor BR valido avanca para etapa 2", (await js("document.body.dataset.tela")) === "inserir-conta" && (await js(`!document.getElementById('etapa-2').classList.contains('hidden')`)) === true);
+  teste("Etapa 1: dados validos avancam para etapa 2", (await js(`!document.getElementById('step-2').classList.contains('hidden')`)) === true);
+  teste("Indicador de etapas muda para PAGINA 2 DE 2", (await js(`document.getElementById('step-counter-badge').textContent`)).includes("2 DE 2"));
 
   await clicar("#btn-salvar");
   await esperar(300);
-  teste("Etapa 2: fornecedor obrigatorio", (await js(`!document.querySelector('[data-erro-campo="idEmpresa"]').classList.contains('hidden')`)) === true);
+  teste("Etapa 2: documento de cobranca obrigatorio", (await js(`!document.querySelector('[data-erro-campo="formaPagamento"]').classList.contains('hidden')`)) === true);
 
   await js(`(() => {
-    const sel = document.getElementById('campo-fornecedor');
-    sel.value = sel.options[1].value;
+    const sel = document.getElementById('payment_method');
+    sel.value = 'boleto';
     sel.dispatchEvent(new Event('input', { bubbles: true }));
-    document.getElementById('campo-categoria').value = 'Material';
-    document.getElementById('campo-documento').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
-    const pasta = document.getElementById('campo-pasta');
-    pasta.value = 'true';
+    const em = document.getElementById('issuer_company');
+    em.value = em.options[1].value;
+    em.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('doc_number').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    const pasta = document.querySelector('input[name="in_folder"][value="sim"]');
+    pasta.checked = true;
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
   await clicar("#btn-salvar");
-  const contaSalvaIc = await esperarPredicado(`document.body.dataset.contaSalva !== undefined`, 10000);
-  teste("Inserir Conta: salvar com dados validos confirma cadastro", contaSalvaIc);
-  teste("Inserir Conta: mensagem de sucesso exibida", (await js(`document.getElementById('feedback-conta').textContent`)).includes("sucesso"));
-  teste("Inserir Conta: volta para etapa 1 apos salvar", (await js(`document.getElementById('etapa-2').classList.contains('hidden')`)) === true);
+  const contaSalvaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
+  teste("Inserir Conta: salvar com dados validos grava a conta", contaSalvaIc);
+  teste("Toast de sucesso do Stitch exibido", (await js(`!document.getElementById('toast').classList.contains('hidden')`)) === true);
+  teste("Apos salvar, retorno a tela anterior (fluxo do Stitch)", await esperarTela("menu", 5000) || (await js("document.body.dataset.tela")) !== "inserir-conta");
 
   const listaIc = JSON.parse(
     await js(`(async () => {
@@ -1078,37 +1106,47 @@ async function executar() {
   );
   const contaCriadaIc = listaIc.find((c) => c.numeroDocumento === `DOC-${sufixoIc}`);
   teste(
-    "Inserir Conta: registro persistido com valor exato (1234.56)",
-    Boolean(contaCriadaIc) && Math.abs(contaCriadaIc.valor - 1234.56) < 0.001 && contaCriadaIc.status === "PENDENTE",
+    "Inserir Conta: registro persistido com valor exato (1234.56) e campos do Stitch",
+    Boolean(contaCriadaIc) && Math.abs(contaCriadaIc.valor - 1234.56) < 0.001
+      && contaCriadaIc.status === "PENDENTE" && contaCriadaIc.formaPagamento === "boleto"
+      && contaCriadaIc.tipoPessoa === "PJ" && contaCriadaIc.pagadorResponsavel === "Balcão 01"
+      && contaCriadaIc.boletoNaPasta === true && contaCriadaIc.idEmpresa === empresaIc.body.id,
     JSON.stringify(contaCriadaIc ?? null)
   );
 
-  // duplicidade: mesmo documento de novo (mesmo mes de vencimento) -> dialogo
+  // duplicidade (mesmo mes) -> dialogo nativo via confirmar(); cancelar e forcar
+  await js("window.finDesk.navegar('inserir-conta')");
+  await esperarTela("inserir-conta");
+  await prepararPagina();
+  await esperarPredicado(`document.body.dataset.listasCarregadas === 'true'`, 10000);
   await js(`(() => {
-    document.getElementById('campo-valor').value = '999,00';
-    document.getElementById('campo-vencimento').value = '2026-12-20';
+    document.getElementById('due_date').value = '28/12/2026';
+    document.getElementById('company_name').value = 'IC EMPRESA ${sufixoIc}';
+    document.getElementById('payer_responsible').value = 'Balcão 01';
+    const el = document.getElementById('total_amount');
+    el.value = '99900';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
   await clicar("#btn-proxima");
   await esperar(300);
   await js(`(() => {
-    const sel = document.getElementById('campo-fornecedor');
-    sel.value = sel.options[1].value;
-    document.getElementById('campo-documento').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    document.getElementById('payment_method').value = 'pix';
+    document.getElementById('doc_number').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
   await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
   await clicar("#btn-salvar");
-  await esperar(600);
+  await esperar(700);
   const confirmasDup = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
   teste("Inserir Conta: duplicidade dispara dialogo de confirmacao", confirmasDup.length === 1 && confirmasDup[0].includes("duplicidade"), JSON.stringify(confirmasDup));
-  teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined || (await js(`document.getElementById('feedback-conta').textContent`)).includes("cancelada"));
+  teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined);
 
-  await js("window.__confirmResposta = true; window.__confirmas = []; sessionStorage.setItem('smoke-confirmas', '[]'); document.getElementById('feedback-conta').textContent = ''; 'ok'");
+  await js("window.__confirmResposta = true; window.__confirmas = []; sessionStorage.setItem('smoke-confirmas', '[]'); document.getElementById('toast').classList.add('hidden'); 'ok'");
   await clicar("#btn-salvar");
-  const forcadaIc = await esperarPredicado(`document.getElementById('feedback-conta').textContent.includes('sucesso')`, 10000);
+  const forcadaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
   teste("Inserir Conta: confirmada a duplicidade, insercao forçada ocorre", forcadaIc);
 
   const listaIc2 = JSON.parse(
@@ -1119,13 +1157,11 @@ async function executar() {
   );
   teste("Inserir Conta: duas contas com o mesmo documento existem apos forcar", listaIc2.filter((c) => c.numeroDocumento === `DOC-${sufixoIc}`).length === 2);
 
-  // limpeza: conta(s) de teste, depois fixtures
   for (const conta of listaIc2.filter((c) => c.numeroDocumento === `DOC-${sufixoIc}`)) {
     await js(`(async () => { await fetch('http://127.0.0.1:${cfgIc.port}/api/contas/${conta.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgIc.token}' } }); return true; })()`);
   }
-  for (const [caminhoLixo, idLixo] of [["/api/empresas", empresaIc.body.id], ["/api/pagadores", pagadorIc.body.id]]) {
-    if (!idLixo) continue;
-    await js(`(async () => { await fetch('http://127.0.0.1:${cfgIc.port}${caminhoLixo}/${idLixo}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgIc.token}' } }); return true; })()`);
+  if (empresaIc.body.id) {
+    await js(`(async () => { await fetch('http://127.0.0.1:${cfgIc.port}/api/empresas/${empresaIc.body.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgIc.token}' } }); return true; })()`);
   }
   teste("Inserir Conta: registros de teste removidos da base temporaria", true);
 

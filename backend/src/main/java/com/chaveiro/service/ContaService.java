@@ -9,26 +9,29 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Regras das contas a pagar. Filtro de duplicidade "ultra-sensivel" herdado
- * do sistema legado (VBA cmdInserir_Click): considera duplicado se o
- * documento for identico (nao vazio), ou se o fornecedor tem nome parecido
- * E (vencimento em ate 5 dias OU valor com diferenca de ate R$ 150,00).
+ * Regras das contas a pagar, conforme o formulario Stitch "Inserir Conta"
+ * e as regras do sistema legado (VBA). Filtro de duplicidade
+ * "ultra-sensivel" restrito ao MES do vencimento (escopo da aba mensal
+ * legado, aprovado pelo usuario).
  */
 @Service
 public class ContaService {
 
     private static final Logger log = LoggerFactory.getLogger(ContaService.class);
 
-    /** Diferenca maxima de dias entre vencimentos para considerar duplicata (regra VBA). */
     static final int JANELA_DIAS_DUPLICATA = 5;
-
-    /** Diferenca maxima de valor (R$) para considerar duplicata (regra VBA). */
     static final BigDecimal TOLERANCIA_VALOR_DUPLICATA = new BigDecimal("150.00");
+    static final long LIMITE_ANEXO_BYTES = 15L * 1024 * 1024;
+
+    static final Set<String> FORMAS_PAGAMENTO =
+            Set.of("boleto", "pix", "cartao", "transferencia", "dinheiro");
+    static final Set<String> TIPOS_PESSOA = Set.of("PF", "PJ");
 
     private final ContaRepository repository;
 
@@ -55,9 +58,19 @@ public class ContaService {
         }
     }
 
-    public Conta cadastrar(Conta dados, boolean forcar) {
+    public byte[] buscarAnexoPdf(long id) {
+        try {
+            return repository.buscarAnexoPdf(id)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("anexo"));
+        } catch (SQLException erro) {
+            log.error("falha ao buscar anexo da conta id={}", id, erro);
+            throw new IllegalStateException("falha ao consultar o anexo", erro);
+        }
+    }
+
+    public Conta cadastrar(Conta dados, byte[] anexoPdf, boolean forcar) {
         Conta normalizado = normalizar(dados, null);
-        validar(normalizado);
+        validar(normalizado, anexoPdf);
         try {
             if (!forcar) {
                 Conta duplicata = buscarPossivelDuplicata(normalizado);
@@ -66,7 +79,7 @@ public class ContaService {
                     throw new PossivelDuplicataException(duplicata);
                 }
             }
-            Conta criada = repository.inserir(normalizado);
+            Conta criada = repository.inserir(normalizado, anexoPdf);
             return repository.buscarPorId(criada.id()).orElse(criada);
         } catch (SQLException erro) {
             log.error("falha ao cadastrar conta", erro);
@@ -74,11 +87,11 @@ public class ContaService {
         }
     }
 
-    public Conta atualizar(long id, Conta dados) {
+    public Conta atualizar(long id, Conta dados, byte[] anexoPdf) {
         Conta normalizado = normalizar(dados, id);
-        validar(normalizado);
+        validar(normalizado, anexoPdf);
         try {
-            if (!repository.atualizar(id, normalizado)) {
+            if (!repository.atualizar(id, normalizado, anexoPdf)) {
                 throw new RecursoNaoEncontradoException("conta");
             }
             return repository.buscarPorId(id).orElse(normalizado);
@@ -101,15 +114,12 @@ public class ContaService {
 
     Conta buscarPossivelDuplicata(Conta nova) {
         try {
-            Conta candidata = comRazaoSocialResolvida(nova);
             for (Conta existente : repository.listar(null)) {
-                // Fiel ao VBA: a comparacao ocorre apenas dentro do MES do vencimento
-                // (cada mes era uma aba da planilha legada). Evita falsos positivos em
-                // recorrencias mensais (ex.: aluguel) — aprovado pelo usuario.
-                if (!YearMonth.from(existente.vencimento()).equals(YearMonth.from(candidata.vencimento()))) {
+                // Fiel ao VBA: comparacao apenas dentro do MES do vencimento.
+                if (!YearMonth.from(existente.vencimento()).equals(YearMonth.from(nova.vencimento()))) {
                     continue;
                 }
-                if (possivelDuplicata(existente, candidata)) {
+                if (possivelDuplicata(existente, nova)) {
                     return existente;
                 }
             }
@@ -121,23 +131,8 @@ public class ContaService {
     }
 
     /**
-     * A API nao envia o nome do fornecedor (vem da FK): resolve pela empresa
-     * cadastrada para que a regra de nomes parecidos funcione em producao.
-     */
-    private Conta comRazaoSocialResolvida(Conta dados) throws SQLException {
-        if (dados.razaoSocial() != null || dados.idEmpresa() == null) {
-            return dados;
-        }
-        String razao = repository.buscarNomeEmpresa(dados.idEmpresa()).orElse(null);
-        return new Conta(dados.id(), dados.idEmpresa(), razao, dados.idPagador(), dados.nomePagador(),
-                dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                dados.boletoNaPasta(), dados.status());
-    }
-
-    /**
-     * Regra VBA cmdInserir_Click ("filtro ultra-sensivel"), aplicada apenas a
-     * contas do MESMO MES de vencimento (escopo da aba mensal do legado):
-     * documento identico (nao vazio), OU fornecedor com nome parecido
+     * Regra VBA cmdInserir_Click ("filtro ultra-sensivel"), aplicada a contas
+     * do mesmo mes: documento identico (nao vazio), OU nome de empresa parecido
      * E (vencimento em ate 5 dias OU valor com diferenca de ate R$ 150,00).
      */
     static boolean possivelDuplicata(Conta existente, Conta nova) {
@@ -146,7 +141,7 @@ public class ContaService {
         if (!docExistente.isEmpty() && docExistente.equalsIgnoreCase(docNovo)) {
             return true;
         }
-        boolean nomesParecidos = nomesParecidos(existente.razaoSocial(), nova.razaoSocial());
+        boolean nomesParecidos = nomesParecidos(existente.nomeEmpresa(), nova.nomeEmpresa());
         if (!nomesParecidos) {
             return false;
         }
@@ -164,7 +159,6 @@ public class ContaService {
         }
         String na = a.trim().toLowerCase();
         String nb = b.trim().toLowerCase();
-        // nomes vazios nunca sao "parecidos" (contains("") seria sempre verdadeiro)
         if (na.isEmpty() || nb.isEmpty()) {
             return false;
         }
@@ -174,25 +168,37 @@ public class ContaService {
     private static Conta normalizar(Conta dados, Long id) {
         return new Conta(
                 id,
+                dados.nomeEmpresa() == null ? "" : dados.nomeEmpresa().trim(),
                 dados.idEmpresa(),
                 dados.razaoSocial(),
-                dados.idPagador(),
-                dados.nomePagador(),
+                dados.pagadorResponsavel() == null ? "" : dados.pagadorResponsavel().trim(),
+                dados.tipoPessoa() == null ? "PJ" : dados.tipoPessoa().trim().toUpperCase(),
+                dados.formaPagamento() == null ? "" : dados.formaPagamento().trim().toLowerCase(),
                 dados.categoria() == null || dados.categoria().isBlank() ? null : dados.categoria().trim(),
                 dados.numeroDocumento() == null || dados.numeroDocumento().isBlank()
                         ? null : dados.numeroDocumento().trim(),
                 dados.valor(),
                 dados.vencimento(),
                 dados.boletoNaPasta(),
+                dados.anexoNome() == null || dados.anexoNome().isBlank() ? null : dados.anexoNome().trim(),
                 dados.status() == null ? "PENDENTE" : dados.status()
         );
     }
 
-    private static void validar(Conta conta) {
+    private static void validar(Conta conta, byte[] anexoPdf) {
         Map<String, String> erros = new LinkedHashMap<>();
 
-        if (conta.idEmpresa() == null || conta.idEmpresa() <= 0) {
-            erros.put("idEmpresa", "informe o fornecedor (empresa cadastrada)");
+        if (conta.nomeEmpresa().length() < 2 || conta.nomeEmpresa().length() > 120) {
+            erros.put("nomeEmpresa", "informe o nome da empresa (2 a 120 caracteres)");
+        }
+        if (conta.pagadorResponsavel().isEmpty() || conta.pagadorResponsavel().length() > 120) {
+            erros.put("pagadorResponsavel", "informe o pagador responsavel (1 a 120 caracteres)");
+        }
+        if (!TIPOS_PESSOA.contains(conta.tipoPessoa())) {
+            erros.put("tipoPessoa", "informe o tipo de conta (PF ou PJ)");
+        }
+        if (!FORMAS_PAGAMENTO.contains(conta.formaPagamento())) {
+            erros.put("formaPagamento", "selecione o documento de cobranca");
         }
         if (conta.valor() == null) {
             erros.put("valor", "informe o valor da conta");
@@ -211,6 +217,17 @@ public class ContaService {
         }
         if (conta.numeroDocumento() != null && conta.numeroDocumento().length() > 60) {
             erros.put("numeroDocumento", "o documento deve ter ate 60 caracteres");
+        }
+        if (conta.anexoNome() != null && conta.anexoNome().length() > 200) {
+            erros.put("anexoNome", "o nome do anexo deve ter ate 200 caracteres");
+        }
+        if (anexoPdf != null) {
+            if (anexoPdf.length > LIMITE_ANEXO_BYTES) {
+                erros.put("anexo", "o anexo deve ter no maximo 15MB");
+            } else if (anexoPdf.length < 5
+                    || anexoPdf[0] != '%' || anexoPdf[1] != 'P' || anexoPdf[2] != 'D' || anexoPdf[3] != 'F') {
+                erros.put("anexo", "o anexo deve ser um arquivo PDF");
+            }
         }
         if (!"PENDENTE".equals(conta.status()) && !"PAGO".equals(conta.status())) {
             erros.put("status", "status invalido");

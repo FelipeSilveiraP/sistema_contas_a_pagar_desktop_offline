@@ -1,9 +1,7 @@
 import {
   buscarStatus,
   criarConta,
-  listarContas,
   listarEmpresas,
-  listarPagadores,
   ErroValidacaoApi,
   ErroDuplicidadeApi,
   ErroApi,
@@ -12,153 +10,211 @@ import {
 import { confirmar } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
+import {
+  mascaraMoeda,
+  mascaraData,
+  paraCentavos,
+  formatarMoedaBR,
+  parseDataBR,
+  formatarDataBR,
+} from "../mascaras";
+
+const LIMITE_ANEXO = 15 * 1024 * 1024;
 
 interface CamposFormulario {
-  valor: string;
   vencimento: string;
-  idEmpresa: string;
-  categoria: string;
+  tipoPessoa: string;
+  nomeEmpresa: string;
   numeroDocumento: string;
-  idPagador: string;
+  valor: string;
   boletoNaPasta: string;
+  categoria: string;
+  formaPagamento: string;
+  idEmpresa: string;
+  pagadorResponsavel: string;
 }
 
-const ID_CAMPOS: Record<keyof CamposFormulario, string> = {
-  valor: "campo-valor",
-  vencimento: "campo-vencimento",
-  idEmpresa: "campo-fornecedor",
-  categoria: "campo-categoria",
-  numeroDocumento: "campo-documento",
-  idPagador: "campo-pagador",
-  boletoNaPasta: "campo-pasta",
-};
-
-function campo(nome: keyof CamposFormulario): HTMLInputElement {
-  return document.getElementById(ID_CAMPOS[nome]) as HTMLInputElement;
+function el<T extends HTMLElement>(id: string): T {
+  return document.getElementById(id) as T;
 }
 
 function lerCampos(): CamposFormulario {
+  const tipo = document.querySelector<HTMLInputElement>('input[name="account_type"]:checked');
+  const pasta = document.querySelector<HTMLInputElement>('input[name="in_folder"]:checked');
   return {
-    valor: campo("valor").value.trim(),
-    vencimento: campo("vencimento").value.trim(),
-    idEmpresa: campo("idEmpresa").value.trim(),
-    categoria: campo("categoria").value.trim(),
-    numeroDocumento: campo("numeroDocumento").value.trim(),
-    idPagador: campo("idPagador").value.trim(),
-    boletoNaPasta: campo("boletoNaPasta").value.trim(),
+    vencimento: el<HTMLInputElement>("due_date").value.trim(),
+    tipoPessoa: tipo ? tipo.value : "PJ",
+    nomeEmpresa: el<HTMLInputElement>("company_name").value.trim(),
+    numeroDocumento: el<HTMLInputElement>("doc_number").value.trim(),
+    valor: el<HTMLInputElement>("total_amount").value.trim(),
+    boletoNaPasta: pasta ? pasta.value : "nao",
+    categoria: el<HTMLSelectElement>("category").selectedOptions[0]?.textContent?.trim() ?? "",
+    formaPagamento: el<HTMLSelectElement>("payment_method").value.trim(),
+    idEmpresa: el<HTMLSelectElement>("issuer_company").value.trim(),
+    pagadorResponsavel: el<HTMLInputElement>("payer_responsible").value.trim(),
   };
 }
 
-// Formato monetario BR: virgula como decimal; ponto como milhar (ou decimal
-// quando nao ha virgula). Retorna a string normalizada "1234.56" (exata) ou null.
-export function parseValor(entrada: string): string | null {
-  const limpo = entrada.trim();
-  let normalizado: string;
-  if (limpo.includes(",")) {
-    if (!/^(\d{1,3}(\.\d{3})*|\d+),\d{1,2}$/.test(limpo)) return null;
-    normalizado = limpo.replace(/\./g, "").replace(",", ".");
-  } else {
-    if (!/^\d{1,12}(\.\d{1,2})?$/.test(limpo)) return null;
-    normalizado = limpo;
-  }
-  if (Number(normalizado) <= 0) return null;
-  return normalizado;
-}
+let anexoSelecionado: { nome: string; base64: string } | null = null;
 
 function validar(dados: CamposFormulario): Record<string, string> {
   const erros: Record<string, string> = {};
-  if (!parseValor(dados.valor)) {
-    erros.valor = "informe o valor no formato 0,00 (maior que zero)";
+  const iso = parseDataBR(dados.vencimento);
+  if (!iso) {
+    erros.vencimento = "informe uma data valida (DD/MM/AAAA)";
   }
-  if (!dados.vencimento) {
-    erros.vencimento = "informe a data de vencimento";
+  const centavos = paraCentavos(dados.valor);
+  if (centavos === null) {
+    erros.valor = "informe o valor no formato R$ 0,00 (maior que zero)";
   }
-  if (!dados.idEmpresa) {
-    erros.idEmpresa = "informe o fornecedor (empresa cadastrada)";
+  if (dados.nomeEmpresa.length < 2 || dados.nomeEmpresa.length > 120) {
+    erros.nomeEmpresa = "informe o nome da empresa (2 a 120 caracteres)";
+  }
+  if (dados.numeroDocumento.length > 60) {
+    erros.numeroDocumento = "o documento deve ter ate 60 caracteres";
+  }
+  if (!dados.formaPagamento) {
+    erros.formaPagamento = "selecione o documento de cobranca";
+  }
+  if (!dados.pagadorResponsavel || dados.pagadorResponsavel.length > 120) {
+    erros.pagadorResponsavel = "informe o pagador responsavel (1 a 120 caracteres)";
   }
   return erros;
 }
 
 function mostrarErros(erros: Record<string, string>): void {
-  document.querySelectorAll<HTMLElement>(".campo-erro").forEach((el) => {
-    const nome = el.dataset.erroCampo ?? "";
+  document.querySelectorAll<HTMLElement>(".campo-erro").forEach((elErro) => {
+    const nome = elErro.dataset.erroCampo ?? "";
     const mensagem = erros[nome];
-    el.textContent = mensagem ?? "";
-    el.classList.toggle("hidden", !mensagem);
-    campo(nome as keyof CamposFormulario)?.classList.toggle("border-[#b6212a]", Boolean(mensagem));
+    elErro.textContent = mensagem ?? "";
+    elErro.classList.toggle("hidden", !mensagem);
   });
-}
-
-function mostrarFeedback(mensagem: string, sucesso: boolean): void {
-  const feedback = document.getElementById("feedback-conta");
-  if (!feedback) return;
-  feedback.textContent = mensagem;
-  feedback.classList.remove("hidden");
-  feedback.classList.toggle("text-[#006c46]", sucesso);
-  feedback.classList.toggle("text-[#b6212a]", !sucesso);
 }
 
 function alternarEtapa(etapa: 1 | 2): void {
-  document.getElementById("etapa-1")!.classList.toggle("hidden", etapa !== 1);
-  document.getElementById("etapa-2")!.classList.toggle("hidden", etapa !== 2);
-  document.getElementById("etapa-2")!.classList.toggle("grid", etapa === 2);
-  document.getElementById("btn-proxima")!.classList.toggle("hidden", etapa !== 1);
-  document.getElementById("btn-salvar")!.classList.toggle("hidden", etapa !== 2);
-  document.getElementById("btn-voltar-etapa")!.classList.toggle("hidden", etapa !== 2);
-  document.getElementById("etapa-rotulo")!.textContent =
-    etapa === 1 ? "Etapa 1 de 2 — Valor e vencimento" : "Etapa 2 de 2 — Fornecedor e documento";
+  const step1 = el<HTMLElement>("step-1");
+  const step2 = el<HTMLElement>("step-2");
+  if (etapa === 1) {
+    step1.classList.remove("hidden");
+    step1.classList.add("flex");
+    step2.classList.add("hidden");
+    step2.classList.remove("flex");
+    el("step-title-text").textContent = "DADOS BÁSICOS & VENCIMENTO";
+    el("step-counter-badge").textContent = "PÁGINA 1 DE 2";
+    el("progress-fill").classList.remove("w-full");
+    el("progress-fill").classList.add("w-1/2");
+  } else {
+    step1.classList.add("hidden");
+    step1.classList.remove("flex");
+    step2.classList.remove("hidden");
+    step2.classList.add("flex");
+    el("step-title-text").textContent = "CATEGORIZAÇÃO & ANEXO";
+    el("step-counter-badge").textContent = "PÁGINA 2 DE 2";
+    el("progress-fill").classList.remove("w-1/2");
+    el("progress-fill").classList.add("w-full");
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function preencherSelecoes(empresas: { id: number; razaoSocial: string }[],
-                           pagadores: { id: number; nome: string }[]): void {
-  const selFornecedor = document.getElementById("campo-fornecedor") as HTMLSelectElement;
-  for (const empresa of empresas) {
-    const opcao = document.createElement("option");
-    opcao.value = String(empresa.id);
-    opcao.textContent = empresa.razaoSocial;
-    selFornecedor.appendChild(opcao);
-  }
-  const selPagador = document.getElementById("campo-pagador") as HTMLSelectElement;
-  for (const pagador of pagadores) {
-    const opcao = document.createElement("option");
-    opcao.value = String(pagador.id);
-    opcao.textContent = pagador.nome;
-    selPagador.appendChild(opcao);
-  }
+function exibirToast(): void {
+  el<HTMLElement>("toast").classList.remove("hidden");
+  window.setTimeout(() => el<HTMLElement>("toast").classList.add("hidden"), 2200);
 }
 
-function preencherCategorias(contas: ContaDados[]): void {
-  const lista = document.getElementById("lista-categorias")!;
-  const usadas = [...new Set(contas.map((c) => c.categoria).filter((c): c is string => Boolean(c)))].sort();
-  for (const categoria of usadas) {
-    const opcao = document.createElement("option");
-    opcao.value = categoria;
-    lista.appendChild(opcao);
-  }
+function montarPayload(forcar: boolean) {
+  const dados = lerCampos();
+  return {
+    nomeEmpresa: dados.nomeEmpresa,
+    idEmpresa: dados.idEmpresa ? Number(dados.idEmpresa) : undefined,
+    pagadorResponsavel: dados.pagadorResponsavel,
+    tipoPessoa: dados.tipoPessoa,
+    formaPagamento: dados.formaPagamento,
+    categoria: dados.categoria && dados.categoria !== "Selecione a categoria..." ? dados.categoria : undefined,
+    numeroDocumento: dados.numeroDocumento || undefined,
+    valor: String(paraCentavos(dados.valor)! / 100),
+    vencimento: parseDataBR(dados.vencimento)!,
+    boletoNaPasta: dados.boletoNaPasta === "sim",
+    anexoNome: anexoSelecionado?.nome,
+    anexoPdfBase64: anexoSelecionado?.base64,
+    forcar,
+  };
 }
 
-function descreverDuplicata(existente: ContaDados): string {
-  const linhas = [
-    `Fornecedor: ${existente.razaoSocial}`,
-    `Vencimento: ${existente.vencimento}`,
-    `Valor: R$ ${existente.valor.toFixed(2).replace(".", ",")}`,
-  ];
-  if (existente.numeroDocumento) linhas.push(`Documento: ${existente.numeroDocumento}`);
-  return linhas.join("\n");
+let sujo = false;
+
+function marcarSujo(): void {
+  sujo = true;
+  document.body.dataset.formSujo = "true";
 }
 
 async function enviar(forcar: boolean): Promise<ContaDados> {
-  const dados = lerCampos();
-  return criarConta(await window.finDesk!.config(), {
-    idEmpresa: Number(dados.idEmpresa),
-    idPagador: dados.idPagador ? Number(dados.idPagador) : undefined,
-    categoria: dados.categoria || undefined,
-    numeroDocumento: dados.numeroDocumento || undefined,
-    valor: parseValor(dados.valor)!,
-    vencimento: dados.vencimento,
-    boletoNaPasta: dados.boletoNaPasta === "true",
-    forcar,
-  });
+  return criarConta(await window.finDesk!.config(), montarPayload(forcar));
+}
+
+async function submeter(): Promise<void> {
+  const erros = validar(lerCampos());
+  mostrarErros(erros);
+  if (Object.keys(erros).length > 0) {
+    alternarEtapa(erros.valor || erros.vencimento || erros.nomeEmpresa ? 1 : 2);
+    return;
+  }
+  try {
+    try {
+      await enviar(false);
+    } catch (erro) {
+      if (!(erro instanceof ErroDuplicidadeApi)) throw erro;
+      const e = erro.existente;
+      const linhas = [
+        `Empresa: ${e.nomeEmpresa}`,
+        `Vencimento: ${formatarDataBR(e.vencimento)}`,
+        `Valor: ${formatarMoedaBR(Math.round(e.valor * 100))}`,
+      ];
+      if (e.numeroDocumento) linhas.push(`Documento: ${e.numeroDocumento}`);
+      const inserir = confirmar(
+        "Possivel duplicidade de conta!\n\nJa existe uma conta semelhante:\n"
+          + linhas.join("\n") + "\n\nDeseja inserir mesmo assim?"
+      );
+      if (!inserir) return;
+      await enviar(true);
+    }
+    sujo = false;
+    document.body.dataset.formSujo = "false";
+    document.body.dataset.contaSalva = "true";
+    exibirToast();
+    console.info("[ContasAPagar] conta cadastrada via formulario");
+    window.setTimeout(() => {
+      void voltar();
+    }, 1200);
+  } catch (erro) {
+    if (erro instanceof ErroValidacaoApi) {
+      mostrarErros(erro.campos);
+      alternarEtapa(2);
+    } else if (erro instanceof ErroApi && erro.status === 409) {
+      mostrarErros({ anexo: "registro vinculado a outros dados. verifique a empresa emissora" });
+    } else {
+      mostrarErros({ anexo: "nao foi possivel inserir a conta. tente novamente" });
+      console.error("[ContasAPagar] falha ao cadastrar conta:", erro);
+    }
+  }
+}
+
+function verificarAnexo(arquivo: File | undefined): boolean {
+  anexoSelecionado = null;
+  const rotulo = el("file_label");
+  if (!arquivo) {
+    rotulo.textContent = "ESCOLHER ARQUIVO PDF OU ARRASTAR AQUI";
+    return true;
+  }
+  if (arquivo.size > LIMITE_ANEXO) {
+    mostrarErros({ anexo: "o anexo deve ter no maximo 15MB" });
+    return false;
+  }
+  if (!arquivo.name.toLowerCase().endsWith(".pdf") && arquivo.type !== "application/pdf") {
+    mostrarErros({ anexo: "o anexo deve ser um arquivo PDF" });
+    return false;
+  }
+  rotulo.textContent = arquivo.name.toUpperCase();
+  return true;
 }
 
 async function verificarApi(): Promise<void> {
@@ -172,97 +228,103 @@ async function verificarApi(): Promise<void> {
   }
 }
 
-async function carregarListas(): Promise<void> {
+async function carregarEmissoras(): Promise<void> {
   try {
     const cfg = await window.finDesk!.config();
-    const [empresas, pagadores, contas] = await Promise.all([
-      listarEmpresas(cfg),
-      listarPagadores(cfg),
-      listarContas(cfg),
-    ]);
-    preencherSelecoes(empresas, pagadores);
-    preencherCategorias(contas);
+    const empresas = await listarEmpresas(cfg);
+    const sel = el<HTMLSelectElement>("issuer_company");
+    for (const empresa of empresas) {
+      const opcao = document.createElement("option");
+      opcao.value = String(empresa.id);
+      opcao.textContent = empresa.razaoSocial;
+      sel.appendChild(opcao);
+    }
     document.body.dataset.listasCarregadas = "true";
   } catch (erro) {
-    console.error("[ContasAPagar] falha ao carregar listas do formulario de conta:", erro);
-    mostrarFeedback("Nao foi possivel carregar fornecedores/pagadores. Tente novamente.", false);
+    console.error("[ContasAPagar] falha ao carregar empresas emissoras:", erro);
     document.body.dataset.listasCarregadas = "erro";
   }
 }
 
 function iniciar(): void {
   montarNavbar("inserir-conta");
-  const formulario = document.getElementById("form-conta") as HTMLFormElement;
-  let sujo = false;
 
-  const marcarSujo = () => {
-    sujo = true;
-    document.body.dataset.formSujo = "true";
-  };
-  formulario.addEventListener("input", marcarSujo);
+  mascaraData(el<HTMLInputElement>("due_date"));
+  mascaraMoeda(el<HTMLInputElement>("total_amount"));
 
-  document.getElementById("btn-proxima")!.addEventListener("click", () => {
+  const hoje = new Date();
+  el<HTMLInputElement>("due_date").value =
+    formatarDataBR(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`);
+
+  el("btn-calendario").addEventListener("click", () => {
+    const picker = el<HTMLInputElement>("native_date_picker");
+    if (typeof picker.showPicker === "function") {
+      picker.showPicker();
+    } else {
+      picker.click();
+    }
+  });
+  el<HTMLInputElement>("native_date_picker").addEventListener("change", () => {
+    const iso = el<HTMLInputElement>("native_date_picker").value;
+    if (iso) el<HTMLInputElement>("due_date").value = formatarDataBR(iso);
+    marcarSujo();
+  });
+
+  const areaAnexo = el("anexo-area");
+  const inputAnexo = el<HTMLInputElement>("invoice_pdf");
+  areaAnexo.addEventListener("click", () => inputAnexo.click());
+  areaAnexo.addEventListener("dragover", (evento) => evento.preventDefault());
+  areaAnexo.addEventListener("drop", (evento) => {
+    evento.preventDefault();
+    const arquivo = evento.dataTransfer?.files[0];
+    if (verificarAnexo(arquivo) && arquivo) {
+      arquivo.arrayBuffer().then((buf) => {
+        let binario = "";
+        new Uint8Array(buf).forEach((b) => (binario += String.fromCharCode(b)));
+        anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
+      });
+    }
+    marcarSujo();
+  });
+  inputAnexo.addEventListener("change", () => {
+    const arquivo = inputAnexo.files?.[0];
+    if (verificarAnexo(arquivo) && arquivo) {
+      arquivo.arrayBuffer().then((buf) => {
+        let binario = "";
+        new Uint8Array(buf).forEach((b) => (binario += String.fromCharCode(b)));
+        anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
+      });
+    }
+    marcarSujo();
+  });
+
+  el<HTMLFormElement>("form-conta").addEventListener("input", marcarSujo);
+  el("btn-proxima").addEventListener("click", () => {
     const erros = validar(lerCampos());
     mostrarErros(erros);
-    if (erros.valor || erros.vencimento) {
-      mostrarFeedback("Corrija os campos destacados.", false);
-      return;
-    }
-    mostrarFeedback("", true);
+    if (erros.vencimento || erros.valor || erros.nomeEmpresa) return;
     alternarEtapa(2);
   });
-
-  document.getElementById("btn-voltar-etapa")!.addEventListener("click", () => alternarEtapa(1));
-
-  formulario.addEventListener("submit", async (evento) => {
+  el("btn-voltar-etapa").addEventListener("click", () => alternarEtapa(1));
+  el<HTMLFormElement>("form-conta").addEventListener("submit", (evento) => {
     evento.preventDefault();
-    const erros = validar(lerCampos());
-    mostrarErros(erros);
-    if (Object.keys(erros).length > 0) {
-      mostrarFeedback("Corrija os campos destacados.", false);
-      return;
-    }
-    try {
-      let criada: ContaDados;
-      try {
-        criada = await enviar(false);
-      } catch (erro) {
-        if (!(erro instanceof ErroDuplicidadeApi)) throw erro;
-        const inserirMesmo = confirmar(
-          "Possivel duplicidade de conta!\n\nJa existe uma conta semelhante:\n"
-            + descreverDuplicata(erro.existente)
-            + "\n\nDeseja inserir mesmo assim?"
-        );
-        if (!inserirMesmo) {
-          mostrarFeedback("Inclusao cancelada (possivel duplicidade identificada).", false);
-          return;
-        }
-        criada = await enviar(true);
-      }
-      sujo = false;
-      document.body.dataset.formSujo = "false";
-      formulario.reset();
-      mostrarErros({});
-      alternarEtapa(1);
-      mostrarFeedback(`Conta de "${criada.razaoSocial}" inserida com sucesso.`, true);
-      document.body.dataset.contaSalva = String(criada.id);
-      console.info("[ContasAPagar] conta cadastrada via formulario (id:", criada.id, ")");
-    } catch (erro) {
-      if (erro instanceof ErroValidacaoApi) {
-        mostrarErros(erro.campos);
-        mostrarFeedback("Corrija os campos destacados.", false);
-      } else if (erro instanceof ErroApi && erro.status === 409) {
-        mostrarFeedback("Registro vinculado a outros dados. Verifique o fornecedor informado.", false);
-      } else {
-        mostrarFeedback("Nao foi possivel inserir a conta. Tente novamente.", false);
-        console.error("[ContasAPagar] falha ao cadastrar conta:", erro);
-      }
-    }
+    void submeter();
   });
-
-  document.getElementById("btn-cancelar")?.addEventListener("click", () => {
+  el("btn-cancelar").addEventListener("click", () => {
     if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
     void voltar();
+  });
+
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "F10") {
+      evento.preventDefault();
+      void submeter();
+    }
+    if (evento.key !== "Escape" || !sujo) return;
+    if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
+      evento.preventDefault();
+      evento.stopPropagation();
+    }
   });
 
   document.addEventListener(
@@ -278,21 +340,9 @@ function iniciar(): void {
     true
   );
 
-  document.addEventListener(
-    "keydown",
-    (evento) => {
-      if (evento.key !== "Escape" || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
-    },
-    true
-  );
-
   void verificarApi();
-  void carregarListas();
-  console.info("[ContasAPagar] formulario de inserir conta iniciado");
+  void carregarEmissoras();
+  console.info("[ContasAPagar] formulario de inserir conta iniciado (design Stitch)");
 }
 
 export function iniciarInserirConta(): void {

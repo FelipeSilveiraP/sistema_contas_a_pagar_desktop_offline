@@ -1,0 +1,541 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastros - Oficina do Chaveiro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary": "#6a5f00",
+            "primary-container": "#FFE600",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-6 sm:py-8 px-4 sm:px-6 lg:px-8 font-headline antialiased">
+  <div class="w-full max-w-4xl flex flex-col gap-5 sm:gap-6">
+
+    <!-- Top Navigation Bar -->
+    <header class="flex items-center justify-between gap-4 pb-1">
+      <button onclick="window.history.back()" type="button" class="inline-flex items-center gap-2 bg-white border-2 border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-lg leading-none">arrow_back</span>
+        <span class="">VOLTAR</span>
+      </button>
+
+      <!-- Step Indicator Badge (Header) -->
+      
+    </header>
+
+    <!-- Main Form Container -->
+    <main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0px_0px_#1c1b1b] sm:shadow-[8px_8px_0px_0px_#1c1b1b] p-5 sm:p-8">
+      
+      <!-- Title Header & Stepper Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b-2 border-[#1c1b1b]">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 bg-[#f59e0b] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[3px_3px_0px_0px_#1c1b1b] flex-shrink-0">
+            <span class="material-symbols-outlined text-2xl text-[#1c1b1b]">domain</span>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">
+              INSERIR NOVO CADASTRO - EMPRESA</h1>
+            
+          </div>
+        </div>
+
+        <!-- Stepper Visual Badges / Tabs -->
+        <div class="flex items-center gap-2 self-start sm:self-center">
+          
+          
+          
+        </div>
+      </div>
+
+      <form id="form-cadastro" onsubmit="event.preventDefault(); alert('Cadastro salvo com sucesso!');" class="flex flex-col">
+
+        <!-- ==========================================
+             ETAPA 1: DADOS DA EMPRESA & CONTATOS
+        =========================================== -->
+        <div id="etapa-1" class="flex-col gap-6 flex">
+
+          <!-- 1. IDENTIFICAÃ‡ÃƒO PRINCIPAL -->
+          <section class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+              <span class="material-symbols-outlined text-lg">domain</span>
+              <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">1. DADOS PRINCIPAIS</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- RAZÃƒO SOCIAL -->
+              <div class="flex flex-col gap-1.5 md:col-span-2">
+                <label for="razao_social" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  RAZÃƒO SOCIAL <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="razao_social" name="razao_social" required="" placeholder="EX: SILCA FECHADURAS E CHAVES DO BRASIL LTDA" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- NOME FANTASIA -->
+              <div class="flex flex-col gap-1.5">
+                <label for="nome_fantasia" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  NOME FANTASIA <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="nome_fantasia" name="nome_fantasia" required="" placeholder="EX: SILCA BRASIL" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- CNPJ -->
+              <div class="flex flex-col gap-1.5">
+                <label for="cnpj" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  CNPJ <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="cnpj" name="cnpj" required="" maxlength="18" placeholder="00.000.000/0001-00" oninput="formatCNPJ(this)" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- NOME DO REPRESENTANTE -->
+              <div class="flex flex-col gap-1.5 md:col-span-2">
+                <label for="representante" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  NOME DO REPRESENTANTE <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="representante" name="representante" required="" placeholder="EX: CARLOS EDUARDO DA SILVA" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. TELEFONE (MÃšLTIPLOS / N TELEFONES) -->
+          <section class="flex flex-col gap-3">
+            <div class="flex items-center justify-between pb-2 border-b-2 border-[#1c1b1b]">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">call</span>
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">2. CONTATOS TELEFÃ”NICOS</h2>
+              </div>
+            </div>
+
+            <div id="telefones-list" class="flex flex-col gap-3">
+              <!-- Linha Telefone 1 -->
+              <div class="telefone-item flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]">
+                <div class="w-full sm:w-1/3 relative">
+                  <select name="tipo_telefone[]" class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] cursor-pointer appearance-none pr-8">
+                    <option value="celular">Celular (WhatsApp)</option>
+                    <option value="fixo">Telefone Fixo</option>
+                  </select>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-lg text-[#1c1b1b]">expand_more</span>
+                </div>
+                <div class="w-full sm:flex-1 relative">
+                  <input type="text" name="numero_telefone[]" required="" maxlength="15" placeholder="(11) 98765-4321" oninput="formatTelefone(this)" class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[3px_3px_0px_0px_#FFE600] transition-all">
+                </div>
+                <button type="button" onclick="removeLinha(this, 'telefones-list')" title="Excluir telefone" class="btn-remove hidden sm:inline-flex items-center justify-center bg-white hover:bg-[#ba1a1a] hover:text-white border-2 border-[#1c1b1b] px-3 py-2 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+                  <span class="material-symbols-outlined text-lg leading-none">delete</span>
+                  <span class="sm:hidden ml-1">REMOVER</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <button type="button" onclick="adicionarTelefone()" class="inline-flex items-center gap-2 bg-white hover:bg-[#f59e0b] border-2 border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-base">add</span>
+                <span class="">+ ADICIONAR OUTRO TELEFONE</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 3. EMAIL (MÃšLTIPLOS / N EMAILS) -->
+          <section class="flex flex-col gap-3">
+            <div class="flex items-center justify-between pb-2 border-b-2 border-[#1c1b1b]">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">mail</span>
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">3. E-MAILS DE CONTATO</h2>
+              </div>
+            </div>
+
+            <div id="emails-list" class="flex flex-col gap-3">
+              <!-- Linha Email 1 -->
+              <div class="email-item flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]">
+                <div class="w-full flex-1 relative">
+                  <input type="email" name="email_contato[]" required="" placeholder="contato@empresa.com.br" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2 text-sm sm:text-base font-mono font-medium text-[#1c1b1b] placeholder:text-[#a09c89] lowercase shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[3px_3px_0px_0px_#FFE600] transition-all">
+                </div>
+                <button type="button" onclick="removeLinha(this, 'emails-list')" title="Excluir e-mail" class="btn-remove hidden sm:inline-flex items-center justify-center bg-white hover:bg-[#ba1a1a] hover:text-white border-2 border-[#1c1b1b] px-3 py-2 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+                  <span class="material-symbols-outlined text-lg leading-none">delete</span>
+                  <span class="sm:hidden ml-1">REMOVER</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <button type="button" onclick="adicionarEmail()" class="inline-flex items-center gap-2 bg-white hover:bg-[#f59e0b] border-2 border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-base">add</span>
+                <span class="">+ ADICIONAR OUTRO E-MAIL</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- RODAPÃ‰ DA ETAPA 1 -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t-2 border-[#1c1b1b] mt-2">
+            <button type="button" onclick="window.history.back()" class="bg-white hover:bg-[#f6f3f2] border-2 border-[#1c1b1b] px-6 py-3 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center">
+              CANCELAR
+            </button>
+
+            <button type="button" onclick="validarEAvancar()" class="bg-[#f59e0b] hover:bg-[#ea580c] border-[3px] border-[#1c1b1b] px-7 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[4px_4px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2 text-[#1c1b1b]">
+              <span class="">AVANÃ‡AR PARA Etapa 2</span>
+              <span class="material-symbols-outlined text-xl">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             ETAPA 2: ENDEREÃ‡O COMPLETO
+        =========================================== -->
+        <div id="etapa-2" class="flex-col gap-6 hidden">
+
+          <!-- 4. ENDEREÃ‡O COMPLETO -->
+          <section class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+              <span class="material-symbols-outlined text-lg">location_on</span>
+              <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">4. ENDEREÃ‡O COMPLETO</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <!-- CEP -->
+              <div class="flex flex-col gap-1.5 md:col-span-2">
+                <label for="cep" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  CEP <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <div class="relative w-full flex items-center">
+                  <input type="text" id="cep" name="cep" required="" maxlength="9" placeholder="00000-000" oninput="formatCEP(this)" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 pr-10 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+                  <span class="material-symbols-outlined pointer-events-none absolute right-3 text-lg text-[#1c1b1b]">search</span>
+                </div>
+              </div>
+
+              <!-- LOGRADOURO -->
+              <div class="flex flex-col gap-1.5 md:col-span-4">
+                <label for="logradouro" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  LOGRADOURO (RUA / AVENIDA / PRAÃ‡A) <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="logradouro" name="logradouro" required="" placeholder="EX: AV. PAULISTA, RUA DAS FLORES..." class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- NÃšMERO DO LOGRADOURO (SELECT BOX) -->
+              <div class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="select_numero_logradouro" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  NÃšMERO DO LOGRADOURO (TIPO / FORMATO) <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <div class="relative w-full">
+                  <select id="select_numero_logradouro" name="select_numero_logradouro" onchange="atualizarCampoNumero(this.value)" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10">
+                    <option value="com_numero" selected="">Com NÃºmero (Digitar nÃºmero)</option>
+                    <option value="sem_numero">Sem NÃºmero (S/N)</option>
+                    <option value="km">QuilÃ´metro de Rodovia (KM)</option>
+                    <option value="galpao_lote">GalpÃ£o / Lote / Quadra</option>
+                    <option value="rural">Ãrea Rural / ChÃ¡cara</option>
+                  </select>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+                </div>
+              </div>
+
+              <!-- NÃšMERO DIGITADO -->
+              <div id="container_numero_valor" class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="numero_valor" id="label_numero_valor" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  DIGITE O NÃšMERO <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="numero_valor" name="numero_valor" required="" placeholder="EX: 1250 OU LOTE 4" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- COMPLEMENTO -->
+              <div class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="complemento" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  COMPLEMENTO (OPCIONAL)
+                </label>
+                <input type="text" id="complemento" name="complemento" placeholder="EX: SALA 402, BLOCO B, GALPÃƒO 2" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- BAIRRO -->
+              <div class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="bairro" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  BAIRRO <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="bairro" name="bairro" required="" placeholder="EX: CENTRO, VILA INDUSTRIAL" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- CIDADE -->
+              <div class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="cidade" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  CIDADE <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <input type="text" id="cidade" name="cidade" required="" placeholder="EX: SÃƒO PAULO, CURITIBA" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all">
+              </div>
+
+              <!-- ESTADO (UF) COM TODOS OS 27 ESTADOS DO BRASIL -->
+              <div class="flex flex-col gap-1.5 md:col-span-3">
+                <label for="estado_uf" class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                  ESTADO (UF) <span class="text-[#ba1a1a]">*</span>
+                </label>
+                <div class="relative w-full">
+                  <select id="estado_uf" name="estado_uf" required="" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10">
+                    <option value="" disabled="" selected="">SELECIONE O ESTADO...</option>
+                    <option value="AC">AC - Acre</option>
+                    <option value="AL">AL - Alagoas</option>
+                    <option value="AP">AP - AmapÃ¡</option>
+                    <option value="AM">AM - Amazonas</option>
+                    <option value="BA">BA - Bahia</option>
+                    <option value="CE">CE - CearÃ¡</option>
+                    <option value="DF">DF - Distrito Federal</option>
+                    <option value="ES">ES - EspÃ­rito Santo</option>
+                    <option value="GO">GO - GoiÃ¡s</option>
+                    <option value="MA">MA - MaranhÃ£o</option>
+                    <option value="MT">MT - Mato Grosso</option>
+                    <option value="MS">MS - Mato Grosso do Sul</option>
+                    <option value="MG">MG - Minas Gerais</option>
+                    <option value="PA">PA - ParÃ¡</option>
+                    <option value="PB">PB - ParaÃ­ba</option>
+                    <option value="PR">PR - ParanÃ¡</option>
+                    <option value="PE">PE - Pernambuco</option>
+                    <option value="PI">PI - PiauÃ­</option>
+                    <option value="RJ">RJ - Rio de Janeiro</option>
+                    <option value="RN">RN - Rio Grande do Norte</option>
+                    <option value="RS">RS - Rio Grande do Sul</option>
+                    <option value="RO">RO - RondÃ´nia</option>
+                    <option value="RR">RR - Roraima</option>
+                    <option value="SC">SC - Santa Catarina</option>
+                    <option value="SP">SP - SÃ£o Paulo</option>
+                    <option value="SE">SE - Sergipe</option>
+                    <option value="TO">TO - Tocantins</option>
+                  </select>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- RODAPÃ‰ DA ETAPA 2 -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t-2 border-[#1c1b1b] mt-2">
+            <button type="button" onclick="irParaEtapa(1)" class="bg-white hover:bg-[#f6f3f2] border-2 border-[#1c1b1b] px-6 py-3 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-lg">arrow_back</span>
+              <span class="">VOLTAR PARA ETAPA 1</span>
+            </button>
+
+            <button type="submit" class="bg-[#f59e0b] hover:bg-[#ea580c] border-[3px] border-[#1c1b1b] px-8 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[4px_4px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2 text-[#1c1b1b]">
+              <span class="material-symbols-outlined text-xl">save</span>
+              <span class="">SALVAR CADASTRO</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </main>
+
+  </div>
+
+  <script>
+    // NavegaÃ§Ã£o entre Etapas
+    function irParaEtapa(etapa) {
+      const etapa1 = document.getElementById('etapa-1');
+      const etapa2 = document.getElementById('etapa-2');
+      const stepHeaderBadge = document.getElementById('header-step-badge');
+      const stepSubheading = document.getElementById('step-subheading');
+      const tab1 = document.getElementById('step-indicator-1');
+      const tab2 = document.getElementById('step-indicator-2');
+
+      if (etapa === 1) {
+        etapa1.classList.remove('hidden');
+        etapa1.classList.add('flex');
+        etapa2.classList.add('hidden');
+        etapa2.classList.remove('flex');
+
+        stepHeaderBadge.textContent = 'ETAPA 1 DE 2';
+        stepSubheading.innerHTML = '<span class="material-symbols-outlined text-sm text-[#f59e0b]">verified</span><span>ETAPA 1 DE 2 â€” DADOS DA EMPRESA &amp; CONTATOS</span>';
+
+        // Tab 1 ativa
+        tab1.className = 'cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-[#f59e0b] text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] font-mono text-xs font-bold uppercase transition-all';
+        tab1.firstElementChild.className = 'w-5 h-5 bg-[#1c1b1b] text-white rounded-full flex items-center justify-center text-[10px]';
+
+        // Tab 2 inativa
+        tab2.className = 'cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-[#f6f3f2] text-[#7c775f] border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] font-mono text-xs font-bold uppercase transition-all';
+        tab2.firstElementChild.className = 'w-5 h-5 bg-white text-[#1c1b1b] border border-[#1c1b1b] rounded-full flex items-center justify-center text-[10px]';
+      } else {
+        etapa1.classList.add('hidden');
+        etapa1.classList.remove('flex');
+        etapa2.classList.remove('hidden');
+        etapa2.classList.add('flex');
+
+        stepHeaderBadge.textContent = 'ETAPA 2 DE 2';
+        stepSubheading.innerHTML = '<span class="material-symbols-outlined text-sm text-[#f59e0b]">location_on</span><span>ETAPA 2 DE 2 â€” ENDEREÃ‡O COMPLETO</span>';
+
+        // Tab 1 concluÃ­da / inativa
+        tab1.className = 'cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-[#f6f3f2] text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] font-mono text-xs font-bold uppercase transition-all';
+        tab1.firstElementChild.className = 'w-5 h-5 bg-[#10b981] text-white rounded-full flex items-center justify-center text-[10px]';
+
+        // Tab 2 ativa
+        tab2.className = 'cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-[#f59e0b] text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] font-mono text-xs font-bold uppercase transition-all';
+        tab2.firstElementChild.className = 'w-5 h-5 bg-[#1c1b1b] text-white rounded-full flex items-center justify-center text-[10px]';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validarEAvancar() {
+      const inputsObrigatoriosEtapa1 = document.querySelectorAll('#etapa-1 input[required]');
+      let valido = true;
+      for (const input of inputsObrigatoriosEtapa1) {
+        if (!input.checkValidity()) {
+          input.reportValidity();
+          valido = false;
+          return;
+        }
+      }
+      if (valido) {
+        irParaEtapa(2);
+      }
+    }
+
+    // Gerenciamento dinÃ¢mico de Telefones
+    function adicionarTelefone() {
+      const list = document.getElementById('telefones-list');
+      const item = document.createElement('div');
+      item.className = 'telefone-item flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]';
+      item.innerHTML = `
+        <div class="w-full sm:w-1/3 relative">
+          <select name="tipo_telefone[]" class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] cursor-pointer appearance-none pr-8">
+            <option value="celular">Celular (WhatsApp)</option>
+            <option value="fixo">Telefone Fixo</option>
+          </select>
+          <span class="material-symbols-outlined pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-lg text-[#1c1b1b]">expand_more</span>
+        </div>
+        <div class="w-full sm:flex-1 relative">
+          <input type="text" name="numero_telefone[]" required maxlength="15" placeholder="(11) 98765-4321" oninput="formatTelefone(this)" class="w-full bg-white border-2 border-[#1c1b1b] px-3 py-2 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[3px_3px_0px_0px_#FFE600] transition-all">
+        </div>
+        <button type="button" onclick="removeLinha(this, 'telefones-list')" title="Excluir telefone" class="btn-remove inline-flex items-center justify-center bg-white hover:bg-[#ba1a1a] hover:text-white border-2 border-[#1c1b1b] px-3 py-2 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg leading-none">delete</span>
+          <span class="sm:hidden ml-1">REMOVER</span>
+        </button>
+      `;
+      list.appendChild(item);
+      atualizarBotoesRemover('telefones-list');
+    }
+
+    // Gerenciamento dinÃ¢mico de E-mails
+    function adicionarEmail() {
+      const list = document.getElementById('emails-list');
+      const item = document.createElement('div');
+      item.className = 'email-item flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 bg-[#f6f3f2] p-3 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]';
+      item.innerHTML = `
+        <div class="w-full flex-1 relative">
+          <input type="email" name="email_contato[]" required placeholder="outro.email@empresa.com.br" class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2 text-sm sm:text-base font-mono font-medium text-[#1c1b1b] placeholder:text-[#a09c89] lowercase shadow-[2px_2px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[3px_3px_0px_0px_#FFE600] transition-all">
+        </div>
+        <button type="button" onclick="removeLinha(this, 'emails-list')" title="Excluir e-mail" class="btn-remove inline-flex items-center justify-center bg-white hover:bg-[#ba1a1a] hover:text-white border-2 border-[#1c1b1b] px-3 py-2 text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer">
+          <span class="material-symbols-outlined text-lg leading-none">delete</span>
+          <span class="sm:hidden ml-1">REMOVER</span>
+        </button>
+      `;
+      list.appendChild(item);
+      atualizarBotoesRemover('emails-list');
+    }
+
+    function removeLinha(btn, containerId) {
+      const container = document.getElementById(containerId);
+      if (container.children.length > 1) {
+        btn.closest('.telefone-item, .email-item').remove();
+      }
+      atualizarBotoesRemover(containerId);
+    }
+
+    function atualizarBotoesRemover(containerId) {
+      const container = document.getElementById(containerId);
+      const items = container.querySelectorAll('.telefone-item, .email-item');
+      items.forEach((item) => {
+        const btn = item.querySelector('.btn-remove');
+        if (btn) {
+          if (items.length === 1) {
+            btn.classList.add('hidden');
+          } else {
+            btn.classList.remove('hidden');
+          }
+        }
+      });
+    }
+
+    // Tratamento para tipo de nÃºmero do logradouro
+    function atualizarCampoNumero(valor) {
+      const input = document.getElementById('numero_valor');
+      const label = document.getElementById('label_numero_valor');
+      const container = document.getElementById('container_numero_valor');
+
+      if (valor === 'sem_numero') {
+        input.value = 'S/N';
+        input.readOnly = true;
+        label.innerHTML = 'NÃšMERO IDENTIFICADO <span class="text-[#ba1a1a]">*</span>';
+      } else if (valor === 'km') {
+        input.readOnly = false;
+        input.placeholder = 'EX: KM 45,5';
+        if (input.value === 'S/N') input.value = '';
+        label.innerHTML = 'QUILÃ”METRO (KM) <span class="text-[#ba1a1a]">*</span>';
+      } else if (valor === 'galpao_lote') {
+        input.readOnly = false;
+        input.placeholder = 'EX: LOTE 12, QUADRA 04, GALPÃƒO C';
+        if (input.value === 'S/N') input.value = '';
+        label.innerHTML = 'LOTE / QUADRA / GALPÃƒO <span class="text-[#ba1a1a]">*</span>';
+      } else if (valor === 'rural') {
+        input.readOnly = false;
+        input.placeholder = 'EX: SÃTIO SÃƒO JOSÃ‰, GLEBA 3';
+        if (input.value === 'S/N') input.value = '';
+        label.innerHTML = 'IDENTIFICAÃ‡ÃƒO RURAL <span class="text-[#ba1a1a]">*</span>';
+      } else {
+        input.readOnly = false;
+        input.placeholder = 'EX: 1250';
+        if (input.value === 'S/N') input.value = '';
+        label.innerHTML = 'DIGITE O NÃšMERO <span class="text-[#ba1a1a]">*</span>';
+      }
+    }
+
+    // MÃ¡scaras de entrada
+    function formatCNPJ(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (v.length > 14) v = v.substring(0, 14);
+      v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+      v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+      v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+      v = v.replace(/(\d{4})(\d)/, "$1-$2");
+      input.value = v;
+    }
+
+    function formatTelefone(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (v.length > 11) v = v.substring(0, 11);
+      if (v.length > 10) {
+        // Celular 9 dÃ­gitos: (11) 98765-4321
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+      } else if (v.length > 6) {
+        // Fixo ou celular digitando: (11) 4321-0987
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
+      }
+      input.value = v;
+    }
+
+    function formatCEP(input) {
+      let v = input.value.replace(/\D/g, "");
+      if (v.length > 8) v = v.substring(0, 8);
+      v = v.replace(/^(\d{5})(\d)/, "$1-$2");
+      input.value = v;
+    }
+  </script>
+
+
+
+
+
+
+
+</body></html>

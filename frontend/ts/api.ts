@@ -6,26 +6,34 @@ export interface StatusApi {
 
 export interface ContaDados {
   id: number;
-  idEmpresa: number;
-  razaoSocial: string;
-  idPagador: number | null;
-  nomePagador: string | null;
+  nomeEmpresa: string;
+  idEmpresa: number | null;
+  razaoSocial: string | null;
+  pagadorResponsavel: string;
+  tipoPessoa: string;
+  formaPagamento: string;
   categoria: string | null;
   numeroDocumento: string | null;
   valor: number;
   vencimento: string;
   boletoNaPasta: boolean;
+  anexoNome: string | null;
   status: string;
 }
 
 export interface ContaEntrada {
-  idEmpresa: number;
-  idPagador?: number;
+  nomeEmpresa: string;
+  idEmpresa?: number;
+  pagadorResponsavel: string;
+  tipoPessoa: string;
+  formaPagamento: string;
   categoria?: string;
   numeroDocumento?: string;
   valor: string;
   vencimento: string;
   boletoNaPasta?: boolean;
+  anexoNome?: string;
+  anexoPdfBase64?: string;
   forcar?: boolean;
 }
 
@@ -231,6 +239,159 @@ export function excluirPagador(cfg: FinDeskConfig, id: number): Promise<void> {
 
 export function excluirEmpresa(cfg: FinDeskConfig, id: number): Promise<void> {
   return excluir(cfg, `/api/empresas/${id}`);
+}
+
+export interface PagamentoDados {
+  id: number;
+  idConta: number;
+  dataPagamento: string;
+  valorPago: number;
+  idBanco: number | null;
+  instituicaoBanco: string | null;
+  nomeEmpresa: string;
+  statusConta: string;
+}
+
+export interface RecorrenteDados {
+  id: number;
+  nomeEmpresa: string;
+  idEmpresa: number | null;
+  pagadorResponsavel: string;
+  categoria: string | null;
+  numeroDocumento: string | null;
+  valor: number;
+  dia: number;
+  periodicidade: string;
+  formaPagamento: string | null;
+  ativo: boolean;
+}
+
+export interface AvisoDados {
+  id: number;
+  dataInicio: string;
+  dataFim: string;
+  diaSemana: string;
+  titulo: string;
+  mensagem: string;
+}
+
+export interface ResumoDashboard {
+  totalPagoCentavos: number;
+  totalPendenteCentavos: number;
+  vencidasCentavos: number;
+  aVencerCentavos: number;
+  porCategoria: { categoria: string; totalCentavos: number }[];
+  porMes: { mes: string; totalPagoCentavos: number }[];
+}
+
+export interface AlertasDados {
+  atrasados: { id: number; nomeEmpresa: string; vencimento: string; valor: number; dias: number }[];
+  aVencer: { id: number; nomeEmpresa: string; vencimento: string; valor: number; dias: number }[];
+  avisosAtivos: number;
+}
+
+async function post<T>(cfg: FinDeskConfig, caminho: string, dados: unknown): Promise<T> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}${caminho}`, {
+    method: "POST",
+    headers: { "X-FinDesk-Token": cfg.token, "Content-Type": "application/json" },
+    body: JSON.stringify(dados),
+  });
+  if (resposta.status === 400) {
+    const corpo = (await resposta.json()) as { campos?: Record<string, string> };
+    throw new ErroValidacaoApi(corpo.campos ?? {});
+  }
+  if (!resposta.ok) {
+    throw new ErroApi(resposta.status);
+  }
+  return (await resposta.json()) as T;
+}
+
+export function registrarPagamento(
+  cfg: FinDeskConfig,
+  idConta: number,
+  dados: { dataPagamento: string; valorPago: string; idBanco?: number }
+): Promise<PagamentoDados> {
+  return post<PagamentoDados>(cfg, `/api/contas/${idConta}/pagamento`, dados);
+}
+
+export function buscarPagamentoConta(cfg: FinDeskConfig, idConta: number): Promise<PagamentoDados> {
+  return get<PagamentoDados>(cfg, `/api/contas/${idConta}/pagamento`);
+}
+
+export async function estornarPagamento(cfg: FinDeskConfig, idConta: number): Promise<void> {
+  await excluir(cfg, `/api/contas/${idConta}/pagamento`);
+}
+
+export function atualizarPagamento(
+  cfg: FinDeskConfig,
+  id: number,
+  dados: { dataPagamento: string; valorPago: string; idBanco?: number }
+): Promise<PagamentoDados> {
+  return atualizar<PagamentoDados>(cfg, `/api/pagamentos/${id}`, dados);
+}
+
+export function listarPagamentos(cfg: FinDeskConfig): Promise<PagamentoDados[]> {
+  return get<PagamentoDados[]>(cfg, "/api/pagamentos");
+}
+
+export function listarRecorrentes(cfg: FinDeskConfig): Promise<RecorrenteDados[]> {
+  return get<RecorrenteDados[]>(cfg, "/api/recorrentes");
+}
+
+export function criarRecorrente(cfg: FinDeskConfig, dados: Omit<RecorrenteDados, "id">): Promise<RecorrenteDados> {
+  return post<RecorrenteDados>(cfg, "/api/recorrentes", dados);
+}
+
+export function gerarContasRecorrente(cfg: FinDeskConfig, id: number): Promise<{ geradas: number }> {
+  return post<{ geradas: number }>(cfg, `/api/recorrentes/${id}/gerar`, {});
+}
+
+export function atualizarRecorrente(
+  cfg: FinDeskConfig,
+  id: number,
+  dados: Omit<RecorrenteDados, "id">
+): Promise<RecorrenteDados> {
+  return atualizar<RecorrenteDados>(cfg, `/api/recorrentes/${id}`, dados);
+}
+
+export function excluirRecorrente(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/recorrentes/${id}`);
+}
+
+export function listarAvisos(cfg: FinDeskConfig): Promise<AvisoDados[]> {
+  return get<AvisoDados[]>(cfg, "/api/avisos");
+}
+
+export function criarAviso(cfg: FinDeskConfig, dados: Omit<AvisoDados, "id">): Promise<AvisoDados> {
+  return post<AvisoDados>(cfg, "/api/avisos", dados);
+}
+
+export function atualizarAviso(cfg: FinDeskConfig, id: number, dados: Omit<AvisoDados, "id">): Promise<AvisoDados> {
+  return atualizar<AvisoDados>(cfg, `/api/avisos/${id}`, dados);
+}
+
+export function excluirAviso(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/avisos/${id}`);
+}
+
+export function buscarResumo(cfg: FinDeskConfig, de?: string, ate?: string): Promise<ResumoDashboard> {
+  const params = new URLSearchParams();
+  if (de) params.set("de", de);
+  if (ate) params.set("ate", ate);
+  const consulta = params.toString() ? `?${params.toString()}` : "";
+  return get<ResumoDashboard>(cfg, `/api/dashboard/resumo${consulta}`);
+}
+
+export function buscarAlertas(cfg: FinDeskConfig): Promise<AlertasDados> {
+  return get<AlertasDados>(cfg, "/api/contas/alertas");
+}
+
+export function atualizarConta(cfg: FinDeskConfig, id: number, dados: ContaEntrada): Promise<ContaDados> {
+  return atualizar<ContaDados>(cfg, `/api/contas/${id}`, dados);
+}
+
+export function excluirConta(cfg: FinDeskConfig, id: number): Promise<void> {
+  return excluir(cfg, `/api/contas/${id}`);
 }
 
 export async function criarConta(cfg: FinDeskConfig, dados: ContaEntrada): Promise<ContaDados> {

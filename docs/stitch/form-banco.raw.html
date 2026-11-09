@@ -1,0 +1,196 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Cadastros - Oficina do Chaveiro</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary": "#16a34a",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-6 sm:py-8 px-4 sm:px-6 lg:px-8 font-headline antialiased">
+<div class="w-full max-w-[780px] flex flex-col gap-5 sm:gap-6">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between gap-4 pb-1">
+<button class="inline-flex items-center gap-2 bg-white border-[3px] border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#1c1b1b] hover:bg-[#f0edec] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-lg leading-none">arrow_back</span>
+<span>VOLTAR</span>
+</button>
+</header>
+<!-- Main Form Container -->
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[8px_8px_0px_0px_#1c1b1b] p-6 sm:p-8 rounded-sm">
+<!-- Title Header -->
+<div class="flex items-center gap-3.5 pb-5 mb-6 border-b-[3px] border-[#1c1b1b]">
+<div class="w-12 h-12 bg-[#16a34a] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[3px_3px_0px_0px_#1c1b1b] shrink-0">
+<span class="material-symbols-outlined text-2xl text-white" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+</div>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">
+            INSERIR NOVO CADASTRO - BANCO
+          </h1>
+</div>
+</div>
+<form class="flex flex-col gap-6" id="form-cadastro-banco" onsubmit="event.preventDefault(); submeterBanco();">
+<!-- SEÃ‡ÃƒO 1: DADOS PRINCIPAIS DO BANCO / CONTA -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg">account_balance_wallet</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">1. DADOS PRINCIPAIS DO BANCO / CONTA</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- NOME DA INSTITUIÃ‡ÃƒO OU CONTA -->
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="nome_banco">
+                NOME DA INSTITUIÃ‡ÃƒO OU CONTA <span class="text-[#ba1a1a]">*</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-normal shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#f0fdf4] focus:shadow-[4px_4px_0px_0px_#16a34a] transition-all" id="nome_banco" name="nome_banco" placeholder="EX: ITAÃš UNIBANCO, BRADESCO CHAVEIRO, NUBANK, CAIXA..." required="" type="text">
+</div>
+<!-- TIPO DE TITULARIDADE (PF / PJ) -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                TIPO DE TITULARIDADE (PF / PJ) <span class="text-[#ba1a1a]">*</span>
+</label>
+<input id="tipo_titularidade" name="tipo_titularidade" type="hidden" value="PJ">
+<div class="grid grid-cols-2 gap-2 h-[46px]">
+<button class="flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-white text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" id="btn-tipo-pf" onclick="selecionarTipo('PF')" type="button">
+                  [ CONTA PF ]
+                </button>
+<button class="flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-[#16a34a] text-white shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#15803d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" id="btn-tipo-pj" onclick="selecionarTipo('PJ')" type="button">
+                  [ CONTA PJ ]
+                </button>
+</div>
+</div>
+<!-- DATA CADASTRO -->
+
+</div>
+</section>
+<!-- SEÃ‡ÃƒO 2: DADOS BANCÃRIOS COMPLEMENTARES -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg">credit_card</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">2. DADOS BANCÃRIOS COMPLEMENTARES (OPCIONAL)</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- AGÃŠNCIA -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="agencia">
+                AGÃŠNCIA (COM DÃGITO)
+              </label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-normal shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#f0fdf4] focus:shadow-[4px_4px_0px_0px_#16a34a] transition-all" id="agencia" maxlength="8" name="agencia" placeholder="Ex: 0455-2" type="text">
+</div>
+<!-- CONTA CORRENTE -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="conta_corrente">
+                CONTA CORRENTE (COM DÃGITO)
+              </label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-normal shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#f0fdf4] focus:shadow-[4px_4px_0px_0px_#16a34a] transition-all" id="conta_corrente" maxlength="15" name="conta_corrente" placeholder="Ex: 28490-5" type="text">
+</div>
+<!-- CHAVE PIX VINCULADA -->
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="chave_pix">
+                CHAVE PIX VINCULADA (OPCIONAL)
+              </label>
+<div class="relative w-full">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 pr-10 py-2.5 text-sm sm:text-base font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-normal shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#f0fdf4] focus:shadow-[4px_4px_0px_0px_#16a34a] transition-all" id="chave_pix" name="chave_pix" placeholder="Ex: CNPJ, Celular, E-mail ou Chave AleatÃ³ria" type="text">
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#7c775f]">qr_code_2</span>
+</div>
+</div>
+</div>
+</section>
+<!-- RODAPÃ‰ DE AÃ‡Ã•ES -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t-2 border-[#1c1b1b] mt-2">
+<!-- CANCELAR -->
+<button class="bg-white hover:bg-[#f6f3f2] border-[3px] border-[#1c1b1b] px-6 py-3.5 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center" onclick="window.history.back()" type="button">
+            CANCELAR
+          </button>
+<!-- SALVAR BANCO -->
+<button class="bg-[#16a34a] hover:bg-[#15803d] text-white border-[3px] border-[#1c1b1b] px-8 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[4px_4px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-xl">save</span>
+<span>SALVAR BANCO</span>
+</button>
+</div>
+</form>
+</main>
+</div>
+<script>
+    // InicializaÃ§Ã£o da Data
+    (function initDate() {
+      definirDataHoje();
+    })();
+
+    function definirDataHoje() {
+      const input = document.getElementById('data_cadastro');
+      if (input) {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        input.value = `${ano}-${mes}-${dia}`;
+      }
+    }
+
+    // Toggle Seletores Neobrutalistas PF / PJ
+    function selecionarTipo(tipo) {
+      const hiddenInput = document.getElementById('tipo_titularidade');
+      const btnPF = document.getElementById('btn-tipo-pf');
+      const btnPJ = document.getElementById('btn-tipo-pj');
+
+      hiddenInput.value = tipo;
+
+      if (tipo === 'PF') {
+        btnPF.className = 'flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-[#16a34a] text-white shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#15803d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        btnPJ.className = 'flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-white text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+      } else {
+        btnPJ.className = 'flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-[#16a34a] text-white shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#15803d] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+        btnPF.className = 'flex items-center justify-center font-bold text-xs uppercase tracking-wider border-2 border-[#1c1b1b] bg-white text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer';
+      }
+    }
+
+    function submeterBanco() {
+      const nome = document.getElementById('nome_banco').value;
+      if (!nome) {
+        alert('Por favor, informe o Nome da InstituiÃ§Ã£o ou Conta.');
+        return;
+      }
+
+      const btnSalvar = document.getElementById('btn-salvar');
+      btnSalvar.disabled = true;
+      btnSalvar.innerHTML = `
+        <span class="material-symbols-outlined text-xl animate-spin">sync</span>
+        <span>SALVANDO...</span>
+      `;
+
+      setTimeout(() => {
+        btnSalvar.className = 'bg-[#10b981] text-white border-[3px] border-[#1c1b1b] px-8 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[2px_2px_0px_0px_#1c1b1b] flex items-center justify-center gap-2';
+        btnSalvar.innerHTML = `
+          <span class="material-symbols-outlined text-xl">check_circle</span>
+          <span>BANCO CADASTRADO!</span>
+        `;
+        setTimeout(() => {
+          window.history.back();
+        }, 600);
+      }, 500);
+    }
+  </script>
+
+
+</body></html>

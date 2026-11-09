@@ -85,6 +85,7 @@ const ITENS_NAV: ItemNav[] = [
 const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
   controle: "controle",
   recorrentes: "controle",
+  "todas-as-contas": "controle",
   cadastros: "cadastros",
   "novo-cadastro": "cadastros",
   "form-banco": "cadastros",

@@ -1,0 +1,225 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Criar Nova Mensagem - Oficina do Chaveiro</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary": "#dc2626",
+            "primary-container": "#dc2626",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-6 sm:py-8 px-4 sm:px-6 lg:px-8 font-headline antialiased">
+<div class="w-full max-w-[780px] flex flex-col gap-5 sm:gap-6">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between gap-4 pb-1">
+<button class="inline-flex items-center gap-2 bg-white border-[3px] border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#000000] hover:bg-[#f0edec] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-lg leading-none">arrow_back</span>
+<span>VOLTAR</span>
+</button>
+</header>
+<!-- Main Form Container -->
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[8px_8px_0px_0px_#000000] p-6 sm:p-8">
+<!-- Title Header -->
+<div class="flex items-center gap-3.5 pb-5 mb-6 border-b-[3px] border-[#1c1b1b]">
+<div class="w-12 h-12 bg-[#dc2626] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[3px_3px_0px_0px_#1c1b1b] flex-shrink-0">
+<span class="material-symbols-outlined text-2xl text-white">mark_email_unread</span>
+</div>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">
+            CRIAR NOVA MENSAGEM
+          </h1>
+</div>
+</div>
+<form class="flex flex-col gap-6" id="form-mensagem" onsubmit="event.preventDefault(); salvarMensagem();">
+<!-- 1. DADOS DO LEMBRETE -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">event_repeat</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">1. DADOS DO LEMBRETE</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- DATA INÃCIO LEMBRETE -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="dt_inicio">
+                DATA INÃCIO LEMBRETE <span class="text-[#dc2626]">*</span>
+</label>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-1.5 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-hoje" type="button">
+                [HOJE]
+              </button>
+</div>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="dt_inicio" name="dt_inicio" required="" type="date">
+</div>
+<!-- DATA FINAL LEMBRETE -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="dt_fim">
+                DATA FINAL LEMBRETE <span class="text-[#dc2626]">*</span>
+</label>
+<span class="font-mono text-xs text-[#7c775f] uppercase">[EXPIRAÃ‡ÃƒO]</span>
+</div>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="dt_fim" name="dt_fim" required="" type="date">
+</div>
+<!-- DIAS DA SEMANA -->
+<div class="flex flex-col gap-1.5 md:col-span-2">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+                DIAS DA SEMANA <span class="text-[#dc2626]">*</span>
+</label>
+<div class="flex items-center gap-2">
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-dias-uteis" type="button">
+                  [DIAS ÃšTEIS]
+                </button>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-todos-dias" type="button">
+                  [TODOS OS DIAS]
+                </button>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-2 pt-1" id="days-container">
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase hover:bg-[#f6f3f2] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="dom" type="button">
+                DOM
+              </button>
+<button class="day-btn is-active py-2.5 px-2 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="seg" type="button">
+                SEG
+              </button>
+<button class="day-btn is-active py-2.5 px-2 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="ter" type="button">
+                TER
+              </button>
+<button class="day-btn is-active py-2.5 px-2 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="qua" type="button">
+                QUA
+              </button>
+<button class="day-btn is-active py-2.5 px-2 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="qui" type="button">
+                QUI
+              </button>
+<button class="day-btn is-active py-2.5 px-2 bg-[#dc2626] text-white border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="sex" type="button">
+                SEX
+              </button>
+<button class="day-btn py-2.5 px-2 bg-white text-[#1c1b1b] border-2 border-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] font-mono text-xs sm:text-sm font-bold uppercase hover:bg-[#f6f3f2] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center" data-day="sab" type="button">
+                SÃB
+              </button>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. CONTEÃšDO DA MENSAGEM -->
+<section class="flex flex-col gap-4">
+<div class="flex items-center gap-2 pb-2 border-b-2 border-[#1c1b1b]">
+<span class="material-symbols-outlined text-lg text-[#1c1b1b]">chat</span>
+<h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]">2. CONTEÃšDO DA MENSAGEM</h2>
+</div>
+<div class="flex flex-col gap-4">
+<!-- TÃTULO DA MENSAGEM -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="msg_titulo">
+              TÃTULO DA MENSAGEM <span class="text-[#dc2626]">*</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-semibold uppercase text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="msg_titulo" name="msg_titulo" placeholder="EX: LEMBRETE PAGAMENTO ALUGUEL GALPÃƒO, REVISÃƒO CHAVEIRO..." required="" type="text">
+</div>
+<!-- MENSAGEM -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="msg_corpo">
+                MENSAGEM <span class="text-[#dc2626]">*</span>
+</label>
+<span class="font-mono text-xs text-[#7c775f] uppercase">TEXTO LIVRE</span>
+</div>
+<textarea class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-medium text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all resize-y min-h-[120px]" id="msg_corpo" name="msg_corpo" placeholder="Digite aqui a mensagem ou lembrete para a equipe do chaveiro..." required="" rows="4"></textarea>
+</div>
+</div>
+</section>
+<!-- RODAPÃ‰ DE AÃ‡Ã•ES -->
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 border-t-2 border-[#1c1b1b] mt-2">
+<button class="bg-white hover:bg-[#f6f3f2] border-[3px] border-[#1c1b1b] px-6 py-3 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[4px_4px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center" onclick="window.history.back()" type="button">
+            CANCELAR
+          </button>
+<button class="bg-[#dc2626] hover:bg-[#b91c1c] text-white border-[3px] border-[#1c1b1b] px-8 py-3.5 font-bold uppercase text-sm sm:text-base tracking-wider shadow-[4px_4px_0px_0px_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2" type="submit">
+<span class="material-symbols-outlined text-xl">save</span>
+<span>SALVAR MENSAGEM</span>
+</button>
+</div>
+</form>
+</main>
+</div>
+<script>
+    (function () {
+      const today = new Date().toISOString().split('T')[0];
+      const dtInicio = document.getElementById('dt_inicio');
+      const dtFim = document.getElementById('dt_fim');
+      const btnHoje = document.getElementById('btn-hoje');
+      const btnDiasUteis = document.getElementById('btn-dias-uteis');
+      const btnTodosDias = document.getElementById('btn-todos-dias');
+      const dayBtns = document.querySelectorAll('.day-btn');
+
+      if (dtInicio) dtInicio.value = today;
+
+      if (btnHoje && dtInicio) {
+        btnHoje.addEventListener('click', () => {
+          dtInicio.value = today;
+        });
+      }
+
+      function setDayState(btn, active) {
+        if (active) {
+          btn.classList.add('is-active', 'bg-[#dc2626]', 'text-white');
+          btn.classList.remove('bg-white', 'text-[#1c1b1b]', 'hover:bg-[#f6f3f2]');
+        } else {
+          btn.classList.remove('is-active', 'bg-[#dc2626]', 'text-white');
+          btn.classList.add('bg-white', 'text-[#1c1b1b]', 'hover:bg-[#f6f3f2]');
+        }
+      }
+
+      dayBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const isActive = btn.classList.contains('is-active');
+          setDayState(btn, !isActive);
+        });
+      });
+
+      if (btnDiasUteis) {
+        btnDiasUteis.addEventListener('click', () => {
+          dayBtns.forEach(btn => {
+            const day = btn.getAttribute('data-day');
+            const isWorkday = ['seg', 'ter', 'qua', 'qui', 'sex'].includes(day);
+            setDayState(btn, isWorkday);
+          });
+        });
+      }
+
+      if (btnTodosDias) {
+        btnTodosDias.addEventListener('click', () => {
+          dayBtns.forEach(btn => setDayState(btn, true));
+        });
+      }
+    })();
+
+    function salvarMensagem() {
+      const form = document.getElementById('form-mensagem');
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      alert('Mensagem cadastrada com sucesso!');
+      window.history.back();
+    }
+  </script>
+</body></html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Oficina do Chaveiro - Controle de Boletos</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary-container": "#FFE600",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "sans": ["Space Grotesk", "sans-serif"],
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black">
+<!-- CONTAINER CENTRALIZADO DE LARGURA CONFORTÃVEL -->
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<!-- LINHA 1 (TOPO - FERRAMENTAS, PESQUISA E FILTROS) -->
+<header class="w-full flex flex-col gap-4">
+<!-- Barra de NavegaÃ§Ã£o Superior -->
+<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border">
+<div class="flex items-center gap-4">
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-base font-bold">arrow_back</span>
+<span class="">VOLTAR</span>
+</button>
+<div class="h-6 w-[2px] bg-[#1c1b1b] hidden sm:block"></div>
+<h1 class="text-lg sm:text-xl font-bold tracking-tight uppercase flex items-center gap-2 whitespace-nowrap"><span class="material-symbols-outlined text-xl sm:text-2xl font-bold text-[#ec4899]">mail</span>TODAS AS MENSAGENS E LEMBRETES</h1>
+</div>
+<div></div>
+</div>
+<!-- Ãrea de Pesquisa e Filtros Neobrutalistas -->
+<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border">
+<!-- Campo de Pesquisa -->
+<div class="relative flex-1 min-w-[240px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border" id="searchInput" placeholder="PESQUISAR POR TÃTULO, CONTEÃšDO OU DATA..." type="text">
+</div>
+<!-- Filtros RÃ¡pidos (sem cortar texto, nowrap e padding ideal) -->
+<div class="flex flex-wrap items-center gap-2" id="filterPillsGroup"><button class="filter-btn active-filter bg-[#ec4899] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="TODOS" type="button">TODOS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="ATIVOS" type="button">ATIVOS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="DIAS_UTEIS" type="button">DIAS ÃšTEIS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="EXPIRADOS" type="button">EXPIRADOS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="ORDEM" type="button">ORDEM CRONOLÃ“GICA</button></div>
+</div>
+</header>
+<!-- LINHA 2 (MEIO - TABELA DE BOLETOS COM NOVAS COLUNAS PAGO / NÃƒO PAGO) -->
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="billsTable">
+<thead>
+<tr class="text-black border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b bg-[#ec4899]"><th class="py-3.5 px-4 w-32 whitespace-nowrap">DATA INÃCIO</th><th class="py-3.5 px-4 w-32 whitespace-nowrap">DATA FINAL</th><th class="py-3.5 px-4 w-36 whitespace-nowrap">DIAS DA SEMANA</th><th class="py-3.5 px-4 min-w-[200px]">TÃTULO DA MENSAGEM</th><th class="py-3.5 px-4 min-w-[240px]">MENSAGEM / CONTEÃšDO</th><th class="py-3.5 px-4 text-center whitespace-nowrap w-28">STATUS</th></tr>
+</thead>
+<tbody class="divide-[#1c1b1b] text-sm font-semibold divide-y" id="tableBody"><tr class="bill-row cursor-pointer transition-colors bg-[#fdf2f8] border-l-8 border-l-[#ec4899]" data-days="DIAS ÃšTEIS" data-end="30/11/2026" data-id="1" data-start="24/10/2026" data-status="ATIVO" data-title="Lembrete Pagamento Aluguel GalpÃ£o"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">24/10/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">30/11/2026</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-200 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">SEG A SEX</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Lembrete Pagamento Aluguel GalpÃ£o</div><div class="text-xs text-neutral-500 font-mono">Financeiro / ImobiliÃ¡ria</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Conferir comprovantes antes do fechamento do caixa Ã s 18h com comprovante assinado.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#4dffb2] text-[#1c1b1b] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">ATIVO</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-days="SEG, QUA, SEX" data-end="INDETERMINADO" data-id="2" data-start="25/10/2026" data-status="ATIVO" data-title="RevisÃ£o Chaveiro e ReposiÃ§Ã£o LÃ¢minas"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">25/10/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">INDETERMINADO</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">SEG, QUA, SEX</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">RevisÃ£o Chaveiro e ReposiÃ§Ã£o LÃ¢minas</div><div class="text-xs text-neutral-500 font-mono">Oficina / Estoque</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Avisar Carlos sobre chegada das chaves Tetra e verificar afiaÃ§Ã£o das fresas.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#4dffb2] text-[#1c1b1b] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">ATIVO</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-days="SÃBADO" data-end="31/12/2026" data-id="3" data-start="28/10/2026" data-status="ATIVO" data-title="BalanÃ§o Semanal Caixa"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">28/10/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">31/12/2026</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">SÃBADO</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">BalanÃ§o Semanal Caixa</div><div class="text-xs text-neutral-500 font-mono">AdministraÃ§Ã£o</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Fazer backup do sistema, conferir notas fiscais e fechar lanÃ§amentos de maquininha.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#4dffb2] text-[#1c1b1b] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">ATIVO</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-days="DIAS ÃšTEIS" data-end="15/11/2026" data-id="4" data-start="01/11/2026" data-status="AGENDADO" data-title="Troca de Segredos - ManutenÃ§Ã£o Preventiva"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">01/11/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">15/11/2026</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">DIAS ÃšTEIS</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Troca de Segredos - ManutenÃ§Ã£o Preventiva</div><div class="text-xs text-neutral-500 font-mono">Clientes Externos</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Agendar atendimento com condomÃ­nio Central e verificar kit de pinos e gazuas.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#ffe600] text-[#1c1b1b] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">AGENDADO</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-days="TODOS OS DIAS" data-end="20/10/2026" data-id="5" data-start="10/10/2026" data-status="EXPIRADO" data-title="PlantÃ£o Noturno Automotivo"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">10/10/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">20/10/2026</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">TODOS OS DIAS</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">PlantÃ£o Noturno Automotivo</div><div class="text-xs text-neutral-500 font-mono">Equipe de EmergÃªncia</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Escala de tÃ©cnicos para atendimento 24 horas e transponders codificados.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#ffdad6] text-[#ba1a1a] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">EXPIRADO</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#fff9d6]" data-days="TER, QUI" data-end="30/11/2026" data-id="6" data-start="20/10/2026" data-status="ATIVO" data-title="InventÃ¡rio Mensal de Cilindros e Cadeados"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap">20/10/2026</td><td class="py-3.5 px-4 font-mono font-bold text-neutral-600 whitespace-nowrap">30/11/2026</td><td class="py-3.5 px-4 font-mono text-xs whitespace-nowrap"><span class="inline-block bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono font-bold uppercase border border-[#1c1b1b]">TER, QUI</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">InventÃ¡rio Mensal de Cilindros e Cadeados</div><div class="text-xs text-neutral-500 font-mono">Controle Patrimonial</div></td><td class="py-3.5 px-4 text-xs font-mono text-neutral-700">Registrar itens faltantes na planilha e emitir pedido de reposiÃ§Ã£o para fornecedor.</td><td class="py-3.5 px-4 text-center whitespace-nowrap"><span class="inline-block bg-[#4dffb2] text-[#1c1b1b] border border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_0px_#1c1b1b]">ATIVO</span></td></tr></tbody>
+</table>
+</div>
+<!-- Barra de Resumo Inferior da Tabela -->
+<div class="border-[#1c1b1b] bg-[#fcf9f8] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono border-t">
+<span class="text-neutral-700 font-bold uppercase tracking-wider" id="tableSummaryCount">6 MENSAGENS CADASTRADAS</span>
+<div class="flex items-center gap-2">
+<span class="text-[#1c1b1b] font-bold uppercase">TOTAL FILTRADO:</span>
+<span class="bg-[#ec4899] text-white px-3 py-1 border-2 border-[#1c1b1b] font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_#1c1b1b]" id="tableSummaryAmount">MENSAGENS ATIVAS: 4</span>
+</div>
+</div>
+</main>
+<!-- LINHA 3 (INFERIOR - ÃREA DE EDIÃ‡ÃƒO CONDICIONAL) -->
+<section class="w-full"><!-- RetÃ¢ngulo SÃ³lido Neobrutalista de EdiÃ§Ã£o Direta -->
+<div class="w-full bg-white border-2 border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4" id="editorContainer">
+<!-- CabeÃ§alho Informativo do Registro Selecionado -->
+<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
+<div class="flex flex-wrap items-center gap-3">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b] font-bold">edit_note</span>
+<div class="flex flex-col">
+<span class="text-xs font-mono font-bold text-neutral-500 uppercase tracking-wider">PAINEL DE EDIÃ‡ÃƒO DIRETA</span>
+<h2 class="text-base sm:text-lg font-bold text-[#1c1b1b] uppercase tracking-tight flex items-center gap-2 flex-wrap" id="editorTitle">
+<span class="">EDITAR REGISTRO:</span>
+<span class="text-[#ec4899] font-black" id="editorRecordName">LEMBRETE PAGAMENTO ALUGUEL GALPÃƒO</span>
+</h2>
+</div>
+</div>
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" id="btnClearSelection" type="button">
+<span class="material-symbols-outlined text-sm font-bold">close</span>
+<span class="">LIMPAR SELEÃ‡ÃƒO</span>
+</button>
+</div>
+<!-- FormulÃ¡rio Neobrutalista de EdiÃ§Ã£o DinÃ¢mica -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end pt-1">
+<!-- Campo a Alterar -->
+<div class="md:col-span-4 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="fieldSelect">
+<span class="material-symbols-outlined text-sm">tune</span> CAMPO A ALTERAR
+      </label>
+<select class="w-full bg-[#fcf9f8] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 focus:bg-white focus:outline-none focus:ring-0 uppercase cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b]" id="fieldSelect"><option selected="" value="title">TÃTULO DA MENSAGEM</option><option value="startDate">DATA INÃCIO</option><option value="endDate">DATA FINAL</option><option value="weekdays">DIAS DA SEMANA</option><option value="content">MENSAGEM / CONTEÃšDO</option><option value="status">STATUS (ATIVO / AGENDADO / EXPIRADO)</option></select>
+</div>
+<!-- Novo Valor do Campo -->
+<div class="md:col-span-5 flex flex-col gap-1">
+<label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="newValueInput">
+<span class="material-symbols-outlined text-sm">edit</span> NOVO VALOR DO CAMPO
+      </label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2 focus:bg-[#fff9d6] focus:outline-none focus:ring-0 uppercase shadow-[2px_2px_0px_0px_#1c1b1b]" id="newValueInput" placeholder="Digite o novo valor..." type="text" value="LEMBRETE PAGAMENTO ALUGUEL GALPÃƒO">
+</div>
+<!-- BotÃµes de AÃ§Ã£o -->
+<div class="md:col-span-3 flex items-center gap-2 pt-1 sm:pt-0">
+<button class="flex-1 bg-[#ec4899] hover:bg-[#db2777] text-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap" id="btnApplyChange" type="button"><span class="material-symbols-outlined text-base font-bold">check</span><span>APLICAR ALTERAÃ‡ÃƒO</span></button>
+<button class="bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center cursor-pointer whitespace-nowrap" id="btnCancelEdit" title="Cancelar" type="button">
+<span class="">CANCELAR</span>
+</button>
+</div>
+</div>
+</div></section>
+</div>
+<!-- SCRIPT DE INTERATIVIDADE COMPLETA -->
+<script>
+    let currentSelectedId = null;
+    let activeFilter = 'TODOS';
+
+    const getRows = () => document.querySelectorAll('.bill-row');
+    const emptyState = document.getElementById('selectionEmptyState');
+    const detailBox = document.getElementById('selectionDetailBox');
+    const closeBtn = document.getElementById('btnCloseSelection');
+    const searchInput = document.getElementById('searchInput');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Elementos de Detalhe
+    const detailProvider = document.getElementById('detailProvider');
+    const detailDoc = document.getElementById('detailDoc');
+    const detailDate = document.getElementById('detailDate');
+    const detailAmount = document.getElementById('detailAmount');
+    const detailCategory = document.getElementById('detailCategory');
+    const detailStatusText = document.getElementById('detailStatusText');
+    const btnPayAction = document.getElementById('btnPayAction');
+    const btnUnpayAction = document.getElementById('btnUnpayAction');
+    const btnEditAction = document.getElementById('btnEditAction');
+    const btnDeleteAction = document.getElementById('btnDeleteAction');
+
+    // FunÃ§Ã£o de Marcar como Pago para uma linha
+    function setRowPaid(targetRow) {
+      if (!targetRow) return;
+      targetRow.setAttribute('data-status', 'PAGO');
+
+      // Coluna de status
+      const badge = targetRow.querySelector('.status-badge');
+      badge.textContent = 'PAGO';
+      badge.className = 'status-badge inline-block bg-[#4dffb2] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+
+      // CÃ©lula de data
+      const dateCell = targetRow.querySelector('.date-cell');
+      const baseDate = targetRow.getAttribute('data-date');
+      dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#006c46] whitespace-nowrap date-cell';
+      if (!baseDate.includes('Pago')) {
+        dateCell.textContent = baseDate + ' (Pago)';
+      } else {
+        dateCell.textContent = baseDate;
+      }
+
+      // Estilo ativo dos botÃµes da linha
+      const btnPaid = targetRow.querySelector('.btn-mark-paid');
+      const btnUnpaid = targetRow.querySelector('.btn-mark-unpaid');
+      if (btnPaid) {
+        btnPaid.className = 'btn-mark-paid inline-flex items-center justify-center gap-1 bg-[#22c55e] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[1px_1px_0px_0px_#1c1b1b] translate-x-0.5 translate-y-0.5 cursor-pointer leading-none';
+      }
+      if (btnUnpaid) {
+        btnUnpaid.className = 'btn-mark-unpaid inline-flex items-center justify-center gap-1 bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer leading-none';
+      }
+
+      if (currentSelectedId === targetRow.getAttribute('data-id')) {
+        updateDetailPanel(targetRow);
+      }
+      applyFilters();
+    }
+
+    // FunÃ§Ã£o de Marcar como NÃ£o Pago para uma linha
+    function setRowUnpaid(targetRow) {
+      if (!targetRow) return;
+      const originalStatus = targetRow.getAttribute('data-original-status') || 'AVENCER';
+      targetRow.setAttribute('data-status', originalStatus);
+
+      const badge = targetRow.querySelector('.status-badge');
+      const dateCell = targetRow.querySelector('.date-cell');
+      const baseDate = targetRow.getAttribute('data-date').replace(' (Pago)', '');
+
+      if (originalStatus === 'ATRASADO') {
+        badge.textContent = 'ATRASADO';
+        badge.className = 'status-badge inline-block bg-[#ba1a1a] text-white border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#ba1a1a] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate.includes('Atrasado') ? baseDate : baseDate + ' (Atrasado)';
+      } else if (originalStatus === 'HOJE') {
+        badge.textContent = 'VENCE HOJE';
+        badge.className = 'status-badge inline-block bg-[#ffdad6] text-[#ba1a1a] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#ba1a1a] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate;
+      } else {
+        badge.textContent = 'A VENCER';
+        badge.className = 'status-badge inline-block bg-[#FFE600] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate;
+      }
+
+      // Estilo ativo dos botÃµes da linha
+      const btnPaid = targetRow.querySelector('.btn-mark-paid');
+      const btnUnpaid = targetRow.querySelector('.btn-mark-unpaid');
+      if (btnPaid) {
+        btnPaid.className = 'btn-mark-paid inline-flex items-center justify-center gap-1 bg-[#4dffb2] hover:bg-[#22c55e] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer leading-none';
+      }
+      if (btnUnpaid) {
+        btnUnpaid.className = 'btn-mark-unpaid inline-flex items-center justify-center gap-1 bg-[#ffdad6] text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[1px_1px_0px_0px_#1c1b1b] translate-x-0.5 translate-y-0.5 cursor-pointer leading-none';
+      }
+
+      if (currentSelectedId === targetRow.getAttribute('data-id')) {
+        updateDetailPanel(targetRow);
+      }
+      applyFilters();
+    }
+
+    // Atualiza o painel inferior de detalhes
+    function updateDetailPanel(row) {
+      const provider = row.getAttribute('data-provider');
+      const doc = row.getAttribute('data-doc');
+      const date = row.querySelector('.date-cell').textContent;
+      const amount = row.getAttribute('data-amount');
+      const category = row.getAttribute('data-category');
+      const status = row.getAttribute('data-status');
+
+      detailProvider.textContent = provider;
+      detailDoc.textContent = doc;
+      detailDate.textContent = date;
+      detailAmount.textContent = 'R$ ' + amount;
+      detailCategory.textContent = category;
+
+      if (status === 'PAGO') {
+        detailStatusText.textContent = 'PAGO';
+        detailStatusText.className = 'font-bold text-[#006c46]';
+        btnPayAction.classList.add('opacity-50', 'pointer-events-none');
+        btnPayAction.innerHTML = '<span class="material-symbols-outlined text-base font-bold">check</span><span>CONTA JÃ PAGA</span>';
+        btnUnpayAction.classList.remove('opacity-50', 'pointer-events-none');
+      } else {
+        detailStatusText.textContent = status === 'HOJE' ? 'VENCE HOJE' : (status === 'ATRASADO' ? 'ATRASADO' : 'A VENCER');
+        detailStatusText.className = status === 'ATRASADO' ? 'font-bold text-[#ba1a1a]' : 'font-bold text-[#1c1b1b]';
+        btnPayAction.classList.remove('opacity-50', 'pointer-events-none');
+        btnPayAction.innerHTML = '<span class="material-symbols-outlined text-base font-bold">check_circle</span><span>âœ” DAR BAIXA / PAGO</span>';
+      }
+    }
+
+    // Selecionar Linha
+    function selectRow(row) {
+      const id = row.getAttribute('data-id');
+      getRows().forEach(r => {
+        r.classList.remove('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      });
+
+      row.classList.add('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      currentSelectedId = id;
+
+      updateDetailPanel(row);
+      emptyState.classList.add('hidden');
+      detailBox.classList.remove('hidden');
+    }
+
+    // Fechar SeleÃ§Ã£o
+    function deselectAll() {
+      getRows().forEach(r => {
+        r.classList.remove('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      });
+      currentSelectedId = null;
+      detailBox.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+    }
+
+    // Vincular cliques das linhas e dos botÃµes PAGO / NÃƒO PAGO
+    function bindRowEvents() {
+      getRows().forEach(row => {
+        row.addEventListener('click', (e) => {
+          // NÃ£o seleciona a linha inteira se clicar diretamente no botÃ£o
+          if (e.target.closest('button')) return;
+          selectRow(row);
+        });
+
+        const btnPaid = row.querySelector('.btn-mark-paid');
+        if (btnPaid) {
+          btnPaid.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setRowPaid(row);
+          });
+        }
+
+        const btnUnpaid = row.querySelector('.btn-mark-unpaid');
+        if (btnUnpaid) {
+          btnUnpaid.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setRowUnpaid(row);
+          });
+        }
+      });
+    }
+
+    bindRowEvents();
+    closeBtn.addEventListener('click', deselectAll);
+
+    // AÃ§Ãµes do painel inferior
+    btnPayAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      if (targetRow) setRowPaid(targetRow);
+    });
+
+    btnUnpayAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      if (targetRow) setRowUnpaid(targetRow);
+    });
+
+    // BotÃ£o Editar Dados
+    btnEditAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      const currentAmount = targetRow.getAttribute('data-amount');
+      const newAmount = prompt('Editar Valor (R$):', currentAmount);
+      if (newAmount && newAmount.trim() !== '') {
+        targetRow.setAttribute('data-amount', newAmount.trim());
+        targetRow.querySelector('td:nth-child(4)').textContent = 'R$ ' + newAmount.trim();
+        selectRow(targetRow);
+        applyFilters();
+      }
+    });
+
+    // BotÃ£o Excluir
+    btnDeleteAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      if (confirm('Tem certeza que deseja excluir este boleto?')) {
+        const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+        if (targetRow) {
+          targetRow.remove();
+          deselectAll();
+          applyFilters();
+        }
+      }
+    });
+
+    // Filtros e Pesquisa
+    function applyFilters() {
+      const query = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+      let totalValue = 0;
+
+      getRows().forEach(r => {
+        if (!r.parentElement) return;
+        const provider = (r.getAttribute('data-provider') || '').toLowerCase();
+        const doc = (r.getAttribute('data-doc') || '').toLowerCase();
+        const desc = (r.getAttribute('data-desc') || '').toLowerCase();
+        const status = r.getAttribute('data-status');
+        const inFolder = r.getAttribute('data-in-folder');
+        const amountStr = r.getAttribute('data-amount') || '0';
+
+        const matchesSearch = !query || provider.includes(query) || doc.includes(query) || desc.includes(query);
+        let matchesFilter = false;
+
+        if (activeFilter === 'TODOS') {
+          matchesFilter = true;
+        } else if (activeFilter === 'NAPASTA') {
+          matchesFilter = (inFolder === 'SIM');
+        } else {
+          matchesFilter = (status === activeFilter);
+        }
+
+        if (matchesSearch && matchesFilter) {
+          r.style.display = '';
+          visibleCount++;
+          const num = parseFloat(amountStr.replace('.', '').replace(',', '.')) || 0;
+          totalValue += num;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+
+      document.getElementById('tableSummaryCount').textContent = `${visibleCount} BOLETO${visibleCount === 1 ? '' : 'S'} LISTADO${visibleCount === 1 ? '' : 'S'}`;
+      document.getElementById('tableSummaryAmount').textContent = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer';
+        });
+        btn.className = 'filter-btn active-filter bg-[#1c1b1b] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer';
+        activeFilter = btn.getAttribute('data-filter');
+        applyFilters();
+      });
+    });
+
+    // Atalhos do Teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        deselectAll();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        alert('Modal de Nova Conta aberto [F2]');
+      }
+    });
+  </script>
+</body></html>

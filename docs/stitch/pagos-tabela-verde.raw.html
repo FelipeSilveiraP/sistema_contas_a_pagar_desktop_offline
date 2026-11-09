@@ -1,0 +1,364 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Oficina do Chaveiro - Contas Pagas</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary-container": "#FFE600",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "sans": ["Space Grotesk", "sans-serif"],
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black">
+<!-- CONTAINER CENTRALIZADO DE LARGURA CONFORTÃVEL -->
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
+<!-- LINHA 1 (TOPO - FERRAMENTAS, PESQUISA E FILTROS) -->
+<header class="w-full flex flex-col gap-4">
+<!-- Barra de NavegaÃ§Ã£o Superior -->
+<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border">
+<div class="flex items-center gap-4">
+<button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-base font-bold">arrow_back</span>
+<span class="">VOLTAR</span>
+</button>
+<div class="h-6 w-[2px] bg-[#1c1b1b] hidden sm:block"></div>
+<h1 class="text-lg sm:text-xl font-bold tracking-tight uppercase flex items-center gap-2 whitespace-nowrap"><span class="material-symbols-outlined text-xl sm:text-2xl font-bold text-[#10b981]">task_alt</span>CONTAS PAGAS</h1>
+</div>
+<div></div>
+</div>
+<!-- Ãrea de Pesquisa e Filtros Neobrutalistas -->
+<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border">
+<!-- Campo de Pesquisa -->
+<div class="relative flex-1 min-w-[240px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border" id="searchInput" placeholder="PESQUISAR FORNECEDOR / EMPRESA, BANCO OU COMPROVANTE..." type="text">
+</div>
+<!-- Filtros RÃ¡pidos (sem cortar texto, nowrap e padding ideal) -->
+<div class="flex flex-wrap items-center gap-2" id="filterPillsGroup"><button class="filter-btn active-filter bg-[#10b981] text-black border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="TODOS" type="button">TODOS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="ESTE_MES" type="button">ESTE MÃŠS</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="VALORES_CRESCENTES" type="button">VALORES CRESCENTES</button><button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="VALORES_DECRESCENTES" type="button">VALORES DECRESCENTES</button></div>
+</div>
+</header>
+<!-- LINHA 2 (MEIO - TABELA DE BOLETOS COM NOVAS COLUNAS PAGO / NÃƒO PAGO) -->
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse" id="billsTable">
+<thead><tr class="text-black border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b bg-[#10b981]"><th class="py-3.5 px-4 w-36 whitespace-nowrap font-black font-headline">DATA PAGAMENTO</th><th class="py-3.5 px-4 min-w-[200px] font-black font-headline">NOME DA EMPRESA</th><th class="py-3.5 px-4 w-44 whitespace-nowrap font-black font-headline">DATA VENCIMENTO</th><th class="py-3.5 px-4 w-36 text-right whitespace-nowrap font-black font-headline">VALOR PAGO</th><th class="py-3.5 px-4 min-w-[170px] whitespace-nowrap font-black font-headline">BANCO</th></tr></thead>
+<tbody class="divide-[#1c1b1b] text-sm font-semibold divide-y" id="tableBody"><tr class="bill-row cursor-pointer transition-colors bg-[#ecfdf5] hover:bg-[#d1fae5] border-l-8 border-l-[#10b981]" data-amount="840,00" data-bank="ItaÃº Chaveiro" data-date-due="24/10/2023" data-date-paid="24/10/2023" data-id="1" data-provider="Silca Chaves do Brasil"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>24/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Silca Chaves do Brasil</div><div class="text-xs text-neutral-500 font-mono">LÃ¢minas Yale e Tetra LatÃ£o</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">24/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 840,00</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">ItaÃº Chaveiro</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#ecfdf5]" data-amount="320,50" data-bank="Bradesco PJ" data-date-due="20/10/2023" data-date-paid="22/10/2023" data-id="2" data-provider="Gold Chaves &amp; LÃ¢minas"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>22/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Gold Chaves &amp; LÃ¢minas</div><div class="text-xs text-neutral-500 font-mono">Canivetes e CarcaÃ§as Automotivas</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">20/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 320,50</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">Bradesco PJ</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#ecfdf5]" data-amount="1.150,00" data-bank="Caixa EconÃ´mica" data-date-due="18/10/2023" data-date-paid="18/10/2023" data-id="3" data-provider="Papaiz IndÃºstria de Fechaduras"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>18/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Papaiz IndÃºstria de Fechaduras</div><div class="text-xs text-neutral-500 font-mono">Cilindros Tetra &amp; Travas Auxiliares</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">18/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 1.150,00</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">Caixa EconÃ´mica</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#ecfdf5]" data-amount="315,80" data-bank="Nubank PJ" data-date-due="15/10/2023" data-date-paid="15/10/2023" data-id="4" data-provider="Enel DistribuiÃ§Ã£o Energia"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>15/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">Enel DistribuiÃ§Ã£o Energia</div><div class="text-xs text-neutral-500 font-mono">Energia ElÃ©trica Oficina Principal</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">15/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 315,80</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">Nubank PJ</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#ecfdf5]" data-amount="260,00" data-bank="ItaÃº Chaveiro" data-date-due="10/10/2023" data-date-paid="12/10/2023" data-id="5" data-provider="AlianÃ§a Cadeados &amp; Fechaduras"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>12/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">AlianÃ§a Cadeados &amp; Fechaduras</div><div class="text-xs text-neutral-500 font-mono">Cadeados LatÃ£o 30mm/40mm</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">10/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 260,00</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">ItaÃº Chaveiro</span></td></tr><tr class="bill-row cursor-pointer transition-colors hover:bg-[#ecfdf5]" data-amount="180,00" data-bank="BalcÃ£o Caixa FÃ­sico" data-date-due="10/10/2023" data-date-paid="10/10/2023" data-id="6" data-provider="ManutenÃ§Ã£o &amp; Fresas RÃ¡pido"><td class="py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell"><span class="inline-flex items-center gap-1 text-[#047857]"><span class="material-symbols-outlined text-sm font-bold">check_circle</span>10/10/2023</span></td><td class="py-3.5 px-4"><div class="font-bold text-[#1c1b1b]">ManutenÃ§Ã£o &amp; Fresas RÃ¡pido</div><div class="text-xs text-neutral-500 font-mono">AfiaÃ§Ã£o de Fresas Copiadoras</div></td><td class="py-3.5 px-4 font-mono font-bold text-neutral-700 whitespace-nowrap">10/10/2023</td><td class="py-3.5 px-4 text-right font-mono font-bold text-[#047857] whitespace-nowrap">R$ 180,00</td><td class="py-3.5 px-4 font-mono text-xs text-neutral-800 whitespace-nowrap"><span class="inline-block bg-white border border-[#1c1b1b] shadow-[1px_1px_0px_0px_#1c1b1b] px-2 py-0.5 font-bold uppercase">BalcÃ£o Caixa FÃ­sico</span></td></tr></tbody>
+</table>
+</div>
+<!-- Barra de Resumo Inferior da Tabela -->
+<div class="border-[#1c1b1b] bg-[#fcf9f8] px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono border-t"><span class="text-[#1c1b1b] font-bold uppercase">TOTAL PAGO:</span><span class="bg-[#10b981] text-black px-3 py-1 border-2 border-[#1c1b1b] font-bold text-sm tracking-wide shadow-[2px_2px_0px_0px_#1c1b1b]" id="tableSummaryAmount">R$ 3.066,30</span></div>
+</main>
+<!-- LINHA 3 (INFERIOR - ÃREA DE EDIÃ‡ÃƒO CONDICIONAL) -->
+<section class="w-full"><!-- RetÃ¢ngulo SÃ³lido Neobrutalista de EdiÃ§Ã£o Direta -->
+<div class="w-full bg-white border-2 border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4" id="editorContainer"><div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border"><div class="flex flex-wrap items-center gap-3"><span class="material-symbols-outlined text-2xl text-[#10b981] font-bold">verified</span><div class="flex flex-col"><span class="text-xs font-mono font-bold text-neutral-500 uppercase tracking-wider">PAINEL DE CONSULTA E EDIÃ‡ÃƒO DIRETA</span><h2 class="text-base sm:text-lg font-bold text-[#1c1b1b] uppercase tracking-tight flex items-center gap-2 flex-wrap" id="editorTitle"><span class="">REGISTRO:</span><span class="text-[#047857] font-black" id="editorRecordName">Silca Chaves do Brasil</span><span class="bg-[#10b981] text-black border border-[#1c1b1b] text-xs font-mono font-bold px-2 py-0.5 shadow-[1px_1px_0px_0px_#1c1b1b]">[CONTA PAGA]</span></h2></div></div><button class="bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap" id="btnClearSelection" onclick="document.querySelectorAll('.bill-row').forEach(r =&gt; r.classList.remove('bg-[#ecfdf5]','border-l-8','border-l-[#10b981]'))" type="button"><span class="material-symbols-outlined text-sm font-bold">close</span><span class="">LIMPAR SELEÃ‡ÃƒO</span></button></div><div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end pt-1"><div class="md:col-span-4 flex flex-col gap-1"><label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="fieldSelect"><span class="material-symbols-outlined text-sm">tune</span> CAMPO A ALTERAR</label><select class="w-full bg-[#fcf9f8] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 focus:bg-white focus:outline-none focus:ring-0 uppercase cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b]" id="fieldSelect"><option value="datePaid">DATA PAGAMENTO</option><option selected="" value="provider">NOME DA EMPRESA</option><option value="dateDue">DATA VENCIMENTO</option><option value="amount">VALOR PAGO</option><option value="bank">BANCO</option></select></div><div class="md:col-span-5 flex flex-col gap-1"><label class="font-mono text-xs font-bold uppercase text-[#1c1b1b] flex items-center gap-1" for="newValueInput"><span class="material-symbols-outlined text-sm">edit</span> NOVO VALOR DO CAMPO</label><input class="w-full bg-white border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2 focus:bg-[#fff9d6] focus:outline-none focus:ring-0 uppercase shadow-[2px_2px_0px_0px_#1c1b1b]" id="newValueInput" placeholder="Digite o novo valor..." type="text" value="Silca Chaves do Brasil"></div><div class="md:col-span-3 flex items-center gap-2 pt-1 sm:pt-0"><button class="flex-1 bg-[#10b981] hover:bg-[#059669] text-black border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[3px_3px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap" id="btnApplyChange" type="button"><span class="material-symbols-outlined text-base font-bold">check</span><span class="">APLICAR ALTERAÃ‡ÃƒO</span></button><button class="bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs sm:text-sm font-bold px-3 py-2.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center cursor-pointer whitespace-nowrap" id="btnCancelEdit" title="Cancelar" type="button"><span class="">CANCELAR</span></button></div></div></div></section>
+</div>
+<!-- SCRIPT DE INTERATIVIDADE COMPLETA -->
+<script>
+    let currentSelectedId = null;
+    let activeFilter = 'TODOS';
+
+    const getRows = () => document.querySelectorAll('.bill-row');
+    const emptyState = document.getElementById('selectionEmptyState');
+    const detailBox = document.getElementById('selectionDetailBox');
+    const closeBtn = document.getElementById('btnCloseSelection');
+    const searchInput = document.getElementById('searchInput');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Elementos de Detalhe
+    const detailProvider = document.getElementById('detailProvider');
+    const detailDoc = document.getElementById('detailDoc');
+    const detailDate = document.getElementById('detailDate');
+    const detailAmount = document.getElementById('detailAmount');
+    const detailCategory = document.getElementById('detailCategory');
+    const detailStatusText = document.getElementById('detailStatusText');
+    const btnPayAction = document.getElementById('btnPayAction');
+    const btnUnpayAction = document.getElementById('btnUnpayAction');
+    const btnEditAction = document.getElementById('btnEditAction');
+    const btnDeleteAction = document.getElementById('btnDeleteAction');
+
+    // FunÃ§Ã£o de Marcar como Pago para uma linha
+    function setRowPaid(targetRow) {
+      if (!targetRow) return;
+      targetRow.setAttribute('data-status', 'PAGO');
+
+      // Coluna de status
+      const badge = targetRow.querySelector('.status-badge');
+      badge.textContent = 'PAGO';
+      badge.className = 'status-badge inline-block bg-[#4dffb2] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+
+      // CÃ©lula de data
+      const dateCell = targetRow.querySelector('.date-cell');
+      const baseDate = targetRow.getAttribute('data-date');
+      dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#006c46] whitespace-nowrap date-cell';
+      if (!baseDate.includes('Pago')) {
+        dateCell.textContent = baseDate + ' (Pago)';
+      } else {
+        dateCell.textContent = baseDate;
+      }
+
+      // Estilo ativo dos botÃµes da linha
+      const btnPaid = targetRow.querySelector('.btn-mark-paid');
+      const btnUnpaid = targetRow.querySelector('.btn-mark-unpaid');
+      if (btnPaid) {
+        btnPaid.className = 'btn-mark-paid inline-flex items-center justify-center gap-1 bg-[#22c55e] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[1px_1px_0px_0px_#1c1b1b] translate-x-0.5 translate-y-0.5 cursor-pointer leading-none';
+      }
+      if (btnUnpaid) {
+        btnUnpaid.className = 'btn-mark-unpaid inline-flex items-center justify-center gap-1 bg-white hover:bg-neutral-100 text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer leading-none';
+      }
+
+      if (currentSelectedId === targetRow.getAttribute('data-id')) {
+        updateDetailPanel(targetRow);
+      }
+      applyFilters();
+    }
+
+    // FunÃ§Ã£o de Marcar como NÃ£o Pago para uma linha
+    function setRowUnpaid(targetRow) {
+      if (!targetRow) return;
+      const originalStatus = targetRow.getAttribute('data-original-status') || 'AVENCER';
+      targetRow.setAttribute('data-status', originalStatus);
+
+      const badge = targetRow.querySelector('.status-badge');
+      const dateCell = targetRow.querySelector('.date-cell');
+      const baseDate = targetRow.getAttribute('data-date').replace(' (Pago)', '');
+
+      if (originalStatus === 'ATRASADO') {
+        badge.textContent = 'ATRASADO';
+        badge.className = 'status-badge inline-block bg-[#ba1a1a] text-white border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#ba1a1a] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate.includes('Atrasado') ? baseDate : baseDate + ' (Atrasado)';
+      } else if (originalStatus === 'HOJE') {
+        badge.textContent = 'VENCE HOJE';
+        badge.className = 'status-badge inline-block bg-[#ffdad6] text-[#ba1a1a] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#ba1a1a] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate;
+      } else {
+        badge.textContent = 'A VENCER';
+        badge.className = 'status-badge inline-block bg-[#FFE600] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]';
+        dateCell.className = 'py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell';
+        dateCell.textContent = baseDate;
+      }
+
+      // Estilo ativo dos botÃµes da linha
+      const btnPaid = targetRow.querySelector('.btn-mark-paid');
+      const btnUnpaid = targetRow.querySelector('.btn-mark-unpaid');
+      if (btnPaid) {
+        btnPaid.className = 'btn-mark-paid inline-flex items-center justify-center gap-1 bg-[#4dffb2] hover:bg-[#22c55e] text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer leading-none';
+      }
+      if (btnUnpaid) {
+        btnUnpaid.className = 'btn-mark-unpaid inline-flex items-center justify-center gap-1 bg-[#ffdad6] text-[#ba1a1a] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 shadow-[1px_1px_0px_0px_#1c1b1b] translate-x-0.5 translate-y-0.5 cursor-pointer leading-none';
+      }
+
+      if (currentSelectedId === targetRow.getAttribute('data-id')) {
+        updateDetailPanel(targetRow);
+      }
+      applyFilters();
+    }
+
+    // Atualiza o painel inferior de detalhes
+    function updateDetailPanel(row) {
+      const provider = row.getAttribute('data-provider');
+      const doc = row.getAttribute('data-doc');
+      const date = row.querySelector('.date-cell').textContent;
+      const amount = row.getAttribute('data-amount');
+      const category = row.getAttribute('data-category');
+      const status = row.getAttribute('data-status');
+
+      detailProvider.textContent = provider;
+      detailDoc.textContent = doc;
+      detailDate.textContent = date;
+      detailAmount.textContent = 'R$ ' + amount;
+      detailCategory.textContent = category;
+
+      if (status === 'PAGO') {
+        detailStatusText.textContent = 'PAGO';
+        detailStatusText.className = 'font-bold text-[#006c46]';
+        btnPayAction.classList.add('opacity-50', 'pointer-events-none');
+        btnPayAction.innerHTML = '<span class="material-symbols-outlined text-base font-bold">check</span><span>CONTA JÃ PAGA</span>';
+        btnUnpayAction.classList.remove('opacity-50', 'pointer-events-none');
+      } else {
+        detailStatusText.textContent = status === 'HOJE' ? 'VENCE HOJE' : (status === 'ATRASADO' ? 'ATRASADO' : 'A VENCER');
+        detailStatusText.className = status === 'ATRASADO' ? 'font-bold text-[#ba1a1a]' : 'font-bold text-[#1c1b1b]';
+        btnPayAction.classList.remove('opacity-50', 'pointer-events-none');
+        btnPayAction.innerHTML = '<span class="material-symbols-outlined text-base font-bold">check_circle</span><span>âœ” DAR BAIXA / PAGO</span>';
+      }
+    }
+
+    // Selecionar Linha
+    function selectRow(row) {
+      const id = row.getAttribute('data-id');
+      getRows().forEach(r => {
+        r.classList.remove('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      });
+
+      row.classList.add('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      currentSelectedId = id;
+
+      updateDetailPanel(row);
+      emptyState.classList.add('hidden');
+      detailBox.classList.remove('hidden');
+    }
+
+    // Fechar SeleÃ§Ã£o
+    function deselectAll() {
+      getRows().forEach(r => {
+        r.classList.remove('bg-[#FFE600]', 'hover:bg-[#FFE600]', 'border-l-8', 'border-l-[#1c1b1b]');
+      });
+      currentSelectedId = null;
+      detailBox.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+    }
+
+    // Vincular cliques das linhas e dos botÃµes PAGO / NÃƒO PAGO
+    function bindRowEvents() {
+      getRows().forEach(row => {
+        row.addEventListener('click', (e) => {
+          // NÃ£o seleciona a linha inteira se clicar diretamente no botÃ£o
+          if (e.target.closest('button')) return;
+          selectRow(row);
+        });
+
+        const btnPaid = row.querySelector('.btn-mark-paid');
+        if (btnPaid) {
+          btnPaid.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setRowPaid(row);
+          });
+        }
+
+        const btnUnpaid = row.querySelector('.btn-mark-unpaid');
+        if (btnUnpaid) {
+          btnUnpaid.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setRowUnpaid(row);
+          });
+        }
+      });
+    }
+
+    bindRowEvents();
+    closeBtn.addEventListener('click', deselectAll);
+
+    // AÃ§Ãµes do painel inferior
+    btnPayAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      if (targetRow) setRowPaid(targetRow);
+    });
+
+    btnUnpayAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      if (targetRow) setRowUnpaid(targetRow);
+    });
+
+    // BotÃ£o Editar Dados
+    btnEditAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+      const currentAmount = targetRow.getAttribute('data-amount');
+      const newAmount = prompt('Editar Valor (R$):', currentAmount);
+      if (newAmount && newAmount.trim() !== '') {
+        targetRow.setAttribute('data-amount', newAmount.trim());
+        targetRow.querySelector('td:nth-child(4)').textContent = 'R$ ' + newAmount.trim();
+        selectRow(targetRow);
+        applyFilters();
+      }
+    });
+
+    // BotÃ£o Excluir
+    btnDeleteAction.addEventListener('click', () => {
+      if (!currentSelectedId) return;
+      if (confirm('Tem certeza que deseja excluir este boleto?')) {
+        const targetRow = document.querySelector(`.bill-row[data-id="${currentSelectedId}"]`);
+        if (targetRow) {
+          targetRow.remove();
+          deselectAll();
+          applyFilters();
+        }
+      }
+    });
+
+    // Filtros e Pesquisa
+    function applyFilters() {
+      const query = searchInput.value.toLowerCase().trim();
+      let visibleCount = 0;
+      let totalValue = 0;
+
+      getRows().forEach(r => {
+        if (!r.parentElement) return;
+        const provider = (r.getAttribute('data-provider') || '').toLowerCase();
+        const doc = (r.getAttribute('data-doc') || '').toLowerCase();
+        const desc = (r.getAttribute('data-desc') || '').toLowerCase();
+        const status = r.getAttribute('data-status');
+        const inFolder = r.getAttribute('data-in-folder');
+        const amountStr = r.getAttribute('data-amount') || '0';
+
+        const matchesSearch = !query || provider.includes(query) || doc.includes(query) || desc.includes(query);
+        let matchesFilter = false;
+
+        if (activeFilter === 'TODOS') {
+          matchesFilter = true;
+        } else if (activeFilter === 'NAPASTA') {
+          matchesFilter = (inFolder === 'SIM');
+        } else {
+          matchesFilter = (status === activeFilter);
+        }
+
+        if (matchesSearch && matchesFilter) {
+          r.style.display = '';
+          visibleCount++;
+          const num = parseFloat(amountStr.replace('.', '').replace(',', '.')) || 0;
+          totalValue += num;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+
+      document.getElementById('tableSummaryCount').textContent = `${visibleCount} BOLETO${visibleCount === 1 ? '' : 'S'} LISTADO${visibleCount === 1 ? '' : 'S'}`;
+      document.getElementById('tableSummaryAmount').textContent = 'R$ ' + totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.className = 'filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer';
+        });
+        btn.className = 'filter-btn active-filter bg-[#1c1b1b] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer';
+        activeFilter = btn.getAttribute('data-filter');
+        applyFilters();
+      });
+    });
+
+    // Atalhos do Teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        deselectAll();
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        alert('Modal de Nova Conta aberto [F2]');
+      }
+    });
+  </script>
+</body></html>

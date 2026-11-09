@@ -1,93 +1,227 @@
 <!DOCTYPE html><html lang="pt-BR"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Inserir Conta — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<title>Inserir Nova Conta — Sistema de Contas a Pagar — Chaveiro Universal</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
 <link href="../css/fonts.css" rel="stylesheet">
 <link href="../dist/tailwind.css" rel="stylesheet">
-</head><body class="submenu-body bg-[#fcf9f8] text-[#1c1b1b] antialiased" data-tela="inserir-conta">
-<div class="submenu-wrap">
+</head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 font-headline" data-tela="inserir-conta">
 <header id="nav-global"></header>
-<main class="w-full">
-<form id="form-conta" class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0_0_#1c1b1b]" novalidate>
-<div class="flex flex-wrap items-center gap-2 sm:gap-3 border-b-4 border-[#1c1b1b] bg-[#ffe600] px-4 py-2.5 sm:px-6">
-<span class="material-symbols-outlined text-xl sm:text-2xl text-[#1c1b1b] font-bold">receipt_long</span>
-<h1 class="font-headline text-base sm:text-lg lg:text-xl font-bold uppercase tracking-tight text-[#1c1b1b]">INSERIR CONTA</h1>
+<div class="w-full max-w-2xl flex flex-col gap-6">
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0px_0px_#1c1b1b] p-6 sm:p-8">
+<div class="flex items-center gap-3 pb-5 mb-6 border-b-2 border-[#1c1b1b]">
+<div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b]">post_add</span>
 </div>
-<div class="border-b-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-2 sm:px-6 font-headline text-xs sm:text-sm font-bold text-[#1c1b1b]">
-<span id="etapa-rotulo">Etapa 1 de 2 — Valor e vencimento</span>
-</div>
-
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="etapa-1">
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-valor">Valor (R$)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-valor" name="valor" type="text" maxlength="16" autocomplete="off" placeholder="0,00" required>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="valor"></p>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-vencimento">Data de Vencimento</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-vencimento" name="vencimento" type="date" required>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="vencimento"></p>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">Inserir Nova Conta</h1>
 </div>
 </div>
-
-<div class="hidden grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="etapa-2">
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-fornecedor">Fornecedor (Empresa)</label>
-<select class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-fornecedor" required>
-<option value="">— Selecione —</option>
-</select>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="idEmpresa"></p>
+<form class="flex flex-col gap-5" id="form-conta" novalidate>
+<div class="flex flex-col gap-2 pb-4 border-b-2 border-[#1c1b1b]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-headline font-bold uppercase text-xs sm:text-sm text-[#1c1b1b]" id="step-title-text">DADOS BÁSICOS &amp; VENCIMENTO</span>
 </div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-categoria">Categoria (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-categoria" type="text" maxlength="60" autocomplete="off" list="lista-categorias" placeholder="Ex.: Aluguel, Material, Energia">
-<datalist id="lista-categorias"></datalist>
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="categoria"></p>
+<div class="text-xs font-mono font-bold bg-white border-2 border-[#1c1b1b] px-2.5 py-0.5 shadow-[2px_2px_0px_0px_#1c1b1b]" id="step-counter-badge">PÁGINA 1 DE 2</div>
 </div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-documento">Nº Documento / NF (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-documento" type="text" maxlength="60" autocomplete="off" placeholder="Ex.: NF 12345">
-<p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="numeroDocumento"></p>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-pagador">Quem vai pagar? (opcional)</label>
-<select class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-pagador">
-<option value="">— Não informado —</option>
-</select>
-</div>
-<div class="flex flex-col gap-1.5">
-<label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-pasta">Boleto está na pasta?</label>
-<select class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-pasta">
-<option value="false" selected>NÃO</option>
-<option value="true">SIM</option>
-</select>
+<div class="w-full h-3 bg-white border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b]">
+<div class="h-full bg-[#FFE600] w-1/2 transition-all" id="progress-fill"></div>
 </div>
 </div>
 
-<div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
-<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-conta" role="status"></p>
-<div class="flex flex-wrap items-center gap-3">
-<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#ffe600] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-proxima" type="button">
-<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_forward</span>
-<span>Avançar para Etapa 2</span>
+<div class="flex flex-col gap-5" id="step-1">
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="due_date">
+<span>DATA DE VENCIMENTO <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full flex items-center">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 pr-12 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-headline shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="due_date" maxlength="10" name="due_date" placeholder="DD/MM/AAAA" type="text" autocomplete="off">
+<button class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#f0edec] hover:bg-[#FFE600] border-2 border-[#1c1b1b] p-1.5 flex items-center justify-center transition-all cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none" id="btn-calendario" title="Abrir Calendário" type="button">
+<span class="material-symbols-outlined text-xl text-[#1c1b1b]">calendar_month</span>
 </button>
-<button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#ffe600] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-salvar" type="submit">
-<span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
-<span>Inserir Conta</span>
+<input class="sr-only absolute opacity-0 pointer-events-none" id="native_date_picker" type="date">
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="vencimento"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]">
+<span>TIPO DE CONTA (PESSOA FÍSICA OU JURÍDICA) <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+<input checked="" class="hidden peer" name="account_type" type="radio" value="PJ">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">PESSOA JURÍDICA (PJ)</span>
+</label>
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none ml-4">
+<input class="hidden peer" name="account_type" type="radio" value="PF">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">PESSOA FÍSICA (PF)</span>
+</label>
+</div>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="company_name">
+<span>NOME DA EMPRESA <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="company_name" name="company_name" placeholder="Ex: Enel Distribuição, Silca do Brasil, Gold Chaves..." type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="nomeEmpresa"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="doc_number">
+<span>Nº DO DOCUMENTO (OPCIONAL)</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="doc_number" name="doc_number" placeholder="Ex: NF-e 14892, Duplicata 03/12..." type="text" maxlength="60" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="numeroDocumento"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="total_amount">
+<span>VALOR TOTAL (R$) <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full">
+<span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-headline font-bold text-base text-[#1c1b1b] select-none">R$</span>
+<input class="w-full bg-white border-2 border-[#1c1b1b] pl-11 pr-3.5 py-2.5 text-base sm:text-lg font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="total_amount" inputmode="decimal" name="total_amount" placeholder="0,00" type="text" autocomplete="off">
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="valor"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+<span>CONTA ESTÁ NA PASTA? (DOCUMENTO FÍSICO ARQUIVADO)</span>
+</label>
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+<input class="hidden peer" name="in_folder" type="radio" value="sim">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">SIM, ARQUIVADO NA PASTA</span>
+</label>
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none ml-4">
+<input checked="" class="hidden peer" name="in_folder" type="radio" value="nao">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">NÃO (PENDENTE / DIGITAL)</span>
+</label>
+</div>
+</div>
+
+<div class="pt-6 mt-2 border-t-2 border-[#1c1b1b] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+<button class="bg-white border-2 border-[#1c1b1b] px-5 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center" id="btn-cancelar" type="button">Cancelar</button>
+<button class="bg-[#FFE600] border-4 border-[#1c1b1b] px-8 py-3.5 text-base sm:text-lg font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[5px_5px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2.5" id="btn-proxima" type="button">
+<span>AVANÇAR PARA ETAPA 2</span>
+<span class="material-symbols-outlined text-2xl font-bold">arrow_forward</span>
 </button>
-<button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-voltar-etapa" type="button">
-<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_back</span>
-<span>Voltar para Etapa 1</span>
+</div>
+</div>
+
+<div class="flex-col gap-5 hidden" id="step-2">
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="category">
+<span>CATEGORIA DA CONTA (OPCIONAL)</span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="category" name="category">
+<option value="">Selecione a categoria...</option>
+<option value="insumos">Insumos (Chaves, Lâminas, Cilindros)</option>
+<option value="utilidades">Utilidades (Energia, Água, Internet)</option>
+<option value="ferramentas">Ferramentas &amp; Equipamentos</option>
+<option value="manutencao">Manutenção de Máquinas</option>
+<option value="aluguel_taxas">Aluguel &amp; Taxas</option>
+<option value="outras">Outras Despesas</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payment_method">
+<span>DOCUMENTO DE COBRANÇA <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="payment_method" name="payment_method">
+<option value="">Selecione a modalidade...</option>
+<option value="boleto">Boleto Bancário</option>
+<option value="pix">Chave Pix</option>
+<option value="cartao">Cartão de Crédito / Débito</option>
+<option value="transferencia">Transferência Bancária (TED/DOC)</option>
+<option value="dinheiro">Dinheiro em Espécie</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="formaPagamento"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="issuer_company">
+<span>EMPRESA EMISSORA (OPCIONAL)</span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="issuer_company" name="issuer_company">
+<option value="">Selecione o fornecedor/emissor...</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payer_responsible">
+<span>PAGADOR RESPONSÁVEL <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="payer_responsible" name="payer_responsible" placeholder="Ex: Balcão 01, Chaveiro Carlos, Gerência, Caixa Principal..." type="text" maxlength="120" autocomplete="off">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="pagadorResponsavel"></p>
+</div>
+
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="invoice_pdf">
+<span>ANEXAR NOTA FISCAL (PDF)</span>
+<span class="text-xs font-mono font-medium text-[#7c775f]">PDF ATÉ 15MB</span>
+</label>
+<div class="w-full bg-white border-2 border-dashed border-[#1c1b1b] p-4 flex flex-col items-center justify-center gap-2 text-center shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#fffde6] transition-all cursor-pointer relative" id="anexo-area">
+<input accept=".pdf,application/pdf" class="sr-only absolute opacity-0 pointer-events-none" id="invoice_pdf" name="invoice_pdf" type="file">
+<div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b]">upload_file</span>
+</div>
+<div>
+<span class="font-headline font-bold text-xs sm:text-sm uppercase text-[#1c1b1b] block" id="file_label">ESCOLHER ARQUIVO PDF OU ARRASTAR AQUI</span>
+<span class="text-xs font-mono text-[#7c775f]">Guarda digital automática com opção de download no sistema</span>
+</div>
+</div>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="anexo"></p>
+</div>
+
+<div class="pt-6 mt-2 border-t-2 border-[#1c1b1b] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+<button class="bg-white border-2 border-[#1c1b1b] px-5 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1" id="btn-voltar-etapa" type="button">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+<span>VOLTAR PARA ETAPA 1</span>
 </button>
-<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-cancelar" type="button">
-<span class="material-symbols-outlined text-lg leading-none font-bold">close</span>
-<span>Cancelar</span>
+<button class="bg-[#FFE600] border-4 border-[#1c1b1b] px-8 py-3.5 text-base sm:text-lg font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[5px_5px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2.5" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-2xl font-bold">save</span>
+<span>INSERIR CONTA</span>
 </button>
 </div>
 </div>
 </form>
 </main>
+</div>
+<div class="hidden fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm" id="toast" role="status">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-3xl text-[#1c1b1b]">check_circle</span>
+<div>
+<p class="font-bold text-sm uppercase text-[#1c1b1b]">Conta Gravada com Sucesso!</p>
+<p class="text-xs text-[#1c1b1b] font-medium">Lançamento inserido no registro de despesas.</p>
+</div>
+</div>
 </div>
 <script type="module" src="../dist/app.js"></script>
 </body></html>

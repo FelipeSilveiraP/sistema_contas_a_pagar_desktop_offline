@@ -1,0 +1,343 @@
+<!DOCTYPE html><html lang="pt-BR" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Oficina do Chaveiro - Inserir Nova Conta</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface": "#1c1b1b",
+            "background": "#fcf9f8",
+            "primary-container": "#FFE600",
+            "surface-container-lowest": "#ffffff",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "mono": ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8 font-headline">
+<!-- Container Centralizado com Largura Controlada (max-w-2xl) -->
+<div class="w-full max-w-2xl flex flex-col gap-6">
+<!-- Topo da pÃ¡gina / CabeÃ§alho simples -->
+<header class="flex items-center justify-between gap-4 pb-2">
+<button class="inline-flex items-center gap-2 bg-white border-2 border-[#1c1b1b] px-4 py-2 font-bold uppercase text-xs sm:text-sm tracking-wide shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer" onclick="window.history.back()" type="button">
+<span class="material-symbols-outlined text-lg leading-none">arrow_back</span>
+<span class="">VOLTAR</span>
+</button>
+<div class="flex items-center gap-2">
+</div>
+</header>
+<!-- Card Principal do FormulÃ¡rio Neobrutalista -->
+<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0px_0px_#1c1b1b] p-6 sm:p-8">
+<!-- TÃ­tulo Claro -->
+<div class="flex items-center gap-3 pb-5 mb-6 border-b-2 border-[#1c1b1b]">
+<div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b]">post_add</span>
+</div>
+<div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#1c1b1b]">
+            Inserir Nova Conta
+          </h1>
+</div>
+</div>
+<!-- FormulÃ¡rio Vertical (um input por linha na vertical) -->
+<form class="flex flex-col gap-5" id="form-conta" onsubmit="event.preventDefault(); submitForm();"><!-- Indicador Neobrutalista de Etapas / PaginaÃ§Ã£o -->
+<div class="flex flex-col gap-2 pb-4 border-b-2 border-[#1c1b1b]">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+
+<span class="font-headline font-bold uppercase text-xs sm:text-sm text-[#1c1b1b]" id="step-title-text">CATEGORIZAÃ‡ÃƒO &amp; ANEXO</span>
+</div>
+<div class="text-xs font-mono font-bold bg-white border-2 border-[#1c1b1b] px-2.5 py-0.5 shadow-[2px_2px_0px_0px_#1c1b1b]" id="step-counter-badge">PÃGINA 2 DE 2</div>
+</div>
+<!-- Barra de Progresso Neobrutalista -->
+
+</div>
+<!-- ==================== ETAPA 1 (PÃGINA 1) ==================== -->
+<div class="flex-col gap-5 hidden" id="step-1">
+<!-- Campo 1: Data de Vencimento (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="due_date">
+<span class="">DATA DE VENCIMENTO <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full flex items-center">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 pr-12 py-2.5 text-sm sm:text-base font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] placeholder:font-headline shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="due_date" maxlength="10" name="due_date" placeholder="DD/MM/AAAA" required="" type="text">
+<button class="absolute right-1 top-1/2 -translate-y-1/2 bg-[#f0edec] hover:bg-[#FFE600] border-2 border-[#1c1b1b] p-1.5 flex items-center justify-center transition-all cursor-pointer shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none" onclick="document.getElementById('native_date_picker').showPicker ? document.getElementById('native_date_picker').showPicker() : document.getElementById('native_date_picker').focus()" title="Abrir CalendÃ¡rio" type="button">
+<span class="material-symbols-outlined text-xl text-[#1c1b1b]">calendar_month</span>
+</button>
+<input class="sr-only absolute opacity-0 pointer-events-none" id="native_date_picker" onchange="if(this.value){const p=this.value.split('-');document.getElementById('due_date').value=`${p[2]}/${p[1]}/${p[0]}`}" type="date">
+</div>
+</div>
+<!-- Campo 2: Tipo de Conta (Pessoa FÃ­sica ou JurÃ­dica) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]">
+<span class="">TIPO DE CONTA (PESSOA FÃSICA OU JURÃDICA) <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+<input checked="" class="hidden peer" name="account_type" type="radio" value="pj">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">PESSOA JURÃDICA (PJ)</span>
+</label>
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none ml-4">
+<input class="hidden peer" name="account_type" type="radio" value="pf">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">PESSOA FÃSICA (PF)</span>
+</label>
+</div>
+</div>
+<!-- Campo 3: Nome da Empresa (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="company_name">
+<span class="">NOME DA EMPRESA <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="company_name" name="company_name" placeholder="Ex: Enel DistribuiÃ§Ã£o, Silca do Brasil, Gold Chaves..." required="" type="text">
+</div>
+<!-- Campo 4: NÂ° do Documento (Opcional) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="doc_number">
+<span class="">NÂ° DO DOCUMENTO (OPCIONAL)</span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="doc_number" name="doc_number" placeholder="Ex: NF-e 14892, Duplicata 03/12..." type="text">
+</div>
+<!-- Campo 5: Valor Total (R$) (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="total_amount">
+<span class="">VALOR TOTAL (R$) <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full">
+<span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-headline font-bold text-base text-[#1c1b1b] select-none">R$</span>
+<input class="w-full bg-white border-2 border-[#1c1b1b] pl-11 pr-3.5 py-2.5 text-base sm:text-lg font-mono font-bold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="total_amount" inputmode="decimal" name="total_amount" placeholder="0,00" required="" type="text">
+</div>
+</div>
+<!-- Campo 6: Conta estÃ¡ na Pasta? (Documento FÃ­sico Arquivado) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
+<span class="">CONTA ESTÃ NA PASTA? (DOCUMENTO FÃSICO ARQUIVADO)</span>
+</label>
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+<input checked="" class="hidden peer" name="in_folder" type="radio" value="sim">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">SIM, ARQUIVADO NA PASTA</span>
+</label>
+<label class="inline-flex items-center gap-2.5 cursor-pointer select-none ml-4">
+<input class="hidden peer" name="in_folder" type="radio" value="nao">
+<div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
+<span class="material-symbols-outlined text-lg font-bold text-[#1c1b1b] opacity-0 peer-checked:opacity-100">check</span>
+</div>
+<span class="font-headline font-bold text-sm uppercase text-[#1c1b1b]">NÃƒO (PENDENTE / DIGITAL)</span>
+</label>
+</div>
+</div>
+<!-- RodapÃ© da PÃ¡gina 1 -->
+<div class="pt-6 mt-2 border-t-2 border-[#1c1b1b] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+<button class="bg-white border-2 border-[#1c1b1b] px-5 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center" onclick="window.history.back()" type="button">
+      Cancelar
+    </button>
+<button class="bg-[#FFE600] border-4 border-[#1c1b1b] px-8 py-3.5 text-base sm:text-lg font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[5px_5px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2.5" onclick="goToStep(2)" type="button">
+<span class="">AVANÃ‡AR PARA ETAPA 2</span>
+<span class="material-symbols-outlined text-2xl font-bold">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- ==================== ETAPA 2 (PÃGINA 2) ==================== -->
+<div class="flex-col gap-5 flex" id="step-2">
+<!-- Campo 7: Categoria da Conta (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="category">
+<span class="">CATEGORIA DA CONTa (opcional)</span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="category" name="category" required="">
+<option value="">Selecione a categoria...</option>
+<option value="insumos">Insumos (Chaves, LÃ¢minas, Cilindros)</option>
+<option value="utilidades">Utilidades (Energia, Ãgua, Internet)</option>
+<option value="ferramentas">Ferramentas &amp; Equipamentos</option>
+<option value="manutencao">ManutenÃ§Ã£o de MÃ¡quinas</option>
+<option value="aluguel_taxas">Aluguel &amp; Taxas</option>
+<option value="outras">Outras Despesas</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+</div>
+<!-- Campo 8: Forma de Pagamento (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payment_method">
+<span class="">dOcumento de cobranÃ§a&nbsp;<strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="payment_method" name="payment_method" required="">
+<option value="">Selecione a modalidade...</option>
+<option value="boleto">Boleto BancÃ¡rio</option>
+<option value="pix">Chave Pix</option>
+<option value="cartao">CartÃ£o de CrÃ©dito / DÃ©bito</option>
+<option value="transferencia">TransferÃªncia BancÃ¡ria (TED/DOC)</option>
+<option value="dinheiro">Dinheiro em EspÃ©cie</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+</div>
+<!-- Campo 9: Empresa Emissora (Opcional) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="issuer_company">
+<span class="">EMPRESA EMISSORA (OPCIONAL)</span>
+</label>
+<div class="relative w-full">
+<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="issuer_company" name="issuer_company">
+<option value="">Selecione o fornecedor/emissor...</option>
+<option value="silca">Silca Chaves do Brasil</option>
+<option value="gold">Gold Chaves &amp; LÃ¢minas</option>
+<option value="papaiz">Papaiz / Yale</option>
+<option value="pado">Pado Fechaduras</option>
+<option value="alianca">AlianÃ§a MetalÃºrgica</option>
+<option value="enel">Enel Energia</option>
+<option value="outro">Outro Fornecedor</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
+</div>
+</div>
+<!-- Campo 10: Pagador ResponsÃ¡vel (ObrigatÃ³rio) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payer_responsible">
+<span class="">PAGADOR RESPONSÃVEL <strong class="text-[#ba1a1a]">*</strong></span>
+</label>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="payer_responsible" name="payer_responsible" placeholder="Ex: BalcÃ£o 01, Chaveiro Carlos, GerÃªncia, Caixa Principal..." type="text">
+</div>
+<!-- Campo 11: Anexar Nota Fiscal (PDF) -->
+<div class="flex flex-col gap-1.5 w-full">
+<label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="invoice_pdf">
+<span class="">ANEXAR NOTA FISCAL (PDF)</span>
+<span class="text-xs font-mono font-medium text-[#7c775f]">PDF ATÃ‰ 15MB</span>
+</label>
+<div class="w-full bg-white border-2 border-dashed border-[#1c1b1b] p-4 flex flex-col items-center justify-center gap-2 text-center shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#fffde6] transition-all cursor-pointer relative" onclick="document.getElementById('invoice_pdf').click()">
+<input accept=".pdf,application/pdf" class="sr-only absolute opacity-0 pointer-events-none" id="invoice_pdf" name="invoice_pdf" onchange="if(this.files &amp;&amp; this.files[0]){document.getElementById('file_label').textContent=this.files[0].name.toUpperCase();}" type="file">
+<div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
+<span class="material-symbols-outlined text-2xl text-[#1c1b1b]">upload_file</span>
+</div>
+<div>
+<span class="font-headline font-bold text-xs sm:text-sm uppercase text-[#1c1b1b] block" id="file_label">ESCOLHER ARQUIVO PDF OU ARRASTAR AQUI</span>
+<span class="text-xs font-mono text-[#7c775f]">Guarda digital automÃ¡tica com opÃ§Ã£o de download no sistema</span>
+</div>
+</div>
+</div>
+<!-- RodapÃ© da PÃ¡gina 2 -->
+<div class="pt-6 mt-2 border-t-2 border-[#1c1b1b] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+<button class="bg-white border-2 border-[#1c1b1b] px-5 py-3 text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#f0edec] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-1" onclick="goToStep(1)" type="button">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+<span class="">VOLTAR PARA ETAPA 1</span>
+</button>
+<button class="bg-[#FFE600] border-4 border-[#1c1b1b] px-8 py-3.5 text-base sm:text-lg font-bold uppercase tracking-wider text-[#1c1b1b] shadow-[5px_5px_0px_0px_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all cursor-pointer flex items-center justify-center gap-2.5" type="submit">
+<span class="material-symbols-outlined text-2xl font-bold">save</span>
+<span class="">INSERIR CONTA</span>
+</button>
+</div>
+</div></form>
+</main>
+</div>
+<!-- Notification Toast (Neobrutalista) -->
+<div class="hidden fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm" id="toast">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-3xl text-[#1c1b1b]">check_circle</span>
+<div>
+<p class="font-bold text-sm uppercase text-[#1c1b1b]">Conta Gravada com Sucesso!</p>
+<p class="text-xs text-[#1c1b1b] font-medium">LanÃ§amento inserido no registro de despesas.</p>
+</div>
+</div>
+</div>
+<script>
+    // Inicializa a data de hoje por padrÃ£o
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById('due_date');
+      if (dateInput && !dateInput.value) {
+        dateInput.value = today;
+      }
+    });
+
+    function clearForm() {
+      document.getElementById('desc').value = '';
+      document.getElementById('supplier').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('barcode').value = '';
+      document.getElementById('obs').value = '';
+      document.getElementById('category').selectedIndex = 0;
+      document.getElementById('due_date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('desc').focus();
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 2200);
+      }
+    }
+
+    function submitForm() {
+      showToast();
+      setTimeout(() => {
+        window.history.back();
+      }, 1200);
+    }
+
+    // Atalhos de teclado (F10 para salvar, ESC para voltar)
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'F10') {
+        event.preventDefault();
+        submitForm();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        window.history.back();
+      }
+    });
+  </script>
+<script>
+  function goToStep(stepNumber) {
+    const step1 = document.getElementById('step-1');
+    const step2 = document.getElementById('step-2');
+    const badge = document.getElementById('step-badge-1');
+    const title = document.getElementById('step-title-text');
+    const counter = document.getElementById('step-counter-badge');
+    const progress = document.getElementById('progress-fill');
+    if (stepNumber === 1) {
+      if (step1) { step1.classList.remove('hidden'); step1.classList.add('flex'); }
+      if (step2) { step2.classList.add('hidden'); step2.classList.remove('flex'); }
+      if (badge) badge.textContent = 'ETAPA 01';
+      if (title) title.textContent = 'DADOS BÃSICOS & VENCIMENTO';
+      if (counter) counter.textContent = 'PÃGINA 1 DE 2';
+      if (progress) { progress.classList.remove('w-full'); progress.classList.add('w-1/2'); }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (stepNumber === 2) {
+      if (step1) { step1.classList.add('hidden'); step1.classList.remove('flex'); }
+      if (step2) { step2.classList.remove('hidden'); step2.classList.add('flex'); }
+      if (badge) badge.textContent = 'ETAPA 02';
+      if (title) title.textContent = 'CATEGORIZAÃ‡ÃƒO & ANEXO';
+      if (counter) counter.textContent = 'PÃGINA 2 DE 2';
+      if (progress) { progress.classList.remove('w-1/2'); progress.classList.add('w-full'); }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+</script>
+
+</body></html>

@@ -1,6 +1,6 @@
 import { Tela } from "./navegacao";
 
-export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros" | "inserir-conta">;
+export type TelaSubmenu = Exclude<Tela, "menu" | "form-banco" | "form-pagador" | "form-empresa" | "todos-cadastros" | "inserir-conta" | "todas-as-contas">;
 
 export interface BotaoSubmenu {
   chave: string;
@@ -51,6 +51,7 @@ export const SUBMENUS: Record<TelaSubmenu, ConfigSubmenu> = {
         selo: "receipt_long",
         seloTexto: "text-white",
         icone: SVG.prancheta,
+        destino: "todas-as-contas",
       },
       {
         chave: "contas-recorrentes",

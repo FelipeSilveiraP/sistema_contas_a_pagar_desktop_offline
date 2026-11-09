@@ -146,6 +146,7 @@ const TELAS = new Map([
   ["form-empresa", path.join(__dirname, "..", "frontend", "html", "form-empresa.html")],
   ["todos-cadastros", path.join(__dirname, "..", "frontend", "html", "todos-cadastros.html")],
   ["inserir-conta", path.join(__dirname, "..", "frontend", "html", "inserir-conta.html")],
+  ["todas-as-contas", path.join(__dirname, "..", "frontend", "html", "todas-as-contas.html")],
 ]);
 
 const NOME_APP = "Sistema de Contas a Pagar — Chaveiro Universal";

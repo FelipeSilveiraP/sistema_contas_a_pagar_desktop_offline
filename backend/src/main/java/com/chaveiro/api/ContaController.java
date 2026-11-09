@@ -2,10 +2,15 @@ package com.chaveiro.api;
 
 import com.chaveiro.model.Conta;
 import com.chaveiro.service.ContaService;
+import com.chaveiro.service.DadosInvalidosException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,13 +30,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class ContaController {
 
     public record ContaRequest(
+            String nomeEmpresa,
             Long idEmpresa,
-            Long idPagador,
+            String pagadorResponsavel,
+            String tipoPessoa,
+            String formaPagamento,
             String categoria,
             String numeroDocumento,
             BigDecimal valor,
             LocalDate vencimento,
             Boolean boletoNaPasta,
+            String anexoNome,
+            String anexoPdfBase64,
             Boolean forcar
     ) {}
 
@@ -51,16 +61,27 @@ public class ContaController {
         return service.buscarPorId(id);
     }
 
+    @GetMapping("/{id}/anexo")
+    public ResponseEntity<byte[]> baixarAnexo(@PathVariable long id) {
+        byte[] pdf = service.buscarAnexoPdf(id);
+        Conta conta = service.buscarPorId(id);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + (conta.anexoNome() == null ? "anexo.pdf" : conta.anexoNome().replace("\"", "")) + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @PostMapping
     public ResponseEntity<Conta> cadastrar(@RequestBody ContaRequest requisicao) {
-        Conta criada = service.cadastrar(paraModelo(requisicao),
+        Conta criada = service.cadastrar(paraModelo(requisicao), decodificarAnexo(requisicao),
                 Boolean.TRUE.equals(requisicao.forcar()));
         return ResponseEntity.created(URI.create("/api/contas/" + criada.id())).body(criada);
     }
 
     @PutMapping("/{id}")
     public Conta atualizar(@PathVariable long id, @RequestBody ContaRequest requisicao) {
-        return service.atualizar(id, paraModelo(requisicao));
+        return service.atualizar(id, paraModelo(requisicao), decodificarAnexo(requisicao));
     }
 
     @DeleteMapping("/{id}")
@@ -72,16 +93,30 @@ public class ContaController {
     private static Conta paraModelo(ContaRequest requisicao) {
         return new Conta(
                 null,
+                requisicao.nomeEmpresa(),
                 requisicao.idEmpresa(),
                 null,
-                requisicao.idPagador(),
-                null,
+                requisicao.pagadorResponsavel(),
+                requisicao.tipoPessoa(),
+                requisicao.formaPagamento(),
                 requisicao.categoria(),
                 requisicao.numeroDocumento(),
                 requisicao.valor(),
                 requisicao.vencimento(),
                 Boolean.TRUE.equals(requisicao.boletoNaPasta()),
+                requisicao.anexoNome(),
                 "PENDENTE"
         );
+    }
+
+    private static byte[] decodificarAnexo(ContaRequest requisicao) {
+        if (requisicao.anexoPdfBase64() == null || requisicao.anexoPdfBase64().isBlank()) {
+            return null;
+        }
+        try {
+            return Base64.getDecoder().decode(requisicao.anexoPdfBase64());
+        } catch (IllegalArgumentException erro) {
+            throw new DadosInvalidosException(Map.of("anexo", "conteudo do anexo invalido"));
+        }
     }
 }
