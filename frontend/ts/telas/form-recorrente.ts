@@ -1,11 +1,12 @@
-import { buscarStatus, criarRecorrente, ErroValidacaoApi, ErroApi } from "../api";
-import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { buscarStatus, criarRecorrente, listarPagadores, ErroValidacaoApi, ErroApi } from "../api";
+import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { mascaraDia, mascaraMoeda, paraCentavos } from "../mascaras";
 
 const MAPA_FORMATO: Record<string, string> = {
-  BOLETO: "boleto", PIX: "pix", CARTAO: "cartao", DEBITO: "transferencia",
+  BOLETO: "boleto", PIX: "pix", CARTAO: "cartao", DEBITO: "debito",
 };
 
 function el<T extends HTMLElement>(id: string): T {
@@ -24,6 +25,7 @@ function lerCampos() {
     dia: Number(el<HTMLInputElement>("dia_vencimento").value),
     periodicidade: periodicidade ? periodicidade.value : "MENSAL",
     formato: el<HTMLSelectElement>("formato_cobranca").value,
+    pagador: el<HTMLInputElement>("pagador_responsavel").value.trim(),
   };
 }
 
@@ -31,13 +33,16 @@ function validar(): Record<string, string> {
   const dados = lerCampos();
   const erros: Record<string, string> = {};
   if (dados.fornecedor.length < 2 || dados.fornecedor.length > 120) {
-    erros.nomeEmpresa = "informe o fornecedor (2 a 120 caracteres)";
+    erros.nomeEmpresa = "Informe o fornecedor (de 2 a 120 caracteres).";
+  }
+  if (dados.pagador.length > 120) {
+    erros.pagadorResponsavel = "Informe o pagador responsável (de 1 a 120 caracteres).";
   }
   if (paraCentavos(dados.valor) === null) {
-    erros.valor = "informe o valor no formato R$ 0,00 (maior que zero)";
+    erros.valor = "Informe o valor (maior que zero). Exemplo: 150,00.";
   }
   if (!Number.isInteger(dados.dia) || dados.dia < 1 || dados.dia > 31) {
-    erros.dia = "informe o dia de vencimento (1 a 31)";
+    erros.dia = "Informe o dia do vencimento (de 1 a 31).";
   }
   return erros;
 }
@@ -53,6 +58,13 @@ function mostrarErros(erros: Record<string, string>): void {
 
 function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   const feedback = el("feedback-recorrente");
+  if (sucesso) {
+    feedback.textContent = "";
+    feedback.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  feedback.setAttribute("role", "alert");
   feedback.textContent = mensagem;
   feedback.classList.remove("hidden");
   feedback.classList.toggle("text-[#006c46]", sucesso);
@@ -63,7 +75,7 @@ async function submeter(): Promise<void> {
   const erros = validar();
   mostrarErros(erros);
   if (Object.keys(erros).length > 0) {
-    mostrarFeedback("Corrija os campos destacados.", false);
+    mostrarFeedback("Corrija os campos destacados em vermelho.", false);
     return;
   }
   const dados = lerCampos();
@@ -72,7 +84,7 @@ async function submeter(): Promise<void> {
     const criada = await criarRecorrente(cfg, {
       nomeEmpresa: dados.fornecedor,
       idEmpresa: null,
-      pagadorResponsavel: "NÃO INFORMADO",
+      pagadorResponsavel: dados.pagador || "NÃO INFORMADO",
       categoria: null,
       numeroDocumento: null,
       valor: paraCentavos(dados.valor)! / 100,
@@ -80,6 +92,7 @@ async function submeter(): Promise<void> {
       periodicidade: dados.periodicidade,
       formaPagamento: MAPA_FORMATO[dados.formato],
       ativo: true,
+      tipoPessoa: dados.tipoPessoa,
     });
     sujo = false;
     document.body.dataset.formSujo = "false";
@@ -92,11 +105,11 @@ async function submeter(): Promise<void> {
   } catch (erro) {
     if (erro instanceof ErroValidacaoApi) {
       mostrarErros(erro.campos);
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
     } else if (erro instanceof ErroApi) {
-      mostrarFeedback("Nao foi possivel salvar a recorrencia. Tente novamente.", false);
+      mostrarFeedback("Não foi possível salvar a conta recorrente. Verifique se o sistema está aberto e tente de novo.", false);
     } else {
-      mostrarFeedback("Nao foi possivel salvar a recorrencia. Tente novamente.", false);
+      mostrarFeedback("Não foi possível salvar a conta recorrente. Verifique se o sistema está aberto e tente de novo.", false);
       console.error("[ContasAPagar] falha ao cadastrar recorrencia:", erro);
     }
   }
@@ -116,6 +129,20 @@ function iniciar(): void {
   montarNavbar("form-recorrente");
   mascaraMoeda(el<HTMLInputElement>("valor_previsto"));
   mascaraDia(el<HTMLInputElement>("dia_vencimento"));
+  // sugere os pagadores cadastrados (o campo continua aceitando texto livre)
+  void (async () => {
+    try {
+      const pagadores = await listarPagadores(await window.finDesk!.config());
+      const lista = document.getElementById("lista-pagadores-rec");
+      for (const p of pagadores) {
+        const opcao = document.createElement("option");
+        opcao.value = p.nome;
+        lista?.appendChild(opcao);
+      }
+    } catch {
+      // sem sugestoes: o campo segue funcionando como texto livre
+    }
+  })();
 
   el<HTMLFormElement>("recorrente-form").addEventListener("input", () => {
     sujo = true;
@@ -127,7 +154,7 @@ function iniciar(): void {
   });
   el("btn-cancelar").addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -136,7 +163,7 @@ function iniciar(): void {
     if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
     evento.preventDefault();
     evento.stopPropagation();
-    void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+    void confirmarSaida().then((ok) => {
       if (ok) void voltar();
     });
   }, true);
@@ -149,7 +176,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });

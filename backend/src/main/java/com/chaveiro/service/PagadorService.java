@@ -95,13 +95,13 @@ public class PagadorService {
         Map<String, String> erros = new LinkedHashMap<>();
 
         if (pagador.nome().length() < 2 || pagador.nome().length() > 120) {
-            erros.put("nome", "informe o nome do pagador (2 a 120 caracteres)");
+            erros.put("nome", "Informe o nome do pagador (de 2 a 120 caracteres).");
         }
         if (pagador.cpf() != null && !cpfValido(pagador.cpf())) {
-            erros.put("cpf", "CPF invalido (11 digitos com digitos verificadores)");
+            erros.put("cpf", "CPF inválido. Confira os 11 números.");
         }
         if (pagador.funcao() != null && pagador.funcao().length() > 100) {
-            erros.put("funcao", "funcao deve ter ate 100 caracteres");
+            erros.put("funcao", "A função deve ter até 100 caracteres.");
         }
 
         if (!erros.isEmpty()) {

@@ -1,5 +1,6 @@
 import { buscarStatus, criarPagador, ErroValidacaoApi } from "../api";
-import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { cpfValido, mascaraCPF } from "../mascaras";
@@ -31,13 +32,13 @@ function lerCampos(): CamposFormulario {
 function validar(dados: CamposFormulario): Record<string, string> {
   const erros: Record<string, string> = {};
   if (dados.nome.length < 2 || dados.nome.length > 120) {
-    erros.nome = "informe o nome do pagador (2 a 120 caracteres)";
+    erros.nome = "Informe o nome do pagador (de 2 a 120 caracteres).";
   }
   if (dados.cpf && !cpfValido(dados.cpf)) {
-    erros.cpf = "CPF invalido (11 digitos com digitos verificadores)";
+    erros.cpf = "CPF inválido. Confira os 11 números.";
   }
   if (dados.funcao.length > 100) {
-    erros.funcao = "funcao deve ter ate 100 caracteres";
+    erros.funcao = "A função deve ter até 100 caracteres.";
   }
   return erros;
 }
@@ -55,6 +56,13 @@ function mostrarErros(erros: Record<string, string>): void {
 function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   const feedback = document.getElementById("feedback-pagador");
   if (!feedback) return;
+  if (sucesso) {
+    feedback.textContent = "";
+    feedback.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  feedback.setAttribute("role", "alert");
   feedback.textContent = mensagem;
   feedback.classList.remove("hidden");
   feedback.classList.toggle("text-[#006c46]", sucesso);
@@ -89,7 +97,7 @@ function iniciar(): void {
     const erros = validar(dados);
     mostrarErros(erros);
     if (Object.keys(erros).length > 0) {
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       return;
     }
     try {
@@ -109,9 +117,9 @@ function iniciar(): void {
     } catch (erro) {
       if (erro instanceof ErroValidacaoApi) {
         mostrarErros(erro.campos);
-        mostrarFeedback("Corrija os campos destacados.", false);
+        mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       } else {
-        mostrarFeedback("Nao foi possivel salvar o pagador. Tente novamente.", false);
+        mostrarFeedback("Não foi possível salvar o pagador. Verifique se o sistema está aberto e tente de novo.", false);
         console.error("[ContasAPagar] falha ao cadastrar pagador:", erro);
       }
     }
@@ -119,7 +127,7 @@ function iniciar(): void {
 
   document.getElementById("btn-cancelar")?.addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -133,7 +141,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });
@@ -147,7 +155,7 @@ function iniciar(): void {
       if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
       evento.preventDefault();
       evento.stopPropagation();
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) void voltar();
       });
     },

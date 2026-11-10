@@ -1,5 +1,6 @@
 import { buscarStatus, criarBanco, ErroValidacaoApi } from "../api";
-import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 
@@ -27,10 +28,10 @@ function lerCampos(): CamposFormulario {
 function validar(dados: CamposFormulario): Record<string, string> {
   const erros: Record<string, string> = {};
   if (dados.instituicao.length < 2 || dados.instituicao.length > 120) {
-    erros.instituicao = "informe a instituicao bancaria (2 a 120 caracteres)";
+    erros.instituicao = "Informe o nome do banco (de 2 a 120 caracteres).";
   }
   if (dados.chavePix && (dados.chavePix.length > 77 || dados.chavePix.includes(" "))) {
-    erros.chavePix = "chave Pix invalida (ate 77 caracteres, sem espacos)";
+    erros.chavePix = "Chave Pix inválida (até 77 caracteres, sem espaços).";
   }
   return erros;
 }
@@ -48,6 +49,13 @@ function mostrarErros(erros: Record<string, string>): void {
 function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   const feedback = document.getElementById("feedback-banco");
   if (!feedback) return;
+  if (sucesso) {
+    feedback.textContent = "";
+    feedback.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  feedback.setAttribute("role", "alert");
   feedback.textContent = mensagem;
   feedback.classList.remove("hidden");
   feedback.classList.toggle("text-[#006c46]", sucesso);
@@ -81,7 +89,7 @@ function iniciar(): void {
     const erros = validar(dados);
     mostrarErros(erros);
     if (Object.keys(erros).length > 0) {
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       return;
     }
     try {
@@ -100,9 +108,9 @@ function iniciar(): void {
     } catch (erro) {
       if (erro instanceof ErroValidacaoApi) {
         mostrarErros(erro.campos);
-        mostrarFeedback("Corrija os campos destacados.", false);
+        mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       } else {
-        mostrarFeedback("Nao foi possivel salvar o banco. Tente novamente.", false);
+        mostrarFeedback("Não foi possível salvar o banco. Verifique se o sistema está aberto e tente de novo.", false);
         console.error("[ContasAPagar] falha ao cadastrar banco:", erro);
       }
     }
@@ -110,7 +118,7 @@ function iniciar(): void {
 
   document.getElementById("btn-cancelar")?.addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -124,7 +132,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });
@@ -138,7 +146,7 @@ function iniciar(): void {
       if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
       evento.preventDefault();
       evento.stopPropagation();
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) void voltar();
       });
     },

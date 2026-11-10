@@ -99,7 +99,7 @@ public class BoletoRecorrenteService {
                 LocalDate vencimento = vencimentoDoMes(mes, recorrente.dia());
                 if (!existeConta(recorrente, vencimento)) {
                     contas.inserirDeRecorrencia(new Conta(null, recorrente.nomeEmpresa(),
-                            recorrente.idEmpresa(), null, recorrente.pagadorResponsavel(), "PJ",
+                            recorrente.idEmpresa(), null, recorrente.pagadorResponsavel(), recorrente.tipoPessoa(),
                             recorrente.formaPagamento() == null ? "boleto" : recorrente.formaPagamento(),
                             recorrente.categoria(), recorrente.numeroDocumento(), recorrente.valor(),
                             vencimento, false, null, "PENDENTE"), recorrente.id());
@@ -153,26 +153,33 @@ public class BoletoRecorrenteService {
                 dados.dia(),
                 dados.periodicidade() == null ? "" : dados.periodicidade().trim().toUpperCase(),
                 dados.formaPagamento() == null || dados.formaPagamento().isBlank() ? null : dados.formaPagamento().trim().toLowerCase(),
-                dados.ativo());
+                dados.ativo(),
+                dados.tipoPessoa() == null || dados.tipoPessoa().isBlank() ? "PJ" : dados.tipoPessoa().trim().toUpperCase());
     }
 
     private static void validar(BoletoRecorrente dados) {
         Map<String, String> erros = new LinkedHashMap<>();
+        if (!ContaService.TIPOS_PESSOA.contains(dados.tipoPessoa())) {
+            erros.put("tipoPessoa", "Escolha o tipo de conta (pessoa física ou jurídica).");
+        }
+        if (dados.formaPagamento() != null && !ContaService.FORMAS_PAGAMENTO.contains(dados.formaPagamento())) {
+            erros.put("formaPagamento", "Formato de pagamento inválido.");
+        }
         if (dados.nomeEmpresa().length() < 2 || dados.nomeEmpresa().length() > 120) {
-            erros.put("nomeEmpresa", "informe o nome da empresa (2 a 120 caracteres)");
+            erros.put("nomeEmpresa", "Informe o nome da empresa (de 2 a 120 caracteres).");
         }
         if (dados.pagadorResponsavel().isEmpty() || dados.pagadorResponsavel().length() > 120) {
-            erros.put("pagadorResponsavel", "informe o pagador responsavel (1 a 120 caracteres)");
+            erros.put("pagadorResponsavel", "Informe o pagador responsável (de 1 a 120 caracteres).");
         }
         if (dados.valor() == null || dados.valor().signum() <= 0
                 || dados.valor().stripTrailingZeros().scale() > 2) {
-            erros.put("valor", "informe um valor valido (maior que zero, ate 2 casas)");
+            erros.put("valor", "Informe um valor válido, maior que zero. Exemplo: 150,00.");
         }
         if (dados.dia() < 1 || dados.dia() > 31) {
-            erros.put("dia", "informe o dia de vencimento (1 a 31)");
+            erros.put("dia", "Informe o dia do vencimento (de 1 a 31).");
         }
         if (!PERIODICIDADES.contains(dados.periodicidade())) {
-            erros.put("periodicidade", "selecione a periodicidade");
+            erros.put("periodicidade", "Selecione a periodicidade.");
         }
         if (!erros.isEmpty()) {
             log.warn("validacao de recorrencia recusada: {}", erros.keySet());

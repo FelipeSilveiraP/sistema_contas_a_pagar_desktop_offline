@@ -93,11 +93,11 @@ public class BancoService {
         Map<String, String> erros = new LinkedHashMap<>();
 
         if (banco.instituicao().length() < 2 || banco.instituicao().length() > 120) {
-            erros.put("instituicao", "informe a instituicao bancaria (2 a 120 caracteres)");
+            erros.put("instituicao", "Informe o nome do banco (de 2 a 120 caracteres).");
         }
         if (banco.chavePix() != null) {
             if (banco.chavePix().length() > 77 || banco.chavePix().contains(" ")) {
-                erros.put("chavePix", "chave Pix invalida (ate 77 caracteres, sem espacos)");
+                erros.put("chavePix", "Chave Pix inválida (até 77 caracteres, sem espaços).");
             }
         }
 

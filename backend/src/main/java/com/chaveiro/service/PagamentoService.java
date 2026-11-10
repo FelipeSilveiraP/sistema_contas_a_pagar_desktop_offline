@@ -98,15 +98,15 @@ public class PagamentoService {
     private static void validar(Pagamento dados) {
         Map<String, String> erros = new LinkedHashMap<>();
         if (dados.dataPagamento() == null) {
-            erros.put("dataPagamento", "informe a data do pagamento");
+            erros.put("dataPagamento", "Informe a data do pagamento.");
         }
         if (dados.valorPago() == null) {
-            erros.put("valorPago", "informe o valor pago");
+            erros.put("valorPago", "Informe o valor pago.");
         } else {
             if (dados.valorPago().signum() <= 0) {
-                erros.put("valorPago", "o valor pago deve ser maior que zero");
+                erros.put("valorPago", "O valor pago deve ser maior que zero.");
             } else if (dados.valorPago().stripTrailingZeros().scale() > 2) {
-                erros.put("valorPago", "o valor deve ter no maximo 2 casas decimais");
+                erros.put("valorPago", "O valor deve ter no máximo 2 casas decimais.");
             }
         }
         if (!erros.isEmpty()) {

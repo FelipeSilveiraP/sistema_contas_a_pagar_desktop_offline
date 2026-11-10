@@ -33,7 +33,8 @@ public class BoletoRecorrenteController {
             Integer dia,
             String periodicidade,
             String formaPagamento,
-            Boolean ativo
+            Boolean ativo,
+            String tipoPessoa
     ) {}
 
     private final BoletoRecorrenteService service;
@@ -80,6 +81,6 @@ public class BoletoRecorrenteController {
                 requisicao.pagadorResponsavel(), requisicao.categoria(), requisicao.numeroDocumento(),
                 requisicao.valor(), requisicao.dia() == null ? 0 : requisicao.dia(),
                 requisicao.periodicidade(), requisicao.formaPagamento(),
-                !Boolean.FALSE.equals(requisicao.ativo()));
+                !Boolean.FALSE.equals(requisicao.ativo()), requisicao.tipoPessoa());
     }
 }

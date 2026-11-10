@@ -10,8 +10,9 @@ import {
   PagamentoDados,
   ErroValidacaoApi,
   ErroApi,
-} from "../api";
-import { confirmar, confirmarExclusao } from "../componentes";
+ baixarAnexoConta } from "../api";
+import { confirmarEstorno, confirmarExclusao } from "../componentes";
+import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
 
@@ -23,6 +24,7 @@ const ROTULO_FORMA: Record<string, string> = {
   cartao: "Cartão de Crédito",
   transferencia: "Transferência",
   dinheiro: "Dinheiro",
+  debito: "Débito automático",
 };
 
 let contas: ContaDados[] = [];
@@ -163,6 +165,8 @@ function selecionar(id: number): void {
   el("detailDate").textContent = formatarDataBR(conta.vencimento);
   el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
   el("detailCategory").textContent = conta.categoria ?? "—";
+  el("detailAnexo").textContent = conta.anexoNome ?? "Sem anexo";
+  el("btnBaixarAnexo").classList.toggle("hidden", !conta.anexoNome);
   const pagamento = pagamentos.find((p) => p.idConta === id);
   el("detailPayment").textContent = pagamento
     ? `${formatarDataBR(pagamento.dataPagamento)} — ${formatarMoedaBR(Math.round(pagamento.valorPago * 100))}`
@@ -188,20 +192,6 @@ function valorAtual(conta: ContaDados, campo: string): string {
   }
 }
 
-function toast(mensagem: string): void {
-  let t = document.getElementById("toast-boletos");
-  if (!t) {
-    t = document.createElement("div");
-    t.id = "toast-boletos";
-    t.className = "fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm";
-    t.setAttribute("role", "status");
-    document.body.appendChild(t);
-  }
-  t.textContent = mensagem;
-  t.classList.remove("hidden");
-  window.setTimeout(() => t!.classList.add("hidden"), 2200);
-}
-
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
   [contas, pagamentos] = await Promise.all([listarContas(cfg), listarPagamentos(cfg)]);
@@ -225,24 +215,24 @@ async function pagar(conta: ContaDados): Promise<void> {
       valorPago: conta.valor.toFixed(2),
     });
     await recarregar();
-    toast(`Conta de ${conta.nomeEmpresa} paga.`);
+    notificar(`Conta de "${conta.nomeEmpresa}" marcada como paga.`);
   } catch (erro) {
     console.error("[ContasAPagar] falha na baixa:", erro);
-    toast("Não foi possível registrar o pagamento.");
+    notificar("Não foi possível registrar o pagamento. Tente de novo.", "erro");
   }
 }
 
 async function estornar(conta: ContaDados): Promise<void> {
   if (conta.status !== "PAGO") return;
-  if (!(await confirmar(`Estornar o pagamento de "${conta.nomeEmpresa}"? A conta voltará para PENDENTE.`, { titulo: "CONFIRMAR ESTORNO", textoConfirmar: "ESTORNAR" }))) return;
+  if (!(await confirmarEstorno(conta.nomeEmpresa))) return;
   try {
     const cfg = await window.finDesk!.config();
     await estornarPagamento(cfg, conta.id);
     await recarregar();
-    toast(`Pagamento de ${conta.nomeEmpresa} estornado.`);
+    notificar(`Pagamento de "${conta.nomeEmpresa}" desfeito.`);
   } catch (erro) {
     console.error("[ContasAPagar] falha no estorno:", erro);
-    toast("Não foi possível estornar o pagamento.");
+    notificar("Não foi possível desfazer o pagamento. Tente de novo.", "erro");
   }
 }
 
@@ -254,6 +244,8 @@ async function aplicarAlteracao(): Promise<void> {
   const erros: Record<string, string> = {};
   const patch = {
     nomeEmpresa: conta.nomeEmpresa,
+    // sem isto o PUT gravava id_empresa = NULL e apagava o vinculo com a empresa emissora
+    idEmpresa: conta.idEmpresa ?? undefined,
     pagadorResponsavel: conta.pagadorResponsavel,
     tipoPessoa: conta.tipoPessoa,
     formaPagamento: conta.formaPagamento,
@@ -267,19 +259,19 @@ async function aplicarAlteracao(): Promise<void> {
   switch (campo) {
     case "vencimento": {
       const iso = parseDataBR(bruto);
-      if (!iso) erros.edicao = "data invalida (use DD/MM/AAAA)";
+      if (!iso) erros.edicao = "Data inválida. Use o formato DD/MM/AAAA.";
       else patch.vencimento = iso;
       break;
     }
     case "valor": {
       const centavos = paraCentavos(bruto);
-      if (centavos === null) erros.edicao = "valor invalido (use R$ 0,00)";
+      if (centavos === null) erros.edicao = "Valor inválido. Exemplo: 150,00.";
       else patch.valor = (centavos / 100).toFixed(2);
       break;
     }
     case "boletoNaPasta": {
       if (!["SIM", "NÃO", "NAO", "N"].includes(bruto.toUpperCase())) {
-        erros.edicao = "informe SIM ou NÃO";
+        erros.edicao = "Responda SIM ou NÃO.";
       } else {
         patch.boletoNaPasta = bruto.toUpperCase().startsWith("S");
       }
@@ -287,7 +279,7 @@ async function aplicarAlteracao(): Promise<void> {
     }
     case "tipoPessoa": {
       const t = bruto.toUpperCase();
-      if (t !== "PF" && t !== "PJ") erros.edicao = "informe PF ou PJ";
+      if (t !== "PF" && t !== "PJ") erros.edicao = "Responda PF ou PJ.";
       else patch.tipoPessoa = t;
       break;
     }
@@ -295,21 +287,21 @@ async function aplicarAlteracao(): Promise<void> {
       const f = bruto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const mapa: Record<string, string> = {
         boleto: "boleto", pix: "pix", cartao: "cartao", "cartao de credito": "cartao",
-        transferencia: "transferencia", dinheiro: "dinheiro",
+        transferencia: "transferencia", dinheiro: "dinheiro", debito: "debito", "debito automatico": "debito",
       };
-      if (!mapa[f]) erros.edicao = "use: boleto, pix, cartao, transferencia ou dinheiro";
+      if (!mapa[f]) erros.edicao = "Use: boleto, pix, cartão, transferência, dinheiro ou débito.";
       else patch.formaPagamento = mapa[f];
       break;
     }
     case "numeroDocumento": patch.numeroDocumento = bruto || undefined; break;
     case "categoria": patch.categoria = bruto || undefined; break;
     case "pagadorResponsavel": {
-      if (!bruto || bruto.length > 120) erros.edicao = "informe o pagador (1 a 120 caracteres)";
+      if (!bruto || bruto.length > 120) erros.edicao = "Informe o pagador (de 1 a 120 caracteres).";
       else patch.pagadorResponsavel = bruto;
       break;
     }
     default: {
-      if (bruto.length < 2 || bruto.length > 120) erros.edicao = "informe o nome (2 a 120 caracteres)";
+      if (bruto.length < 2 || bruto.length > 120) erros.edicao = "Informe o nome (de 2 a 120 caracteres).";
       else patch.nomeEmpresa = bruto;
     }
   }
@@ -319,14 +311,14 @@ async function aplicarAlteracao(): Promise<void> {
     const cfg = await window.finDesk!.config();
     await atualizarConta(cfg, conta.id, patch);
     await recarregar();
-    toast("Registro atualizado.");
+    notificar("Alterações salvas.");
   } catch (erro) {
     if (erro instanceof ErroValidacaoApi) {
-      mostrarErroEdicao(Object.values(erro.campos)[0] ?? "dados invalidos");
+      mostrarErroEdicao(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
     } else if (erro instanceof ErroApi && erro.status === 409) {
       mostrarErroEdacao409();
     } else {
-      mostrarErroEdicao("nao foi possivel atualizar o registro");
+      mostrarErroEdicao("Não foi possível salvar a alteração. Tente de novo.");
       console.error("[ContasAPagar] falha na edicao:", erro);
     }
   }
@@ -340,13 +332,13 @@ function mostrarErroEdicao(mensagem?: string): void {
 }
 
 function mostrarErroEdacao409(): void {
-  mostrarErroEdicao("registro vinculado a outros dados");
+  mostrarErroEdicao("Não é possível: este registro está ligado a outros dados.");
 }
 
 async function excluirSelecionado(): Promise<void> {
   const conta = contas.find((c) => c.id === selecionadoId);
   if (!conta) return;
-  if (!(await confirmarExclusao(`Excluir definitivamente a conta de "${conta.nomeEmpresa}"? Esta acao nao pode ser desfeita.`))) return;
+  if (!(await confirmarExclusao(`a conta de "${conta.nomeEmpresa}"`))) return;
   try {
     const cfg = await window.finDesk!.config();
     await excluirConta(cfg, conta.id);
@@ -354,12 +346,12 @@ async function excluirSelecionado(): Promise<void> {
     el("selectionDetailBox").classList.add("hidden");
     el("editorContainer").classList.add("hidden");
     await recarregar();
-    toast("Conta excluída.");
+    notificar("Conta excluída.");
   } catch (erro) {
     if (erro instanceof ErroApi && erro.status === 409) {
-      mostrarErroEdicao("conta vinculada a registros financeiros");
+      mostrarErroEdicao("Não é possível excluir: esta conta já tem pagamento registrado. Desfaça o pagamento antes.");
     } else {
-      mostrarErroEdicao("nao foi possivel excluir a conta");
+      mostrarErroEdicao("Não foi possível excluir a conta. Tente de novo.");
       console.error("[ContasAPagar] falha na exclusao:", erro);
     }
   }
@@ -428,6 +420,26 @@ function iniciar(): void {
   mascaraDinamica(editor, tipoEditor);
   ajustarTeclado();
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
+  // nota fiscal anexada: salva em Downloads (sem dialogo nativo) e oferece ABRIR
+  el("btnBaixarAnexo").addEventListener("click", async () => {
+    const conta = contas.find((c) => c.id === selecionadoId);
+    if (!conta || !conta.anexoNome) return;
+    try {
+      const cfg = await window.finDesk!.config();
+      const bytes = await baixarAnexoConta(cfg, conta.id);
+      const salvo = await window.finDesk!.salvarNota(conta.anexoNome, bytes);
+      if (!salvo.ok || !salvo.caminho) throw new Error("falha ao gravar");
+      const caminho = salvo.caminho;
+      document.body.dataset.notaSalva = caminho;
+      notificar("Nota fiscal salva na pasta Downloads › Chaveiro Universal - Notas Fiscais.", "sucesso", {
+        rotulo: "Abrir",
+        aoClicar: () => void window.finDesk!.abrirNota(caminho),
+      });
+    } catch (erro) {
+      notificar("Não foi possível salvar a nota fiscal. Tente de novo.", "erro");
+      console.error("[ContasAPagar] falha ao baixar anexo:", erro);
+    }
+  });
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);

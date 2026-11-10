@@ -1,59 +1,41 @@
-// Sistema global de dialogos neobrutalistas (substitui window.alert/confirm/prompt).
-// Componente unico, reutilizavel em todas as telas, com API assincrona que
-// devolve a escolha do usuario. Sem frameworks, DOM seguro (textContent),
-// acessibilidade de dialogo (role/aria-modal/titulo/foco) e sem bloquear a
-// pagina apos o fechamento (overlay e removido do DOM).
+// Confirmacoes neobrutalistas (substituem window.alert/confirm/prompt — PROIBIDOS:
+// dialogos nativos causavam o bug de foco dos inputs no Electron/Windows).
 //
-// Registro de uso nos testes: elementos carregam data-dialogo,
-// data-dialogo-titulo, data-dialogo-mensagem e data-dialogo-acao.
+// Usar SO quando o usuario precisa DECIDIR algo que nao da para desfazer facil:
+// sair sem salvar, excluir, desfazer pagamento, cadastrar conta parecida.
+// Resultado de acao ("salvo", "excluido") -> notificacoes.ts. Erro de campo -> inline.
+//
+// Acessibilidade (WAI-ARIA APG alertdialog): role=alertdialog, aria-modal,
+// aria-labelledby (titulo) + aria-describedby (mensagem), foco inicial na acao
+// SEGURA (cancelar), Tab preso, ESC cancela, clique fora nao fecha, fundo inert,
+// foco devolvido ao fechar, fila serial (um dialogo por vez).
+// Testes: data-dialogo (tom), data-dialogo-titulo, data-dialogo-mensagem, data-dialogo-acao.
 
-export type TipoDialogo = "confirmacao" | "aviso" | "sucesso" | "erro" | "informacao" | "recorrencia";
+export type TomConfirmacao = "normal" | "atencao" | "perigo";
 
-export interface OpcoesDialogo {
-  titulo?: string;
+export interface OpcoesConfirmacao {
+  titulo: string;
   mensagem: string;
-  tipo?: TipoDialogo;
-  textoConfirmar?: string;
+  /** verbo da acao, ex.: "EXCLUIR", "SAIR SEM SALVAR" */
+  textoConfirmar: string;
   textoCancelar?: string;
   detalhes?: string;
+  tom?: TomConfirmacao;
 }
 
-interface PedidoDialogo {
-  opcoes: Required<Pick<OpcoesDialogo, "mensagem" | "tipo">> & Omit<OpcoesDialogo, "mensagem" | "tipo">;
+interface Pedido {
+  opcoes: OpcoesConfirmacao;
   resolver: (confirmado: boolean) => void;
 }
 
-const TITULOS: Record<TipoDialogo, string> = {
-  confirmacao: "CONFIRMAR",
-  aviso: "AVISO",
-  sucesso: "SUCESSO",
-  erro: "ERRO",
-  informacao: "INFORMAÇÃO",
-  recorrencia: "RECORRÊNCIA",
-};
+const ICONES: Record<TomConfirmacao, string> = { normal: "help", atencao: "warning", perigo: "delete_forever" };
 
-const ICONES: Record<TipoDialogo, string> = {
-  confirmacao: "help",
-  aviso: "warning",
-  sucesso: "check_circle",
-  erro: "error",
-  informacao: "info",
-  recorrencia: "autorenew",
-};
-
-let fila: PedidoDialogo[] = [];
+const fila: Pedido[] = [];
 let processando = false;
 let dialogoAberto = false;
 
 export function dialogoEstaAberto(): boolean {
   return dialogoAberto;
-}
-
-function enfileirar(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
-  return new Promise<boolean>((resolver) => {
-    fila.push({ opcoes, resolver });
-    void processarFila();
-  });
 }
 
 async function processarFila(): Promise<void> {
@@ -62,25 +44,31 @@ async function processarFila(): Promise<void> {
   while (fila.length > 0) {
     const pedido = fila.shift();
     if (!pedido) break;
-    pedido.resolver(await montarDialogo(pedido.opcoes));
+    pedido.resolver(await montar(pedido.opcoes));
   }
   processando = false;
 }
 
-function botaoHtml(acao: string, rotulo: string, destaque: boolean): HTMLButtonElement {
-  const botao = document.createElement("button");
-  botao.type = "button";
-  botao.dataset.dialogoAcao = acao;
-  botao.className = destaque
-    ? "dialogo-botao dialogo-botao--destaque"
-    : "dialogo-botao dialogo-botao--neutro";
-  botao.textContent = rotulo;
-  return botao;
+function botao(acao: "cancelar" | "confirmar", rotulo: string): HTMLButtonElement {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.dialogoAcao = acao;
+  b.className = acao === "confirmar" ? "dialogo-botao dialogo-botao--acao" : "dialogo-botao dialogo-botao--neutro";
+  b.textContent = rotulo;
+  return b;
 }
 
-function montarDialogo(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
+function definirFundoInerte(inerte: boolean): void {
+  for (const filho of Array.from(document.body.children)) {
+    if (filho.classList.contains("dialogo-veu") || filho.classList.contains("notificacoes")) continue;
+    if (inerte) filho.setAttribute("inert", "");
+    else filho.removeAttribute("inert");
+  }
+}
+
+function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
   return new Promise<boolean>((resolver) => {
-    const tipo = opcoes.tipo;
+    const tom = opcoes.tom ?? "normal";
     const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const veu = document.createElement("div");
@@ -88,36 +76,33 @@ function montarDialogo(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
 
     const caixa = document.createElement("div");
     caixa.className = "dialogo";
-    caixa.setAttribute("role", "dialog");
+    caixa.setAttribute("role", "alertdialog");
     caixa.setAttribute("aria-modal", "true");
     caixa.setAttribute("aria-labelledby", "dialogo-titulo");
-    caixa.dataset.dialogo = tipo;
+    caixa.setAttribute("aria-describedby", "dialogo-mensagem");
+    caixa.dataset.dialogo = tom;
 
     const cabecalho = document.createElement("div");
     cabecalho.className = "dialogo__cabecalho";
-
     const icone = document.createElement("span");
     icone.className = "material-symbols-outlined dialogo__icone";
     icone.setAttribute("aria-hidden", "true");
-    icone.textContent = ICONES[tipo];
-
+    icone.textContent = ICONES[tom];
     const titulo = document.createElement("h2");
     titulo.className = "dialogo__titulo";
     titulo.id = "dialogo-titulo";
     titulo.dataset.dialogoTitulo = "";
-    titulo.textContent = opcoes.titulo ?? TITULOS[tipo];
-
+    titulo.textContent = opcoes.titulo;
     cabecalho.append(icone, titulo);
 
     const corpo = document.createElement("div");
     corpo.className = "dialogo__corpo";
-
     const mensagem = document.createElement("p");
     mensagem.className = "dialogo__mensagem";
+    mensagem.id = "dialogo-mensagem";
     mensagem.dataset.dialogoMensagem = "";
     mensagem.textContent = opcoes.mensagem;
     corpo.appendChild(mensagem);
-
     if (opcoes.detalhes) {
       const detalhes = document.createElement("p");
       detalhes.className = "dialogo__detalhes";
@@ -128,23 +113,14 @@ function montarDialogo(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
 
     const acoes = document.createElement("div");
     acoes.className = "dialogo__acoes";
-
-    const comEscolha = Boolean(opcoes.textoConfirmar);
-    const botoes: HTMLButtonElement[] = [];
-    if (comEscolha) {
-      const cancelar = botaoHtml("cancelar", opcoes.textoCancelar ?? "CANCELAR", false);
-      const confirmar = botaoHtml("confirmar", opcoes.textoConfirmar ?? "CONFIRMAR", true);
-      if (tipo === "erro") confirmar.classList.add("dialogo-botao--perigo");
-      if (tipo === "recorrencia") confirmar.classList.add("dialogo-botao--roxo");
-      botoes.push(cancelar, confirmar);
-    } else {
-      botoes.push(botaoHtml("fechar", "FECHAR", true));
-    }
-    acoes.append(...botoes);
+    const cancelar = botao("cancelar", opcoes.textoCancelar ?? "CANCELAR");
+    const confirmar = botao("confirmar", opcoes.textoConfirmar);
+    acoes.append(cancelar, confirmar);
 
     caixa.append(cabecalho, corpo, acoes);
     veu.appendChild(caixa);
     document.body.appendChild(veu);
+    definirFundoInerte(true);
     dialogoAberto = true;
 
     let concluido = false;
@@ -152,6 +128,7 @@ function montarDialogo(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
       if (concluido) return;
       concluido = true;
       veu.remove();
+      definirFundoInerte(false);
       dialogoAberto = false;
       document.removeEventListener("keydown", aoTeclar, true);
       if (anterior && anterior.isConnected) anterior.focus();
@@ -166,82 +143,73 @@ function montarDialogo(opcoes: PedidoDialogo["opcoes"]): Promise<boolean> {
         return;
       }
       if (evento.key === "Tab") {
-        const focaveis = [...caixa.querySelectorAll<HTMLButtonElement>("button")];
-        const primeiro = focaveis[0];
-        const ultimo = focaveis[focaveis.length - 1];
-        if (!primeiro || !ultimo) return;
         const atual = document.activeElement;
-        if (evento.shiftKey && atual === primeiro) {
+        if (evento.shiftKey && atual === cancelar) {
           evento.preventDefault();
-          ultimo.focus();
-        } else if (!evento.shiftKey && atual === ultimo) {
+          confirmar.focus();
+        } else if (!evento.shiftKey && atual === confirmar) {
           evento.preventDefault();
-          primeiro.focus();
+          cancelar.focus();
         }
       }
     };
 
-    for (const botao of botoes) {
-      botao.addEventListener("click", () => fechar(botao.dataset.dialogoAcao === "confirmar" || botao.dataset.dialogoAcao === "fechar"));
-    }
-
+    cancelar.addEventListener("click", () => fechar(false));
+    confirmar.addEventListener("click", () => fechar(true));
     veu.addEventListener("mousedown", (evento) => {
       if (evento.target === veu) evento.preventDefault();
     });
-
     document.addEventListener("keydown", aoTeclar, true);
-    botoes[0].focus();
+    cancelar.focus();
   });
 }
 
-export function confirmar(mensagem: string, opcoes: Omit<OpcoesDialogo, "mensagem"> = {}): Promise<boolean> {
-  return enfileirar({
-    mensagem,
-    tipo: opcoes.tipo ?? "confirmacao",
-    titulo: opcoes.titulo,
-    textoConfirmar: opcoes.textoConfirmar ?? "CONFIRMAR",
-    textoCancelar: opcoes.textoCancelar ?? "CANCELAR",
-    detalhes: opcoes.detalhes,
+/** Confirmacao generica — prefira as especificas abaixo. */
+export function confirmar(opcoes: OpcoesConfirmacao): Promise<boolean> {
+  return new Promise<boolean>((resolver) => {
+    fila.push({ opcoes, resolver });
+    void processarFila();
   });
 }
 
-export function confirmarExclusao(mensagem: string): Promise<boolean> {
-  return enfileirar({
-    mensagem,
-    tipo: "erro",
-    titulo: "CONFIRMAR EXCLUSÃO",
+/** Sair de um formulario com alteracoes nao salvas. */
+export function confirmarSaida(): Promise<boolean> {
+  return confirmar({
+    titulo: "SAIR SEM SALVAR?",
+    mensagem: "O que você digitou nesta tela ainda não foi salvo e será perdido.",
+    textoCancelar: "CONTINUAR EDITANDO",
+    textoConfirmar: "SAIR SEM SALVAR",
+    tom: "atencao",
+  });
+}
+
+/** Exclusao definitiva. `oQue` ex.: 'a conta de "Aluguel"', 'o banco "Itaú"'. */
+export function confirmarExclusao(oQue: string): Promise<boolean> {
+  return confirmar({
+    titulo: "EXCLUIR?",
+    mensagem: `Excluir ${oQue}? Depois de excluído, não dá para recuperar.`,
     textoConfirmar: "EXCLUIR",
-    textoCancelar: "CANCELAR",
+    tom: "perigo",
   });
 }
 
-export function confirmarDuplicidade(mensagem: string, detalhes?: string): Promise<boolean> {
-  return enfileirar({
-    mensagem,
-    tipo: "aviso",
-    titulo: "POSSÍVEL DUPLICIDADE",
-    textoConfirmar: "CADASTRAR MESMO ASSIM",
-    textoCancelar: "CANCELAR",
+/** Desfazer a baixa de pagamento (estorno). */
+export function confirmarEstorno(nomeEmpresa: string): Promise<boolean> {
+  return confirmar({
+    titulo: "DESFAZER PAGAMENTO?",
+    mensagem: `O pagamento de "${nomeEmpresa}" será desfeito e a conta voltará a ficar pendente.`,
+    textoConfirmar: "DESFAZER PAGAMENTO",
+    tom: "normal",
+  });
+}
+
+/** Conta muito parecida com outra do mesmo mes (regra de duplicidade do VBA). */
+export function confirmarDuplicidade(detalhes: string): Promise<boolean> {
+  return confirmar({
+    titulo: "CONTA PARECIDA JÁ EXISTE",
+    mensagem: "Já existe uma conta muito parecida com esta no mesmo mês. Confira antes de continuar:",
     detalhes,
+    textoConfirmar: "CADASTRAR MESMO ASSIM",
+    tom: "atencao",
   });
-}
-
-export function aviso(mensagem: string, titulo?: string): Promise<boolean> {
-  return enfileirar({ mensagem, tipo: "aviso", titulo, textoConfirmar: undefined });
-}
-
-export function sucesso(mensagem: string, titulo?: string): Promise<boolean> {
-  return enfileirar({ mensagem, tipo: "sucesso", titulo, textoConfirmar: undefined });
-}
-
-export function erro(mensagem: string, titulo?: string): Promise<boolean> {
-  return enfileirar({ mensagem, tipo: "erro", titulo, textoConfirmar: undefined });
-}
-
-export function informacao(mensagem: string, titulo?: string): Promise<boolean> {
-  return enfileirar({ mensagem, tipo: "informacao", titulo, textoConfirmar: undefined });
-}
-
-export function recorrencia(mensagem: string, titulo?: string): Promise<boolean> {
-  return enfileirar({ mensagem, tipo: "recorrencia", titulo, textoConfirmar: undefined });
 }

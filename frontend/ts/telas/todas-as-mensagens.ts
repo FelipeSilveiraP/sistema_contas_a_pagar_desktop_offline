@@ -7,6 +7,7 @@ import {
   ErroValidacaoApi,
 } from "../api";
 import { confirmarExclusao } from "../componentes";
+import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { formatarDataBR, parseDataBR, mascaraDinamica } from "../mascaras";
 
@@ -62,11 +63,19 @@ function renderTabela(): void {
     tr.dataset.id = String(aviso.id);
     if (selecionadoId === aviso.id) tr.classList.add("bg-[#FF5E89]", "border-l-8", "border-l-[#1c1b1b]");
     const ativo = ativoEm(aviso, hoje());
-    const tdStatus = celula(ativo ? "ATIVO" : aviso.dataFim < hoje() ? "EXPIRADO" : "FORA DE VIGÊNCIA", "py-3.5 px-4 text-center whitespace-nowrap");
-    tdStatus.textContent = "";
+    // mesmos rotulos do Stitch: ATIVO / AGENDADO / EXPIRADO (+ dentro do periodo, mas nao hoje)
+    const status = ativo ? "ATIVO" : aviso.dataInicio > hoje() ? "AGENDADO" : aviso.dataFim < hoje() ? "EXPIRADO" : "OUTRO DIA";
+    const tdStatus = celula("", "py-3.5 px-4 text-center whitespace-nowrap");
     const selo = document.createElement("span");
-    selo.className = `inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${ativo ? "bg-[#006c46]/10 text-[#006c46]" : "bg-neutral-200 text-neutral-600"}`;
-    selo.textContent = ativo ? "ATIVO" : aviso.dataFim < hoje() ? "EXPIRADO" : "INATIVO";
+    const cores: Record<string, string> = {
+      ATIVO: "bg-[#006c46]/10 text-[#006c46]",
+      AGENDADO: "bg-[#2563eb]/10 text-[#1e40af]",
+      EXPIRADO: "bg-neutral-200 text-neutral-600",
+      "OUTRO DIA": "bg-[#FFE600]/30 text-[#6a5f00]",
+    };
+    selo.className = `inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${cores[status]}`;
+    selo.textContent = status;
+    selo.title = status === "OUTRO DIA" ? "Dentro do período, mas não aparece no dia da semana de hoje" : "";
     tdStatus.appendChild(selo);
     const tdMsg = celula(aviso.mensagem, "py-3.5 px-4 text-xs text-neutral-700");
     tr.append(
@@ -104,20 +113,6 @@ function selecionar(id: number): void {
   renderTabela();
 }
 
-function toast(mensagem: string): void {
-  let t = document.getElementById("toast-mensagens");
-  if (!t) {
-    t = document.createElement("div");
-    t.id = "toast-mensagens";
-    t.className = "fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm";
-    t.setAttribute("role", "status");
-    document.body.appendChild(t);
-  }
-  t.textContent = mensagem;
-  t.classList.remove("hidden");
-  window.setTimeout(() => t!.classList.add("hidden"), 2200);
-}
-
 function mostrarErro(mensagem?: string): void {
   const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
   if (!alvo) return;
@@ -145,31 +140,31 @@ async function aplicarAlteracao(): Promise<void> {
   };
   if (campo === "dataInicio" || campo === "dataFim") {
     const iso = parseDataBR(bruto);
-    if (!iso) return mostrarErro("data invalida (use DD/MM/AAAA)");
+    if (!iso) return mostrarErro("Data inválida. Use o formato DD/MM/AAAA.");
     patch[campo] = iso;
   } else if (campo === "diaSemana") {
     const dias = bruto.toUpperCase().split(",").map((d) => d.trim());
     const validos = ["TODOS", "DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"];
-    if (dias.some((d) => !validos.includes(d))) return mostrarErro("dias invalidos (ex.: SEGUNDA,QUARTA ou TODOS)");
+    if (dias.some((d) => !validos.includes(d))) return mostrarErro("Dias inválidos. Exemplo: SEGUNDA,QUARTA ou TODOS.");
     patch.diaSemana = dias.join(",");
   } else if (campo === "titulo") {
-    if (bruto.length < 2 || bruto.length > 100) return mostrarErro("titulo deve ter 2 a 100 caracteres");
+    if (bruto.length < 2 || bruto.length > 100) return mostrarErro("O título deve ter de 2 a 100 caracteres.");
     patch.titulo = bruto;
   } else {
-    if (bruto.length < 2 || bruto.length > 500) return mostrarErro("mensagem deve ter 2 a 500 caracteres");
+    if (bruto.length < 2 || bruto.length > 500) return mostrarErro("A mensagem deve ter de 2 a 500 caracteres.");
     patch.mensagem = bruto;
   }
-  if (patch.dataFim < patch.dataInicio) return mostrarErro("o fim deve ser igual ou posterior ao inicio");
+  if (patch.dataFim < patch.dataInicio) return mostrarErro("A data final deve ser igual ou depois da data de início.");
   mostrarErro();
   try {
     const cfg = await window.finDesk!.config();
     await atualizarAviso(cfg, aviso.id, patch);
     await recarregar();
-    toast("Mensagem atualizada.");
+    notificar("Mensagem atualizada.");
   } catch (erro) {
-    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "dados invalidos");
+    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
     else {
-      mostrarErro("nao foi possivel atualizar a mensagem");
+      mostrarErro("Não foi possível salvar a mensagem. Tente de novo.");
       console.error("[ContasAPagar] falha na edicao da mensagem:", erro);
     }
   }
@@ -178,16 +173,16 @@ async function aplicarAlteracao(): Promise<void> {
 async function excluirSelecionado(): Promise<void> {
   const aviso = avisos.find((a) => a.id === selecionadoId);
   if (!aviso) return;
-  if (!(await confirmarExclusao(`Excluir definitivamente a mensagem "${aviso.titulo}"? Esta acao nao pode ser desfeita.`))) return;
+  if (!(await confirmarExclusao(`a mensagem "${aviso.titulo}"`))) return;
   try {
     const cfg = await window.finDesk!.config();
     await excluirAviso(cfg, aviso.id);
     selecionadoId = null;
     el("editorContainer").classList.add("hidden");
     await recarregar();
-    toast("Mensagem excluída.");
+    notificar("Mensagem excluída.");
   } catch (erro) {
-    mostrarErro("nao foi possivel excluir a mensagem");
+    mostrarErro("Não foi possível excluir a mensagem. Tente de novo.");
     console.error("[ContasAPagar] falha na exclusao da mensagem:", erro);
   }
 }

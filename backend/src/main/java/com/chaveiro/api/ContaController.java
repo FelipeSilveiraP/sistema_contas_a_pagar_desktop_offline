@@ -117,7 +117,7 @@ public class ContaController {
         try {
             return Base64.getDecoder().decode(requisicao.anexoPdfBase64());
         } catch (IllegalArgumentException erro) {
-            throw new DadosInvalidosException(Map.of("anexo", "conteudo do anexo invalido"));
+            throw new DadosInvalidosException(Map.of("anexo", "O arquivo anexado está corrompido. Escolha o PDF de novo."));
         }
     }
 }

@@ -1,13 +1,16 @@
 import {
   buscarStatus,
   criarConta,
+  listarContas,
   listarEmpresas,
+  listarPagadores,
   ErroValidacaoApi,
   ErroDuplicidadeApi,
   ErroApi,
   ContaDados,
 } from "../api";
-import { confirmar, confirmarDuplicidade, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarDuplicidade, confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificarAoAbrir } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import {
@@ -48,11 +51,25 @@ function lerCampos(): CamposFormulario {
     numeroDocumento: el<HTMLInputElement>("doc_number").value.trim(),
     valor: el<HTMLInputElement>("total_amount").value.trim(),
     boletoNaPasta: pasta ? pasta.value : "nao",
-    categoria: el<HTMLSelectElement>("category").selectedOptions[0]?.textContent?.trim() ?? "",
+    categoria: el<HTMLInputElement>("category").value.trim(),
     formaPagamento: el<HTMLSelectElement>("payment_method").value.trim(),
     idEmpresa: el<HTMLSelectElement>("issuer_company").value.trim(),
     pagadorResponsavel: el<HTMLInputElement>("payer_responsible").value.trim(),
   };
+}
+
+function preencherSugestoes(idLista: string, valores: string[]): void {
+  const lista = document.getElementById(idLista);
+  if (!lista) return;
+  const existentes = new Set([...lista.querySelectorAll("option")].map((o) => o.value.toLowerCase()));
+  for (const valor of valores) {
+    const v = valor.trim();
+    if (!v || existentes.has(v.toLowerCase())) continue;
+    existentes.add(v.toLowerCase());
+    const opcao = document.createElement("option");
+    opcao.value = v;
+    lista.appendChild(opcao);
+  }
 }
 
 let anexoSelecionado: { nome: string; base64: string } | null = null;
@@ -61,23 +78,23 @@ function validar(dados: CamposFormulario): Record<string, string> {
   const erros: Record<string, string> = {};
   const iso = parseDataBR(dados.vencimento);
   if (!iso) {
-    erros.vencimento = "informe uma data valida (DD/MM/AAAA)";
+    erros.vencimento = "Informe uma data válida (DD/MM/AAAA).";
   }
   const centavos = paraCentavos(dados.valor);
   if (centavos === null) {
-    erros.valor = "informe o valor no formato R$ 0,00 (maior que zero)";
+    erros.valor = "Informe o valor (maior que zero). Exemplo: 150,00.";
   }
   if (dados.nomeEmpresa.length < 2 || dados.nomeEmpresa.length > 120) {
-    erros.nomeEmpresa = "informe o nome da empresa (2 a 120 caracteres)";
+    erros.nomeEmpresa = "Informe o nome da empresa (de 2 a 120 caracteres).";
   }
   if (dados.numeroDocumento.length > 60) {
-    erros.numeroDocumento = "o documento deve ter ate 60 caracteres";
+    erros.numeroDocumento = "O número do documento deve ter até 60 caracteres.";
   }
   if (!dados.formaPagamento) {
-    erros.formaPagamento = "selecione o documento de cobranca";
+    erros.formaPagamento = "Selecione o documento de cobrança.";
   }
   if (!dados.pagadorResponsavel || dados.pagadorResponsavel.length > 120) {
-    erros.pagadorResponsavel = "informe o pagador responsavel (1 a 120 caracteres)";
+    erros.pagadorResponsavel = "Informe o pagador responsável (de 1 a 120 caracteres).";
   }
   return erros;
 }
@@ -110,11 +127,6 @@ function alternarEtapa(etapa: 1 | 2): void {
     el("progress-fill").classList.add("w-full");
   }
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function exibirToast(): void {
-  el<HTMLElement>("toast").classList.remove("hidden");
-  window.setTimeout(() => el<HTMLElement>("toast").classList.add("hidden"), 2200);
 }
 
 function montarPayload(forcar: boolean) {
@@ -166,29 +178,28 @@ async function submeter(): Promise<void> {
         `Valor: ${formatarMoedaBR(Math.round(e.valor * 100))}`,
       ];
       if (e.numeroDocumento) linhas.push(`Documento: ${e.numeroDocumento}`);
-      const inserir = await confirmarDuplicidade(
-        "Encontramos uma conta semelhante a que voce esta cadastrando. Deseja continuar mesmo assim?",
-        linhas.join("\n")
-      );
+      const inserir = await confirmarDuplicidade(linhas.join("\n"));
       if (!inserir) return;
       await enviar(true);
     }
     sujo = false;
     document.body.dataset.formSujo = "false";
     document.body.dataset.contaSalva = "true";
-    exibirToast();
+    // a tela volta sozinha; o aviso de sucesso aparece na tela seguinte
+    notificarAoAbrir(`Conta de "${lerCampos().nomeEmpresa}" salva.`);
     console.info("[ContasAPagar] conta cadastrada via formulario");
+    // pausa curta: o botao mostra que salvou antes de a tela trocar
     window.setTimeout(() => {
       void voltar();
-    }, 1200);
+    }, 600);
   } catch (erro) {
     if (erro instanceof ErroValidacaoApi) {
       mostrarErros(erro.campos);
       alternarEtapa(2);
     } else if (erro instanceof ErroApi && erro.status === 409) {
-      mostrarErros({ anexo: "registro vinculado a outros dados. verifique a empresa emissora" });
+      mostrarErros({ anexo: "Não foi possível salvar: confira a empresa emissora escolhida." });
     } else {
-      mostrarErros({ anexo: "nao foi possivel inserir a conta. tente novamente" });
+      mostrarErros({ anexo: "Não foi possível salvar a conta. Verifique se o sistema está aberto e tente de novo." });
       console.error("[ContasAPagar] falha ao cadastrar conta:", erro);
     }
   }
@@ -202,11 +213,11 @@ function verificarAnexo(arquivo: File | undefined): boolean {
     return true;
   }
   if (arquivo.size > LIMITE_ANEXO) {
-    mostrarErros({ anexo: "o anexo deve ter no maximo 15MB" });
+    mostrarErros({ anexo: "O arquivo deve ter no máximo 15 MB." });
     return false;
   }
   if (!arquivo.name.toLowerCase().endsWith(".pdf") && arquivo.type !== "application/pdf") {
-    mostrarErros({ anexo: "o anexo deve ser um arquivo PDF" });
+    mostrarErros({ anexo: "O arquivo deve ser um PDF." });
     return false;
   }
   rotulo.textContent = arquivo.name.toUpperCase();
@@ -228,6 +239,10 @@ async function carregarEmissoras(): Promise<void> {
   try {
     const cfg = await window.finDesk!.config();
     const empresas = await listarEmpresas(cfg);
+    // sugestoes: categorias ja usadas + pagadores cadastrados (texto livre continua valendo)
+    const [pagadores, contasExistentes] = await Promise.all([listarPagadores(cfg), listarContas(cfg)]);
+    preencherSugestoes("lista-pagadores", pagadores.map((p) => p.nome));
+    preencherSugestoes("lista-categorias", contasExistentes.map((c) => c.categoria ?? ""));
     const sel = el<HTMLSelectElement>("issuer_company");
     for (const empresa of empresas) {
       const opcao = document.createElement("option");
@@ -308,7 +323,7 @@ function iniciar(): void {
   });
   el("btn-cancelar").addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -322,7 +337,7 @@ function iniciar(): void {
     if (evento.key !== "Escape" || !sujo) return;
     evento.preventDefault();
     evento.stopPropagation();
-    void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+    void confirmarSaida().then((ok) => {
       if (ok) void voltar();
     });
   }, true);
@@ -336,7 +351,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });

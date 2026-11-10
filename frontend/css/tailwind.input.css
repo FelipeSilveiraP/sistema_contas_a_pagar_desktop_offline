@@ -551,11 +551,9 @@
   color: #1c1b1b;
 }
 
-[data-dialogo="aviso"] .dialogo__cabecalho { background: #ffe600; color: #1c1b1b; }
-[data-dialogo="sucesso"] .dialogo__cabecalho { background: #16a34a; color: #ffffff; }
-[data-dialogo="erro"] .dialogo__cabecalho { background: #dc2626; color: #ffffff; }
-[data-dialogo="informacao"] .dialogo__cabecalho { background: #2563eb; color: #ffffff; }
-[data-dialogo="recorrencia"] .dialogo__cabecalho { background: #7c3aed; color: #ffffff; }
+/* tons das confirmacoes: normal (laranja), atencao (amarelo), perigo (vermelho) */
+[data-dialogo="atencao"] .dialogo__cabecalho { background: #ffe600; color: #1c1b1b; }
+[data-dialogo="perigo"] .dialogo__cabecalho { background: #dc2626; color: #ffffff; }
 
 .dialogo__icone {
   font-size: 1.75rem;
@@ -640,29 +638,87 @@
   color: #1c1b1b;
 }
 
-.dialogo-botao--destaque {
+/* botao da acao (direita) na cor do tom; cancelar (esquerda) sempre branco */
+.dialogo-botao--acao {
   background: #ff8c00;
   color: #1c1b1b;
 }
 
-.dialogo-botao--perigo {
-  background: #dc2626;
-  color: #ffffff;
+[data-dialogo="atencao"] .dialogo-botao--acao { background: #ffe600; color: #1c1b1b; }
+[data-dialogo="perigo"] .dialogo-botao--acao { background: #dc2626; color: #ffffff; }
+
+/* ===== Notificacoes (toasts) — canto inferior direito, abaixo do veu do dialogo ===== */
+
+.notificacoes {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(24rem, calc(100vw - 2rem));
+  pointer-events: none;
 }
 
-.dialogo-botao--roxo {
-  background: #7c3aed;
-  color: #ffffff;
+.notificacoes__regiao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-[data-dialogo="aviso"] .dialogo-botao--destaque { background: #ffe600; color: #1c1b1b; }
-[data-dialogo="sucesso"] .dialogo-botao--destaque { background: #16a34a; color: #ffffff; }
-[data-dialogo="erro"] .dialogo-botao--destaque { background: #dc2626; color: #ffffff; }
-[data-dialogo="informacao"] .dialogo-botao--destaque { background: #2563eb; color: #ffffff; }
-[data-dialogo="recorrencia"] .dialogo-botao--destaque { background: #7c3aed; color: #ffffff; }
+.notificacao {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  border: 4px solid #1c1b1b;
+  box-shadow: 5px 5px 0 0 #1c1b1b;
+  background: #3ffdae;
+  color: #1c1b1b;
+  font-family: "Space Grotesk", Arial, sans-serif;
+  animation: notificacao-entrar 0.18s ease-out;
+}
+
+.notificacao[data-notificacao="erro"] { background: #dc2626; color: #ffffff; }
+.notificacao[data-notificacao="info"] { background: #ffffff; }
+
+.notificacao__icone { font-size: 1.6rem; line-height: 1; font-weight: 700; flex: 0 0 auto; }
+
+.notificacao__texto {
+  margin: 0;
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.notificacao__acao,
+.notificacao__fechar {
+  flex: 0 0 auto;
+  border: 3px solid #1c1b1b;
+  background: #ffffff;
+  color: #1c1b1b;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.notificacao__acao { padding: 0.25rem 0.6rem; font-size: 0.75rem; text-transform: uppercase; }
+.notificacao__fechar { width: 2rem; height: 2rem; font-size: 1.1rem; line-height: 1; }
+.notificacao__acao:focus-visible,
+.notificacao__fechar:focus-visible { outline: 3px solid #2165ef; outline-offset: 2px; }
+
+@keyframes notificacao-entrar {
+  from { transform: translateY(0.75rem); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .dialogo-botao {
+  .dialogo-botao,
+  .notificacao {
     transition: none;
+    animation: none;
   }
 }

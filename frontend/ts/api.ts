@@ -53,6 +53,15 @@ async function get<T>(cfg: FinDeskConfig, caminho: string): Promise<T> {
   return (await resposta.json()) as T;
 }
 
+/** Bytes do PDF anexado a uma conta (nota fiscal). */
+export async function baixarAnexoConta(cfg: FinDeskConfig, id: number): Promise<Uint8Array> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/contas/${id}/anexo`, {
+    headers: { "X-FinDesk-Token": cfg.token },
+  });
+  if (!resposta.ok) throw new ErroApi(resposta.status);
+  return new Uint8Array(await resposta.arrayBuffer());
+}
+
 export function buscarStatus(cfg: FinDeskConfig): Promise<StatusApi> {
   return get<StatusApi>(cfg, "/api/status");
 }
@@ -264,6 +273,7 @@ export interface RecorrenteDados {
   periodicidade: string;
   formaPagamento: string | null;
   ativo: boolean;
+  tipoPessoa: string;
 }
 
 export interface AvisoDados {
@@ -284,10 +294,23 @@ export interface ResumoDashboard {
   porMes: { mes: string; totalPagoCentavos: number }[];
 }
 
+export interface AlertaContaDados {
+  id: number;
+  nomeEmpresa: string;
+  vencimento: string;
+  valor: number;
+  /** dias ate o vencimento (negativo = atrasada) */
+  dias: number;
+  boletoNaPasta: boolean;
+  pagadorResponsavel: string | null;
+}
+
 export interface AlertasDados {
-  atrasados: { id: number; nomeEmpresa: string; vencimento: string; valor: number; dias: number }[];
-  aVencer: { id: number; nomeEmpresa: string; vencimento: string; valor: number; dias: number }[];
+  hoje: string;
+  atrasados: AlertaContaDados[];
+  aVencer: AlertaContaDados[];
   avisosAtivos: number;
+  avisosHoje: { id: number; titulo: string; mensagem: string }[];
 }
 
 async function post<T>(cfg: FinDeskConfig, caminho: string, dados: unknown): Promise<T> {

@@ -84,9 +84,11 @@ public class EmpresaService {
         }
     }
 
-    private static IllegalStateException tratar(SQLException erro, String acao) {
+    private static RuntimeException tratar(SQLException erro, String acao) {
         if (erro.getMessage() != null && erro.getMessage().toLowerCase().contains("unique")) {
-            return new IllegalStateException("CNPJ ja cadastrado para outra empresa", erro);
+            // antes virava 500 "erro interno": agora o usuario ve o aviso no proprio campo
+            log.warn("cnpj duplicado recusado ao {} empresa", acao);
+            return new DadosInvalidosException(Map.of("cnpj", "Este CNPJ já está cadastrado em outra empresa."));
         }
         log.error("falha ao {} empresa", acao, erro);
         return new IllegalStateException("falha ao " + acao + " a empresa", erro);
@@ -125,28 +127,28 @@ public class EmpresaService {
         Map<String, String> erros = new LinkedHashMap<>();
 
         if (empresa.razaoSocial().length() < 2 || empresa.razaoSocial().length() > 120) {
-            erros.put("razaoSocial", "informe a razao social (2 a 120 caracteres)");
+            erros.put("razaoSocial", "Informe a razão social (de 2 a 120 caracteres).");
         }
         if (empresa.cnpj() != null && !cnpjValido(empresa.cnpj())) {
-            erros.put("cnpj", "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)");
+            erros.put("cnpj", "CNPJ inválido. Confira os 14 caracteres.");
         }
-        if (empresa.email() != null && !EMAIL.matcher(empresa.email()).matches()) {
-            erros.put("email", "email invalido");
+        if (empresa.email() != null && (empresa.email().length() > 120 || !EMAIL.matcher(empresa.email()).matches())) {
+            erros.put("email", "E-mail inválido. Exemplo: contato@empresa.com.br.");
         }
         if (empresa.nomeRepresentante() != null && empresa.nomeRepresentante().length() > 120) {
-            erros.put("nomeRepresentante", "nome do representante deve ter ate 120 caracteres");
+            erros.put("nomeRepresentante", "O nome do representante deve ter até 120 caracteres.");
         }
         if (empresa.logradouro() != null && empresa.logradouro().length() > 120) {
-            erros.put("logradouro", "logradouro deve ter ate 120 caracteres");
+            erros.put("logradouro", "O endereço deve ter até 120 caracteres.");
         }
         for (int i = 0; i < empresa.telefones().size(); i++) {
             TelefoneEmpresa telefone = empresa.telefones().get(i);
             if (!telefone.numero().matches("[0-9A-Za-z().+\\- ]{8,20}")) {
-                erros.put("telefones", "telefone invalido (8 a 20 caracteres) na linha " + (i + 1));
+                erros.put("telefones", "Telefone inválido na linha " + (i + 1) + ". Exemplo: (11) 3333-4444.");
                 break;
             }
             if (telefone.tipo().length() > 20) {
-                erros.put("telefones", "tipo do telefone deve ter ate 20 caracteres");
+                erros.put("telefones", "O tipo do telefone deve ter até 20 caracteres.");
                 break;
             }
         }

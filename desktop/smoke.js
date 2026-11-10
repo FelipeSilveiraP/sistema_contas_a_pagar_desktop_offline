@@ -714,8 +714,8 @@ async function executar() {
   await clicar("#btn-salvar");
   const salvoOk = await esperarPredicado(`document.body.dataset.bancoSalvo !== undefined`, 10000);
   teste("Form Banco: salvar com dados validos confirma cadastro", salvoOk);
-  const feedback = await js(`document.getElementById('feedback-banco').textContent`);
-  teste("Form Banco: mensagem de sucesso exibida", String(feedback).includes("sucesso"), String(feedback));
+  const feedback = await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`);
+  teste("Form Banco: notificacao de sucesso exibida", String(feedback).includes("sucesso"), String(feedback));
   teste("Form Banco: campos limpos apos salvar", (await js(`document.getElementById('campo-instituicao').value`)) === "");
 
   const cfg = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
@@ -754,7 +754,7 @@ async function executar() {
   await clicar('.nav-barra button[data-nav="voltar"]');
   const dialogouSujo = await esperarDialogo();
   const infoSuja = dialogouSujo ? await dialogoInfo() : null;
-  teste("Form Banco: VOLTAR com alteracoes nao salvas pede confirmacao", dialogouSujo && Boolean(infoSuja) && infoSuja.mensagem.includes("alteracoes nao salvas"), JSON.stringify(infoSuja));
+  teste("Form Banco: VOLTAR com alteracoes nao salvas pede confirmacao", dialogouSujo && Boolean(infoSuja) && infoSuja.mensagem.includes("não foi salvo") && infoSuja.titulo.includes("SAIR SEM SALVAR"), JSON.stringify(infoSuja));
   await responderDialogo("cancelar");
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Form Banco: cancelamento da confirmacao mantem na tela", (await js("document.body.dataset.tela")) === "form-banco");
@@ -837,8 +837,8 @@ async function executar() {
   await clicar("#btn-salvar");
   const pagadorSalvoOk = await esperarPredicado(`document.body.dataset.pagadorSalvo !== undefined`, 10000);
   teste("Form Pagador: salvar com dados validos confirma cadastro", pagadorSalvoOk);
-  const feedbackPag = await js(`document.getElementById('feedback-pagador').textContent`);
-  teste("Form Pagador: mensagem de sucesso exibida", String(feedbackPag).includes("sucesso"), String(feedbackPag));
+  const feedbackPag = await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`);
+  teste("Form Pagador: notificacao de sucesso exibida", String(feedbackPag).includes("sucesso"), String(feedbackPag));
   teste("Form Pagador: campos limpos apos salvar", (await js(`document.getElementById('campo-nome').value`)) === "");
 
   const cfgPag = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
@@ -938,8 +938,8 @@ async function executar() {
   await clicar("#btn-salvar");
   const empresaSalvaOk = await esperarPredicado(`document.body.dataset.empresaSalva !== undefined`, 10000);
   teste("Form Empresa: salvar com dados validos confirma cadastro", empresaSalvaOk);
-  const feedbackEmp = await js(`document.getElementById('feedback-empresa').textContent`);
-  teste("Form Empresa: mensagem de sucesso exibida", String(feedbackEmp).includes("sucesso"), String(feedbackEmp));
+  const feedbackEmp = await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`);
+  teste("Form Empresa: notificacao de sucesso exibida", String(feedbackEmp).includes("sucesso"), String(feedbackEmp));
   teste("Form Empresa: volta a etapa 1 apos salvar", (await js(`document.getElementById('etapa-1').classList.contains('hidden')`)) === false);
 
   const cfgEmp = JSON.parse(await js(`(async () => JSON.stringify(await window.finDesk.config()))()`));
@@ -1047,7 +1047,7 @@ async function executar() {
   await js(`(() => { const el = document.getElementById('campo-edt-funcao'); el.value = 'Caixa Editado'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await clicar("#btn-edt-salvar");
   const semCpfSalvo = await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
-  teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`document.getElementById('feedback-edt').textContent`)).includes("sucesso"),
+  teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("sucesso"),
     await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.textContent))`));
   await js(`(() => { delete document.body.dataset.registroSalvo; const el = document.getElementById('campo-pesquisa'); el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await esperar(200);
@@ -1082,13 +1082,13 @@ async function executar() {
   await js(`(() => { const el = document.getElementById('campo-edt-instituicao'); el.value = 'TC BANCO EDITADO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await clicar("#btn-edt-salvar");
   await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
-  teste("Salvar no painel atualiza o registro (feedback sucesso)", (await js(`document.getElementById('feedback-edt').textContent`)).includes("sucesso"));
+  teste("Salvar no painel atualiza o registro (notificacao de sucesso)", (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("sucesso"));
   teste("Linha atualizada reflete a edicao", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO ${sufixoTc}')`)) === true);
 
   await clicar("#btn-edt-excluir");
   const dialogoExclusao = await esperarDialogo();
   const infoExclusao = dialogoExclusao ? await dialogoInfo() : null;
-  teste("Exclusao pede confirmacao (dialogo CONFIRMAR EXCLUSAO)", dialogoExclusao && Boolean(infoExclusao) && infoExclusao.titulo.includes("EXCLUS"), JSON.stringify(infoExclusao));
+  teste("Exclusao pede confirmacao (dialogo EXCLUIR? de perigo)", dialogoExclusao && Boolean(infoExclusao) && infoExclusao.titulo.includes("EXCLUIR") && infoExclusao.tipo === "perigo", JSON.stringify(infoExclusao));
   await responderDialogo("cancelar");
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Exclusao cancelada preserva o registro", (await js(`document.body.dataset.registroExcluido`)) === undefined && (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === true);
@@ -1148,7 +1148,7 @@ async function executar() {
       doc: !!document.getElementById('doc_number'),
       valor: !!document.getElementById('total_amount'),
       pasta: document.querySelectorAll('input[name="in_folder"]').length === 2,
-      categoria: document.querySelectorAll('#category option').length >= 6,
+      categoria: document.querySelectorAll('#lista-categorias option').length >= 6 && document.getElementById('category').tagName === 'INPUT',
       cobranca: document.querySelectorAll('#payment_method option').length >= 5,
       emissora: document.getElementById('issuer_company').options.length > 1,
       pagador: !!document.getElementById('payer_responsavel') || !!document.getElementById('payer_responsible'),
@@ -1242,8 +1242,8 @@ async function executar() {
   await clicar("#btn-salvar");
   const contaSalvaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
   teste("Inserir Conta: salvar com dados validos grava a conta", contaSalvaIc);
-  teste("Toast de sucesso do Stitch exibido", (await js(`!document.getElementById('toast').classList.contains('hidden')`)) === true);
   teste("Apos salvar, retorno a tela anterior (fluxo do Stitch)", await esperarTela("menu", 5000) || (await js("document.body.dataset.tela")) !== "inserir-conta");
+  teste("Notificacao 'Conta ... salva' aparece na tela seguinte", await esperarPredicado(`(Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')).includes('salva')`, 5000), await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`));
 
   const listaIc = JSON.parse(
     await js(`(async () => {
@@ -1287,12 +1287,11 @@ async function executar() {
   await clicar("#btn-salvar");
   const dialogouDup = await esperarDialogo(10000);
   const infoDup = dialogouDup ? await dialogoInfo() : null;
-  teste("Inserir Conta: duplicidade dispara dialogo POSSIVEL DUPLICIDADE", dialogouDup && Boolean(infoDup) && infoDup.titulo.includes("DUPLICIDADE"), JSON.stringify(infoDup));
+  teste("Inserir Conta: duplicidade dispara dialogo CONTA PARECIDA", dialogouDup && Boolean(infoDup) && infoDup.titulo.includes("PARECIDA"), JSON.stringify(infoDup));
   teste("Inserir Conta: detalhes da duplicidade exibidos", Boolean(infoDup) && Boolean(infoDup.detalhes) && infoDup.detalhes.includes("Vencimento"), JSON.stringify(infoDup ? infoDup.detalhes : null));
   teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined);
   await responderDialogo("cancelar");
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
-  await js(`document.getElementById('toast').classList.add('hidden'); 'ok'`);
   await clicar("#btn-salvar");
   teste("Inserir Conta: dialogo de duplicidade reabre ao salvar de novo", await esperarDialogo(10000));
   await responderDialogo("confirmar");
@@ -1487,8 +1486,8 @@ async function executar() {
   teste("Dialogo: abre ao tentar sair sujo", await esperarDialogo());
   const infoDlg = await dialogoInfo();
   teste(
-    "Dialogo: acessibilidade (role=dialog, aria-modal, titulo associado)",
-    Boolean(infoDlg) && infoDlg.role === "dialog" && infoDlg.ariaModal === "true" && infoDlg.labelledby === "dialogo-titulo",
+    "Dialogo: acessibilidade (role=alertdialog, aria-modal, titulo associado)",
+    Boolean(infoDlg) && infoDlg.role === "alertdialog" && infoDlg.ariaModal === "true" && infoDlg.labelledby === "dialogo-titulo",
     JSON.stringify(infoDlg)
   );
   teste("Dialogo: acoes certas para confirmacao (cancelar/confirmar)", Boolean(infoDlg) && JSON.stringify(infoDlg.acoes) === JSON.stringify(["cancelar", "confirmar"]), JSON.stringify(infoDlg ? infoDlg.acoes : null));

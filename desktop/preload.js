@@ -9,4 +9,6 @@ contextBridge.exposeInMainWorld("finDesk", {
   reiniciarBackend: () => ipcRenderer.invoke("findesk:reiniciar-backend"),
   repararFoco: () => ipcRenderer.invoke("findesk:reparar-foco"),
   fecharAplicativo: () => ipcRenderer.invoke("findesk:fechar"),
+  salvarNota: (nome, bytes) => ipcRenderer.invoke("findesk:salvar-nota", nome, bytes),
+  abrirNota: (caminho) => ipcRenderer.invoke("findesk:abrir-nota", caminho),
 });

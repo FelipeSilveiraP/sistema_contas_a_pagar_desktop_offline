@@ -17,5 +17,6 @@ public record BoletoRecorrente(
     int dia,
     String periodicidade,
     String formaPagamento,
-    boolean ativo
+    boolean ativo,
+    String tipoPessoa
 ) {}

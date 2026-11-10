@@ -1,5 +1,6 @@
 import { buscarStatus, criarEmpresa, ErroValidacaoApi } from "../api";
-import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { cnpjValido, mascaraCNPJ, mascaraTelefone } from "../mascaras";
@@ -48,23 +49,23 @@ function lerTelefones(): { numero: string; tipo: string }[] {
 function validar(dados: CamposFormulario, telefones: { numero: string; tipo: string }[]): Record<string, string> {
   const erros: Record<string, string> = {};
   if (dados.razaoSocial.length < 2 || dados.razaoSocial.length > 120) {
-    erros.razaoSocial = "informe a razao social (2 a 120 caracteres)";
+    erros.razaoSocial = "Informe a razão social (de 2 a 120 caracteres).";
   }
   if (dados.cnpj && !cnpjValido(dados.cnpj)) {
-    erros.cnpj = "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)";
+    erros.cnpj = "CNPJ inválido. Confira os 14 caracteres.";
   }
   if (dados.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.email)) {
-    erros.email = "email invalido";
+    erros.email = "E-mail inválido. Exemplo: contato@empresa.com.br.";
   }
   if (dados.nomeRepresentante.length > 120) {
-    erros.nomeRepresentante = "nome do representante deve ter ate 120 caracteres";
+    erros.nomeRepresentante = "O nome do representante deve ter até 120 caracteres.";
   }
   if (dados.logradouro.length > 120) {
-    erros.logradouro = "logradouro deve ter ate 120 caracteres";
+    erros.logradouro = "O endereço deve ter até 120 caracteres.";
   }
   for (let i = 0; i < telefones.length; i++) {
     if (!/^[0-9A-Za-z().+\- ]{8,20}$/.test(telefones[i].numero)) {
-      erros.telefones = `telefone invalido (8 a 20 caracteres) na linha ${i + 1}`;
+      erros.telefones = `Telefone inválido na linha ${i + 1}. Exemplo: (11) 3333-4444.`;
       break;
     }
   }
@@ -86,6 +87,13 @@ function mostrarErros(erros: Record<string, string>): void {
 function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   const feedback = document.getElementById("feedback-empresa");
   if (!feedback) return;
+  if (sucesso) {
+    feedback.textContent = "";
+    feedback.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  feedback.setAttribute("role", "alert");
   feedback.textContent = mensagem;
   feedback.classList.remove("hidden");
   feedback.classList.toggle("text-[#006c46]", sucesso);
@@ -152,7 +160,7 @@ function iniciar(): void {
     const erros = validar(dados, []);
     if (erros.razaoSocial || erros.cnpj || erros.nomeRepresentante) {
       mostrarErros(erros);
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       return;
     }
     mostrarErros({});
@@ -169,7 +177,7 @@ function iniciar(): void {
     const erros = validar(dados, telefones);
     mostrarErros(erros);
     if (Object.keys(erros).length > 0) {
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       return;
     }
     try {
@@ -194,9 +202,9 @@ function iniciar(): void {
     } catch (erro) {
       if (erro instanceof ErroValidacaoApi) {
         mostrarErros(erro.campos);
-        mostrarFeedback("Corrija os campos destacados.", false);
+        mostrarFeedback("Corrija os campos destacados em vermelho.", false);
       } else {
-        mostrarFeedback("Nao foi possivel salvar a empresa. Tente novamente.", false);
+        mostrarFeedback("Não foi possível salvar a empresa. Verifique se o sistema está aberto e tente de novo.", false);
         console.error("[ContasAPagar] falha ao cadastrar empresa:", erro);
       }
     }
@@ -204,7 +212,7 @@ function iniciar(): void {
 
   document.getElementById("btn-cancelar")?.addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -218,7 +226,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });
@@ -232,7 +240,7 @@ function iniciar(): void {
       if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
       evento.preventDefault();
       evento.stopPropagation();
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) void voltar();
       });
     },

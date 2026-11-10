@@ -93,6 +93,16 @@ class EmpresaServiceTest {
     }
 
     @Test
+    void deveRecusarCnpjDuplicadoComMensagemNoCampo() {
+        service.cadastrar(new Empresa(null, "11.222.333/0001-81", "Primeira", null, null, null, List.of()));
+        assertThatThrownBy(() -> service.cadastrar(
+                new Empresa(null, "11222333000181", "Segunda", null, null, null, List.of())))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
+                        .containsEntry("cnpj", "Este CNPJ já está cadastrado em outra empresa."));
+    }
+
+    @Test
     void deveRecusarSemRazaoSocial() {
         assertThatThrownBy(() -> service.cadastrar(
                 new Empresa(null, null, "", null, null, null, List.of())))

@@ -1,15 +1,21 @@
 import {
   buscarStatus,
+  excluirRecorrente,
+  gerarContasRecorrente,
   listarContasFixas,
+  listarRecorrentes,
+  RecorrenteDados,
   atualizarConta,
   ContaDados,
   ErroValidacaoApi,
 } from "../api";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
+import { notificar } from "../notificacoes";
+import { confirmar } from "../componentes";
 
 const ROTULO_FORMA: Record<string, string> = {
-  boleto: "Boleto", pix: "PIX", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro",
+  boleto: "Boleto", pix: "PIX", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro", debito: "Débito automático",
 };
 
 let contas: ContaDados[] = [];
@@ -98,20 +104,6 @@ function selecionar(id: number): void {
   renderTabela();
 }
 
-function toast(mensagem: string): void {
-  let t = document.getElementById("toast-recorrentes");
-  if (!t) {
-    t = document.createElement("div");
-    t.id = "toast-recorrentes";
-    t.className = "fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm";
-    t.setAttribute("role", "status");
-    document.body.appendChild(t);
-  }
-  t.textContent = mensagem;
-  t.classList.remove("hidden");
-  window.setTimeout(() => t!.classList.add("hidden"), 2200);
-}
-
 function mostrarErro(mensagem?: string): void {
   const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
   if (!alvo) return;
@@ -119,10 +111,88 @@ function mostrarErro(mensagem?: string): void {
   alvo.classList.toggle("hidden", !mensagem);
 }
 
+let recorrentes: RecorrenteDados[] = [];
+
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
-  contas = await listarContasFixas(cfg);
+  [contas, recorrentes] = await Promise.all([listarContasFixas(cfg), listarRecorrentes(cfg)]);
   renderTabela();
+  renderCadastradas();
+}
+
+// ===== Contas fixas cadastradas (a recorrencia em si): gerar proximos meses / excluir =====
+function botaoAcao(texto: string, classe: string, acao: () => void): HTMLButtonElement {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = `border-2 border-[#1c1b1b] font-mono text-xs font-bold px-2.5 py-1.5 uppercase shadow-[2px_2px_0px_0px_#1c1b1b] ${classe}`;
+  b.textContent = texto;
+  b.addEventListener("click", acao);
+  return b;
+}
+
+function renderCadastradas(): void {
+  const corpo = document.getElementById("recorrentesCadastradas");
+  if (!corpo) return;
+  if (!recorrentes.length) {
+    const tr = document.createElement("tr");
+    tr.appendChild(celula("Nenhuma conta fixa cadastrada. Use CONTROLE › CONTAS RECORRENTES › CADASTRAR.", "py-3 px-3 text-center font-mono text-xs text-neutral-500 uppercase"));
+    (tr.firstChild as HTMLTableCellElement).colSpan = 7;
+    corpo.replaceChildren(tr);
+    return;
+  }
+  corpo.replaceChildren(...recorrentes.map((r) => {
+    const tr = document.createElement("tr");
+    tr.dataset.recorrente = String(r.id);
+    const acoes = celula("", "py-2 px-3 text-center whitespace-nowrap");
+    const grupo = document.createElement("div");
+    grupo.className = "inline-flex gap-2";
+    grupo.append(
+      botaoAcao("Gerar próximos meses", "bg-[#ede9fe] hover:bg-[#ddd6fe] text-[#1c1b1b]", () => void gerar(r)),
+      botaoAcao("Excluir", "bg-white hover:bg-neutral-100 text-[#ba1a1a]", () => void excluirFixa(r)),
+    );
+    acoes.appendChild(grupo);
+    tr.append(
+      celula(r.nomeEmpresa, "py-2 px-3"),
+      celula(formatarMoedaBR(Math.round(r.valor * 100)), "py-2 px-3 text-right font-mono whitespace-nowrap"),
+      celula(String(r.dia), "py-2 px-3 text-center font-mono"),
+      celula(r.periodicidade, "py-2 px-3 text-center font-mono text-xs"),
+      celula(r.tipoPessoa, "py-2 px-3 text-center font-mono"),
+      celula(r.pagadorResponsavel, "py-2 px-3 font-mono text-xs"),
+      acoes,
+    );
+    return tr;
+  }));
+}
+
+async function gerar(r: RecorrenteDados): Promise<void> {
+  try {
+    const cfg = await window.finDesk!.config();
+    const { geradas } = await gerarContasRecorrente(cfg, r.id);
+    notificar(geradas > 0
+      ? `${geradas} conta${geradas > 1 ? "s" : ""} de "${r.nomeEmpresa}" gerada${geradas > 1 ? "s" : ""} para os próximos meses.`
+      : `As contas de "${r.nomeEmpresa}" dos próximos 12 meses já existem.`, geradas > 0 ? "sucesso" : "info");
+    await recarregar();
+  } catch {
+    notificar("Não foi possível gerar as contas. Tente de novo.", "erro");
+  }
+}
+
+async function excluirFixa(r: RecorrenteDados): Promise<void> {
+  const ok = await confirmar({
+    titulo: "EXCLUIR CONTA FIXA?",
+    mensagem: `Excluir a conta fixa "${r.nomeEmpresa}"? As contas dela que ainda NÃO foram pagas também serão excluídas. As já pagas continuam no histórico.`,
+    textoConfirmar: "EXCLUIR",
+    tom: "perigo",
+  });
+  if (!ok) return;
+  try {
+    const cfg = await window.finDesk!.config();
+    await excluirRecorrente(cfg, r.id);
+    notificar(`Conta fixa "${r.nomeEmpresa}" excluída.`);
+    await recarregar();
+  } catch {
+    notificar("Não foi possível excluir a conta fixa. Tente de novo.", "erro");
+  }
 }
 
 async function aplicarAlteracao(): Promise<void> {
@@ -132,6 +202,8 @@ async function aplicarAlteracao(): Promise<void> {
   const bruto = el<HTMLInputElement>("newValueInput").value.trim();
   const patch = {
     nomeEmpresa: conta.nomeEmpresa,
+    // sem isto o PUT gravava id_empresa = NULL e apagava o vinculo com a empresa emissora
+    idEmpresa: conta.idEmpresa ?? undefined,
     pagadorResponsavel: conta.pagadorResponsavel,
     tipoPessoa: conta.tipoPessoa,
     formaPagamento: conta.formaPagamento,
@@ -144,21 +216,22 @@ async function aplicarAlteracao(): Promise<void> {
   };
   if (campo === "vencimento") {
     const iso = parseDataBR(bruto);
-    if (!iso) return mostrarErro("data invalida (use DD/MM/AAAA)");
+    if (!iso) return mostrarErro("Data inválida. Use o formato DD/MM/AAAA.");
     patch.vencimento = iso;
   } else if (campo === "valor") {
     const centavos = paraCentavos(bruto);
-    if (centavos === null) return mostrarErro("valor invalido (use R$ 0,00)");
+    if (centavos === null) return mostrarErro("Valor inválido. Exemplo: 150,00.");
     patch.valor = (centavos / 100).toFixed(2);
   } else if (campo === "pagadorResponsavel") {
-    if (!bruto || bruto.length > 120) return mostrarErro("informe o pagador (1 a 120 caracteres)");
+    if (!bruto || bruto.length > 120) return mostrarErro("Informe o pagador (de 1 a 120 caracteres).");
     patch.pagadorResponsavel = bruto;
   } else {
     const f = bruto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const mapa: Record<string, string> = {
       boleto: "boleto", pix: "pix", cartao: "cartao", transferencia: "transferencia", dinheiro: "dinheiro",
+      debito: "debito", "debito automatico": "debito",
     };
-    if (!mapa[f]) return mostrarErro("use: boleto, pix, cartao, transferencia ou dinheiro");
+    if (!mapa[f]) return mostrarErro("Use: boleto, pix, cartão, transferência, dinheiro ou débito.");
     patch.formaPagamento = mapa[f];
   }
   mostrarErro();
@@ -166,11 +239,11 @@ async function aplicarAlteracao(): Promise<void> {
     const cfg = await window.finDesk!.config();
     await atualizarConta(cfg, conta.id, patch);
     await recarregar();
-    toast("Registro atualizado.");
+    notificar("Alterações salvas.");
   } catch (erro) {
-    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "dados invalidos");
+    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
     else {
-      mostrarErro("nao foi possivel atualizar o registro");
+      mostrarErro("Não foi possível salvar a alteração. Tente de novo.");
       console.error("[ContasAPagar] falha na edicao:", erro);
     }
   }

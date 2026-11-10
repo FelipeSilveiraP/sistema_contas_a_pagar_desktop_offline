@@ -33,9 +33,14 @@ public class DashboardController {
             List<CategoriaTotal> porCategoria,
             List<MesTotal> porMes
     ) {}
+    /** Conta pendente na janela de alerta do VBA (VerificarVencimentosAoAbrir). */
     public record Alerta(long id, String nomeEmpresa, LocalDate vencimento,
-                         java.math.BigDecimal valor, int dias) {}
-    public record Alertas(List<Alerta> atrasados, List<Alerta> aVencer, int avisosAtivos) {}
+                         java.math.BigDecimal valor, int dias,
+                         boolean boletoNaPasta, String pagadorResponsavel) {}
+    /** Recado do quadro de avisos vigente hoje (BuscarAvisosExtras do VBA). */
+    public record AvisoDoDia(long id, String titulo, String mensagem) {}
+    public record Alertas(LocalDate hoje, List<Alerta> atrasados, List<Alerta> aVencer,
+                          int avisosAtivos, List<AvisoDoDia> avisosHoje) {}
 
     private final ContaService contas;
     private final AvisoService avisos;
@@ -95,14 +100,22 @@ public class DashboardController {
         List<Alerta> aVencer = new ArrayList<>();
         for (Conta conta : contas.listar("PENDENTE")) {
             int dias = (int) java.time.temporal.ChronoUnit.DAYS.between(hoje, conta.vencimento());
+            Alerta alerta = new Alerta(conta.id(), conta.nomeEmpresa(), conta.vencimento(), conta.valor(), dias,
+                    conta.boletoNaPasta(), conta.pagadorResponsavel());
             if (dias >= -15 && dias < 0) {
-                atrasados.add(new Alerta(conta.id(), conta.nomeEmpresa(), conta.vencimento(), conta.valor(), dias));
+                atrasados.add(alerta);
             } else if (dias >= 0 && dias <= 10) {
-                aVencer.add(new Alerta(conta.id(), conta.nomeEmpresa(), conta.vencimento(), conta.valor(), dias));
+                aVencer.add(alerta);
             }
         }
-        int ativos = (int) avisos.listar().stream().filter(a -> AvisoService.ativoEm(a, hoje)).count();
-        return new Alertas(atrasados, aVencer, ativos);
+        // mais atrasados primeiro; a vencer do mais proximo ao mais distante
+        atrasados.sort(Comparator.comparing(Alerta::vencimento));
+        aVencer.sort(Comparator.comparing(Alerta::vencimento));
+        List<AvisoDoDia> avisosHoje = avisos.listar().stream()
+                .filter(a -> AvisoService.ativoEm(a, hoje))
+                .map(a -> new AvisoDoDia(a.id(), a.titulo(), a.mensagem()))
+                .toList();
+        return new Alertas(hoje, atrasados, aVencer, avisosHoje.size(), avisosHoje);
     }
 
     private static long centavos(Conta conta) {

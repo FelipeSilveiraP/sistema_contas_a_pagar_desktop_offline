@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 11;
+    private static final int VERSAO_ATUAL = 12;
 
     private final ConnectionFactory conexao;
 
@@ -283,6 +283,11 @@ public class DatabaseInitializer {
                 )
                 """,
                 "CREATE INDEX IF NOT EXISTS idx_avisos_vigencia ON avisos(data_inicio, data_fim)",
+            };
+            case 12 -> new String[] {
+                // Tipo de conta (PF/PJ) escolhido no form roxo: antes era descartado e
+                // as contas geradas saiam sempre PJ. Aditiva: registros antigos ficam PJ.
+                "ALTER TABLE boletos_recorrentes ADD COLUMN tipo_pessoa TEXT NOT NULL DEFAULT 'PJ'",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

@@ -122,13 +122,13 @@ public class AvisoService {
     private static void validar(Aviso dados) {
         Map<String, String> erros = new LinkedHashMap<>();
         if (dados.dataInicio() == null) {
-            erros.put("dataInicio", "informe a data de inicio da vigencia");
+            erros.put("dataInicio", "Informe a data de início.");
         }
         if (dados.dataFim() == null) {
-            erros.put("dataFim", "informe a data de fim da vigencia");
+            erros.put("dataFim", "Informe a data final.");
         }
         if (dados.dataInicio() != null && dados.dataFim() != null && dados.dataFim().isBefore(dados.dataInicio())) {
-            erros.put("dataFim", "o fim da vigencia deve ser igual ou posterior ao inicio");
+            erros.put("dataFim", "A data final deve ser igual ou depois da data de início.");
         }
         if (!DIAS.contains(dados.diaSemana())) {
             boolean todosValidos = true;
@@ -139,14 +139,14 @@ public class AvisoService {
                 }
             }
             if (!todosValidos) {
-                erros.put("diaSemana", "dia da semana invalido");
+                erros.put("diaSemana", "Dia da semana inválido.");
             }
         }
         if (dados.titulo().length() < 2 || dados.titulo().length() > 100) {
-            erros.put("titulo", "informe o titulo (2 a 100 caracteres)");
+            erros.put("titulo", "Informe o título (de 2 a 100 caracteres).");
         }
         if (dados.mensagem().length() < 2 || dados.mensagem().length() > 500) {
-            erros.put("mensagem", "informe a mensagem (2 a 500 caracteres)");
+            erros.put("mensagem", "Escreva a mensagem (de 2 a 500 caracteres).");
         }
         if (!erros.isEmpty()) {
             log.warn("validacao de aviso recusada: {}", erros.keySet());

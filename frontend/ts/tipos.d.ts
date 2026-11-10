@@ -32,5 +32,7 @@ interface Window {
     reiniciarBackend: () => Promise<{ ok: boolean }>;
     repararFoco: () => Promise<boolean>;
     fecharAplicativo: () => Promise<void>;
+    salvarNota: (nome: string, bytes: Uint8Array) => Promise<{ ok: boolean; caminho?: string }>;
+    abrirNota: (caminho: string) => Promise<boolean>;
   };
 }

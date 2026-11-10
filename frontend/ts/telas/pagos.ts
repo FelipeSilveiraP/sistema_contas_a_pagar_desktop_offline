@@ -10,7 +10,8 @@ import {
   BancoDados,
   ErroValidacaoApi,
 } from "../api";
-import { confirmar } from "../componentes";
+import { confirmarEstorno } from "../componentes";
+import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
 
@@ -95,20 +96,6 @@ function selecionar(id: number): void {
   renderTabela();
 }
 
-function toast(mensagem: string): void {
-  let t = document.getElementById("toast-pagos");
-  if (!t) {
-    t = document.createElement("div");
-    t.id = "toast-pagos";
-    t.className = "fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm";
-    t.setAttribute("role", "status");
-    document.body.appendChild(t);
-  }
-  t.textContent = mensagem;
-  t.classList.remove("hidden");
-  window.setTimeout(() => t!.classList.add("hidden"), 2200);
-}
-
 function mostrarErro(mensagem?: string): void {
   const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
   if (!alvo) return;
@@ -133,15 +120,15 @@ async function aplicarAlteracao(): Promise<void> {
   let idBanco = pagamento.idBanco ?? undefined;
   if (campo === "dataPagamento") {
     const iso = parseDataBR(bruto);
-    if (!iso) return mostrarErro("data invalida (use DD/MM/AAAA)");
+    if (!iso) return mostrarErro("Data inválida. Use o formato DD/MM/AAAA.");
     dataPagamento = iso;
   } else if (campo === "valorPago") {
     const centavos = paraCentavos(bruto);
-    if (centavos === null) return mostrarErro("valor invalido (use R$ 0,00)");
+    if (centavos === null) return mostrarErro("Valor inválido. Exemplo: 150,00.");
     valorPago = (centavos / 100).toFixed(2);
   } else {
     const alvo = bancos.find((b) => b.instituicao.toLowerCase() === bruto.toLowerCase());
-    if (bruto && !alvo) return mostrarErro("banco nao encontrado no cadastro (deixe vazio para remover)");
+    if (bruto && !alvo) return mostrarErro("Banco não encontrado no cadastro. Deixe vazio para remover o banco.");
     idBanco = alvo?.id;
   }
   mostrarErro();
@@ -149,11 +136,11 @@ async function aplicarAlteracao(): Promise<void> {
     const cfg = await window.finDesk!.config();
     await atualizarPagamento(cfg, pagamento.id, { dataPagamento, valorPago, idBanco });
     await recarregar();
-    toast("Pagamento atualizado.");
+    notificar("Alterações do pagamento salvas.");
   } catch (erro) {
-    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "dados invalidos");
+    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
     else {
-      mostrarErro("nao foi possivel atualizar o pagamento");
+      mostrarErro("Não foi possível salvar a alteração do pagamento. Tente de novo.");
       console.error("[ContasAPagar] falha na edicao do pagamento:", erro);
     }
   }
@@ -162,7 +149,7 @@ async function aplicarAlteracao(): Promise<void> {
 async function estornarSelecionado(): Promise<void> {
   const pagamento = pagamentos.find((p) => p.id === selecionadoId);
   if (!pagamento) return;
-  if (!(await confirmar(`Estornar o pagamento de "${pagamento.nomeEmpresa}"? A conta voltará para PENDENTE.`, { titulo: "CONFIRMAR ESTORNO", textoConfirmar: "ESTORNAR" }))) return;
+  if (!(await confirmarEstorno(pagamento.nomeEmpresa))) return;
   try {
     const cfg = await window.finDesk!.config();
     await estornarPagamento(cfg, pagamento.idConta);
@@ -170,9 +157,9 @@ async function estornarSelecionado(): Promise<void> {
     el("selectionDetailBox").classList.add("hidden");
     el("editorContainer").classList.add("hidden");
     await recarregar();
-    toast("Pagamento estornado.");
+    notificar("Pagamento desfeito. A conta voltou a ficar pendente.");
   } catch (erro) {
-    mostrarErro("nao foi possivel estornar o pagamento");
+    mostrarErro("Não foi possível desfazer o pagamento. Tente de novo.");
     console.error("[ContasAPagar] falha no estorno:", erro);
   }
 }

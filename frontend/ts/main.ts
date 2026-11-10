@@ -1,8 +1,11 @@
 // Despacho por tela com carregamento sob demanda: cada pagina importa somente
 // o modulo que utiliza (chunks ESM gerados pelo esbuild --splitting).
 import { iniciarDiagnostico } from "./diagnostico";
+import { iniciarNotificacoes } from "./notificacoes";
 
 iniciarDiagnostico();
+// regioes vivas das notificacoes existem desde o carregamento (e mostram o aviso deixado pela tela anterior)
+iniciarNotificacoes();
 
 const tela = document.body.dataset.tela ?? "menu";
 

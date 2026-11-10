@@ -16,7 +16,8 @@ import {
   EmpresaDados,
 } from "../api";
 import { montarNavbar } from "../navbar";
-import { confirmar, confirmarExclusao, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarExclusao, confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { cnpjValido, cpfValido, formatarCNPJ, formatarCPF, formatarTelefone, mascaraCPF, mascaraCNPJ, mascaraTelefone } from "../mascaras";
 
 type Tipo = "empresas" | "pagadores" | "bancos";
@@ -28,7 +29,7 @@ const ROTULOS: Record<Tipo, string> = {
 };
 
 const COLUNAS: Record<Tipo, string[]> = {
-  empresas: ["Razão Social", "CNPJ", "Representante", "E-mail"],
+  empresas: ["Razão Social", "CNPJ", "Representante", "Telefone", "E-mail", "Endereço"],
   pagadores: ["Nome", "CPF", "Função"],
   bancos: ["Instituição", "Chave Pix"],
 };
@@ -52,6 +53,13 @@ function atualizarSujo(valor: boolean): void {
 function feedback(mensagem: string, sucesso: boolean): void {
   const alvo = document.getElementById("feedback-edt");
   if (!alvo) return;
+  if (sucesso) {
+    alvo.textContent = "";
+    alvo.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  alvo.setAttribute("role", "alert");
   alvo.textContent = mensagem;
   alvo.classList.remove("hidden");
   alvo.classList.toggle("text-[#006c46]", sucesso);
@@ -100,7 +108,8 @@ function renderTabela(): void {
   let linhas: HTMLTableRowElement[] = [];
   if (tipo === "empresas") {
     linhas = itensFiltrados(empresas, (e) => `${e.razaoSocial} ${e.cnpj ?? ""} ${e.nomeRepresentante ?? ""} ${e.email ?? ""} ${e.telefones.map((t) => t.numero).join(" ")}`)
-      .map((e) => linhaTabela(e.id, [e.razaoSocial, e.cnpj ? formatarCNPJ(e.cnpj) : "—", e.nomeRepresentante ?? "—", e.email ?? "—"]));
+      .map((e) => linhaTabela(e.id, [e.razaoSocial, e.cnpj ? formatarCNPJ(e.cnpj) : "—", e.nomeRepresentante ?? "—",
+        e.telefones.length ? e.telefones.map((tel) => formatarTelefone(tel.numero)).join(" / ") : "—", e.email ?? "—", e.logradouro ?? "—"]));
   } else if (tipo === "pagadores") {
     linhas = itensFiltrados(pagadores, (p) => `${p.nome} ${p.cpf} ${p.funcao ?? ""}`)
       .map((p) => linhaTabela(p.id, [p.nome, p.cpf ? formatarCPF(p.cpf) : "—", p.funcao ?? "—"]));
@@ -227,28 +236,28 @@ function validarPainel(): Record<string, string> {
     const razao = idCampo("campo-edt-razao").value.trim();
     const cnpj = idCampo("campo-edt-cnpj").value.trim();
     const email = idCampo("campo-edt-email").value.trim();
-    if (razao.length < 2 || razao.length > 120) erros.razaoSocial = "informe a razao social (2 a 120 caracteres)";
-    if (cnpj && !cnpjValido(cnpj)) erros.cnpj = "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)";
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = "email invalido";
-    if (idCampo("campo-edt-representante").value.trim().length > 120) erros.nomeRepresentante = "nome do representante deve ter ate 120 caracteres";
-    if (idCampo("campo-edt-logradouro").value.trim().length > 120) erros.logradouro = "logradouro deve ter ate 120 caracteres";
+    if (razao.length < 2 || razao.length > 120) erros.razaoSocial = "Informe a razão social (de 2 a 120 caracteres).";
+    if (cnpj && !cnpjValido(cnpj)) erros.cnpj = "CNPJ inválido. Confira os 14 caracteres.";
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = "E-mail inválido. Exemplo: contato@empresa.com.br.";
+    if (idCampo("campo-edt-representante").value.trim().length > 120) erros.nomeRepresentante = "O nome do representante deve ter até 120 caracteres.";
+    if (idCampo("campo-edt-logradouro").value.trim().length > 120) erros.logradouro = "O endereço deve ter até 120 caracteres.";
     lerTelefonesEdt().forEach((telefone, i) => {
       if (!/^[0-9A-Za-z().+\- ]{8,20}$/.test(telefone.numero)) {
-        erros.telefones = `telefone invalido (8 a 20 caracteres) na linha ${i + 1}`;
+        erros.telefones = `Telefone inválido na linha ${i + 1}. Exemplo: (11) 3333-4444.`;
       }
     });
   } else if (tipo === "pagadores") {
     const nome = idCampo("campo-edt-nome").value.trim();
     const cpf = idCampo("campo-edt-cpf").value.trim();
-    if (nome.length < 2 || nome.length > 120) erros.nome = "informe o nome (2 a 120 caracteres)";
-    if (cpf && !cpfValido(cpf)) erros.cpf = "CPF invalido (11 digitos com digitos verificadores)";
-    if (idCampo("campo-edt-funcao").value.trim().length > 100) erros.funcao = "funcao deve ter ate 100 caracteres";
+    if (nome.length < 2 || nome.length > 120) erros.nome = "Informe o nome (de 2 a 120 caracteres).";
+    if (cpf && !cpfValido(cpf)) erros.cpf = "CPF inválido. Confira os 11 números.";
+    if (idCampo("campo-edt-funcao").value.trim().length > 100) erros.funcao = "A função deve ter até 100 caracteres.";
   } else {
     const instituicao = idCampo("campo-edt-instituicao").value.trim();
     const chavePix = idCampo("campo-edt-chave-pix").value.trim();
-    if (instituicao.length < 2 || instituicao.length > 120) erros.instituicao = "informe a instituicao bancaria (2 a 120 caracteres)";
+    if (instituicao.length < 2 || instituicao.length > 120) erros.instituicao = "Informe o nome do banco (de 2 a 120 caracteres).";
     if (chavePix && (chavePix.length > 77 || chavePix.includes(" "))) {
-      erros.chavePix = "chave Pix invalida (ate 77 caracteres, sem espacos)";
+      erros.chavePix = "Chave Pix inválida (até 77 caracteres, sem espaços).";
     }
   }
   return erros;
@@ -259,7 +268,7 @@ async function salvarPainel(): Promise<void> {
   const erros = validarPainel();
   mostrarErros(erros);
   if (Object.keys(erros).length > 0) {
-    feedback("Corrija os campos destacados.", false);
+    feedback("Corrija os campos destacados em vermelho.", false);
     return;
   }
   try {
@@ -290,15 +299,15 @@ async function salvarPainel(): Promise<void> {
     }
     atualizarSujo(false);
     renderTabela();
-    feedback("Registro atualizado com sucesso.", true);
+    feedback("Alterações salvas com sucesso.", true);
     document.body.dataset.registroSalvo = String(selecionadoId);
     console.info("[ContasAPagar] registro atualizado (tipo:", tipo, "id:", selecionadoId, ")");
   } catch (erro) {
     if (erro instanceof ErroValidacaoApi) {
       mostrarErros(erro.campos);
-      feedback("Corrija os campos destacados.", false);
+      feedback("Corrija os campos destacados em vermelho.", false);
     } else {
-      feedback("Nao foi possivel salvar o registro. Tente novamente.", false);
+      feedback("Não foi possível salvar. Verifique se o sistema está aberto e tente de novo.", false);
       console.error("[ContasAPagar] falha ao atualizar registro:", erro);
     }
   }
@@ -306,7 +315,7 @@ async function salvarPainel(): Promise<void> {
 
 async function excluirSelecionado(): Promise<void> {
   if (selecionadoId === null) return;
-  if (!(await confirmarExclusao(`Excluir definitivamente este ${ROTULOS[tipo].toLowerCase()}? Esta acao nao pode ser desfeita.`))) {
+  if (!(await confirmarExclusao(`este cadastro de ${ROTULOS[tipo].toLowerCase()}`))) {
     return;
   }
   try {
@@ -323,16 +332,16 @@ async function excluirSelecionado(): Promise<void> {
       bancos = await listarBancos(cfg);
     }
     fecharPainel();
-    feedback("Registro excluido com sucesso.", true);
+    feedback("Cadastro excluído.", true);
     document.body.dataset.registroExcluido = String(id);
     console.info("[ContasAPagar] registro excluido (tipo:", tipo, "id:", id, ")");
   } catch (erro) {
     if (erro instanceof ErroApi && erro.status === 409) {
-      feedback("Nao foi possivel excluir: o registro esta vinculado a outros dados do sistema.", false);
+      feedback("Não é possível excluir: este cadastro está sendo usado em contas.", false);
     } else if (erro instanceof ErroApi && erro.status === 404) {
-      feedback("Registro nao encontrado (pode ja ter sido excluido).", false);
+      feedback("Este cadastro não existe mais (talvez já tenha sido excluído).", false);
     } else {
-      feedback("Nao foi possivel excluir o registro. Tente novamente.", false);
+      feedback("Não foi possível excluir. Tente de novo.", false);
       console.error("[ContasAPagar] falha ao excluir registro:", erro);
     }
   }
@@ -357,7 +366,7 @@ async function carregarListas(): Promise<void> {
     const mensagem = document.createElement("p");
     mensagem.id = "tabela-estado";
     mensagem.className = "font-headline text-sm font-bold text-[#b6212a]";
-    mensagem.textContent = "Nao foi possivel carregar os cadastros.";
+    mensagem.textContent = "Não foi possível carregar os cadastros.";
     const tentar = document.createElement("button");
     tentar.id = "btn-tentar-novamente";
     tentar.type = "button";
@@ -409,7 +418,7 @@ function iniciar(): void {
   document.getElementById("btn-edt-excluir")!.addEventListener("click", () => void excluirSelecionado());
   document.getElementById("btn-edt-cancelar")!.addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       fecharPainel();
     })();
   });
@@ -423,7 +432,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });
@@ -437,7 +446,7 @@ function iniciar(): void {
       if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
       evento.preventDefault();
       evento.stopPropagation();
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) fecharPainel();
       });
     },

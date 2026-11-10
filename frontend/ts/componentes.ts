@@ -1,24 +1,21 @@
-// Componentes transversais: atalhos + dialogs neobrutalistas.
-// window.alert/window.confirm sao PROIBIDOS nos fluxos do aplicativo — usar
-// confirmar()/aviso()/sucesso()/erro()/informacao() do ./dialogos (API
-// assincrona que devolve a escolha do usuario, com foco gerenciado e sem o
-// defeito de perda de foco dos dialogs modais nativos do Electron/Windows).
-import { aviso, dialogoEstaAberto } from "./dialogos";
+// Componentes transversais: atalhos + confirmacoes + notificacoes.
+// window.alert/window.confirm/window.prompt sao PROIBIDOS (causavam o bug de foco
+// dos inputs no Electron/Windows). Decisao -> confirmar*() de ./dialogos;
+// resultado de acao -> notificar() de ./notificacoes; erro de campo -> inline.
+import { dialogoEstaAberto } from "./dialogos";
+import { notificar } from "./notificacoes";
 
 export {
   confirmar,
+  confirmarSaida,
   confirmarExclusao,
+  confirmarEstorno,
   confirmarDuplicidade,
-  aviso,
-  sucesso,
-  erro,
-  informacao,
-  recorrencia,
   dialogoEstaAberto,
 } from "./dialogos";
 
 export function respostaProvisoria(nome: string, tipo = "Módulo"): void {
-  void aviso(`${tipo} ${nome}\n\nDisponível nas próximas fases do Sistema de Contas a Pagar — Chaveiro Universal.`);
+  notificar(`${tipo} ${nome}: esta função ainda não está disponível.`, "info");
 }
 
 export function menuLateralAberto(): boolean {

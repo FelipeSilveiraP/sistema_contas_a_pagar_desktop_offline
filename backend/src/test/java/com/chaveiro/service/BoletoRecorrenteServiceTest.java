@@ -37,7 +37,29 @@ class BoletoRecorrenteServiceTest {
 
     private BoletoRecorrente recorrente(int dia, String periodicidade) {
         return new BoletoRecorrente(null, "Aluguel do Galpão", null, "Gerência", "Aluguel & Taxas",
-                null, new BigDecimal("1500.00"), dia, periodicidade, "boleto", true);
+                null, new BigDecimal("1500.00"), dia, periodicidade, "boleto", true, "PJ");
+    }
+
+    @Test
+    void deveGerarContasComOTipoPessoaEscolhidoNoFormulario() throws Exception {
+        // antes o PF escolhido era descartado e as contas saiam sempre PJ
+        service.cadastrar(new BoletoRecorrente(null, "Diarista", null, "Gerência", null, null,
+                new BigDecimal("300.00"), 5, "MENSAL", "debito", true, "PF"));
+
+        List<Conta> geradas = contas.listar(null);
+        assertThat(geradas).isNotEmpty().allSatisfy(c -> {
+            assertThat(c.tipoPessoa()).isEqualTo("PF");
+            assertThat(c.formaPagamento()).isEqualTo("debito");
+        });
+        assertThat(service.listar()).singleElement().extracting(BoletoRecorrente::tipoPessoa).isEqualTo("PF");
+    }
+
+    @Test
+    void deveRecusarFormatoDePagamentoForaDoDominioDasContas() {
+        assertThatThrownBy(() -> service.cadastrar(new BoletoRecorrente(null, "Aluguel", null, "Gerência", null, null,
+                new BigDecimal("100.00"), 10, "MENSAL", "cheque", true, "PJ")))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(e -> assertThat(((DadosInvalidosException) e).getCampos()).containsKey("formaPagamento"));
     }
 
     @Test
@@ -95,7 +117,7 @@ class BoletoRecorrenteServiceTest {
         assertThatThrownBy(() -> service.cadastrar(recorrente(10, "SEMANAL")))
                 .isInstanceOf(DadosInvalidosException.class);
         assertThatThrownBy(() -> service.cadastrar(new BoletoRecorrente(null, "A", null, "B",
-                null, null, BigDecimal.ZERO, 10, "MENSAL", null, true)))
+                null, null, BigDecimal.ZERO, 10, "MENSAL", null, true, "PJ")))
                 .isInstanceOf(DadosInvalidosException.class);
     }
 }

@@ -1,5 +1,6 @@
 import { buscarStatus, criarAviso, ErroValidacaoApi } from "../api";
-import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 
@@ -19,12 +20,12 @@ function validar(): Record<string, string> {
   const fim = el<HTMLInputElement>("dt_fim").value;
   const titulo = el<HTMLInputElement>("msg_titulo").value.trim();
   const corpo = el<HTMLTextAreaElement>("msg_corpo").value.trim();
-  if (!inicio) erros.dataInicio = "informe a data de inicio";
-  if (!fim) erros.dataFim = "informe a data final";
-  if (inicio && fim && fim < inicio) erros.dataFim = "o fim deve ser igual ou posterior ao inicio";
-  if (titulo.length < 2 || titulo.length > 100) erros.titulo = "informe o titulo (2 a 100 caracteres)";
-  if (corpo.length < 2 || corpo.length > 500) erros.mensagem = "informe a mensagem (2 a 500 caracteres)";
-  if (diasSelecionados().length === 0) erros.diaSemana = "selecione ao menos um dia da semana";
+  if (!inicio) erros.dataInicio = "Informe a data de início.";
+  if (!fim) erros.dataFim = "Informe a data final.";
+  if (inicio && fim && fim < inicio) erros.dataFim = "A data final deve ser igual ou depois da data de início.";
+  if (titulo.length < 2 || titulo.length > 100) erros.titulo = "Informe o título (de 2 a 100 caracteres).";
+  if (corpo.length < 2 || corpo.length > 500) erros.mensagem = "Escreva a mensagem (de 2 a 500 caracteres).";
+  if (diasSelecionados().length === 0) erros.diaSemana = "Selecione pelo menos um dia da semana.";
   return erros;
 }
 
@@ -39,6 +40,13 @@ function mostrarErros(erros: Record<string, string>): void {
 
 function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   const feedback = el("feedback-mensagem");
+  if (sucesso) {
+    feedback.textContent = "";
+    feedback.classList.add("hidden");
+    if (mensagem) notificar(mensagem);
+    return;
+  }
+  feedback.setAttribute("role", "alert");
   feedback.textContent = mensagem;
   feedback.classList.remove("hidden");
   feedback.classList.toggle("text-[#006c46]", sucesso);
@@ -49,7 +57,7 @@ async function submeter(): Promise<void> {
   const erros = validar();
   mostrarErros(erros);
   if (Object.keys(erros).length > 0) {
-    mostrarFeedback("Corrija os campos destacados.", false);
+    mostrarFeedback("Corrija os campos destacados em vermelho.", false);
     return;
   }
   try {
@@ -72,9 +80,9 @@ async function submeter(): Promise<void> {
   } catch (erro) {
     if (erro instanceof ErroValidacaoApi) {
       mostrarErros(erro.campos);
-      mostrarFeedback("Corrija os campos destacados.", false);
+      mostrarFeedback("Corrija os campos destacados em vermelho.", false);
     } else {
-      mostrarFeedback("Nao foi possivel salvar a mensagem. Tente novamente.", false);
+      mostrarFeedback("Não foi possível salvar a mensagem. Verifique se o sistema está aberto e tente de novo.", false);
       console.error("[ContasAPagar] falha ao salvar mensagem:", erro);
     }
   }
@@ -137,7 +145,7 @@ function iniciar(): void {
   });
   el("btn-cancelar").addEventListener("click", () => {
     void (async () => {
-      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      if (sujo && !(await confirmarSaida())) return;
       void voltar();
     })();
   });
@@ -146,7 +154,7 @@ function iniciar(): void {
     if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
     evento.preventDefault();
     evento.stopPropagation();
-    void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+    void confirmarSaida().then((ok) => {
       if (ok) void voltar();
     });
   }, true);
@@ -159,7 +167,7 @@ function iniciar(): void {
       evento.preventDefault();
       evento.stopPropagation();
       navegacaoConfirmada = true;
-      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      void confirmarSaida().then((ok) => {
         if (ok) alvo.click();
         navegacaoConfirmada = false;
       });

@@ -55,6 +55,21 @@
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase">Nenhuma conta fixa gerada — cadastre uma recorrência em "Cadastrar Nova Conta Recorrente".</p>
 </div>
 </main>
+<section class="w-full bg-white border-[#1c1b1b] border" aria-labelledby="tituloCadastradas">
+<div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#1c1b1b] bg-[#ede9fe] px-4 py-2.5">
+<h2 class="text-sm sm:text-base font-bold uppercase tracking-tight flex items-center gap-2" id="tituloCadastradas"><span class="material-symbols-outlined text-lg">event_repeat</span>Contas fixas cadastradas</h2>
+<span class="text-xs font-mono font-bold text-neutral-600 uppercase">Cada uma gera os próximos 12 meses</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#7c3aed] text-white font-mono text-xs uppercase tracking-wider"><tr>
+<th class="py-2.5 px-3">Fornecedor</th><th class="py-2.5 px-3 text-right">Valor</th><th class="py-2.5 px-3 text-center">Dia</th>
+<th class="py-2.5 px-3 text-center">Periodicidade</th><th class="py-2.5 px-3 text-center">Conta</th><th class="py-2.5 px-3">Pagador</th><th class="py-2.5 px-3 text-center">Ações</th>
+</tr></thead>
+<tbody class="divide-y-2 divide-[#1c1b1b] text-sm font-bold" id="recorrentesCadastradas"></tbody>
+</table>
+</div>
+</section>
 <section class="w-full bg-white border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4 hidden" id="editorContainer">
 <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
 <div class="flex flex-wrap items-center gap-3">

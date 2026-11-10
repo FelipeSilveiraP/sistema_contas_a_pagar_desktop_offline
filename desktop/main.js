@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const path = require("path");
@@ -365,6 +365,42 @@ ipcMain.handle("findesk:reiniciar-backend", async () => {
   } catch {
     return { ok: false };
   }
+});
+
+// Nota fiscal (PDF anexado a uma conta): grava direto em Downloads, sem a
+// janela nativa "Salvar como" (dialogos modais nativos causavam o bug de foco).
+// O renderer manda os bytes; o main valida tamanho/nome e so abre arquivos
+// dentro desta pasta.
+const LIMITE_NOTA_BYTES = 16 * 1024 * 1024;
+
+function pastaNotas() {
+  return path.join(app.getPath("downloads"), "Chaveiro Universal - Notas Fiscais");
+}
+
+function nomeSeguro(nome) {
+  const base = String(nome || "nota-fiscal.pdf").replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").slice(0, 120);
+  return base.toLowerCase().endsWith(".pdf") ? base : `${base}.pdf`;
+}
+
+ipcMain.handle("findesk:salvar-nota", (_evento, nome, bytes) => {
+  if (!(bytes instanceof Uint8Array) || bytes.length === 0 || bytes.length > LIMITE_NOTA_BYTES) {
+    return { ok: false };
+  }
+  const pasta = pastaNotas();
+  fs.mkdirSync(pasta, { recursive: true });
+  const arquivo = nomeSeguro(nome);
+  let destino = path.join(pasta, arquivo);
+  for (let n = 2; fs.existsSync(destino); n++) {
+    destino = path.join(pasta, arquivo.replace(/\.pdf$/i, ` (${n}).pdf`));
+  }
+  fs.writeFileSync(destino, Buffer.from(bytes));
+  return { ok: true, caminho: destino };
+});
+
+ipcMain.handle("findesk:abrir-nota", async (_evento, caminho) => {
+  const alvo = path.resolve(String(caminho || ""));
+  if (!alvo.startsWith(pastaNotas() + path.sep) || !fs.existsSync(alvo)) return false;
+  return (await shell.openPath(alvo)) === "";
 });
 
 ipcMain.handle("findesk:fechar", () => {

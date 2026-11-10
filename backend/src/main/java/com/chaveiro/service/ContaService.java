@@ -30,7 +30,7 @@ public class ContaService {
     static final long LIMITE_ANEXO_BYTES = 15L * 1024 * 1024;
 
     static final Set<String> FORMAS_PAGAMENTO =
-            Set.of("boleto", "pix", "cartao", "transferencia", "dinheiro");
+            Set.of("boleto", "pix", "cartao", "transferencia", "dinheiro", "debito");
     static final Set<String> TIPOS_PESSOA = Set.of("PF", "PJ");
 
     private final ContaRepository repository;
@@ -198,48 +198,48 @@ public class ContaService {
         Map<String, String> erros = new LinkedHashMap<>();
 
         if (conta.nomeEmpresa().length() < 2 || conta.nomeEmpresa().length() > 120) {
-            erros.put("nomeEmpresa", "informe o nome da empresa (2 a 120 caracteres)");
+            erros.put("nomeEmpresa", "Informe o nome da empresa (de 2 a 120 caracteres).");
         }
         if (conta.pagadorResponsavel().isEmpty() || conta.pagadorResponsavel().length() > 120) {
-            erros.put("pagadorResponsavel", "informe o pagador responsavel (1 a 120 caracteres)");
+            erros.put("pagadorResponsavel", "Informe o pagador responsável (de 1 a 120 caracteres).");
         }
         if (!TIPOS_PESSOA.contains(conta.tipoPessoa())) {
-            erros.put("tipoPessoa", "informe o tipo de conta (PF ou PJ)");
+            erros.put("tipoPessoa", "Escolha o tipo de conta (pessoa física ou jurídica).");
         }
         if (!FORMAS_PAGAMENTO.contains(conta.formaPagamento())) {
-            erros.put("formaPagamento", "selecione o documento de cobranca");
+            erros.put("formaPagamento", "Selecione o documento de cobrança.");
         }
         if (conta.valor() == null) {
-            erros.put("valor", "informe o valor da conta");
+            erros.put("valor", "Informe o valor da conta.");
         } else {
             if (conta.valor().signum() <= 0) {
-                erros.put("valor", "o valor deve ser maior que zero");
+                erros.put("valor", "O valor deve ser maior que zero.");
             } else if (conta.valor().stripTrailingZeros().scale() > 2) {
-                erros.put("valor", "o valor deve ter no maximo 2 casas decimais");
+                erros.put("valor", "O valor deve ter no máximo 2 casas decimais.");
             }
         }
         if (conta.vencimento() == null) {
-            erros.put("vencimento", "informe a data de vencimento");
+            erros.put("vencimento", "Informe a data de vencimento.");
         }
         if (conta.categoria() != null && conta.categoria().length() > 60) {
-            erros.put("categoria", "a categoria deve ter ate 60 caracteres");
+            erros.put("categoria", "A categoria deve ter até 60 caracteres.");
         }
         if (conta.numeroDocumento() != null && conta.numeroDocumento().length() > 60) {
-            erros.put("numeroDocumento", "o documento deve ter ate 60 caracteres");
+            erros.put("numeroDocumento", "O número do documento deve ter até 60 caracteres.");
         }
         if (conta.anexoNome() != null && conta.anexoNome().length() > 200) {
-            erros.put("anexoNome", "o nome do anexo deve ter ate 200 caracteres");
+            erros.put("anexoNome", "O nome do arquivo deve ter até 200 caracteres.");
         }
         if (anexoPdf != null) {
             if (anexoPdf.length > LIMITE_ANEXO_BYTES) {
-                erros.put("anexo", "o anexo deve ter no maximo 15MB");
+                erros.put("anexo", "O arquivo deve ter no máximo 15 MB.");
             } else if (anexoPdf.length < 5
                     || anexoPdf[0] != '%' || anexoPdf[1] != 'P' || anexoPdf[2] != 'D' || anexoPdf[3] != 'F') {
-                erros.put("anexo", "o anexo deve ser um arquivo PDF");
+                erros.put("anexo", "O arquivo deve ser um PDF.");
             }
         }
         if (!"PENDENTE".equals(conta.status()) && !"PAGO".equals(conta.status())) {
-            erros.put("status", "status invalido");
+            erros.put("status", "Situação inválida.");
         }
 
         if (!erros.isEmpty()) {

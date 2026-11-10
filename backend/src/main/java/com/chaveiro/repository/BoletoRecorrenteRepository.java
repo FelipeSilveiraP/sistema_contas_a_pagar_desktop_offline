@@ -57,8 +57,8 @@ public class BoletoRecorrenteRepository {
 
     public BoletoRecorrente inserir(BoletoRecorrente dados) throws SQLException {
         String sql = "INSERT INTO boletos_recorrentes (nome_empresa, id_empresa, pagador_responsavel,"
-                + " categoria, numero_documento, valor_centavos, dia, periodicidade, forma_pagamento, ativo)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " categoria, numero_documento, valor_centavos, dia, periodicidade, forma_pagamento, ativo,"
+                + " tipo_pessoa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexao.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preencher(stmt, dados);
@@ -70,7 +70,7 @@ public class BoletoRecorrenteRepository {
                 return new BoletoRecorrente(chaves.getLong(1), dados.nomeEmpresa(), dados.idEmpresa(),
                         dados.pagadorResponsavel(), dados.categoria(), dados.numeroDocumento(),
                         dados.valor(), dados.dia(), dados.periodicidade(), dados.formaPagamento(),
-                        dados.ativo());
+                        dados.ativo(), dados.tipoPessoa());
             }
         }
     }
@@ -78,12 +78,13 @@ public class BoletoRecorrenteRepository {
     public boolean atualizar(long id, BoletoRecorrente dados) throws SQLException {
         String sql = "UPDATE boletos_recorrentes SET nome_empresa = ?, id_empresa = ?,"
                 + " pagador_responsavel = ?, categoria = ?, numero_documento = ?, valor_centavos = ?,"
-                + " dia = ?, periodicidade = ?, forma_pagamento = ?, ativo = ? WHERE id_recorrente = ?";
+                + " dia = ?, periodicidade = ?, forma_pagamento = ?, ativo = ?, tipo_pessoa = ?"
+                + " WHERE id_recorrente = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 preencher(stmt, dados);
-                stmt.setLong(11, id);
+                stmt.setLong(12, id);
                 int linhas = stmt.executeUpdate();
                 conn.commit();
                 return linhas > 0;
@@ -136,6 +137,7 @@ public class BoletoRecorrenteRepository {
         stmt.setString(8, dados.periodicidade());
         stmt.setString(9, dados.formaPagamento());
         stmt.setInt(10, dados.ativo() ? 1 : 0);
+        stmt.setString(11, dados.tipoPessoa());
     }
 
     private static BoletoRecorrente paraRegistro(ResultSet rs) throws SQLException {
@@ -153,7 +155,8 @@ public class BoletoRecorrenteRepository {
                 rs.getInt("dia"),
                 rs.getString("periodicidade"),
                 rs.getString("forma_pagamento"),
-                rs.getInt("ativo") == 1
+                rs.getInt("ativo") == 1,
+                rs.getString("tipo_pessoa")
         );
     }
 }

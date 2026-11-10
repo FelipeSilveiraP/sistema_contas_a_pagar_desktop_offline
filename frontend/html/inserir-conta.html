@@ -130,18 +130,16 @@
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="category">
 <span>CATEGORIA DA CONTA (OPCIONAL)</span>
 </label>
-<div class="relative w-full">
-<select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="category" name="category">
-<option value="">Selecione a categoria...</option>
-<option value="insumos">Insumos (Chaves, Lâminas, Cilindros)</option>
-<option value="utilidades">Utilidades (Energia, Água, Internet)</option>
-<option value="ferramentas">Ferramentas &amp; Equipamentos</option>
-<option value="manutencao">Manutenção de Máquinas</option>
-<option value="aluguel_taxas">Aluguel &amp; Taxas</option>
-<option value="outras">Outras Despesas</option>
-</select>
-<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span>
-</div>
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="category" name="category" list="lista-categorias" maxlength="60" autocomplete="off" placeholder="Ex: Insumos, Aluguel, Energia... (opcional)" type="text">
+<datalist id="lista-categorias">
+<option value="Insumos (Chaves, Lâminas, Cilindros)"></option>
+<option value="Utilidades (Energia, Água, Internet)"></option>
+<option value="Ferramentas &amp; Equipamentos"></option>
+<option value="Manutenção de Máquinas"></option>
+<option value="Aluguel &amp; Taxas"></option>
+<option value="Outras Despesas"></option>
+</datalist>
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="categoria"></p>
 </div>
 
 <div class="flex flex-col gap-1.5 w-full">
@@ -178,7 +176,8 @@
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payer_responsible">
 <span>PAGADOR RESPONSÁVEL <strong class="text-[#ba1a1a]">*</strong></span>
 </label>
-<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="payer_responsible" name="payer_responsible" placeholder="Ex: Balcão 01, Chaveiro Carlos, Gerência, Caixa Principal..." type="text" maxlength="120" autocomplete="off">
+<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="payer_responsible" name="payer_responsible" list="lista-pagadores" placeholder="Ex: Balcão 01, Chaveiro Carlos, Gerência, Caixa Principal..." type="text" maxlength="120" autocomplete="off">
+<datalist id="lista-pagadores"></datalist>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="pagadorResponsavel"></p>
 </div>
 
@@ -213,15 +212,6 @@
 </div>
 </form>
 </main>
-</div>
-<div class="hidden fixed bottom-6 right-6 z-50 bg-[#3ffdae] border-4 border-[#1c1b1b] p-4 shadow-[5px_5px_0px_0px_#1c1b1b] max-w-sm" id="toast" role="status">
-<div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-3xl text-[#1c1b1b]">check_circle</span>
-<div>
-<p class="font-bold text-sm uppercase text-[#1c1b1b]">Conta Gravada com Sucesso!</p>
-<p class="text-xs text-[#1c1b1b] font-medium">Lançamento inserido no registro de despesas.</p>
-</div>
-</div>
 </div>
 <script type="module" src="../dist/app.js"></script>
 </body></html>

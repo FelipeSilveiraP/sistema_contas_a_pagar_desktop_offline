@@ -47,3 +47,18 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 - **2026-11-09 — Memory bank substituído.** As regras estáveis estão em `AGENTS.md` e `CLAUDE.md`; o conhecimento técnico, em `.claude/skills/`; as decisões, neste arquivo; e o momento atual, em `docs/estado-atual.md` (≤30 linhas).
 - **2026-11-09 — Skills consolidadas: 23 viraram 8, em `.claude/skills/`.** Essa pasta é lida pelo Claude Code e pelo OpenCode. A pasta `.agents/` fica só para configuração local e está fora do Git.
+
+## Entrega de auditoria (2026-11-10)
+
+- **2026-11-10 — "Mensagens do dia" no Menu com dados reais.** A tabela mostra as contas atrasadas de 1 a 15 dias e as que vencem de hoje até 10 dias, como na regra `VerificarVencimentosAoAbrir` do VBA, com pasta e pagador. O rodapé traz os recados vigentes hoje. Quando não há nada pendente, aparece "Tudo em dia!". Endpoint: `GET /api/contas/alertas`.
+- **2026-11-10 — Pop-ups enxutos em 3 tipos (pesquisa: SweetAlert2/sonner/WAI-ARIA/NN/g).** **Confirmação** (`dialogos.ts`, `role=alertdialog`, botão com o verbo da ação, foco no Cancelar) só para sair sem salvar, excluir, desfazer pagamento e conta parecida. **Notificação** (`notificacoes.ts`) para o resultado de uma ação: sucesso some em 5 s, erro só fecha quando o usuário fecha. **Erro junto ao campo** para o que foi digitado. Os modais de "sucesso", "informação" e "erro" foram removidos, e todos os textos ganharam acento e linguagem simples.
+- **2026-11-10 — Conta recorrente guarda PF/PJ (migração v12, aditiva) e aceita "débito automático".** Antes, o PF escolhido era descartado e "Débito" virava "Transferência". O domínio de formas de pagamento é único para contas e recorrências: boleto, pix, cartão, transferência, dinheiro e débito.
+- **2026-11-10 — Contas fixas podem ser regeradas ou excluídas na tela de Recorrentes.** "Gerar próximos meses" completa os 12 meses à frente, sem duplicar. Excluir remove só as contas não pagas.
+- **2026-11-10 — Nota fiscal anexada pode ser baixada (Todas as Contas › detalhe).** O PDF vai direto para `Downloads\Chaveiro Universal - Notas Fiscais`, sem a janela nativa "Salvar como" (risco de bug de foco), e a notificação oferece o botão "Abrir".
+- **2026-11-10 — Correções da auditoria.**
+  - Editar uma conta não apaga mais o vínculo com a empresa emissora.
+  - CNPJ duplicado mostra o aviso no campo em vez de "erro interno".
+  - Categoria voltou a ser texto livre com sugestões, conforme a decisão de 2026-11-08.
+  - Os campos de pagador sugerem os pagadores cadastrados.
+  - A tabela de empresas mostra telefone e endereço.
+  - As mensagens ganharam o status AGENDADO.
