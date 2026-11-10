@@ -7,19 +7,7 @@
 ## Situação
 - **Fases 1 a 5 concluídas.** Todas as telas gravam no SQLite, com filtros avançados, gráficos consolidados e impressão em PDF. O instalador Windows tem o Java embutido e há logs com rotação.
 - Auditoria de formulários feita (agente `auditor-formularios`): os bugs claros foram corrigidos; os itens que dependem de decisão estão abaixo.
-- **Testes (2026-11-10):**
-
-| Teste | Resultado |
-|---|---|
-| JUnit | 130/130 |
-| Máscaras | 65/65 |
-| Filtros | 32/32 |
-| smoke | 331/331 |
-| smoke-boot | 44/44 |
-| persistência | 11/11 |
-| smoke-real | 50/50 |
-| smoke-dev | 83/83 |
-| CRUD real | 62/62 |
+- **Testes (2026-11-10), todos verdes:** JUnit 130 · máscaras 65 · filtros 32 · smoke 331 · smoke-boot 44 · persistência 11 · smoke-real 50 · smoke-dev 83 · CRUD real 62.
 
 ## Pendências — decisões do usuário (auditoria)
 - Trilha de auditoria (`auditoria_operacoes`): implementar ou descartar.
