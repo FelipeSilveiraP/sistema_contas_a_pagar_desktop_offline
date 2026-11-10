@@ -2,7 +2,7 @@ import { buscarStatus, criarPagador, ErroValidacaoApi } from "../api";
 import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
-import { mascaraCPF } from "../mascaras";
+import { cpfValido, mascaraCPF } from "../mascaras";
 
 interface CamposFormulario {
   nome: string;
@@ -26,20 +26,6 @@ function lerCampos(): CamposFormulario {
     cpf: campo("cpf").value.trim(),
     funcao: campo("funcao").value.trim(),
   };
-}
-
-export function cpfValido(entrada: string): boolean {
-  const cpf = entrada.replace(/\D/g, "");
-  if (cpf.length !== 11 || cpf.split("").every((c) => c === cpf[0])) return false;
-  const d = cpf.split("").map((c) => Number(c));
-  let soma = 0;
-  for (let i = 0; i < 9; i++) soma += d[i] * (10 - i);
-  const dig1 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-  if (dig1 !== d[9]) return false;
-  soma = 0;
-  for (let i = 0; i < 10; i++) soma += d[i] * (11 - i);
-  const dig2 = soma % 11 < 2 ? 0 : 11 - (soma % 11);
-  return dig2 === d[10];
 }
 
 function validar(dados: CamposFormulario): Record<string, string> {

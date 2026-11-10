@@ -13,7 +13,7 @@ import {
 } from "../api";
 import { confirmar, confirmarExclusao } from "../componentes";
 import { montarNavbar } from "../navbar";
-import { mascaraData, mascaraMoeda, paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
 
 type Filtro = "TODOS" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
 
@@ -105,9 +105,9 @@ function renderTabela(): void {
     if (conta.status === "PAGO") tr.classList.add("bg-[#4dffb2]/20");
     if (selecionadoId === conta.id) tr.classList.add("bg-[#FFE600]", "border-l-8", "border-l-[#1c1b1b]");
 
-    const data = celulaTexto(formatarDataBR(conta.vencimento), "py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell");
+    const data = celulaTexto(formatarDataBR(conta.vencimento), "py-3 px-3 font-mono font-bold text-[#1c1b1b] whitespace-nowrap date-cell");
     const empresaTd = document.createElement("td");
-    empresaTd.className = "py-3.5 px-4";
+    empresaTd.className = "py-3 px-3";
     const nome = document.createElement("div");
     nome.className = "font-bold text-[#1c1b1b]";
     nome.textContent = conta.nomeEmpresa;
@@ -115,20 +115,20 @@ function renderTabela(): void {
     desc.className = "text-xs text-neutral-500 font-mono";
     desc.textContent = conta.categoria ?? "";
     empresaTd.append(nome, desc);
-    const valor = celulaTexto(formatarMoedaBR(Math.round(conta.valor * 100)), "py-3.5 px-4 text-right font-mono font-bold whitespace-nowrap");
+    const valor = celulaTexto(formatarMoedaBR(Math.round(conta.valor * 100)), "py-3 px-3 text-right font-mono font-bold whitespace-nowrap");
     valor.firstElementChild!.className = "";
-    const pastaTd = celulaTexto(conta.boletoNaPasta ? "SIM" : "NÃO", "py-3.5 px-4 text-center whitespace-nowrap");
+    const pastaTd = celulaTexto(conta.boletoNaPasta ? "SIM" : "NÃO", "py-3 px-3 text-center whitespace-nowrap");
     pastaTd.firstElementChild!.className = `inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${conta.boletoNaPasta ? "bg-[#006c46]/10 text-[#006c46]" : "bg-neutral-200 text-neutral-700"}`;
     const status = statusDerivado(conta);
-    const statusTd = celulaTexto(status.rotulo, "py-3.5 px-4 text-center whitespace-nowrap");
+    const statusTd = celulaTexto(status.rotulo, "py-3 px-3 text-center whitespace-nowrap");
     statusTd.firstElementChild!.className = `status-badge inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${status.classe}`;
-    const doc = celulaTexto(conta.numeroDocumento ?? "—", "py-3.5 px-4 font-mono text-xs whitespace-nowrap");
+    const doc = celulaTexto(conta.numeroDocumento ?? "—", "py-3 px-3 font-mono text-xs whitespace-nowrap");
     doc.firstElementChild!.className = "";
-    const tipoTd = celulaTexto(conta.tipoPessoa, "py-3.5 px-4 text-center whitespace-nowrap");
+    const tipoTd = celulaTexto(conta.tipoPessoa, "py-3 px-3 text-center whitespace-nowrap");
     tipoTd.firstElementChild!.className = "inline-block bg-neutral-100 text-neutral-600 rounded-full px-2.5 py-1 text-xs font-mono font-bold leading-none";
-    const formaTd = celulaTexto(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "py-3.5 px-4 text-center whitespace-nowrap");
+    const formaTd = celulaTexto(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "py-3 px-3 text-center whitespace-nowrap");
     formaTd.firstElementChild!.className = "inline-block bg-neutral-100 border border-[#1c1b1b] text-neutral-700 px-2 py-0.5 text-xs font-mono font-bold uppercase";
-    const pagador = celulaTexto(conta.pagadorResponsavel, "py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap");
+    const pagador = celulaTexto(conta.pagadorResponsavel, "py-3 px-3 font-mono text-xs text-neutral-700 whitespace-nowrap");
     pagador.firstElementChild!.className = "";
 
     const btnPago = botaoRapido("PAGO", "check",
@@ -418,6 +418,16 @@ function iniciar(): void {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) void estornar(conta);
   });
+  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
+  const tiposEditor: Record<string, "data" | "moeda"> = { vencimento: "data", valor: "moeda" };
+  const editor = el<HTMLInputElement>("newValueInput");
+  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
+  const ajustarTeclado = (): void => {
+    editor.inputMode = tipoEditor() ? "numeric" : "text";
+  };
+  mascaraDinamica(editor, tipoEditor);
+  ajustarTeclado();
+  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);

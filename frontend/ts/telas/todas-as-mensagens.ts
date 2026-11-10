@@ -8,7 +8,7 @@ import {
 } from "../api";
 import { confirmarExclusao } from "../componentes";
 import { montarNavbar } from "../navbar";
-import { formatarDataBR, parseDataBR } from "../mascaras";
+import { formatarDataBR, parseDataBR, mascaraDinamica } from "../mascaras";
 
 let avisos: AvisoDados[] = [];
 let pesquisa = "";
@@ -229,6 +229,16 @@ function iniciar(): void {
   el("btnCancelEdit").addEventListener("click", () => mostrarErro());
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   el("btnDeleteAction").addEventListener("click", () => void excluirSelecionado());
+  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
+  const tiposEditor: Record<string, "data" | "moeda"> = { dataInicio: "data", dataFim: "data" };
+  const editor = el<HTMLInputElement>("newValueInput");
+  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
+  const ajustarTeclado = (): void => {
+    editor.inputMode = tipoEditor() ? "numeric" : "text";
+  };
+  mascaraDinamica(editor, tipoEditor);
+  ajustarTeclado();
+  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
     const aviso = avisos.find((a) => a.id === selecionadoId);
     if (aviso) el<HTMLInputElement>("newValueInput").value = valorAtual(aviso, el<HTMLSelectElement>("fieldSelect").value);

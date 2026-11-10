@@ -2,7 +2,7 @@ import { buscarStatus, criarRecorrente, ErroValidacaoApi, ErroApi } from "../api
 import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
-import { mascaraMoeda, paraCentavos } from "../mascaras";
+import { mascaraDia, mascaraMoeda, paraCentavos } from "../mascaras";
 
 const MAPA_FORMATO: Record<string, string> = {
   BOLETO: "boleto", PIX: "pix", CARTAO: "cartao", DEBITO: "transferencia",
@@ -115,6 +115,7 @@ async function verificarApi(): Promise<void> {
 function iniciar(): void {
   montarNavbar("form-recorrente");
   mascaraMoeda(el<HTMLInputElement>("valor_previsto"));
+  mascaraDia(el<HTMLInputElement>("dia_vencimento"));
 
   el<HTMLFormElement>("recorrente-form").addEventListener("input", () => {
     sujo = true;

@@ -93,7 +93,7 @@ public class EmpresaService {
     }
 
     private static Empresa normalizar(Empresa dados, Long id) {
-        String cnpj = dados.cnpj() == null ? "" : dados.cnpj().replaceAll("\\D", "");
+        String cnpj = dados.cnpj() == null ? "" : dados.cnpj().toUpperCase().replaceAll("[^0-9A-Z]", "");
         List<TelefoneEmpresa> telefones = new ArrayList<>();
         if (dados.telefones() != null) {
             for (TelefoneEmpresa telefone : dados.telefones()) {
@@ -128,7 +128,7 @@ public class EmpresaService {
             erros.put("razaoSocial", "informe a razao social (2 a 120 caracteres)");
         }
         if (empresa.cnpj() != null && !cnpjValido(empresa.cnpj())) {
-            erros.put("cnpj", "CNPJ invalido (14 digitos com digitos verificadores)");
+            erros.put("cnpj", "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)");
         }
         if (empresa.email() != null && !EMAIL.matcher(empresa.email()).matches()) {
             erros.put("email", "email invalido");
@@ -158,10 +158,12 @@ public class EmpresaService {
     }
 
     /**
-     * Validacao de CNPJ por digitos verificadores (mod 11).
+     * Validacao de CNPJ por digitos verificadores (mod 11), numerico ou
+     * alfanumerico (Receita Federal, a partir de 07/2026): 12 caracteres A-Z/0-9
+     * + 2 digitos verificadores; cada caractere vale (codigo ASCII - 48).
      */
     static boolean cnpjValido(String cnpj) {
-        if (cnpj == null || cnpj.length() != 14 || cnpj.chars().allMatch(c -> c == cnpj.charAt(0))) {
+        if (cnpj == null || !cnpj.matches("[0-9A-Z]{12}[0-9]{2}") || cnpj.chars().allMatch(c -> c == cnpj.charAt(0))) {
             return false;
         }
         int[] d = new int[14];

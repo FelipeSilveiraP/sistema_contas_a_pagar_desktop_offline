@@ -9,6 +9,33 @@
     height: 100%;
     overflow-x: hidden;
   }
+  /* reserva o espaco da barra de rolagem nos dois lados: navbar e conteudo
+     ficam no MESMO centro com ou sem rolagem. So em janelas largas: abaixo de
+     1024px os ~30px reservados derrubariam os submenus de 2 para 1 coluna. */
+  @media (min-width: 1024px) {
+    body {
+      scrollbar-gutter: stable both-edges;
+    }
+  }
+  /* CENTRALIZACAO VERTICAL de todas as telas: o bloco "navbar + conteudo"
+     fica no meio da janela, com o mesmo espaco em cima e embaixo. Usa margens
+     automaticas (e nao justify-content:center): se o conteudo for maior que a
+     janela, as margens viram zero e a pagina rola normalmente, sem cortar o topo. */
+  body:not(.submenu-body):not(.menu-body) {
+    display: flex;
+    flex-direction: column;
+    padding-top: clamp(0.75rem, 2.5vmin, 2rem);
+    padding-bottom: clamp(0.75rem, 2.5vmin, 2rem);
+  }
+  body:not(.submenu-body):not(.menu-body) > #nav-global {
+    display: block;
+    flex: 0 0 auto;
+    margin-top: auto;
+  }
+  body:not(.submenu-body):not(.menu-body) > #nav-global + * {
+    flex: 0 0 auto;
+    margin-bottom: auto;
+  }
 }
 
 /* ===== Tela de carregamento — chave giratoria 3D (eixo vertical) ===== */
@@ -413,20 +440,21 @@
 .submenu-wrap {
   width: 100%;
   max-width: 72rem;
-  margin: 0 auto;
+  /* margens automaticas: navbar + conteudo centralizados na vertical (ver base) */
+  margin: auto;
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 3vmin, 2.25rem);
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .submenu-grade {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-content: flex-start;
+  align-content: center;
   gap: clamp(0.75rem, 2vmin, 1.5rem);
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .submenu-cartao {
@@ -468,6 +496,9 @@
     grid-template-columns: repeat(3, 1fr);
     grid-auto-rows: minmax(0, 1fr);
   }
+  /* cartoes preenchem a celula da grade (altura pela tela, nao pela largura):
+     o Menu cabe inteiro na janela, sem rolagem */
+  .menu-grade .cartao { aspect-ratio: auto; min-height: 0; height: 100%; }
   .cartao--inserir   { grid-area: 1 / 1; }
   .cartao--controle  { grid-area: 1 / 3; }
   .cartao--cadastros { grid-area: 2 / 2; }

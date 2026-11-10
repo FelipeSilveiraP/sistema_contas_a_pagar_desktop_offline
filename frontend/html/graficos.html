@@ -7,7 +7,7 @@
 <link href="../dist/tailwind.css" rel="stylesheet">
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black" data-tela="graficos">
 <header id="nav-global"></header>
-<main class="max-w-7xl mx-auto flex flex-col gap-6 py-8 px-4 sm:px-6">
+<main class="max-w-7xl mx-auto flex flex-col gap-4 py-4 px-4 sm:px-6">
 <header class="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 bg-white border-[3px] border-black shadow-[4px_4px_0px_0px_#000]">
 <div class="flex items-center gap-4">
 <div class="flex items-center gap-3">
@@ -64,12 +64,13 @@
 </div>
 </div>
 </section>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 <section class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000]">
 <div class="flex items-center gap-2 pb-3 mb-4 border-b-2 border-black">
 <span class="material-symbols-outlined text-[20px]">show_chart</span>
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider">FLUXO MENSAL (ÚLTIMOS 6 MESES)</h2>
 </div>
-<div class="flex items-end gap-3 h-52 overflow-x-auto pb-2" id="graficoMensal">
+<div class="flex items-end gap-3 h-44 overflow-x-auto pb-2" id="graficoMensal">
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase self-center" id="graficoMensalVazio">Sem movimentação registrada no período.</p>
 </div>
 </section>
@@ -82,6 +83,7 @@
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase" id="graficoCategoriasVazio">Nenhuma categoria com lançamentos no período.</p>
 </div>
 </section>
+</div>
 </main>
 <script type="module" src="../dist/app.js"></script>
 </body></html>

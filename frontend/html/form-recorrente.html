@@ -7,8 +7,8 @@
 <link href="../dist/tailwind.css" rel="stylesheet">
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased" data-tela="form-recorrente">
 <header id="nav-global"></header>
-<div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 flex flex-col gap-6">
-<div class="bg-[#7c3aed] border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] p-4 sm:p-5 flex items-center gap-4">
+<div class="max-w-5xl mx-auto py-4 px-4 sm:px-6 flex flex-col gap-4">
+<div class="bg-[#7c3aed] border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] p-3 sm:p-4 flex items-center gap-4">
 <div class="w-12 h-12 bg-white border-[3px] border-[#121212] shadow-[3px_3px_0px_0px_#121212] flex items-center justify-center p-1.5 flex-shrink-0 text-[#7c3aed]">
 <span class="material-symbols-outlined text-2xl">autorenew</span>
 </div>
@@ -16,7 +16,7 @@
 <h1 class="text-lg sm:text-xl font-bold uppercase tracking-tight text-white drop-shadow-[2px_2px_0px_#121212]">CADASTRAR CONTA RECORRENTE</h1>
 </div>
 </div>
-<form class="p-4 sm:p-6 flex flex-col gap-5 bg-white border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212]" id="recorrente-form" novalidate>
+<form class="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4 bg-white border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212]" id="recorrente-form" novalidate>
 <div class="flex flex-col gap-1.5">
 <label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center gap-1" for="fornecedor"><span>EMPRESA / FORNECEDOR RECORRENTE</span><span class="text-[#7c3aed]">*</span></label>
 <div class="relative flex items-center">
@@ -47,7 +47,7 @@
 <label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center justify-between" for="valor_previsto"><span>VALOR (R$)</span><span class="text-[#7c3aed]">*</span></label>
 <div class="relative flex items-center">
 <span class="absolute left-3.5 text-sm font-bold text-[#1c1b1b]">R$</span>
-<input class="w-full pl-12 pr-4 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="valor_previsto" placeholder="0,00" type="text" autocomplete="off">
+<input class="w-full pl-12 pr-4 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="valor_previsto" placeholder="0,00" type="text" inputmode="numeric" maxlength="14" autocomplete="off">
 </div>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="valor"></p>
 </div>
@@ -55,7 +55,7 @@
 <label class="text-xs sm:text-sm uppercase font-bold text-[#1c1b1b] flex items-center justify-between" for="dia_vencimento"><span>DIA DO VENCIMENTO</span><span class="text-[#7c3aed]">*</span></label>
 <div class="relative flex items-center">
 <span class="absolute left-3.5 material-symbols-outlined text-[20px] text-neutral-500">calendar_today</span>
-<input class="w-full pl-12 pr-16 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="dia_vencimento" max="31" min="1" placeholder="10" type="number">
+<input class="w-full pl-12 pr-16 py-2.5 text-base bg-white text-[#1c1b1b] border-2 border-[#121212] shadow-[3px_3px_0px_0px_#121212] focus:outline-none focus:bg-[#f5f3ff] focus:border-[#7c3aed] transition-all font-bold font-mono" id="dia_vencimento" placeholder="10" type="text" inputmode="numeric" maxlength="2" autocomplete="off">
 <span class="absolute right-3 text-xs text-neutral-500 font-bold uppercase">(1 A 31)</span>
 </div>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="dia"></p>
@@ -86,13 +86,13 @@
 </div>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="formaPagamento"></p>
 </div>
-<div class="pt-4 border-t-4 border-[#121212] flex flex-col-reverse sm:flex-row items-center justify-between gap-4">
+<div class="lg:col-span-2 pt-4 border-t-4 border-[#121212] flex flex-col-reverse sm:flex-row items-center justify-center gap-4">
 <button class="w-full sm:w-auto px-6 py-2.5 bg-white text-[#1c1b1b] text-xs sm:text-sm uppercase border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-center font-bold cursor-pointer" id="btn-cancelar" type="button">← CANCELAR</button>
 <button class="w-full sm:w-auto px-8 py-3 bg-[#7c3aed] text-white text-sm sm:text-base uppercase border-[3px] border-[#121212] shadow-[4px_4px_0px_0px_#121212] hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_#121212] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-center font-bold cursor-pointer flex items-center justify-center gap-2" id="btn-salvar" type="submit">
 <span class="material-symbols-outlined text-xl">save</span> SALVAR RECORRÊNCIA
 </button>
 </div>
-<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-recorrente" role="status"></p>
+<p class="hidden lg:col-span-2 text-center font-headline text-sm font-bold text-[#006c46]" id="feedback-recorrente" role="status"></p>
 </form>
 </div>
 <script type="module" src="../dist/app.js"></script>

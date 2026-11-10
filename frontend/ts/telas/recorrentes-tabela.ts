@@ -6,7 +6,7 @@ import {
   ErroValidacaoApi,
 } from "../api";
 import { montarNavbar } from "../navbar";
-import { mascaraData, mascaraMoeda, paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
 
 const ROTULO_FORMA: Record<string, string> = {
   boleto: "Boleto", pix: "PIX", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro",
@@ -211,6 +211,16 @@ function iniciar(): void {
   });
   el("btnCancelEdit").addEventListener("click", () => mostrarErro());
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
+  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
+  const tiposEditor: Record<string, "data" | "moeda"> = { vencimento: "data", valor: "moeda" };
+  const editor = el<HTMLInputElement>("newValueInput");
+  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
+  const ajustarTeclado = (): void => {
+    editor.inputMode = tipoEditor() ? "numeric" : "text";
+  };
+  mascaraDinamica(editor, tipoEditor);
+  ajustarTeclado();
+  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);

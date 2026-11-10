@@ -17,9 +17,7 @@ import {
 } from "../api";
 import { montarNavbar } from "../navbar";
 import { confirmar, confirmarExclusao, dialogoEstaAberto, menuLateralAberto } from "../componentes";
-import { mascaraCPF, mascaraCNPJ, mascaraTelefone } from "../mascaras";
-import { cnpjValido } from "./form-empresa";
-import { cpfValido } from "./form-pagador";
+import { cnpjValido, cpfValido, formatarCNPJ, formatarCPF, formatarTelefone, mascaraCPF, mascaraCNPJ, mascaraTelefone } from "../mascaras";
 
 type Tipo = "empresas" | "pagadores" | "bancos";
 
@@ -102,10 +100,10 @@ function renderTabela(): void {
   let linhas: HTMLTableRowElement[] = [];
   if (tipo === "empresas") {
     linhas = itensFiltrados(empresas, (e) => `${e.razaoSocial} ${e.cnpj ?? ""} ${e.nomeRepresentante ?? ""} ${e.email ?? ""} ${e.telefones.map((t) => t.numero).join(" ")}`)
-      .map((e) => linhaTabela(e.id, [e.razaoSocial, e.cnpj ?? "—", e.nomeRepresentante ?? "—", e.email ?? "—"]));
+      .map((e) => linhaTabela(e.id, [e.razaoSocial, e.cnpj ? formatarCNPJ(e.cnpj) : "—", e.nomeRepresentante ?? "—", e.email ?? "—"]));
   } else if (tipo === "pagadores") {
     linhas = itensFiltrados(pagadores, (p) => `${p.nome} ${p.cpf} ${p.funcao ?? ""}`)
-      .map((p) => linhaTabela(p.id, [p.nome, p.cpf, p.funcao ?? "—"]));
+      .map((p) => linhaTabela(p.id, [p.nome, p.cpf ? formatarCPF(p.cpf) : "—", p.funcao ?? "—"]));
   } else {
     linhas = itensFiltrados(bancos, (b) => `${b.instituicao} ${b.chavePix ?? ""}`)
       .map((b) => linhaTabela(b.id, [b.instituicao, b.chavePix ?? "—"]));
@@ -152,12 +150,12 @@ function adicionarLinhaTelefone(numero = "", tipo = ""): void {
   const linha = document.createElement("div");
   linha.className = "linha-telefone flex flex-wrap items-center gap-2";
   linha.innerHTML = `
-<input class="form-campo tel-numero flex-1 min-w-[10rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" maxlength="20" placeholder="(11) 99999-0000" autocomplete="off">
+<input class="form-campo tel-numero flex-1 min-w-[10rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" inputmode="numeric" maxlength="15" placeholder="(11) 99999-0000" autocomplete="off">
 <input class="form-campo tel-tipo w-36 border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" maxlength="20" placeholder="Comercial" autocomplete="off">
 <button class="inline-flex items-center justify-center w-10 h-10 bg-white border-4 border-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer tel-remover" type="button" aria-label="Remover telefone">
 <span class="material-symbols-outlined text-base leading-none font-bold">delete</span>
 </button>`;
-  (linha.querySelector(".tel-numero") as HTMLInputElement).value = numero;
+  (linha.querySelector(".tel-numero") as HTMLInputElement).value = formatarTelefone(numero);
   (linha.querySelector(".tel-tipo") as HTMLInputElement).value = tipo;
   mascaraTelefone(linha.querySelector(".tel-numero") as HTMLInputElement);
   linha.querySelector(".tel-remover")!.addEventListener("click", () => {
@@ -190,7 +188,7 @@ function abrirPainel(id: number): void {
     if (!registro) return;
     document.getElementById("painel-titulo")!.textContent = "EDITAR REGISTRO — EMPRESA";
     idCampo("campo-edt-razao").value = registro.razaoSocial;
-    idCampo("campo-edt-cnpj").value = registro.cnpj ?? "";
+    idCampo("campo-edt-cnpj").value = registro.cnpj ? formatarCNPJ(registro.cnpj) : "";
     idCampo("campo-edt-representante").value = registro.nomeRepresentante ?? "";
     idCampo("campo-edt-email").value = registro.email ?? "";
     idCampo("campo-edt-logradouro").value = registro.logradouro ?? "";
@@ -200,7 +198,7 @@ function abrirPainel(id: number): void {
     if (!registro) return;
     document.getElementById("painel-titulo")!.textContent = "EDITAR REGISTRO — PAGADOR";
     idCampo("campo-edt-nome").value = registro.nome;
-    idCampo("campo-edt-cpf").value = registro.cpf;
+    idCampo("campo-edt-cpf").value = registro.cpf ? formatarCPF(registro.cpf) : "";
     idCampo("campo-edt-funcao").value = registro.funcao ?? "";
   } else {
     const registro = bancos.find((b) => b.id === id);
@@ -230,7 +228,7 @@ function validarPainel(): Record<string, string> {
     const cnpj = idCampo("campo-edt-cnpj").value.trim();
     const email = idCampo("campo-edt-email").value.trim();
     if (razao.length < 2 || razao.length > 120) erros.razaoSocial = "informe a razao social (2 a 120 caracteres)";
-    if (cnpj && !cnpjValido(cnpj)) erros.cnpj = "CNPJ invalido (14 digitos com digitos verificadores)";
+    if (cnpj && !cnpjValido(cnpj)) erros.cnpj = "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)";
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email = "email invalido";
     if (idCampo("campo-edt-representante").value.trim().length > 120) erros.nomeRepresentante = "nome do representante deve ter ate 120 caracteres";
     if (idCampo("campo-edt-logradouro").value.trim().length > 120) erros.logradouro = "logradouro deve ter ate 120 caracteres";
@@ -243,8 +241,8 @@ function validarPainel(): Record<string, string> {
     const nome = idCampo("campo-edt-nome").value.trim();
     const cpf = idCampo("campo-edt-cpf").value.trim();
     if (nome.length < 2 || nome.length > 120) erros.nome = "informe o nome (2 a 120 caracteres)";
-    if (!cpfValido(cpf)) erros.cpf = "CPF invalido (11 digitos com digitos verificadores)";
-    if (idCampo("campo-edt-funcao").value.trim().length > 60) erros.funcao = "funcao deve ter ate 60 caracteres";
+    if (cpf && !cpfValido(cpf)) erros.cpf = "CPF invalido (11 digitos com digitos verificadores)";
+    if (idCampo("campo-edt-funcao").value.trim().length > 100) erros.funcao = "funcao deve ter ate 100 caracteres";
   } else {
     const instituicao = idCampo("campo-edt-instituicao").value.trim();
     const chavePix = idCampo("campo-edt-chave-pix").value.trim();

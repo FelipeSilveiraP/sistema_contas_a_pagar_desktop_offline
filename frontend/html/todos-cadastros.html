@@ -51,7 +51,7 @@ Consulte, edite ou exclua os cadastros de Empresas, Pagadores e Bancos.
 </div>
 <div class="flex flex-col gap-1.5">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-cnpj">CNPJ (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cnpj" type="text" maxlength="18" autocomplete="off">
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cnpj" type="text" autocapitalize="characters" maxlength="18" autocomplete="off">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cnpj"></p>
 </div>
 <div class="flex flex-col gap-1.5">
@@ -89,12 +89,12 @@ Consulte, edite ou exclua os cadastros de Empresas, Pagadores e Bancos.
 </div>
 <div class="flex flex-col gap-1.5">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-cpf">CPF</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cpf" type="text" maxlength="14" autocomplete="off">
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-cpf" type="text" inputmode="numeric" maxlength="14" autocomplete="off">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cpf"></p>
 </div>
 <div class="flex flex-col gap-1.5">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-edt-funcao">Função (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-funcao" type="text" maxlength="60" autocomplete="off">
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" id="campo-edt-funcao" type="text" maxlength="100" autocomplete="off">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="funcao"></p>
 </div>
 </div>
@@ -112,8 +112,8 @@ Consulte, edite ou exclua os cadastros de Empresas, Pagadores e Bancos.
 </div>
 </div>
 <div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
-<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-edt" role="status"></p>
-<div class="flex flex-wrap items-center gap-3">
+<p class="hidden text-center font-headline text-sm font-bold text-[#006c46]" id="feedback-edt" role="status"></p>
+<div class="flex flex-wrap items-center justify-center gap-3">
 <button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#ea580c] text-white border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-edt-salvar" type="button">
 <span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
 <span>Salvar</span>

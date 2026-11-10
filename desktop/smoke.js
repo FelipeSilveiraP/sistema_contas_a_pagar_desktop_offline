@@ -907,6 +907,15 @@ async function executar() {
   const erroCnpj = await js(`!document.querySelector('[data-erro-campo="cnpj"]').classList.contains('hidden')`);
   teste("Form Empresa: CNPJ com digitos invalidos e recusado", erroCnpj === true);
 
+  // CNPJ alfanumerico (Receita Federal, 07/2026): mascara aceita letras e converte para maiusculas
+  const cnpjAlfa = await js(`(() => {
+    const el = document.getElementById('campo-cnpj');
+    el.value = '12abc34501de35';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    return el.value;
+  })()`);
+  teste("Form Empresa: mascara aceita CNPJ alfanumerico (12.ABC.345/01DE-35)", cnpjAlfa === "12.ABC.345/01DE-35", cnpjAlfa);
+
   await js(`(() => {
     document.getElementById('campo-cnpj').value = '11.222.333/0001-81';
     document.getElementById('campo-email').value = 'contato@empresa.com.br';
@@ -1012,6 +1021,8 @@ async function executar() {
   const bancoTc = await tcCriar("/api/bancos", { instituicao: `TC BANCO ${sufixoTc}` });
   const pagadorTc = await tcCriar("/api/pagadores", { nome: `TC PAGADOR ${sufixoTc}`, cpf: "529.982.247-25", funcao: "Fiscal" });
   const empresaTc = await tcCriar("/api/empresas", { razaoSocial: `TC EMPRESA ${sufixoTc}`, cnpj: "11.222.333/0001-81" });
+  const pagadorSemCpfTc = await tcCriar("/api/pagadores", { nome: `TC SEMCPF ${sufixoTc}`, funcao: "Caixa" });
+  teste("Todos os Cadastros: pagador sem CPF aceito pela API (CPF opcional)", pagadorSemCpfTc.status === 201, JSON.stringify(pagadorSemCpfTc.status));
   teste("Todos os Cadastros: registros de teste criados via API", bancoTc.status === 201 && pagadorTc.status === 201 && empresaTc.status === 201,
     JSON.stringify({ b: bancoTc.status, p: pagadorTc.status, e: empresaTc.status }));
 
@@ -1026,6 +1037,20 @@ async function executar() {
   const cabecalhoPag = await js(`JSON.stringify([...document.querySelectorAll('#tabela-area th')].map(th => th.textContent.trim()))`);
   teste("Filtro PAGADORES reconfigura colunas", JSON.stringify(JSON.parse(cabecalhoPag)) === JSON.stringify(["Nome", "CPF", "Função"]), cabecalhoPag);
   teste("Filtro PAGADORES lista o pagador de teste", (await js(`document.getElementById('tabela-area').textContent.includes('TC PAGADOR ${sufixoTc}')`)) === true);
+  teste("Filtro PAGADORES exibe o CPF formatado (529.982.247-25)", (await js(`document.getElementById('tabela-area').textContent.includes('529.982.247-25')`)) === true);
+
+  // edicao de pagador SEM CPF: o painel nao pode exigir CPF (campo opcional)
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'TC SEMCPF ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
+  await clicar(`#tabela-area tbody tr`);
+  await esperar(300);
+  await js(`(() => { const el = document.getElementById('campo-edt-funcao'); el.value = 'Caixa Editado'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btn-edt-salvar");
+  const semCpfSalvo = await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
+  teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`document.getElementById('feedback-edt').textContent`)).includes("sucesso"),
+    await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.textContent))`));
+  await js(`(() => { delete document.body.dataset.registroSalvo; const el = document.getElementById('campo-pesquisa'); el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
 
   await clicar("#btn-filtro-bancos");
   await esperar(200);
@@ -1147,14 +1172,24 @@ async function executar() {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  teste("Mascara moeda: digitacao 123456 formata R$ 1.234,56", (await js(`document.getElementById('total_amount').value`)) === "R$ 1.234,56", await js(`document.getElementById('total_amount').value`));
+  teste("Mascara moeda: digitacao 123456 formata 1.234,56 (R$ fica no rotulo, sem duplicar)", (await js(`document.getElementById('total_amount').value`)) === "1.234,56", await js(`document.getElementById('total_amount').value`));
   await js(`(() => {
     const el = document.getElementById('total_amount');
     el.value = 'abc';
     el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  teste("Mascara moeda: letras sao ignoradas", /^R\$ 0,\d{2}$/.test(await js(`document.getElementById('total_amount').value`)) === true, await js(`document.getElementById('total_amount').value`));
+  teste("Mascara moeda: letras sao ignoradas (campo fica vazio)", (await js(`document.getElementById('total_amount').value`)) === "", await js(`document.getElementById('total_amount').value`));
+  // Backspace sobre separador (evento beforeinput real do navegador): nao trava no "/"
+  const dataApagada = await js(`(() => {
+    const el = document.getElementById('due_date');
+    el.focus();
+    el.value = '31/12/2026';
+    el.setSelectionRange(3, 3);
+    el.dispatchEvent(new InputEvent('beforeinput', { inputType: 'deleteContentBackward', bubbles: true, cancelable: true }));
+    return el.value;
+  })()`);
+  teste("Mascara data: Backspace logo apos a barra apaga o digito anterior", dataApagada === "31/22/026", dataApagada);
 
   await js(`(() => {
     const el = document.getElementById('due_date');
@@ -1515,17 +1550,18 @@ async function executar() {
   teste("Cartoes: dimensoes identicas em todos os submenus (1536x864)", padronizado, JSON.stringify({ ref: refDim, ...dimensoes }));
   teste("Cartoes: 2 cartoes mantem o mesmo tamanho dos 3 da Controle", dimensoes.recorrentes.every((r) => Math.abs(r.w - refDim.w) < 1 && Math.abs(r.h - refDim.h) < 1), JSON.stringify(dimensoes.recorrentes));
   teste("Cartoes: grupo centralizado horizontalmente (recorrentes)", simetriaCentral(dimensoes.recorrentes, 1536), JSON.stringify(dimensoes.recorrentes));
-  const alturaNavbar = JSON.parse(
+  const centroVertical = JSON.parse(
     await js(`(() => {
       const barra = document.querySelector('.nav-barra');
-      const cartao = document.querySelector('a[data-modulo]');
-      if (!barra || !cartao) return 'null';
-      const rb = barra.getBoundingClientRect();
-      const rc = cartao.getBoundingClientRect();
-      return JSON.stringify({ distancia: +(rc.top - rb.bottom).toFixed(1) });
+      const cartoes = [...document.querySelectorAll('a[data-modulo]')];
+      if (!barra || !cartoes.length) return 'null';
+      const topo = barra.getBoundingClientRect().top;
+      const base = Math.max(...cartoes.map((c) => c.getBoundingClientRect().bottom));
+      return JSON.stringify({ acima: +topo.toFixed(1), abaixo: +(window.innerHeight - base).toFixed(1) });
     })()`)
   );
-  teste("Cartoes: distancia confortavel da navbar (16 a 60px, sem grude nem vazio)", Boolean(alturaNavbar) && alturaNavbar.distancia >= 16 && alturaNavbar.distancia <= 60, JSON.stringify(alturaNavbar));
+  teste("Navbar + cartoes centralizados na vertical (mesmo espaco em cima e embaixo, tolerancia 24px)",
+    Boolean(centroVertical) && Math.abs(centroVertical.acima - centroVertical.abaixo) <= 24, JSON.stringify(centroVertical));
 
   // 11. Responsividade (medição) + breakpoint da barra + capturas
   if (!fs.existsSync(SAIDA)) fs.mkdirSync(SAIDA, { recursive: true });

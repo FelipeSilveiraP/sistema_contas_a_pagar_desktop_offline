@@ -29,7 +29,7 @@ Cadastre a empresa/fornecedora usada nas despesas da oficina.
 </div>
 <div class="flex flex-col gap-1.5">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-cnpj">CNPJ (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-cnpj" name="cnpj" type="text" inputmode="numeric" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
+<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-cnpj" name="cnpj" type="text" autocapitalize="characters" maxlength="18" autocomplete="off" placeholder="00.000.000/0000-00">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="cnpj"></p>
 </div>
 <div class="flex flex-col gap-1.5">
@@ -60,8 +60,8 @@ Cadastre a empresa/fornecedora usada nas despesas da oficina.
 </div>
 </fieldset>
 <div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
-<p class="hidden font-headline text-sm font-bold text-[#006c46]" id="feedback-empresa" role="status"></p>
-<div class="flex flex-wrap items-center gap-3">
+<p class="hidden text-center font-headline text-sm font-bold text-[#006c46]" id="feedback-empresa" role="status"></p>
+<div class="flex flex-wrap items-center justify-center gap-3">
 <button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-proxima" type="button">
 <span class="material-symbols-outlined text-lg leading-none font-bold">arrow_forward</span>
 <span>Próxima etapa</span>

@@ -68,6 +68,31 @@ class EmpresaServiceTest {
     }
 
     @Test
+    void deveAceitarCnpjAlfanumericoENormalizarParaMaiusculas() {
+        // exemplo oficial da Receita Federal: 12.ABC.345/01DE-35
+        Empresa criada = service.cadastrar(
+                new Empresa(null, "12.abc.345/01de-35", "Empresa Alfanumerica", null, null, null, List.of()));
+
+        assertThat(criada.cnpj()).isEqualTo("12ABC34501DE35");
+    }
+
+    @Test
+    void deveRecusarCnpjAlfanumericoComDigitoVerificadorErrado() {
+        assertThatThrownBy(() -> service.cadastrar(
+                new Empresa(null, "12ABC34501DE36", "Empresa Y", null, null, null, List.of())))
+                .isInstanceOf(DadosInvalidosException.class)
+                .satisfies(erro -> assertThat(((DadosInvalidosException) erro).getCampos())
+                        .containsKey("cnpj"));
+    }
+
+    @Test
+    void deveRecusarCnpjComLetraNosDigitosVerificadores() {
+        assertThat(EmpresaService.cnpjValido("12ABC34501DE3A")).isFalse();
+        assertThat(EmpresaService.cnpjValido("12ABC34501DE35")).isTrue();
+        assertThat(EmpresaService.cnpjValido("11222333000181")).isTrue();
+    }
+
+    @Test
     void deveRecusarSemRazaoSocial() {
         assertThatThrownBy(() -> service.cadastrar(
                 new Empresa(null, null, "", null, null, null, List.of())))

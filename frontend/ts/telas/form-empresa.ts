@@ -2,7 +2,7 @@ import { buscarStatus, criarEmpresa, ErroValidacaoApi } from "../api";
 import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
-import { mascaraCNPJ, mascaraTelefone } from "../mascaras";
+import { cnpjValido, mascaraCNPJ, mascaraTelefone } from "../mascaras";
 
 interface CamposFormulario {
   razaoSocial: string;
@@ -45,27 +45,13 @@ function lerTelefones(): { numero: string; tipo: string }[] {
   return telefones;
 }
 
-export function cnpjValido(entrada: string): boolean {
-  const cnpj = entrada.replace(/\D/g, "");
-  if (cnpj.length !== 14 || cnpj.split("").every((c) => c === cnpj[0])) return false;
-  const d = cnpj.split("").map((c) => Number(c));
-  const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const digito = (pesos: number[]): number => {
-    const soma = pesos.reduce((acc, p, i) => acc + d[i] * p, 0);
-    const resto = soma % 11;
-    return resto < 2 ? 0 : 11 - resto;
-  };
-  return digito(pesos1) === d[12] && digito(pesos2) === d[13];
-}
-
 function validar(dados: CamposFormulario, telefones: { numero: string; tipo: string }[]): Record<string, string> {
   const erros: Record<string, string> = {};
   if (dados.razaoSocial.length < 2 || dados.razaoSocial.length > 120) {
     erros.razaoSocial = "informe a razao social (2 a 120 caracteres)";
   }
   if (dados.cnpj && !cnpjValido(dados.cnpj)) {
-    erros.cnpj = "CNPJ invalido (14 digitos com digitos verificadores)";
+    erros.cnpj = "CNPJ invalido (confira os 14 caracteres e os digitos verificadores)";
   }
   if (dados.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dados.email)) {
     erros.email = "email invalido";
@@ -122,7 +108,7 @@ function adicionarLinhaTelefone(): void {
   const linha = document.createElement("div");
   linha.className = "linha-telefone flex flex-wrap items-center gap-2";
   linha.innerHTML = `
-<input class="form-campo tel-numero flex-1 min-w-[10rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" maxlength="20" placeholder="(11) 99999-0000" autocomplete="off">
+<input class="form-campo tel-numero flex-1 min-w-[10rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" inputmode="numeric" maxlength="15" placeholder="(11) 99999-0000" autocomplete="off">
 <input class="form-campo tel-tipo w-36 border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" maxlength="20" placeholder="Comercial" autocomplete="off">
 <button class="inline-flex items-center justify-center w-10 h-10 bg-white border-4 border-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer tel-remover" type="button" aria-label="Remover telefone">
 <span class="material-symbols-outlined text-base leading-none font-bold">delete</span>

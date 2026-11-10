@@ -96,18 +96,14 @@ function alternarEtapa(etapa: 1 | 2): void {
   const step2 = el<HTMLElement>("step-2");
   if (etapa === 1) {
     step1.classList.remove("hidden");
-    step1.classList.add("flex");
     step2.classList.add("hidden");
-    step2.classList.remove("flex");
     el("step-title-text").textContent = "DADOS BÁSICOS & VENCIMENTO";
     el("step-counter-badge").textContent = "PÁGINA 1 DE 2";
     el("progress-fill").classList.remove("w-full");
     el("progress-fill").classList.add("w-1/2");
   } else {
     step1.classList.add("hidden");
-    step1.classList.remove("flex");
     step2.classList.remove("hidden");
-    step2.classList.add("flex");
     el("step-title-text").textContent = "CATEGORIZAÇÃO & ANEXO";
     el("step-counter-badge").textContent = "PÁGINA 2 DE 2";
     el("progress-fill").classList.remove("w-1/2");
@@ -131,7 +127,7 @@ function montarPayload(forcar: boolean) {
     formaPagamento: dados.formaPagamento,
     categoria: dados.categoria && dados.categoria !== "Selecione a categoria..." ? dados.categoria : undefined,
     numeroDocumento: dados.numeroDocumento || undefined,
-    valor: String(paraCentavos(dados.valor)! / 100),
+    valor: (paraCentavos(dados.valor)! / 100).toFixed(2),
     vencimento: parseDataBR(dados.vencimento)!,
     boletoNaPasta: dados.boletoNaPasta === "sim",
     anexoNome: anexoSelecionado?.nome,

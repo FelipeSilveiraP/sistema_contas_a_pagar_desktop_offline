@@ -12,7 +12,7 @@ import {
 } from "../api";
 import { confirmar } from "../componentes";
 import { montarNavbar } from "../navbar";
-import { mascaraData, mascaraMoeda, paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
 
 let pagamentos: PagamentoDados[] = [];
 let contas: ContaDados[] = [];
@@ -208,6 +208,16 @@ function iniciar(): void {
   el("btnCancelEdit").addEventListener("click", () => mostrarErro());
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   el("btnUnpayAction").addEventListener("click", () => void estornarSelecionado());
+  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
+  const tiposEditor: Record<string, "data" | "moeda"> = { dataPagamento: "data", valorPago: "moeda" };
+  const editor = el<HTMLInputElement>("newValueInput");
+  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
+  const ajustarTeclado = (): void => {
+    editor.inputMode = tipoEditor() ? "numeric" : "text";
+  };
+  mascaraDinamica(editor, tipoEditor);
+  ajustarTeclado();
+  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
     const pagamento = pagamentos.find((p) => p.id === selecionadoId);
     if (pagamento) el<HTMLInputElement>("newValueInput").value = valorAtual(pagamento, el<HTMLSelectElement>("fieldSelect").value);
