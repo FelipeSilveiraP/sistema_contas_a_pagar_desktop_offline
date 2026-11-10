@@ -21,7 +21,7 @@ Consolida `vanilla-typescript-dom` e `frontend-ui-engineering`.
 - **DOM seguro:** use `createElement`, `textContent` e `setAttribute`. **Proibido `innerHTML` com qualquer dado** (risco de XSS). Para estruturas repetidas, use `<template>` + `cloneNode`.
 - **Diálogos:** só via `dialogos.ts`, com as funções `confirmar`, `confirmarExclusao`, `confirmarDuplicidade`, `aviso`, `sucesso`, `erro`, `informacao` e `recorrencia`. Nunca `window.alert/confirm/prompt`.
 - **Guardas de teclado e clique dos formulários:** cheque `dialogoEstaAberto()` e `menuLateralAberto()`. ESC com o menu lateral aberto fecha o menu, não o formulário.
-- **Máscaras:** use `mascaras.ts` (moeda por centavos, CPF, CNPJ, telefone, CEP, data dd/mm/aaaa). Não reimplemente.
+- **Máscaras:** use `mascaras.ts` (`mascaraMoeda/CPF/CNPJ/Telefone/CEP/Data/Dia` e `mascaraDinamica` para campos cujo tipo muda). Não reimplemente. O campo de moeda guarda "1.234,56" e o "R$" fica num `<span>` ao lado. Para exibir dados da API, use `formatarCPF/CNPJ/Telefone/MoedaBR`. Mexeu em máscara? Rode `npm run test:mascaras`.
 - **Navegação:** use `navegacao.ts` (`irPara`, `voltar`, `menuPrincipal`). A pilha fica em `sessionStorage`.
 - **API:** use `api.ts`, que já envia o `X-FinDesk-Token`. O frontend **não** calcula regra financeira: valida formato e mostra o erro que o backend devolve.
 - **Delegação de eventos:** em tabelas, um listener no container + `closest('[data-acao]')`. Remova listeners e timers globais ao sair.
@@ -40,7 +40,7 @@ Consolida `vanilla-typescript-dom` e `frontend-ui-engineering`.
 
 - Faixas testadas: 480, 600, 768, 960, 1280, 1536 e 1920 px. Barra de navegação desktop a partir de ~851 px; abaixo disso, hambúrguer.
 - Os cartões dos submenus têm largura fixa por faixa (padrão compartilhado `.submenu-grade`/`.submenu-cartao`). A quantidade de cartões não muda as dimensões.
-- Sem rolagem horizontal em nenhuma faixa.
+- Sem rolagem horizontal em nenhuma faixa. A partir de 1366×768 as telas cabem sem rolagem vertical: em formulários longos use `lg:grid-cols-2`; os botões de ação ficam centralizados (`justify-center`). Navbar + conteúdo ficam centralizados na VERTICAL pelo CSS base (margens automáticas no elemento logo após `#nav-global` / no `.submenu-wrap`): toda tela nova deve ter `<header id="nav-global">` seguido de UM contêiner de conteúdo. Confira com `npx electron desktop/medir-layout.js --capturas`.
 
 ## Build
 

@@ -34,10 +34,10 @@ O Menu Principal tem 5 botões (também acessíveis pelas teclas de atalho), e u
 | **Gráficos** | Totais pago / a vencer / em atraso, fluxo mensal, gastos por categoria e impressão. |
 
 Recursos gerais:
-- máscaras de moeda, CPF, CNPJ, telefone, CEP e data;
+- máscaras de moeda, CPF, CNPJ (inclusive o novo CNPJ alfanumérico), telefone, CEP e data;
 - pop-ups próprios do sistema para confirmação, erro e sucesso;
 - aviso antes de sair de um formulário com alterações não salvas;
-- layout responsivo de 480 px até 1920 px de largura.
+- layout responsivo de 480 px até 1920 px de largura; a partir de 1366×768 as telas cabem sem rolar.
 
 Regras financeiras importantes:
 - **um pagamento por conta**, que pode ter valor diferente da conta (juros ou desconto);
@@ -116,6 +116,8 @@ npx electron desktop/smoke-boot.js        # tempo de inicialização
 npx electron desktop/smoke-real.js        # cliques e teclado reais do Windows
 node desktop/smoke-dev.js                 # cenário real do `npm run dev` (regressão do bug de foco)
 node desktop/teste-persistencia.js        # os dados sobrevivem a fechar e reabrir o app
+npm run test:mascaras                     # máscaras de CPF, CNPJ, telefone, data e moeda
+npx electron desktop/medir-layout.js      # mede rolagem e centralização das telas em 3 resoluções
 ```
 
 - **Banco isolado:** todos os testes usam um banco temporário, definido pela variável `FINDESK_DB_PATH`, e nunca tocam o banco real da empresa.

@@ -4,24 +4,16 @@
 
 **Atualizado em:** 2026-11-09 — branch `feature/layout-mascaras-contexto`
 
-## Foco atual
-- Centralizar as telas e a navbar e eliminar a rolagem causada por formulários grandes demais.
-- Revisar input por input as máscaras de todos os formulários, com testes automatizados.
+## Entrega atual (concluída, aguardando validação visual do usuário)
+- **Layout:** todas as telas cabem sem rolar a partir de 1366×768; os formulários longos usam 2 colunas em telas largas; os botões de ação estão centralizados; a navbar fica na mesma posição em todas as telas; o Menu não corta mais os cartões.
+- **Máscaras:** reescritas como funções puras e testadas. Trazem o "R$" sem duplicar, Backspace sobre separadores, CNPJ alfanumérico, máscara nos editores das tabelas e o dia com 2 dígitos. O CPF é opcional também na edição.
 
 ## Situação
 - Fases 1–3 concluídas: todas as telas do Stitch estão implementadas e gravam no SQLite.
-- Última regressão completa (2026-11-09):
+- Testes: JUnit, `teste-mascaras`, smoke, smoke-boot, smoke-real, smoke-dev e persistência. Os números estão no último commit da entrega.
 
-| Teste | Resultado |
-|---|---|
-| JUnit | 120/120 |
-| smoke | 326/326 |
-| smoke-boot | 44/44 |
-| smoke-real | 50/50 |
-| smoke-dev | 83/83 |
-| persistência | 11/11 |
-
-## Pendências do usuário
+## Pendências
+- **Menu:** a tabela "Mensagens do dia" ainda mostra dados FICTÍCIOS fixos do design (contas de 2023), ligados a nada. Precisa ser conectada a `/api/contas/alertas`.
 - Validação visual final na resolução real do monitor da empresa.
 - Validação manual do bug de foco/digitação no uso real (`npm run dev`).
 - Revogar a chave de API da Xiaomi que está em `chat_mimo.ps1` (fora do Git).

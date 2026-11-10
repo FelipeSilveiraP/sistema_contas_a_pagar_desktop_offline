@@ -39,6 +39,8 @@ Antes de rodar: `mvn -f backend/pom.xml package` (gera o jar) e `npm run build`.
 | `desktop/smoke-real.js` | `npx electron desktop/smoke-real.js` | Clique, digitação, TAB e hover **reais** do Windows (`entrada-real.ps1`, SendInput) |
 | `desktop/smoke-dev.js` | `node desktop/smoke-dev.js` | Reproduz o `npm run dev` com entrada real. **Regressão obrigatória do bug de foco dos inputs.** |
 | `desktop/teste-persistencia.js` | `node desktop/teste-persistencia.js` | Grava, mata o processo, reabre a frio e confere os dados |
+| `desktop/teste-mascaras.js` | `npm run test:mascaras` | Funções puras das máscaras: formatação, cursor, Backspace sobre separador, CPF/CNPJ (inclusive alfanumérico), `paraCentavos` e datas. Roda sem Electron. |
+| `desktop/medir-layout.js` | `npx electron desktop/medir-layout.js --capturas` | Rolagem e centralização das 18 telas em 3 resoluções. É uma ferramenta de inspeção, sem aprovado/reprovado. |
 
 - `smoke.js`, `smoke-boot.js` e `smoke-real.js` dependem de `require("electron")`, então **rodam com `npx electron`, não com `node`**.
 - `smoke-real` e `smoke-dev` movem o mouse e o teclado de verdade. Ninguém pode usar o PC durante, senão há falso negativo.

@@ -28,6 +28,8 @@ npx electron desktop/smoke-boot.js     # tempos de boot + interação imediata
 npx electron desktop/smoke-real.js     # entrada real do Windows (SendInput via desktop/entrada-real.ps1)
 node desktop/smoke-dev.js              # reproduz `npm run dev` com entrada real — regressão obrigatória do bug de foco dos inputs
 node desktop/teste-persistencia.js     # cold start: dados sobrevivem ao reinício do backend
+npm run test:mascaras                  # testes unitários das máscaras (sem Electron)
+npx electron desktop/medir-layout.js --capturas   # rolagem/centralização das 18 telas em 3 resoluções
 ```
 
 Os smokes e o teste de persistência exigem o jar já compilado e o frontend já buildado. smoke-real/smoke-dev movem mouse/teclado de verdade — não interagir com a máquina enquanto rodam.
@@ -42,7 +44,7 @@ Os smokes e o teste de persistência exigem o jar já compilado e o frontend já
 - `navbar.ts` — navbar global fixa (barra desktop + hambúrguer); módulo ativo via `MODULO_DA_TELA`.
 - `submenus-config.ts` + `telas/submenu.ts` — submenus são gerados por config, não por HTML.
 - `dialogos.ts` — todos os pop-ups (`confirmar`, `confirmarExclusao`, `confirmarDuplicidade`, `aviso`, `sucesso`, `erro`...). **Nunca usar `window.alert/confirm/prompt`**: diálogos nativos causavam o bug de inputs mortos no Electron 33/Windows. Handlers de teclado dos forms devem checar `dialogoEstaAberto()` / `menuLateralAberto()`.
-- `mascaras.ts` — máscaras de moeda (por centavos), CPF, CNPJ, telefone, CEP, data.
+- `mascaras.ts` — máscaras (funções puras `limpar`/`montar` + ligação com o input) e validações de CPF/CNPJ (inclui CNPJ alfanumérico). Campo de moeda exibe "1.234,56" (o "R$" é rótulo ao lado). Testes em `desktop/teste-mascaras.js`.
 - DOM somente via `createElement`/`textContent` (sem `innerHTML` com dados). Tailwind varre também `frontend/ts/**`, então classes podem estar no TS. Fontes são locais (offline, sem CDN).
 
 **Backend (`backend/`, pacote `com.chaveiro`)**: `api/*Controller` → `service/*Service` → `repository/*Repository` (JDBC puro, PreparedStatements) → SQLite. `web/TokenFilter` rejeita com 401 requisições sem o token; `api/ApiExceptionHandler` mapeia as exceções de `service/` (`DadosInvalidosException`, `RecursoNaoEncontradoException`, `ConflitoIntegridadeException`, `PossivelDuplicataException`) para JSON padronizado. `database/ConnectionFactory` resolve o banco (`FINDESK_DB_PATH` ou `%LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar\contas_a_pagar.db`) e aplica PRAGMAs (WAL, foreign_keys, busy_timeout) por conexão. `database/InicializadorBanco` (ApplicationRunner) faz backup pré-migração, roda `DatabaseInitializer` (migrações aditivas versionadas por `PRAGMA user_version`, `VERSAO_ATUAL`) e backup diário; `BackupService` usa `VACUUM INTO`. Testes usam `src/test/resources/application.properties`, que aponta para um banco aleatório em `backend/target/banco-testes/`.
