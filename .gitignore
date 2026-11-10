@@ -94,3 +94,6 @@ $RECYCLE.BIN/
 
 # Logs de diagnostico gerados pelos smoke tests (smoke-dev)
 docs/diagnostico-*/
+
+# Fase 5: Java minimo gerado pelo jlink (instalador/gerar-jre.js)
+build/

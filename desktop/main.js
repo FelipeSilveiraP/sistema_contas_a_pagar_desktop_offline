@@ -15,8 +15,45 @@ let menuLiberado = false;
 
 // Marcos de tempo do ciclo de inicializacao (sem tokens nem caminhos sensiveis)
 const INICIO_PROCESSO = Date.now();
+// ===== Log em arquivo com rotacao (Fase 5) =====
+// Fica ao lado do banco: %LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar\logs (ou, nos
+// testes, ao lado do banco temporario de FINDESK_DB_PATH — logs de teste nunca se
+// misturam com os da empresa). app.log = processo Electron; backend.log = Spring.
+// Nunca registrar o token da API.
+const LIMITE_LOG_BYTES = 5 * 1024 * 1024;
+const ARQUIVOS_LOG_ANTIGOS = 3;
+
+function caminhoBanco() {
+  if (process.env.FINDESK_DB_PATH) return path.resolve(process.env.FINDESK_DB_PATH);
+  const local = process.env.LOCALAPPDATA || path.join(require("os").homedir(), "AppData", "Local");
+  return path.join(local, "ChaveiroUniversal", "ContasAPagar", "contas_a_pagar.db");
+}
+
+const PASTA_LOGS = path.join(path.dirname(caminhoBanco()), "logs");
+
+function registrarLog(nivel, mensagem) {
+  try {
+    fs.mkdirSync(PASTA_LOGS, { recursive: true });
+    const arquivo = path.join(PASTA_LOGS, "app.log");
+    if (fs.existsSync(arquivo) && fs.statSync(arquivo).size > LIMITE_LOG_BYTES) {
+      for (let i = ARQUIVOS_LOG_ANTIGOS; i >= 1; i--) {
+        const origem = i === 1 ? arquivo : path.join(PASTA_LOGS, `app.${i - 1}.log`);
+        if (fs.existsSync(origem)) fs.renameSync(origem, path.join(PASTA_LOGS, `app.${i}.log`));
+      }
+    }
+    fs.appendFileSync(arquivo, `${new Date().toISOString()} ${nivel} ${mensagem}\n`);
+  } catch {
+    // log nunca pode derrubar o aplicativo
+  }
+}
+
+process.on("uncaughtException", (erro) => {
+  registrarLog("ERROR", `erro nao tratado no processo principal: ${erro && erro.stack ? erro.stack : erro}`);
+});
+
 function marco(nome) {
   console.log(`[startup] ${nome} +${Date.now() - INICIO_PROCESSO}ms`);
+  registrarLog("INFO", `[startup] ${nome} +${Date.now() - INICIO_PROCESSO}ms`);
 }
 marco("processo-inicio");
 
@@ -211,13 +248,24 @@ async function iniciarBackend() {
   porta = await portaLivre();
   token = crypto.randomBytes(24).toString("hex");
 
-  const jar = path.join(__dirname, "..", "backend", "target", "findesk-backend-0.1.0.jar");
+  // Instalado (Fase 5): Java minimo (jlink) e jar vem em resources/ do instalador.
+  // Em desenvolvimento: java do PATH + jar gerado pelo Maven.
+  const jar = app.isPackaged
+    ? path.join(process.resourcesPath, "backend", "findesk-backend.jar")
+    : path.join(__dirname, "..", "backend", "target", "findesk-backend-0.1.0.jar");
+  const java = app.isPackaged ? path.join(process.resourcesPath, "jre", "bin", "java.exe") : "java";
   if (!fs.existsSync(jar)) {
+    registrarLog("ERROR", `backend nao encontrado em ${jar}`);
     throw new Error("backend nao compilado. Execute: mvn -f backend/pom.xml package");
   }
 
-  const proc = spawn("java", ["-jar", jar], {
-    env: { ...process.env, SERVER_PORT: String(porta), FINDESK_API_TOKEN: token },
+  const proc = spawn(java, ["-Xmx256m", "-jar", jar], {
+    env: {
+      ...process.env,
+      SERVER_PORT: String(porta),
+      FINDESK_API_TOKEN: token,
+      FINDESK_LOG_FILE: path.join(PASTA_LOGS, "backend.log"),
+    },
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
   });
@@ -230,10 +278,12 @@ async function iniciarBackend() {
     if (proc !== processoBackend) return;
     if (encerrando) return;
     if (estadoInicializacao === "pronto") {
-      dialog.showErrorBox(NOME_APP, `O backend encerrou inesperadamente (código ${codigo}).`);
+      registrarLog("ERROR", `backend encerrou inesperadamente (codigo ${codigo})`);
+      dialog.showErrorBox(NOME_APP, `O sistema encontrou um problema e precisa ser fechado (código ${codigo}). Abra de novo pelo atalho. Se repetir, envie a pasta de logs: ${PASTA_LOGS}`);
       app.quit();
     } else {
       console.error(`[startup] backend encerrou durante a inicializacao (codigo ${codigo})`);
+      registrarLog("ERROR", `backend encerrou durante a inicializacao (codigo ${codigo})`);
       definirEstadoInicializacao("falhou");
     }
   });
@@ -254,6 +304,7 @@ async function prepararAplicativo() {
     liberarAplicativo();
   } catch (erro) {
     console.error("[startup] falha na inicializacao:", erro.message);
+    registrarLog("ERROR", `falha na inicializacao: ${erro.message}`);
     definirEstadoInicializacao("falhou");
     throw erro;
   }

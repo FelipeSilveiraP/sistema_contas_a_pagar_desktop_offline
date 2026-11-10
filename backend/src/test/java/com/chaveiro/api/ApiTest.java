@@ -20,6 +20,15 @@ class ApiTest {
     private MockMvc mvc;
 
     @Test
+    void deveResponder400ParaJsonMalformadoEmVezDeErroInterno() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/contas")
+                        .header("X-FinDesk-Token", TOKEN)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"nomeEmpresa\": "))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void deveNegarStatusSemToken() throws Exception {
         mvc.perform(get("/api/status")).andExpect(status().isUnauthorized());
     }

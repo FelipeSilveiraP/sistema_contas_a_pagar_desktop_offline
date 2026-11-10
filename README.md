@@ -97,6 +97,8 @@ npm run dev                      # compila o frontend e abre o aplicativo
 
 Depois da primeira compilação, `EXECUTAR_SISTEMA.bat` abre o aplicativo com dois cliques.
 
+**Instalador para o computador da loja:** `npm run instalador` gera `release/Contas a Pagar - Chaveiro Universal - Instalador <versão>.exe`, que já leva o Java dentro. Instalação, atualização, local dos dados e logs estão em [docs/instalacao.md](docs/instalacao.md).
+
 | Comando | Para quê |
 |---|---|
 | `npm run dev` | Compila o frontend e abre o app |
@@ -192,8 +194,8 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 | Fase 1 — Interface + API local | Concluída |
 | Fase 2 — Navegação completa + barra global | Concluída |
 | Fase 3 — Cadastros, contas, pagamentos, recorrentes, mensagens e gráficos (SQLite) | Concluída — em validação pelo usuário |
-| Fase 4 — Filtros avançados, gráficos consolidados e impressão | Não iniciada |
-| Fase 5 — Logs com rotação, instalador Windows (Electron + JRE embutido), atualização | Não iniciada |
+| Fase 4 — Filtros avançados, gráficos consolidados e impressão | Concluída |
+| Fase 5 — Logs com rotação, instalador Windows (Electron + JRE embutido), atualização | Concluída |
 
 Pendências conhecidas:
 - validação visual final na resolução do monitor da empresa;
