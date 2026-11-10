@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Projeto: **Sistema de Contas a Pagar — Chaveiro Universal** — app desktop 100% offline (Electron + TypeScript puro + Spring Boot 3.3/Java 21 + SQLite WAL) que substitui uma planilha Excel/VBA. Código, comentários, commits e UI são em português.
 
-`AGENTS.md` contém as regras permanentes do projeto (segurança, banco operacional, git, testes obrigatórios, tabela de skills) — siga-o. As skills do projeto ficam em `.claude/skills/` (fluxo-de-entrega, electron-desktop, frontend-telas, backend-spring, sqlite-financeiro, testes, depuracao, simplicidade). No início de uma tarefa leia `.memory-bank/activeContext.md` e `.memory-bank/systemPatterns.md`; ao concluir uma entrega atualize `activeContext.md` e `progress.md`.
+`AGENTS.md` contém as regras permanentes do projeto (segurança, banco operacional, git, testes obrigatórios, tabela de skills) — siga-o. As skills do projeto ficam em `.claude/skills/` (fluxo-de-entrega, electron-desktop, frontend-telas, backend-spring, sqlite-financeiro, testes, depuracao, simplicidade). No início de uma tarefa leia `docs/estado-atual.md` (foco e pendências) e consulte `docs/decisoes.md` (decisões de negócio e arquitetura já tomadas); ao concluir uma entrega reescreva `estado-atual.md` (máx. 30 linhas) e acrescente as decisões novas em `decisoes.md`.
 
 ## Comandos
 

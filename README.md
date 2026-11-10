@@ -140,12 +140,13 @@ node desktop/teste-persistencia.js        # os dados sobrevivem a fechar e reabr
 │   ├── css/  assets/     # Tailwind de entrada e fontes locais
 │   └── dist/             # gerado pelo build (não versionado)
 ├── docs/
+│   ├── estado-atual.md   # foco atual e pendências (curto, reescrito a cada entrega)
+│   ├── decisoes.md       # registro de decisões de negócio e arquitetura
 │   ├── plano-telas.md    # plano das telas e da navegação
 │   ├── stitch/           # HTML de referência de cada tela do design
 │   └── responsivo/       # capturas geradas pelos smoke tests
 ├── telas_referencia/     # imagens PNG do design Stitch
 ├── .claude/skills/       # skills para agentes de IA (Claude Code / OpenCode)
-├── .memory-bank/         # contexto do projeto para agentes de IA
 ├── AGENTS.md / CLAUDE.md # instruções para agentes de IA
 └── BRIEFING_PROJETO.md   # briefing original do projeto
 ```

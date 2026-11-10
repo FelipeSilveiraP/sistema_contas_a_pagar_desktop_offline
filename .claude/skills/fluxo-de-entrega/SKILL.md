@@ -5,11 +5,11 @@ description: Processo de planejar, executar e verificar uma entrega (fatia verti
 
 # Fluxo de entrega (planejar → executar → verificar)
 
-Consolida as antigas `gsd-plan-phase`, `gsd-execute-phase`, `gsd-verify-work`, `planning-and-task-breakdown` e `project-memory-bank`.
+Consolida as antigas `gsd-plan-phase`, `gsd-execute-phase`, `gsd-verify-work`, `planning-and-task-breakdown` e `project-memory-bank` (o memory bank foi substituído por `docs/estado-atual.md` + `docs/decisoes.md`).
 
 ## 1. Planejar
 
-1. Leia o contexto do projeto antes de varrer o código: `CLAUDE.md` e os arquivos de contexto citados nele.
+1. Leia o contexto antes de varrer o código: `docs/estado-atual.md` e `docs/decisoes.md`.
 2. Defina o escopo: o que **entra** e o que **não entra** (YAGNI). Uma entidade de negócio por entrega.
 3. Triangule as fontes, nesta ordem de autoridade:
    - **design:** Stitch (`docs/stitch/<tela>.html`, `telas_referencia/`);
@@ -62,5 +62,5 @@ node desktop/smoke-dev.js                # regressão obrigatória do bug de foc
 
 ## 4. Registrar
 
-- Ao fechar a entrega, atualize o contexto do projeto (estado atual + próximos passos), de forma curta, sem colar código.
+- Ao fechar a entrega: **reescreva** `docs/estado-atual.md` (máx. 30 linhas: foco, situação, pendências) e acrescente cada decisão nova em `docs/decisoes.md` (2–3 linhas, com data). Sem colar código.
 - Faça commits locais atômicos numa branch de feature. **Nunca commit direto na `main` e nunca `git push` sem ordem explícita.**

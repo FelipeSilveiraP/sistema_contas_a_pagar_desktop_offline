@@ -64,12 +64,11 @@ Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 
 ---
 
-## 6. Referências ao Memory Bank & Economia de Tokens
+## 6. Contexto do Projeto & Economia de Tokens
 
-Para otimizar o consumo de tokens da API e manter o contexto contínuo entre sessões:
-1. **Consulte o Memory Bank no Início:** Sempre leia `.memory-bank/activeContext.md` e `.memory-bank/systemPatterns.md` antes de varrer o workspace.
-2. **Atualize o Memory Bank no Fim:** Ao concluir uma entrega ou decisão arquitetural, atualize `.memory-bank/activeContext.md` e marque o progresso em `.memory-bank/progress.md`.
-3. **Nunca Duplique Código Bruto:** Mantenha resumos concisos e use referências a arquivos locais.
+1. **No início:** leia `docs/estado-atual.md` (foco e pendências) e consulte `docs/decisoes.md` antes de decidir algo que já possa ter sido decidido.
+2. **No fim de cada entrega:** **reescreva** `docs/estado-atual.md` (máx. 30 linhas, sem histórico) e acrescente em `docs/decisoes.md` cada decisão nova (2–3 linhas, com data).
+3. **Nunca duplique código bruto** nesses arquivos: use resumos e referências a arquivos.
 
 ---
 
