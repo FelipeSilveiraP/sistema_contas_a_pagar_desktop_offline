@@ -91,3 +91,6 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 $RECYCLE.BIN/
+
+# Logs de diagnostico gerados pelos smoke tests (smoke-dev)
+docs/diagnostico-*/
