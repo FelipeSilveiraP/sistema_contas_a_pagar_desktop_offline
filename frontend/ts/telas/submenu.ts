@@ -4,17 +4,16 @@ import { registrarAtalhos, respostaProvisoria } from "../componentes";
 import { montarNavbar } from "../navbar";
 import { BotaoSubmenu, ConfigSubmenu } from "../submenus-config";
 
-function cartaoHtml(botao: BotaoSubmenu, ultimo: boolean): string {
-  const classeUltimo = ultimo ? " submenu-cartao--ultimo" : "";
+function cartaoHtml(botao: BotaoSubmenu): string {
   const traco = botao.traco ?? "2.5";
-  return `<a class="submenu-cartao group relative flex flex-col border-4 border-[#1c1b1b] shadow-[8px_8px_0_0_#1c1b1b] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0_0_#1c1b1b] transition-all cursor-pointer no-underline overflow-hidden select-none${classeUltimo}" data-modulo="${botao.chave}" href="#">
+  return `<a class="submenu-cartao group relative flex flex-col border-4 border-[#1c1b1b] shadow-[8px_8px_0_0_#1c1b1b] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[12px_12px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0_0_#1c1b1b] transition-all cursor-pointer no-underline overflow-hidden select-none" data-modulo="${botao.chave}" href="#">
 <div class="submenu-cartao__area ${botao.cor} flex items-center justify-center relative">
 <div class="w-24 h-24 sm:w-28 sm:h-28 bg-white border-4 border-[#1c1b1b] shadow-[4px_4px_0_0_#1c1b1b] flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
 <svg class="w-12 h-12 sm:w-14 sm:h-14 text-[#1c1b1b]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="${traco}" viewBox="0 0 24 24">${botao.icone}</svg>
 </div>
 </div>
-<div class="border-t-4 border-[#1c1b1b] bg-white px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
-<span class="font-headline font-bold text-lg sm:text-xl tracking-wider text-[#1c1b1b] uppercase">${botao.rotulo}</span>
+<div class="submenu-cartao__descricao border-t-4 border-[#1c1b1b] bg-white px-5 sm:px-6 py-3 flex items-center justify-between">
+<span class="font-headline font-bold text-lg sm:text-xl leading-tight tracking-wider text-[#1c1b1b] uppercase">${botao.rotulo}</span>
 <div class="w-8 h-8 sm:w-9 sm:h-9 ${botao.cor} border-2 border-[#1c1b1b] shadow-[2px_2px_0_0_#1c1b1b] flex items-center justify-center shrink-0 ml-2">
 <span class="material-symbols-outlined text-base sm:text-lg ${botao.seloTexto} font-bold">${botao.selo}</span>
 </div>
@@ -69,9 +68,7 @@ export function iniciarSubmenu(tela: Tela, config: ConfigSubmenu): void {
   document.body.dataset.botoes = String(config.botoes.length);
   const grade = document.querySelector(".submenu-grade");
   if (grade) {
-    grade.innerHTML = config.botoes
-      .map((botao, indice) => cartaoHtml(botao, indice === config.botoes.length - 1))
-      .join("");
+    grade.innerHTML = config.botoes.map((botao) => cartaoHtml(botao)).join("");
   }
   montarNavbar(tela);
   registrarOpcoes(config);

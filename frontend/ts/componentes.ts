@@ -1,32 +1,33 @@
-// Reparo de foco pos-dialogo modal nativo (alert/confirm): no Electron 33 /
-// Windows, ao fechar esses dialogos a janela volta a ficar ATIVA sem que o
-// widget do Chromium re-emit o ciclo de foco da PAGINA (document.hasFocus()
-// fica falso); o teclado passa a ser engolido e os inputs morrem. O reparo e
-// um ciclo blur->focus na janela executado pelo processo principal
-// (findesk:reparar-foco) — o mesmo mecanismo que restaura o uso apos
-// minimizar/restaurar. Chamada unica e dirigida por evento (sem timers).
-function repararFocoPosDialogo(): void {
-  window.focus();
-  void window.finDesk?.repararFoco();
-}
+// Componentes transversais: atalhos + dialogs neobrutalistas.
+// window.alert/window.confirm sao PROIBIDOS nos fluxos do aplicativo — usar
+// confirmar()/aviso()/sucesso()/erro()/informacao() do ./dialogos (API
+// assincrona que devolve a escolha do usuario, com foco gerenciado e sem o
+// defeito de perda de foco dos dialogs modais nativos do Electron/Windows).
+import { aviso, dialogoEstaAberto } from "./dialogos";
 
-export function confirmar(mensagem: string): boolean {
-  const resposta = window.confirm(mensagem);
-  repararFocoPosDialogo();
-  return resposta;
-}
-
-export function aviso(mensagem: string): void {
-  window.alert(mensagem);
-  repararFocoPosDialogo();
-}
+export {
+  confirmar,
+  confirmarExclusao,
+  confirmarDuplicidade,
+  aviso,
+  sucesso,
+  erro,
+  informacao,
+  recorrencia,
+  dialogoEstaAberto,
+} from "./dialogos";
 
 export function respostaProvisoria(nome: string, tipo = "Módulo"): void {
-  aviso(`${tipo} ${nome}\n\nDisponível nas próximas fases do Sistema de Contas a Pagar — Chaveiro Universal.`);
+  void aviso(`${tipo} ${nome}\n\nDisponível nas próximas fases do Sistema de Contas a Pagar — Chaveiro Universal.`);
+}
+
+export function menuLateralAberto(): boolean {
+  return document.getElementById("nav-global")?.dataset.menuAberto === "true";
 }
 
 export function registrarAtalhos(mapa: Record<string, () => void>): void {
   document.addEventListener("keydown", (evento) => {
+    if (dialogoEstaAberto()) return;
     const acao = mapa[evento.key];
     if (!acao) return;
     evento.preventDefault();

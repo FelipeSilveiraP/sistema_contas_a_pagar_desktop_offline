@@ -7,7 +7,7 @@ import {
   ErroApi,
   ContaDados,
 } from "../api";
-import { confirmar } from "../componentes";
+import { confirmar, confirmarDuplicidade, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import {
@@ -170,9 +170,9 @@ async function submeter(): Promise<void> {
         `Valor: ${formatarMoedaBR(Math.round(e.valor * 100))}`,
       ];
       if (e.numeroDocumento) linhas.push(`Documento: ${e.numeroDocumento}`);
-      const inserir = confirmar(
-        "Possivel duplicidade de conta!\n\nJa existe uma conta semelhante:\n"
-          + linhas.join("\n") + "\n\nDeseja inserir mesmo assim?"
+      const inserir = await confirmarDuplicidade(
+        "Encontramos uma conta semelhante a que voce esta cadastrando. Deseja continuar mesmo assim?",
+        linhas.join("\n")
       );
       if (!inserir) return;
       await enviar(true);
@@ -311,31 +311,39 @@ function iniciar(): void {
     void submeter();
   });
   el("btn-cancelar").addEventListener("click", () => {
-    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
-    void voltar();
+    void (async () => {
+      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      void voltar();
+    })();
   });
 
   document.addEventListener("keydown", (evento) => {
+    if (dialogoEstaAberto() || menuLateralAberto()) return;
     if (evento.key === "F10") {
       evento.preventDefault();
       void submeter();
     }
     if (evento.key !== "Escape" || !sujo) return;
-    if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-      evento.preventDefault();
-      evento.stopPropagation();
-    }
-  });
+    evento.preventDefault();
+    evento.stopPropagation();
+    void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      if (ok) void voltar();
+    });
+  }, true);
 
+  let navegacaoConfirmada = false;
   document.addEventListener(
     "click",
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
-      if (!alvo || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (!alvo || !sujo || navegacaoConfirmada || dialogoEstaAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      navegacaoConfirmada = true;
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) alvo.click();
+        navegacaoConfirmada = false;
+      });
     },
     true
   );

@@ -11,6 +11,35 @@
   }
 }
 
+/* ===== Tela de carregamento — chave giratoria 3D (eixo vertical) ===== */
+
+.chave-giratoria {
+  width: 4.5rem;
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 480px;
+}
+
+.chave-giratoria__svg {
+  width: 3.25rem;
+  height: 3.25rem;
+  transform-style: preserve-3d;
+  animation: chave-girar 2.4s linear infinite;
+}
+
+@keyframes chave-girar {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chave-giratoria__svg {
+    animation: none;
+  }
+}
+
 /* ===== Menu Principal — layout responsivo (Grid/Flexbox + media queries) ===== */
 
 .menu-body {
@@ -183,52 +212,80 @@
   stroke-linejoin: miter;
 }
 
-/* CORES DOS ICONES */
+/* CORES DOS ICONES (quadrado) — cor oficial do modulo */
 
 .icone-amarelo {
-  background: #ffe500;
-}
-
-.icone-laranja {
-  background: #ff8400;
-}
-
-.icone-branco {
-  background: #ffffff;
-}
-
-.icone-rosa {
-  background: #fa78b8;
-}
-
-.icone-verde {
-  background: #35e87d;
-}
-
-/* HOVER: cor do botao respectivo da tela do Menu (fundos brancos por padrao) */
-
-.barra-navegacao .nav-item[data-nav="menu"]:hover {
   background: #ffe600;
 }
 
-.barra-navegacao .nav-item[data-nav="cadastros"]:hover {
-  background: #ff8400;
+.icone-laranja {
+  background: #ff8c00;
 }
 
-.barra-navegacao .nav-item[data-nav="controle"]:hover {
-  background: #38bdf8;
+.icone-azul {
+  background: #2563eb;
 }
 
-.barra-navegacao .nav-item[data-nav="mensagens"]:hover {
+.icone-rosa {
   background: #ff5e89;
 }
 
-.barra-navegacao .nav-item[data-nav="graficos"]:hover {
+.icone-verde {
   background: #00ff66;
 }
 
-.barra-navegacao .nav-item[data-nav="voltar"]:hover {
-  background: #eeeeee;
+/* COR DO MODULO + CONTRASTE DE TEXTO POR BOTAO */
+
+.barra-navegacao .nav-item[data-nav="menu"] {
+  --cor-modulo: #ffe600;
+  --cor-texto-forte: #1c1b1b;
+}
+
+.barra-navegacao .nav-item[data-nav="cadastros"] {
+  --cor-modulo: #ff8c00;
+  --cor-texto-forte: #1c1b1b;
+}
+
+.barra-navegacao .nav-item[data-nav="controle"] {
+  --cor-modulo: #2563eb;
+  --cor-texto-forte: #ffffff;
+}
+
+.barra-navegacao .nav-item[data-nav="mensagens"] {
+  --cor-modulo: #ff5e89;
+  --cor-texto-forte: #1c1b1b;
+}
+
+.barra-navegacao .nav-item[data-nav="graficos"] {
+  --cor-modulo: #00ff66;
+  --cor-texto-forte: #1c1b1b;
+}
+
+/* HOVER: a cor do modulo preenche o botao inteiro (nao so o quadrado do
+   icone) e o icone (glifo SVG) fica branco; sem mudanca de tamanho */
+
+.barra-navegacao .nav-item:hover {
+  background: var(--cor-modulo, #eeeeee);
+  color: var(--cor-texto-forte, #1c1b1b);
+}
+
+.barra-navegacao .nav-item:hover .nav-icone {
+  background: var(--cor-modulo, transparent);
+}
+
+.barra-navegacao .nav-item:hover .nav-icone svg {
+  stroke: #ffffff;
+}
+
+.barra-navegacao .nav-voltar:hover > svg {
+  stroke: #1c1b1b;
+}
+
+/* ESTADO ATIVO: fundo branco preservado + barra inferior grossa na cor do
+   modulo — indicacao clara do modulo atual, distinguivel do hover */
+
+.barra-navegacao .nav-item[aria-current="page"] {
+  box-shadow: inset 0 -5px 0 var(--cor-modulo, #1c1b1b);
 }
 
 /* FOCO PARA NAVEGACAO POR TECLADO */
@@ -256,24 +313,6 @@
     width: 20px;
     height: 20px;
   }
-}
-
-/* Paginas com 2 botoes tem o wrap mais estreito (56rem): itens compactos
-   para a barra nunca estourar a largura disponivel */
-[data-botoes="2"] .barra-navegacao .nav-item {
-  gap: 8px;
-  padding: 8px 10px;
-  font-size: 12px;
-}
-
-[data-botoes="2"] .nav-icone {
-  width: 30px;
-  height: 30px;
-}
-
-[data-botoes="2"] .nav-icone svg {
-  width: 20px;
-  height: 20px;
 }
 
 /* Exibicao da barra (desktop) x hamburguer (compacto) */
@@ -356,7 +395,11 @@
   }
 }
 
-/* ===== Submenus (Controle/Cadastros/Mensagens) - layout responsivo ===== */
+/* ===== Submenus (Controle/Cadastros/Mensagens) - layout responsivo =====
+   Layout compartilhado por TODOS os submenus: espacamento unico entre a
+   navbar e os cartoes + dimensoes padronizadas de cartao (referencia: os
+   3 cartoes da tela Controle). A quantidade de cartoes NAO altera o tamanho
+   individual deles — o grupo centraliza e quebra linha quando nao cabe. */
 
 .submenu-body {
   box-sizing: border-box;
@@ -373,20 +416,23 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.75rem, 2.5vmin, 2rem);
+  gap: clamp(1rem, 3vmin, 2.25rem);
   flex: 1;
-}
-
-[data-botoes="2"] .submenu-wrap {
-  max-width: 56rem;
 }
 
 .submenu-grade {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
   gap: clamp(0.75rem, 2vmin, 1.5rem);
-  align-content: center;
   flex: 1;
+}
+
+.submenu-cartao {
+  width: 16.5rem;
+  max-width: 100%;
+  flex: 0 0 auto;
 }
 
 .submenu-cartao__area {
@@ -397,12 +443,13 @@
   padding: clamp(0.75rem, 2vmin, 1.5rem);
 }
 
+.submenu-cartao__descricao {
+  height: 5rem;
+}
+
 /* Compacto: 2 colunas (600–960px) */
 @media (min-width: 600px) {
   .menu-grade { grid-template-columns: repeat(2, 1fr); }
-  .submenu-grade { grid-template-columns: repeat(2, 1fr); }
-  .submenu-cartao--ultimo { grid-column: span 2; }
-  [data-botoes="2"] .submenu-cartao--ultimo { grid-column: auto; }
 }
 
 @media (min-width: 600px) and (max-width: 960px) {
@@ -426,7 +473,165 @@
   .cartao--cadastros { grid-area: 2 / 2; }
   .cartao--mensagens { grid-area: 3 / 1; }
   .cartao--graficos  { grid-area: 3 / 3; }
-  .submenu-grade { grid-template-columns: repeat(3, 1fr); }
-  .submenu-cartao--ultimo { grid-column: auto; }
-  [data-botoes="2"] .submenu-grade { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Faixas de largura fixa do cartao (referencia: 3 cartoes da tela Controle) */
+@media (min-width: 768px) {
+  .submenu-cartao { width: 21.5rem; }
+}
+
+/* Estreito: cartoes ocupam a largura disponivel */
+@media (max-width: 599px) {
+  .submenu-cartao { width: 100%; }
+}
+
+/* ===== Dialogos globais neobrutalistas (dialogos.ts) ===== */
+
+.dialogo-veu {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(28, 27, 27, 0.55);
+}
+
+.dialogo {
+  width: min(26rem, 100%);
+  max-height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 4px solid #1c1b1b;
+  box-shadow: 10px 10px 0 0 #1c1b1b;
+  font-family: "Space Grotesk", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.dialogo__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 4px solid #1c1b1b;
+  background: #ff8c00;
+  color: #1c1b1b;
+}
+
+[data-dialogo="aviso"] .dialogo__cabecalho { background: #ffe600; color: #1c1b1b; }
+[data-dialogo="sucesso"] .dialogo__cabecalho { background: #16a34a; color: #ffffff; }
+[data-dialogo="erro"] .dialogo__cabecalho { background: #dc2626; color: #ffffff; }
+[data-dialogo="informacao"] .dialogo__cabecalho { background: #2563eb; color: #ffffff; }
+[data-dialogo="recorrencia"] .dialogo__cabecalho { background: #7c3aed; color: #ffffff; }
+
+.dialogo__icone {
+  font-size: 1.75rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.dialogo__titulo {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dialogo__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.125rem 1.25rem;
+  overflow-y: auto;
+}
+
+.dialogo__mensagem {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #1c1b1b;
+}
+
+.dialogo__detalhes {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  font-weight: 700;
+  color: #1c1b1b;
+  background: #f6f3f2;
+  border: 2px solid #1c1b1b;
+}
+
+.dialogo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.dialogo-botao {
+  min-height: 2.875rem;
+  padding: 0.5rem 1.125rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 3px solid #1c1b1b;
+  box-shadow: 4px 4px 0 0 #1c1b1b;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dialogo-botao:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 0 #1c1b1b;
+}
+
+.dialogo-botao:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 #1c1b1b;
+}
+
+.dialogo-botao:focus-visible {
+  outline: 3px solid #2165ef;
+  outline-offset: 2px;
+}
+
+.dialogo-botao--neutro {
+  background: #ffffff;
+  color: #1c1b1b;
+}
+
+.dialogo-botao--destaque {
+  background: #ff8c00;
+  color: #1c1b1b;
+}
+
+.dialogo-botao--perigo {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.dialogo-botao--roxo {
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+[data-dialogo="aviso"] .dialogo-botao--destaque { background: #ffe600; color: #1c1b1b; }
+[data-dialogo="sucesso"] .dialogo-botao--destaque { background: #16a34a; color: #ffffff; }
+[data-dialogo="erro"] .dialogo-botao--destaque { background: #dc2626; color: #ffffff; }
+[data-dialogo="informacao"] .dialogo-botao--destaque { background: #2563eb; color: #ffffff; }
+[data-dialogo="recorrencia"] .dialogo-botao--destaque { background: #7c3aed; color: #ffffff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dialogo-botao {
+    transition: none;
+  }
 }

@@ -16,7 +16,7 @@ import {
   EmpresaDados,
 } from "../api";
 import { montarNavbar } from "../navbar";
-import { confirmar } from "../componentes";
+import { confirmar, confirmarExclusao, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { mascaraCPF, mascaraCNPJ, mascaraTelefone } from "../mascaras";
 import { cnpjValido } from "./form-empresa";
 import { cpfValido } from "./form-pagador";
@@ -308,7 +308,7 @@ async function salvarPainel(): Promise<void> {
 
 async function excluirSelecionado(): Promise<void> {
   if (selecionadoId === null) return;
-  if (!confirmar(`Excluir definitivamente este ${ROTULOS[tipo].toLowerCase()}? Esta acao nao pode ser desfeita.`)) {
+  if (!(await confirmarExclusao(`Excluir definitivamente este ${ROTULOS[tipo].toLowerCase()}? Esta acao nao pode ser desfeita.`))) {
     return;
   }
   try {
@@ -410,19 +410,25 @@ function iniciar(): void {
   document.getElementById("btn-edt-salvar")!.addEventListener("click", () => void salvarPainel());
   document.getElementById("btn-edt-excluir")!.addEventListener("click", () => void excluirSelecionado());
   document.getElementById("btn-edt-cancelar")!.addEventListener("click", () => {
-    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
-    fecharPainel();
+    void (async () => {
+      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      fecharPainel();
+    })();
   });
 
+  let navegacaoConfirmada = false;
   document.addEventListener(
     "click",
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
-      if (!alvo || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (!alvo || !sujo || navegacaoConfirmada || dialogoEstaAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      navegacaoConfirmada = true;
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) alvo.click();
+        navegacaoConfirmada = false;
+      });
     },
     true
   );
@@ -430,11 +436,12 @@ function iniciar(): void {
   document.addEventListener(
     "keydown",
     (evento) => {
-      if (evento.key !== "Escape" || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) fecharPainel();
+      });
     },
     true
   );

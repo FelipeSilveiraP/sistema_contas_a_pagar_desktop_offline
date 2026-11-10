@@ -1,5 +1,5 @@
 import { Tela, irPara, voltar, menuPrincipal } from "./navegacao";
-import { respostaProvisoria } from "./componentes";
+import { respostaProvisoria, dialogoEstaAberto } from "./componentes";
 
 type ChaveNav = "voltar" | "menu" | "cadastros" | "controle" | "mensagens" | "graficos";
 
@@ -30,8 +30,8 @@ const ITENS_NAV: ItemNav[] = [
     chave: "menu",
     rotulo: "MENU PRINCIPAL",
     icone: "home",
-    cor: "",
-    corTexto: "",
+    cor: "bg-[#FFE600]",
+    corTexto: "text-[#FFE600]",
     svg: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10"/><path d="M10 21v-7h4v7"/>',
     quadrado: "icone-amarelo",
     noPainel: true,
@@ -40,8 +40,8 @@ const ITENS_NAV: ItemNav[] = [
     chave: "cadastros",
     rotulo: "CADASTROS",
     icone: "badge",
-    cor: "bg-[#FF8400]",
-    corTexto: "text-[#FF8400]",
+    cor: "bg-[#FF8C00]",
+    corTexto: "text-[#FF8C00]",
     svg: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2"/><path d="M17 6a3 3 0 0 1 0 6"/><path d="M18 15a5 5 0 0 1 3 5"/>',
     quadrado: "icone-laranja",
     destino: "cadastros",
@@ -51,10 +51,10 @@ const ITENS_NAV: ItemNav[] = [
     chave: "controle",
     rotulo: "CONTROLE",
     icone: "checklist",
-    cor: "bg-[#38BDF8]",
-    corTexto: "text-[#38BDF8]",
+    cor: "bg-[#2563EB]",
+    corTexto: "text-[#2563EB]",
     svg: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="white"/><circle cx="15" cy="12" r="2" fill="white"/><circle cx="9" cy="18" r="2" fill="white"/>',
-    quadrado: "icone-branco",
+    quadrado: "icone-azul",
     destino: "controle",
     noPainel: true,
   },
@@ -77,7 +77,7 @@ const ITENS_NAV: ItemNav[] = [
     corTexto: "text-[#00FF66]",
     svg: '<path d="M5 20v-6h3v6M11 20V9h3v11M17 20V4h3v16"/>',
     quadrado: "icone-verde",
-    destino: "graficos", provisorio: "GRÁFICOS",
+    destino: "graficos",
     noPainel: true,
   },
 ];
@@ -197,6 +197,7 @@ ${ITENS_NAV.filter((item) => item.noPainel)
 
   document.addEventListener("keydown", (evento) => {
     if (evento.key !== "Escape") return;
+    if (dialogoEstaAberto()) return;
     evento.preventDefault();
     if (menuEstaAberto(raiz)) {
       definirMenu(raiz, false);

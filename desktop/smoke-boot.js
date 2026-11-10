@@ -78,8 +78,16 @@ async function pontoRealDoSeletor(seletor) {
   };
 }
 
+async function confirmarDialogoSeAberto() {
+  // dialogos do app (dialogos.ts): confirma automaticamente como o antigo
+  // window.confirm = () => true destes testes
+  if (await js(`!!document.querySelector('[data-dialogo]')`)) {
+    await js(`(() => { const b = document.querySelector('[data-dialogo-acao="confirmar"], [data-dialogo-acao="fechar"]'); if (b) b.click(); return true; })()`);
+    await esperar(200);
+  }
+}
+
 async function clicarReal(seletor) {
-  await js(`window.confirm = () => true; 'ok'`);
   // garante que os cliques REAIS mirem a janela do app (outras janelas podem
   // estar em primeiro plano no ambiente de teste)
   janela.moveTop();
@@ -87,6 +95,8 @@ async function clicarReal(seletor) {
   const ponto = await pontoRealDoSeletor(seletor);
   if (!ponto) return false;
   entradaReal("clicar", ponto);
+  await esperar(250);
+  await confirmarDialogoSeAberto();
   return true;
 }
 
@@ -120,6 +130,53 @@ async function ciclo() {
     const destino = path.join(__dirname, "..", "docs", "responsivo", `carregando-${cicloAtual}.png`);
     fs.writeFileSync(destino, imagem.toPNG());
     teste("Captura da tela de carregamento gerada", fs.existsSync(destino), destino);
+
+    // chave giratoria 3D: rotateY + perspectiva + prefers-reduced-motion
+    const chave = JSON.parse(await js(`(() => {
+      const wrap = document.querySelector('.chave-giratoria');
+      const svg = document.querySelector('.chave-giratoria__svg');
+      const cs = svg ? getComputedStyle(svg) : null;
+      const msg = document.getElementById('iniciando');
+      return JSON.stringify({
+        existe: Boolean(wrap && svg),
+        animacao: cs ? cs.animationName : null,
+        duracao: cs ? cs.animationDuration : null,
+        perspectiva: wrap ? getComputedStyle(wrap).perspective : null,
+        mensagem: msg ? msg.textContent : null,
+      });
+    })()`));
+    teste("Chave giratoria presente na tela de carregamento", chave.existe === true, JSON.stringify(chave));
+    teste("Chave anima em rotateY/3D (sem timers)", chave.animacao === "chave-girar" && parseFloat(chave.duracao) > 0, JSON.stringify(chave));
+    teste("Perspectiva 3D ativa no conteiner da chave", chave.perspectiva && chave.perspectiva !== "none" && parseFloat(chave.perspectiva) > 0, JSON.stringify(chave));
+    teste("Mensagem INICIANDO O SISTEMA preservada", String(chave.mensagem).toUpperCase().includes("INICIANDO O SISTEMA"), String(chave.mensagem));
+    let animacaoReduzida = null;
+    try {
+      janela.webContents.debugger.attach("1.3");
+      await janela.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+      });
+      await esperar(300);
+      animacaoReduzida = await js(`(() => { const svg = document.querySelector('.chave-giratoria__svg'); return svg ? getComputedStyle(svg).animationName : null; })()`);
+      await janela.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+      janela.webContents.debugger.detach();
+    } catch (erro) {
+      // fallback: valida a regra CSS de prefers-reduced-motion na folha compilada
+      animacaoReduzida = await js(`(() => {
+        for (const folha of document.styleSheets) {
+          let regras;
+          try { regras = folha.cssRules; } catch { continue; }
+          for (const r of regras) {
+            const midia = r.conditionText || (r.media && r.media.mediaText) || '';
+            if (r.type !== 4 || !String(midia).includes('prefers-reduced-motion')) continue;
+            for (const rr of r.cssRules) {
+              if (rr.selectorText && rr.selectorText.includes('chave-giratoria') && /animation:\s*none/.test(rr.style.cssText)) return 'none';
+            }
+          }
+        }
+        return 'ausente';
+      })()`);
+    }
+    teste("prefers-reduced-motion desativa a rotacao continua", animacaoReduzida === "none", String(animacaoReduzida));
 
     // estado de erro da tela de carregamento (UI testada por injecao do evento)
     janela.webContents.send("findesk:inicializacao", { estado: "falhou" });

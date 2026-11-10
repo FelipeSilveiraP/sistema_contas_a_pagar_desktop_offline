@@ -119,6 +119,7 @@ function diagProcessarPedidos() {
               hasFocus: document.hasFocus(),
               ativo: a ? a.tagName + (a.id ? "#" + a.id : "") : null,
               menuAberto: document.getElementById("nav-global") ? document.getElementById("nav-global").dataset.menuAberto : null,
+              dialogoAberto: Boolean(document.querySelector("[data-dialogo]")),
               comprimentos: {
                 campoInstituicao: campo("campo-instituicao"),
                 campoNome: campo("campo-nome"),

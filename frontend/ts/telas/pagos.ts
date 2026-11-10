@@ -162,7 +162,7 @@ async function aplicarAlteracao(): Promise<void> {
 async function estornarSelecionado(): Promise<void> {
   const pagamento = pagamentos.find((p) => p.id === selecionadoId);
   if (!pagamento) return;
-  if (!confirmar(`Estornar o pagamento de "${pagamento.nomeEmpresa}"? A conta voltará para PENDENTE.`)) return;
+  if (!(await confirmar(`Estornar o pagamento de "${pagamento.nomeEmpresa}"? A conta voltará para PENDENTE.`, { titulo: "CONFIRMAR ESTORNO", textoConfirmar: "ESTORNAR" }))) return;
   try {
     const cfg = await window.finDesk!.config();
     await estornarPagamento(cfg, pagamento.idConta);

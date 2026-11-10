@@ -11,7 +11,7 @@ import {
   ErroValidacaoApi,
   ErroApi,
 } from "../api";
-import { confirmar } from "../componentes";
+import { confirmar, confirmarExclusao } from "../componentes";
 import { montarNavbar } from "../navbar";
 import { mascaraData, mascaraMoeda, paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
 
@@ -234,7 +234,7 @@ async function pagar(conta: ContaDados): Promise<void> {
 
 async function estornar(conta: ContaDados): Promise<void> {
   if (conta.status !== "PAGO") return;
-  if (!confirmar(`Estornar o pagamento de "${conta.nomeEmpresa}"? A conta voltará para PENDENTE.`)) return;
+  if (!(await confirmar(`Estornar o pagamento de "${conta.nomeEmpresa}"? A conta voltará para PENDENTE.`, { titulo: "CONFIRMAR ESTORNO", textoConfirmar: "ESTORNAR" }))) return;
   try {
     const cfg = await window.finDesk!.config();
     await estornarPagamento(cfg, conta.id);
@@ -346,7 +346,7 @@ function mostrarErroEdacao409(): void {
 async function excluirSelecionado(): Promise<void> {
   const conta = contas.find((c) => c.id === selecionadoId);
   if (!conta) return;
-  if (!confirmar(`Excluir definitivamente a conta de "${conta.nomeEmpresa}"? Esta acao nao pode ser desfeita.`)) return;
+  if (!(await confirmarExclusao(`Excluir definitivamente a conta de "${conta.nomeEmpresa}"? Esta acao nao pode ser desfeita.`))) return;
   try {
     const cfg = await window.finDesk!.config();
     await excluirConta(cfg, conta.id);

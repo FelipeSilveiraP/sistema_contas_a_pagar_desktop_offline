@@ -158,6 +158,10 @@ async function aguardarBoot() {
 // Confirmações nativas de dirty-form: o usuário real confirma com ENTER
 // (botão padrao do window.confirm do Electron).
 function confirmarDialogo() {
+  // dialogo DOM do app (dialogos.ts): foco inicial no CANCELAR; TAB leva ao
+  // botao de confirmacao e ENTER confirma (mesma semantica do window.confirm
+  // nativo antigo: ENTER = ok). Entrada real via SendInput.
+  ps("tab");
   ps("enter");
 }
 
@@ -170,7 +174,8 @@ async function sairDeFormulario(seletor, telaEsperada, marca) {
   await esperar(400);
   let dialogoAberto = false;
   if (clicou) {
-    dialogoAberto = (await pedir({ acao: "estado" }, 1500)) === null;
+    const e = await pedir({ acao: "estado" }, 3000);
+    dialogoAberto = Boolean(e && e.ok && e.estado && e.estado.dialogoAberto);
     if (dialogoAberto) confirmarDialogo();
   }
   await esperar(500);

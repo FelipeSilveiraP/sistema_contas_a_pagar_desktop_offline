@@ -70,12 +70,21 @@ async function pontoRealDoSeletor(seletor) {
   };
 }
 
+async function confirmarDialogoSeAberto() {
+  // dialogos do app (dialogos.ts): confirma automaticamente como o antigo
+  // window.confirm = () => true destes testes
+  if (await js(`!!document.querySelector('[data-dialogo]')`)) {
+    await js(`(() => { const b = document.querySelector('[data-dialogo-acao="confirmar"], [data-dialogo-acao="fechar"]'); if (b) b.click(); return true; })()`);
+    await esperar(250);
+  }
+}
+
 async function clicarReal(seletor) {
-  // cada loadFile troca o documento: reaplicar o override de confirm
-  await js(`window.confirm = () => true; 'ok'`);
   const ponto = await pontoRealDoSeletor(seletor);
   if (!ponto) return false;
   entradaReal("clicar", ponto);
+  await esperar(250);
+  await confirmarDialogoSeAberto();
   return true;
 }
 
@@ -87,7 +96,6 @@ async function digitarReal(texto) {
 async function ciclo() {
   await esperarPredicado("!!document.body && !!document.body.dataset.tela");
   await esperarPredicado(`document.body.dataset.apiStatus !== undefined`, 30000);
-  await js(`window.confirm = () => true; 'ok'`);
 
   // 1. nada invisivel bloqueia os inputs do form-banco (verificado no proprio form)
   await js("window.finDesk.navegar('form-banco')");
@@ -188,10 +196,15 @@ async function ciclo() {
   teste("Botao CADASTROS branco por padrao (sem cor fixa)", corPadrao === "rgb(255, 255, 255)", corPadrao);
 
   const pCad = await pontoRealDoSeletor('.nav-barra button[data-nav="cadastros"]');
+  const dimBotaoAntes = await js(`JSON.stringify((() => { const r = document.querySelector('.nav-barra button[data-nav="cadastros"]').getBoundingClientRect(); return [r.width, r.height]; })())`);
   entradaReal("mover", pCad);
   await esperar(500);
   const corHoverCad = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="cadastros"]')).backgroundColor`);
-  teste("Hover real CADASTROS pinta com a cor do Menu (#FF8400)", corHoverCad === "rgb(255, 132, 0)", corHoverCad);
+  teste("Hover real CADASTROS pinta com a cor do modulo (#FF8C00)", corHoverCad === "rgb(255, 140, 0)", corHoverCad);
+  const glifoHoverCad = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="cadastros"] .nav-icone svg')).stroke`);
+  teste("Hover real CADASTROS deixa o icone (glifo SVG) branco", glifoHoverCad === "rgb(255, 255, 255)", glifoHoverCad);
+  const dimBotaoDepois = await js(`JSON.stringify((() => { const r = document.querySelector('.nav-barra button[data-nav="cadastros"]').getBoundingClientRect(); return [r.width, r.height]; })())`);
+  teste("Hover nao altera o tamanho do botao", dimBotaoAntes === dimBotaoDepois, `${dimBotaoAntes} vs ${dimBotaoDepois}`);
   const imagemHover = await janela.webContents.capturePage();
   fs.writeFileSync(path.join(__dirname, "..", "docs", "responsivo", "nav-hover-cadastros.png"), imagemHover.toPNG());
 
@@ -199,7 +212,9 @@ async function ciclo() {
   entradaReal("mover", pControle);
   await esperar(500);
   const corHoverControle = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="controle"]')).backgroundColor`);
-  teste("Hover real CONTROLE pinta com a cor do Menu (#38BDF8)", corHoverControle === "rgb(56, 189, 248)", corHoverControle);
+  teste("Hover real CONTROLE pinta com a cor do modulo (#2563EB)", corHoverControle === "rgb(37, 99, 235)", corHoverControle);
+  const textoHoverControle = await js(`getComputedStyle(document.querySelector('.nav-barra button[data-nav="controle"]')).color`);
+  teste("Hover real CONTROLE mantem contraste do texto (branco)", textoHoverControle === "rgb(255, 255, 255)", textoHoverControle);
 
   const pFora = await pontoRealDoSeletor("main");
   entradaReal("mover", pFora);

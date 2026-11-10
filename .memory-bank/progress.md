@@ -194,3 +194,14 @@
 - [x] Hover verificado com mouse REAL do Windows (smoke-real): branco → cor no hover → branco ao
       sair; captura `nav-hover-cadastros.png`; smoke 246/246 + smoke-real 2 ciclos APROVADO
 - [ ] Aguardando validação visual do usuário
+
+
+## Ajustes visuais + sistema global de pop-ups (2026-11-09) — CONCLUÍDO (aguardando validação visual)
+- [x] Tela de carregamento: chave metálica giratória 3D (`rotateY` + perspectiva + `prefers-reduced-motion`)
+- [x] Cartões dos submenus: espaçamento navbar↔cartões corrigido + dimensões padronizadas (ref. Controle)
+- [x] Navbar: hover com cor do módulo + glifo branco; ativo com barra inferior; CONTROLE padronizado
+- [x] Form Recorrente: fundo preto eliminado (`bg-[#fcf9f8]`); roxo/branco preservados
+- [x] Pop-ups neobrutalistas globais (`dialogos.ts`): 6 tipos, API assíncrona, exclusão/duplicidade,
+      fila serial, ESC/Tab/foco/aria, overlay removido; `window.alert/confirm/prompt` eliminados dos fluxos
+- [x] Testes: JUnit 120/120; smoke 326/326; smoke-boot 22/22×2 APROVADO; smoke-real 25/25×2 APROVADO;
+      smoke-dev 83/83 (foco OK); persistência 11/11; capturas em `docs/responsivo/`

@@ -136,7 +136,47 @@ async function esperarPredicado(codigo, timeoutMs = 15000) {
 async function prepararPagina() {
   await esperarPredicado("!!document.body && !!document.body.dataset.tela");
   await esperarPredicado("document.body.dataset.apiStatus !== undefined", 15000);
-  await js("window.__alertas = []; window.alert = (m) => { window.__alertas.push(String(m)); }; 'ok'");
+  await fecharDialogoSeAberto();
+}
+
+// Dialogos neobrutalistas (dialogos.ts): leitura e resposta via DOM
+async function dialogoInfo() {
+  return JSON.parse(
+    await js(`(() => {
+      const d = document.querySelector('[data-dialogo]');
+      if (!d) return 'null';
+      const t = d.querySelector('[data-dialogo-titulo]');
+      const m = d.querySelector('[data-dialogo-mensagem]');
+      const det = d.querySelector('[data-dialogo-detalhes]');
+      const acoes = [...d.querySelectorAll('[data-dialogo-acao]')].map((b) => b.dataset.dialogoAcao);
+      return JSON.stringify({
+        tipo: d.dataset.dialogo,
+        role: d.getAttribute('role'),
+        ariaModal: d.getAttribute('aria-modal'),
+        labelledby: d.getAttribute('aria-labelledby'),
+        titulo: t ? t.textContent : '',
+        mensagem: m ? m.textContent : '',
+        detalhes: det ? det.textContent : null,
+        acoes,
+        foco: document.activeElement ? document.activeElement.getAttribute('data-dialogo-acao') : null,
+      });
+    })()`)
+  );
+}
+
+async function esperarDialogo(timeoutMs = 5000) {
+  return esperarPredicado("!!document.querySelector('[data-dialogo]')", timeoutMs);
+}
+
+async function responderDialogo(acao) {
+  return js(`(() => { const b = document.querySelector('[data-dialogo-acao="${acao}"]'); if (!b) return false; b.click(); return true; })()`);
+}
+
+async function fecharDialogoSeAberto() {
+  if (await js("!!document.querySelector('[data-dialogo]')")) {
+    await js(`(() => { const b = document.querySelector('[data-dialogo-acao="cancelar"], [data-dialogo-acao="fechar"]'); if (b) b.click(); return true; })()`);
+    await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
+  }
 }
 
 async function clicar(seletor) {
@@ -148,7 +188,31 @@ async function tecla(key) {
 }
 
 async function lerAlertas() {
-  return JSON.parse(await js("JSON.stringify(window.__alertas || [])"));
+  const info = await dialogoInfo();
+  return info ? [`${info.titulo} ${info.mensagem}`] : [];
+}
+
+async function testarProvisorio(seletor, nome) {
+  await clicar(seletor);
+  if (!(await esperarDialogo())) return false;
+  const info = await dialogoInfo();
+  await responderDialogo("fechar");
+  return Boolean(info) && (info.mensagem.includes(nome) || info.titulo.includes(nome));
+}
+
+function colunasEsperadas(numBotoes, w, tela) {
+  // Menu preserva a grade aprovada; submenus usam cartoes de largura fixa
+  // por faixa (100% / 16.5rem / 21.5rem) com quebra de linha e centralizacao
+  if (tela === "menu") {
+    if (w >= 961) return 3;
+    if (w >= 600) return 2;
+    return 1;
+  }
+  let faixa;
+  if (w < 600) faixa = 1;
+  else if (w < 1104) faixa = 2;
+  else faixa = 3;
+  return Math.min(numBotoes, faixa);
 }
 
 async function navegarPor(seletor, destino) {
@@ -165,19 +229,6 @@ async function voltarPara(destino) {
   const ok = await esperarTela(destino);
   await prepararPagina();
   return ok;
-}
-
-async function testarProvisorio(seletor, nome) {
-  await js("window.__alertas = []");
-  await clicar(seletor);
-  const alertas = await lerAlertas();
-  return alertas.length === 1 && alertas[0].includes(nome);
-}
-
-function colunasEsperadas(numBotoes, w) {
-  if (w >= 961) return numBotoes >= 3 ? 3 : 2;
-  if (w >= 600) return 2;
-  return 1;
 }
 
 async function estadoMenu() {
@@ -347,11 +398,24 @@ async function medirTela() {
   return JSON.parse(
     await js(`(() => {
       const grade = document.querySelector(".submenu-grade, .menu-grade");
-      const colunas = grade ? getComputedStyle(grade).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
       const doc = document.documentElement;
       const barra = document.querySelector(".nav-barra");
       const hamb = document.querySelector(".nav-hamburguer");
       const visivel = (el) => !!el && getComputedStyle(el).display !== "none";
+      let colunas = 0;
+      if (grade) {
+        if (grade.classList.contains("menu-grade")) {
+          colunas = getComputedStyle(grade).gridTemplateColumns.split(" ").filter(Boolean).length;
+        } else {
+          const rects = [...grade.querySelectorAll("a[data-modulo]")].map((el) => el.getBoundingClientRect());
+          const linhas = {};
+          for (const r of rects) {
+            const chave = Math.round(r.top / 8);
+            linhas[chave] = (linhas[chave] || 0) + 1;
+          }
+          colunas = rects.length ? Math.max(...Object.values(linhas)) : 0;
+        }
+      }
       return JSON.stringify({
         colunas,
         overflow: doc.scrollWidth - doc.clientWidth,
@@ -456,6 +520,55 @@ async function executar() {
     JSON.stringify(ordem)
   );
   teste("Botao CONTROLE com fundo branco por padrao", (await corBotaoNav("controle")) === "rgb(255, 255, 255)", await corBotaoNav("controle"));
+
+  // 5b. Hover/ativo da navbar: cores dos modulos, estado ativo, padrao do CONTROLE
+  const coresNav = JSON.parse(
+    await js(`(() => {
+      const pega = (c) => { const el = document.querySelector('.nav-barra button[data-nav="' + c + '"]'); return el ? getComputedStyle(el).getPropertyValue('--cor-modulo').trim() : null; };
+      return JSON.stringify({ menu: pega('menu'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
+    })()`)
+  );
+  const normalizaHex = (c) => (c && c.length === 4 ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c);
+  const coresNorm = Object.fromEntries(Object.entries(coresNav).map(([k, v]) => [k, normalizaHex(v)]));
+  teste(
+    "Navbar: cor do modulo declarada por botao (hover preenche o botao)",
+    JSON.stringify(coresNorm) === JSON.stringify({ menu: "#ffe600", cadastros: "#ff8c00", controle: "#2563eb", mensagens: "#ff5e89", graficos: "#00ff66" }),
+    JSON.stringify(coresNav)
+  );
+  const estadoAtivo = JSON.parse(
+    await js(`(() => {
+      const ativo = document.querySelector('.nav-barra button[data-nav="controle"]');
+      const inativo = document.querySelector('.nav-barra button[data-nav="cadastros"]');
+      return JSON.stringify({
+        ativoMarca: ativo ? ativo.getAttribute('aria-current') : null,
+        ativoSombra: ativo ? getComputedStyle(ativo).boxShadow : '',
+        ativoFundo: ativo ? getComputedStyle(ativo).backgroundColor : '',
+        inativoFundo: inativo ? getComputedStyle(inativo).backgroundColor : '',
+        inativoSombra: inativo ? getComputedStyle(inativo).boxShadow : '',
+      });
+    })()`)
+  );
+  teste(
+    "Navbar: estado ativo marcado (barra inferior) com fundo branco",
+    estadoAtivo.ativoMarca === "page" && estadoAtivo.ativoSombra.includes("inset") && estadoAtivo.ativoFundo === "rgb(255, 255, 255)",
+    JSON.stringify(estadoAtivo)
+  );
+  teste(
+    "Navbar: botao inativo sem barra ativa (destaca so o modulo atual)",
+    estadoAtivo.inativoFundo === "rgb(255, 255, 255)" && !estadoAtivo.inativoSombra.includes("inset"),
+    JSON.stringify(estadoAtivo)
+  );
+  const quadrados = JSON.parse(
+    await js(`(() => {
+      const pega = (c) => { const el = document.querySelector('.nav-barra button[data-nav="' + c + '"] .nav-icone'); return el ? el.className : null; };
+      return JSON.stringify({ menu: pega('menu'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
+    })()`)
+  );
+  teste(
+    "Navbar: CONTROLE padronizado com quadrado do icone do modulo (icone-azul)",
+    String(quadrados.controle).includes("icone-azul") && String(quadrados.menu).includes("icone-amarelo") && String(quadrados.cadastros).includes("icone-laranja") && String(quadrados.mensagens).includes("icone-rosa") && String(quadrados.graficos).includes("icone-verde"),
+    JSON.stringify(quadrados)
+  );
 
   // GRÁFICOS = provisório; MENU PRINCIPAL navega; destinos a partir de tela profunda
   teste("Navbar GRÁFICOS navega", await navegarPor('.nav-barra button[data-nav="graficos"]', "graficos"));
@@ -636,28 +749,30 @@ async function executar() {
   teste("Fluxo UI: cadastros -> novo-cadastro", await navegarPor('a[data-modulo="novo-cadastro"]', "novo-cadastro"));
   teste("Fluxo UI: novo-cadastro -> banco (form-banco)", await navegarPor('a[data-modulo="banco"]', "form-banco"));
 
-  // dirty-form: confirmacao ao abandonar com alteracoes nao salvas
-  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
+  // dirty-form: confirmacao ao abandonar com alteracoes nao salvas (dialogo global)
   await js(`(() => { const el = document.getElementById('campo-instituicao'); el.value = 'Alteracao nao salva'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await clicar('.nav-barra button[data-nav="voltar"]');
-  await esperar(400);
-  const confirmas1 = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
-  teste("Form Banco: VOLTAR com alteracoes nao salvas pede confirmacao", confirmas1.length === 1);
+  const dialogouSujo = await esperarDialogo();
+  const infoSuja = dialogouSujo ? await dialogoInfo() : null;
+  teste("Form Banco: VOLTAR com alteracoes nao salvas pede confirmacao", dialogouSujo && Boolean(infoSuja) && infoSuja.mensagem.includes("alteracoes nao salvas"), JSON.stringify(infoSuja));
+  await responderDialogo("cancelar");
+  await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Form Banco: cancelamento da confirmacao mantem na tela", (await js("document.body.dataset.tela")) === "form-banco");
-  await js("window.__confirmResposta = true");
+  teste("Form Banco: dialogo fecha sem deixar overlay bloqueando", (await js("document.querySelectorAll('.dialogo-veu').length")) === 0);
   await clicar('.nav-barra button[data-nav="voltar"]');
+  teste("Form Banco: dialogo reabre ao insistir em sair", await esperarDialogo());
+  await responderDialogo("confirmar");
   teste("Form Banco: confirmacao aceita VOLTAR a novo-cadastro", await esperarTela("novo-cadastro"));
   await prepararPagina();
   await navegarPor('a[data-modulo="banco"]', "form-banco");
-  await js(`window.__confirmas = []; window.__confirmResposta = true; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
   await js(`(() => { const el = document.getElementById('campo-instituicao'); el.value = 'x'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await clicar("#btn-cancelar");
-  await esperar(400);
-  const confirmas2 = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
-  teste("Form Banco: CANCELAR sujo pede confirmacao e sai", confirmas2.length === 1 && (await js("document.body.dataset.tela")) !== "form-banco");
+  teste("Form Banco: CANCELAR sujo pede confirmacao", await esperarDialogo());
+  await responderDialogo("confirmar");
+  teste("Form Banco: confirmacao aceita sair pela tela", await esperarTela("novo-cadastro"));
 
   // estabilidade dos campos com menu lateral aberto + capturas
-  await js(`window.confirm = () => true; 'ok'`);
+  await fecharDialogoSeAberto();
   await js("window.finDesk.navegar('form-banco')");
   await esperarTela("form-banco");
   await prepararPagina();
@@ -848,7 +963,7 @@ async function executar() {
   await definirTamanho(1536, 864);
   await capturar("form-empresa-1536x864.png");
   await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
-  await js("window.confirm = () => true; 'ok'");
+  await fecharDialogoSeAberto();
   await js("window.finDesk.navegar('menu')");
   await esperarTela("menu");
   await prepararPagina();
@@ -945,18 +1060,21 @@ async function executar() {
   teste("Salvar no painel atualiza o registro (feedback sucesso)", (await js(`document.getElementById('feedback-edt').textContent`)).includes("sucesso"));
   teste("Linha atualizada reflete a edicao", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO ${sufixoTc}')`)) === true);
 
-  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
   await clicar("#btn-edt-excluir");
-  await esperar(300);
+  const dialogoExclusao = await esperarDialogo();
+  const infoExclusao = dialogoExclusao ? await dialogoInfo() : null;
+  teste("Exclusao pede confirmacao (dialogo CONFIRMAR EXCLUSAO)", dialogoExclusao && Boolean(infoExclusao) && infoExclusao.titulo.includes("EXCLUS"), JSON.stringify(infoExclusao));
+  await responderDialogo("cancelar");
+  await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Exclusao cancelada preserva o registro", (await js(`document.body.dataset.registroExcluido`)) === undefined && (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === true);
 
-  await js("window.__confirmResposta = true");
   await clicar("#btn-edt-excluir");
+  teste("Exclusao reabre o dialogo de confirmacao", await esperarDialogo());
+  await responderDialogo("confirmar");
   const excluidoOk = await esperarPredicado(`document.body.dataset.registroExcluido !== undefined`, 10000);
   teste("Exclusao confirmada remove o registro e fecha o painel", excluidoOk && (await js("document.getElementById('painel-edicao').hidden")) === true);
   teste("Registro excluido nao aparece mais na tabela", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === false);
 
-  await js("window.confirm = () => true; 'ok'");
   await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'TC BANCO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await definirTamanho(1536, 864);
   await capturar("todos-cadastros-1536x864.png");
@@ -1108,7 +1226,7 @@ async function executar() {
     JSON.stringify(contaCriadaIc ?? null)
   );
 
-  // duplicidade (mesmo mes) -> dialogo nativo via confirmar(); cancelar e forcar
+  // duplicidade (mesmo mes) -> dialogo global POSSIVEL DUPLICIDADE; cancelar e forcar
   await js("window.finDesk.navegar('inserir-conta')");
   await esperarTela("inserir-conta");
   await prepararPagina();
@@ -1131,15 +1249,18 @@ async function executar() {
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  await js(`window.__confirmas = []; window.__confirmResposta = false; sessionStorage.setItem('smoke-confirmas', '[]'); window.confirm = (m) => { window.__confirmas.push(String(m)); sessionStorage.setItem('smoke-confirmas', JSON.stringify(window.__confirmas)); return window.__confirmResposta; }; 'ok'`);
   await clicar("#btn-salvar");
-  await esperar(700);
-  const confirmasDup = JSON.parse(await js(`sessionStorage.getItem('smoke-confirmas') || '[]'`));
-  teste("Inserir Conta: duplicidade dispara dialogo de confirmacao", confirmasDup.length === 1 && confirmasDup[0].includes("duplicidade"), JSON.stringify(confirmasDup));
+  const dialogouDup = await esperarDialogo(10000);
+  const infoDup = dialogouDup ? await dialogoInfo() : null;
+  teste("Inserir Conta: duplicidade dispara dialogo POSSIVEL DUPLICIDADE", dialogouDup && Boolean(infoDup) && infoDup.titulo.includes("DUPLICIDADE"), JSON.stringify(infoDup));
+  teste("Inserir Conta: detalhes da duplicidade exibidos", Boolean(infoDup) && Boolean(infoDup.detalhes) && infoDup.detalhes.includes("Vencimento"), JSON.stringify(infoDup ? infoDup.detalhes : null));
   teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined);
-
-  await js("window.__confirmResposta = true; window.__confirmas = []; sessionStorage.setItem('smoke-confirmas', '[]'); document.getElementById('toast').classList.add('hidden'); 'ok'");
+  await responderDialogo("cancelar");
+  await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
+  await js(`document.getElementById('toast').classList.add('hidden'); 'ok'`);
   await clicar("#btn-salvar");
+  teste("Inserir Conta: dialogo de duplicidade reabre ao salvar de novo", await esperarDialogo(10000));
+  await responderDialogo("confirmar");
   const forcadaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
   teste("Inserir Conta: confirmada a duplicidade, insercao forçada ocorre", forcadaIc);
 
@@ -1159,7 +1280,7 @@ async function executar() {
   }
   teste("Inserir Conta: registros de teste removidos da base temporaria", true);
 
-  await js("window.confirm = () => true; 'ok'");
+  await fecharDialogoSeAberto();
   await js("window.finDesk.navegar('inserir-conta')");
   await esperarTela("inserir-conta");
   await prepararPagina();
@@ -1317,6 +1438,49 @@ async function executar() {
   })());
   await prepararPagina();
 
+  // 9b. Dialogos globais: acessibilidade, ESC, foco, teclado, sem overlay
+  //     + fundo claro do formulario de recorrencia
+  await js("window.finDesk.navegar('form-recorrente')");
+  await esperarTela("form-recorrente");
+  await prepararPagina();
+  const fundoRecorrente = await js("getComputedStyle(document.body).backgroundColor");
+  teste("Form Recorrente: fundo claro padrao (preto eliminado)", fundoRecorrente === "rgb(252, 249, 248)", fundoRecorrente);
+  const cabecalhoRoxo = await js(`(() => { const h = document.querySelector('h1'); return h && h.parentElement && h.parentElement.parentElement ? getComputedStyle(h.parentElement.parentElement).backgroundColor : null; })()`);
+  teste("Form Recorrente: cabecalho roxo preservado", cabecalhoRoxo === "rgb(124, 58, 237)", String(cabecalhoRoxo));
+  await js(`(() => { const el = document.getElementById('fornecedor'); el.value = 'Aluguel Teste'; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); return true; })()`);
+  await clicar("#btn-cancelar");
+  teste("Dialogo: abre ao tentar sair sujo", await esperarDialogo());
+  const infoDlg = await dialogoInfo();
+  teste(
+    "Dialogo: acessibilidade (role=dialog, aria-modal, titulo associado)",
+    Boolean(infoDlg) && infoDlg.role === "dialog" && infoDlg.ariaModal === "true" && infoDlg.labelledby === "dialogo-titulo",
+    JSON.stringify(infoDlg)
+  );
+  teste("Dialogo: acoes certas para confirmacao (cancelar/confirmar)", Boolean(infoDlg) && JSON.stringify(infoDlg.acoes) === JSON.stringify(["cancelar", "confirmar"]), JSON.stringify(infoDlg ? infoDlg.acoes : null));
+  teste("Dialogo: foco inicial no botao seguro (cancelar)", Boolean(infoDlg) && infoDlg.foco === "cancelar", JSON.stringify(infoDlg ? infoDlg.foco : null));
+  await tecla("Escape");
+  await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
+  teste("Dialogo: ESC cancela sem executar a acao", (await js("document.body.dataset.tela")) === "form-recorrente");
+  teste("Dialogo: overlay removido apos fechar", (await js("document.querySelectorAll('.dialogo-veu').length")) === 0);
+  const focoDev = await js("document.activeElement ? document.activeElement.id : null");
+  teste("Dialogo: foco devolvido ao elemento anterior", focoDev === "fornecedor", String(focoDev));
+  teste(
+    "Dialogo: inputs sem bloqueio pos-fechamento",
+    await js(`(() => { const el = document.getElementById('fornecedor'); const r = el.getBoundingClientRect(); const topo = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return Boolean(topo) && (topo === el || el.contains(topo)); })()`)
+  );
+  await definirTamanho(1536, 864);
+  await clicar("#btn-cancelar");
+  teste("Dialogo: reabre para teste de teclado", await esperarDialogo());
+  if (!fs.existsSync(SAIDA)) fs.mkdirSync(SAIDA, { recursive: true });
+  await capturar("dialogo-confirmacao-1536x864.png");
+  await js(`document.querySelector('[data-dialogo-acao="confirmar"]').focus(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); 'ok'`);
+  const focoTab = await js(`document.activeElement ? document.activeElement.getAttribute('data-dialogo-acao') : null`);
+  teste("Dialogo: TAB no ultimo botao volta ao primeiro (foco preso no dialogo)", focoTab === "cancelar", String(focoTab));
+  await responderDialogo("confirmar");
+  await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
+  teste("Dialogo: confirmacao executa a acao (sai do formulario)", (await js("document.body.dataset.tela")) !== "form-recorrente");
+  await prepararPagina();
+
   // 10. Estabilidade visual dos cartões (480/600/768) em telas de 2 e 3 cartões
   for (const [tela, larguras] of [
     ["controle", [480, 600, 768]],
@@ -1337,6 +1501,32 @@ async function executar() {
     }
   }
 
+  // 10b. Dimensoes padronizadas dos cartoes (referencia: tela Controle)
+  await definirTamanho(1536, 864);
+  const dimensoes = {};
+  for (const telaDim of ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro"]) {
+    await js(`window.finDesk.navegar('${telaDim}')`);
+    await esperarTela(telaDim);
+    await prepararPagina();
+    dimensoes[telaDim] = await rectsCartoesEstavel();
+  }
+  const refDim = dimensoes.controle[0];
+  const padronizado = Object.values(dimensoes).every((rects) => rects.length > 0 && rects.every((r) => Math.abs(r.w - refDim.w) < 1 && Math.abs(r.h - refDim.h) < 1));
+  teste("Cartoes: dimensoes identicas em todos os submenus (1536x864)", padronizado, JSON.stringify({ ref: refDim, ...dimensoes }));
+  teste("Cartoes: 2 cartoes mantem o mesmo tamanho dos 3 da Controle", dimensoes.recorrentes.every((r) => Math.abs(r.w - refDim.w) < 1 && Math.abs(r.h - refDim.h) < 1), JSON.stringify(dimensoes.recorrentes));
+  teste("Cartoes: grupo centralizado horizontalmente (recorrentes)", simetriaCentral(dimensoes.recorrentes, 1536), JSON.stringify(dimensoes.recorrentes));
+  const alturaNavbar = JSON.parse(
+    await js(`(() => {
+      const barra = document.querySelector('.nav-barra');
+      const cartao = document.querySelector('a[data-modulo]');
+      if (!barra || !cartao) return 'null';
+      const rb = barra.getBoundingClientRect();
+      const rc = cartao.getBoundingClientRect();
+      return JSON.stringify({ distancia: +(rc.top - rb.bottom).toFixed(1) });
+    })()`)
+  );
+  teste("Cartoes: distancia confortavel da navbar (16 a 60px, sem grude nem vazio)", Boolean(alturaNavbar) && alturaNavbar.distancia >= 16 && alturaNavbar.distancia <= 60, JSON.stringify(alturaNavbar));
+
   // 11. Responsividade (medição) + breakpoint da barra + capturas
   if (!fs.existsSync(SAIDA)) fs.mkdirSync(SAIDA, { recursive: true });
   const paginas = [
@@ -1350,9 +1540,9 @@ async function executar() {
     for (const { w, h } of RESOLUCOES) {
       await definirTamanho(w, h);
       const medido = await medirTelaEstavel();
-      const esperado = colunasEsperadas(pagina.numBotoes, w);
+      const esperado = colunasEsperadas(pagina.numBotoes, w, pagina.tela);
       const vwValido =
-        colunasEsperadas(pagina.numBotoes, medido.vw) === esperado &&
+        colunasEsperadas(pagina.numBotoes, medido.vw, pagina.tela) === esperado &&
         w >= BREAKPOINT_BARRA === medido.vw >= BREAKPOINT_BARRA;
       teste(
         `Responsividade ${pagina.tela} ${w}x${h} (${esperado} col)`,

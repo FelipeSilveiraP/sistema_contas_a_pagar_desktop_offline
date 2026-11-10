@@ -1,5 +1,5 @@
 import { buscarStatus, criarEmpresa, ErroValidacaoApi } from "../api";
-import { confirmar } from "../componentes";
+import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { mascaraCNPJ, mascaraTelefone } from "../mascaras";
@@ -217,19 +217,25 @@ function iniciar(): void {
   });
 
   document.getElementById("btn-cancelar")?.addEventListener("click", () => {
-    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
-    void voltar();
+    void (async () => {
+      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      void voltar();
+    })();
   });
 
+  let navegacaoConfirmada = false;
   document.addEventListener(
     "click",
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
-      if (!alvo || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (!alvo || !sujo || navegacaoConfirmada || dialogoEstaAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      navegacaoConfirmada = true;
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) alvo.click();
+        navegacaoConfirmada = false;
+      });
     },
     true
   );
@@ -237,11 +243,12 @@ function iniciar(): void {
   document.addEventListener(
     "keydown",
     (evento) => {
-      if (evento.key !== "Escape" || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) void voltar();
+      });
     },
     true
   );

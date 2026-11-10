@@ -1,8 +1,45 @@
 # Active Context
 
 ## Foco Atual
-**Escopo integral: TODAS as telas implementadas (2026-11-08) — regressão completa verde.**
+**Ajustes visuais + sistema global de pop-ups implementados (2026-11-09) — regressão completa verde.**
 Pendente: validação visual/final do usuário (matriz abaixo) e validação manual do bug de foco.
+
+## Ajustes visuais + pop-ups (2026-11-09) — concluído, aguardando validação
+- **Chave giratória:** tela de carregamento com SVG de chave metálica girando em `rotateY`
+  (perspectiva 480px, 2.4s linear, `prefers-reduced-motion` desliga a rotação); mensagem
+  "INICIANDO O SISTEMA...", janela e prontidão real intactas (sem timers).
+- **Cartões dos submenus:** layout compartilhado flex-wrap (padrão 19 do systemPatterns) —
+  cartões junto da navbar (distância 16–60px, sem vazio vertical), largura fixa por faixa
+  (100%/16.5rem/21.5rem) e altura padronizada; quantidade de cartões NÃO muda dimensões;
+  centralização + quebra de linha; referência = 3 cartões da tela Controle.
+- **Navbar:** hover pinta o botão inteiro com a cor do módulo (MENU `#FFE600`, CADASTROS
+  `#FF8C00`, CONTROLE `#2563EB`, MENSAGENS `#FF5E89`, GRÁFICOS `#00FF66`) + glifo SVG branco,
+  texto com contraste (branco só no CONTROLE); sem mudança de tamanho; ativo = fundo branco +
+  barra inferior 5px na cor do módulo (distinguível do hover); CONTROLE padronizado
+  (`icone-azul`, fundo branco inativo); quadrados dos ícones = cor do módulo.
+- **Form Recorrente:** fundo preto (`bg-[#1c1b1b]` no body) → `bg-[#fcf9f8]` (origem localizada
+  no próprio body do form; nada global alterado); cabeçalho roxo e form branco preservados.
+- **Pop-ups neobrutalistas:** `frontend/ts/dialogos.ts` (novo) — diálogo único reutilizável
+  (HTML por JS seguro, nunca por mensagem), tipos CONFIRMAÇÃO/AVISO/SUCESSO/ERRO/INFORMAÇÃO/
+  RECORRÊNCIA com cabeçalhos laranja/amarelo/verde/vermelho/azul/roxo; API assíncrona que
+  devolve a escolha; `confirmarExclusao` (CONFIRMAR EXCLUSÃO / CANCELAR / EXCLUIR vermelho) e
+  `confirmarDuplicidade` (POSSÍVEL DUPLICIDADE / CANCELAR / CADASTRAR MESMO ASSIM + detalhes);
+  fila serial, ESC cancela, Tab preso, foco inicial no botão seguro + restauração de foco,
+  `role=dialog`/`aria-modal`/`aria-labelledby`, overlay removido ao fechar. Todos os
+  `window.alert/confirm` dos fluxos migrados (9 telas); `componentes.ts` reexporta a API.
+- **Guardas novas:** teclado/clique dos forms ignoram ações com `dialogoEstaAberto()`; ESC com
+  menu lateral aberto fecha o MENU (não dispara saída de form sujo) — correção de precedência
+  que o stub `window.confirm=()=>true` mascarava nos testes.
+- **Testes (2026-11-09):** JUnit 120/120; smoke **326/326** (blocos novos: cores do módulo,
+  ativo/inativo, CONTROLE padronizado, dimensões padronizadas, distância navbar↔cartões,
+  diálogos a11y/ESC/foco/teclado/sem overlay, fundo form-recorrente); smoke-boot 22/22×2
+  (chave + rotateY + reduced-motion + prontidão real) APROVADO; smoke-real 25/25×2 (hover real
+  com glifo branco, sem resize, contraste) APROVADO; smoke-dev **83/83** (regressão de foco com
+  diálogos DOM via TAB+ENTER reais) verde; persistência 11/11. Capturas em `docs/responsivo/`
+  (inclui `dialogo-confirmacao-1536x864.png`, `carregando-{1,2}.png`, `nav-hover-cadastros.png`).
+- **Observações:** `window.confirm/​alert/prompt` removidos dos fluxos (só restam nos harnesses
+  de teste como stubs legados removidos); comportamento de cada operação preservado (mesmas
+  mensagens, mesmas consequências); confirmação só onde há risco/perda/duplicidade.
 
 ## Conclusão das telas (2026-11-08)
 - **Pagos** (`pagos.html`/`pagos.ts` — ref `pagos-tabela-verde`): tabela verde, total pago,
@@ -297,8 +334,13 @@ exibição por tipo separada.
 - JUnit 101/101 após as guardas novas.
 
 ## Pendências
-1. Validação do usuário: correção do Banco (instituição + Pix) + Entrega 3.2 (Pagador) + Entrega 3.3
-   (Empresa) + navbar hover; capturas em `docs/responsivo/form-{banco,pagador}-{1536x864,768x800,480x800}.png`
-2. **Validação manual do defeito de digitação** (`npm run dev` real) — até lá NÃO declarar resolvido
-3. Push ao GitHub — AGUARDA autorização explícita
-4. Próxima entrega: **Módulo 3.6 Boletos/Todas as Contas** — autorizado; executar conforme plano mestre
+1. **Validação visual do usuário (2026-11-09):** chave giratória, cartões padronizados próximos
+   da navbar, hover/ativo da navbar (CONTROLE padronizado), fundo do form-recorrente e sistema
+   de pop-ups — capturas em `docs/responsivo/` (inclui `dialogo-confirmacao-1536x864.png`,
+   `carregando-{1,2}.png`, `nav-hover-cadastros.png`, `<tela>-{1536x864,768x800,480x800}.png`)
+2. Validação do usuário (itens anteriores): correção do Banco + Entrega 3.2 (Pagador) +
+   Entrega 3.3 (Empresa) + navbar hover; capturas em `docs/responsivo/form-{banco,pagador}-*.png`
+3. **Validação manual do defeito de digitação** (`npm run dev` real) — até lá NÃO declarar
+   resolvido (smoke-dev 83/83 prova a regressão, mas a validação humana continua pendente)
+4. Push ao GitHub — AGUARDA autorização explícita
+5. Próxima entrega: **Módulo 3.6 Boletos/Todas as Contas** — autorizado; executar conforme plano mestre

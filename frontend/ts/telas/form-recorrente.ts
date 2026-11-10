@@ -1,5 +1,5 @@
 import { buscarStatus, criarRecorrente, ErroValidacaoApi, ErroApi } from "../api";
-import { confirmar } from "../componentes";
+import { confirmar, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { mascaraMoeda, paraCentavos } from "../mascaras";
@@ -125,26 +125,33 @@ function iniciar(): void {
     void submeter();
   });
   el("btn-cancelar").addEventListener("click", () => {
-    if (sujo && !confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) return;
-    void voltar();
+    void (async () => {
+      if (sujo && !(await confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?"))) return;
+      void voltar();
+    })();
   });
 
   document.addEventListener("keydown", (evento) => {
-    if (evento.key !== "Escape" || !sujo) return;
-    if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-      evento.preventDefault();
-      evento.stopPropagation();
-    }
-  });
+    if (evento.key !== "Escape" || !sujo || dialogoEstaAberto() || menuLateralAberto()) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+      if (ok) void voltar();
+    });
+  }, true);
+  let navegacaoConfirmada = false;
   document.addEventListener(
     "click",
     (evento) => {
       const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
-      if (!alvo || !sujo) return;
-      if (!confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?")) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      if (!alvo || !sujo || navegacaoConfirmada || dialogoEstaAberto()) return;
+      evento.preventDefault();
+      evento.stopPropagation();
+      navegacaoConfirmada = true;
+      void confirmar("Ha alteracoes nao salvas. Deseja sair mesmo assim?").then((ok) => {
+        if (ok) alvo.click();
+        navegacaoConfirmada = false;
+      });
     },
     true
   );

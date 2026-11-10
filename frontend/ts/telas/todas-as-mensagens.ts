@@ -6,7 +6,7 @@ import {
   AvisoDados,
   ErroValidacaoApi,
 } from "../api";
-import { confirmar } from "../componentes";
+import { confirmarExclusao } from "../componentes";
 import { montarNavbar } from "../navbar";
 import { formatarDataBR, parseDataBR } from "../mascaras";
 
@@ -178,7 +178,7 @@ async function aplicarAlteracao(): Promise<void> {
 async function excluirSelecionado(): Promise<void> {
   const aviso = avisos.find((a) => a.id === selecionadoId);
   if (!aviso) return;
-  if (!confirmar(`Excluir definitivamente a mensagem "${aviso.titulo}"?`)) return;
+  if (!(await confirmarExclusao(`Excluir definitivamente a mensagem "${aviso.titulo}"? Esta acao nao pode ser desfeita.`))) return;
   try {
     const cfg = await window.finDesk!.config();
     await excluirAviso(cfg, aviso.id);
