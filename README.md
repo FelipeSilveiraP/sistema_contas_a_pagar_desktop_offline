@@ -199,7 +199,7 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 
 Pendências conhecidas:
 - validação visual final na resolução do monitor da empresa;
-- o instalador ainda não existe: hoje o app roda a partir do código-fonte, com JDK e Node instalados.
+- o instalador não tem assinatura digital paga: o Windows mostra um aviso na primeira execução (ver [docs/instalacao.md](docs/instalacao.md)).
 
 ## Licença
 

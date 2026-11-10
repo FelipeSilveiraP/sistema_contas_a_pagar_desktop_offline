@@ -69,3 +69,11 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - **2026-11-10 — "Hoje" é calculado no horário local.** O `toISOString()` usava UTC, e das 21h à meia-noite as contas que vencem hoje apareciam como atrasadas.
 - **2026-11-10 — Gráficos consolidados.** O fluxo mostra sempre os últimos 6 meses, com pago × pendente por mês, independente do período escolhido. Entraram os 5 maiores fornecedores do período e a quantidade de contas pagas e pendentes nos indicadores.
 - **2026-11-10 — Impressão por PDF, sem a janela nativa de impressão.** O botão IMPRIMIR (Gráficos) e IMPRIMIR LISTA (Todas as Contas) geram um PDF da tela em `Downloads\Chaveiro Universal - Relatórios` e o abrem no leitor padrão, onde o usuário imprime. O CSS `@media print` esconde navbar, botões e editores.
+
+## Fase 5 — logs, instalador e atualização (2026-11-10)
+
+- **2026-11-10 — Logs em arquivo com rotação, na pasta `logs` ao lado do banco.** O `app.log` (Electron) vira um novo arquivo a cada 5 MB e mantém os 3 anteriores. O `backend.log` (Spring) também roda a cada 5 MB, com limite de 50 MB. Nos testes, os logs ficam ao lado do banco temporário. O token da API nunca é registrado.
+- **2026-11-10 — Instalador com electron-builder (NSIS) e Java mínimo via `jlink`.** O planejado era Electron Forge + `jpackage`, mas como o backend é um processo filho do Electron, o `jlink` do JDK local, sem download, gera só o runtime necessário (cerca de 50 MB), e o NSIS do electron-builder instala por usuário, sem administrador, com atalhos. O instalador final tem cerca de 143 MB e é gerado por `npm run instalador`.
+- **2026-11-10 — Sem assinatura digital do `.exe`.** Não há certificado; o Windows mostra "O Windows protegeu o computador" na primeira vez (documentado em `docs/instalacao.md`).
+- **2026-11-10 — Atualização = rodar o instalador novo por cima.** Os dados ficam em `%LOCALAPPDATA%` e não são tocados, e o backup automático pré-migração protege as mudanças de estrutura. Não há atualização automática pela internet, porque o sistema é offline.
+- **2026-11-10 — JSON ilegível na API devolve 400 ("dados invalidos"), não 500.**
