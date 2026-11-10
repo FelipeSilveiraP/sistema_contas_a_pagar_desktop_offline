@@ -10,7 +10,9 @@
     "build": "npm run typecheck && npm run build:css && npm run build:ts",
     "app": "electron desktop/main.js",
     "dev": "npm run build && electron desktop/main.js",
-    "test:mascaras": "node desktop/teste-mascaras.js"
+    "test:mascaras": "node desktop/teste-mascaras.js",
+    "test:filtros": "node desktop/teste-filtros.js",
+    "test:frontend": "node desktop/teste-mascaras.js && node desktop/teste-filtros.js"
   },
   "devDependencies": {
     "@tailwindcss/container-queries": "^0.1.1",

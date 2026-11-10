@@ -291,7 +291,10 @@ export interface ResumoDashboard {
   vencidasCentavos: number;
   aVencerCentavos: number;
   porCategoria: { categoria: string; totalCentavos: number }[];
-  porMes: { mes: string; totalPagoCentavos: number }[];
+  porMes: { mes: string; totalPagoCentavos: number; totalPendenteCentavos: number }[];
+  quantidadePagas: number;
+  quantidadePendentes: number;
+  maioresFornecedores: { nomeEmpresa: string; totalCentavos: number; quantidade: number }[];
 }
 
 export interface AlertaContaDados {

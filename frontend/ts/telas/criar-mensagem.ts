@@ -1,6 +1,7 @@
 import { buscarStatus, criarAviso, ErroValidacaoApi } from "../api";
 import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { notificar } from "../notificacoes";
+import { hojeIso } from "../filtros";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 
@@ -128,7 +129,7 @@ function iniciar(): void {
     document.body.dataset.formSujo = "true";
   });
   el("btn-hoje").addEventListener("click", () => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = hojeIso();
     el<HTMLInputElement>("dt_inicio").value = hoje;
     if (!el<HTMLInputElement>("dt_fim").value) el<HTMLInputElement>("dt_fim").value = hoje;
     sujo = true;

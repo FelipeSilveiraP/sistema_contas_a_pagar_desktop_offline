@@ -24,14 +24,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class DashboardController {
 
     public record CategoriaTotal(String categoria, long totalCentavos) {}
-    public record MesTotal(String mes, long totalPagoCentavos) {}
+    public record MesTotal(String mes, long totalPagoCentavos, long totalPendenteCentavos) {}
+    public record FornecedorTotal(String nomeEmpresa, long totalCentavos, int quantidade) {}
     public record Resumo(
             long totalPagoCentavos,
             long totalPendenteCentavos,
             long vencidasCentavos,
             long aVencerCentavos,
             List<CategoriaTotal> porCategoria,
-            List<MesTotal> porMes
+            List<MesTotal> porMes,
+            int quantidadePagas,
+            int quantidadePendentes,
+            List<FornecedorTotal> maioresFornecedores
     ) {}
     /** Conta pendente na janela de alerta do VBA (VerificarVencimentosAoAbrir). */
     public record Alerta(long id, String nomeEmpresa, LocalDate vencimento,
@@ -62,23 +66,36 @@ public class DashboardController {
         long vencidas = 0;
         long aVencer = 0;
         Map<String, Long> porCategoria = new LinkedHashMap<>();
-        Map<String, Long> porMes = new LinkedHashMap<>();
+        Map<String, long[]> porMes = new LinkedHashMap<>();          // [pago, pendente]
+        Map<String, long[]> porFornecedor = new LinkedHashMap<>();   // [total, quantidade]
+        int quantidadePagas = 0;
+        int quantidadePendentes = 0;
 
         for (Conta conta : contas.listar(null)) {
             boolean noPeriodo = !conta.vencimento().isBefore(inicio) && !conta.vencimento().isAfter(fim);
-            if ("PAGO".equals(conta.status()) && noPeriodo) {
+            if (!noPeriodo) {
+                continue;
+            }
+            String mes = conta.vencimento().toString().substring(0, 7);
+            long[] doMes = porMes.computeIfAbsent(mes, m -> new long[2]);
+            long[] doFornecedor = porFornecedor.computeIfAbsent(conta.nomeEmpresa().trim().toUpperCase(), n -> new long[2]);
+            doFornecedor[0] += centavos(conta);
+            doFornecedor[1]++;
+            if ("PAGO".equals(conta.status())) {
                 pago += centavos(conta);
-                String mes = conta.vencimento().toString().substring(0, 7);
-                porMes.merge(mes, centavos(conta), Long::sum);
-            } else if ("PENDENTE".equals(conta.status()) && noPeriodo) {
+                doMes[0] += centavos(conta);
+                quantidadePagas++;
+            } else if ("PENDENTE".equals(conta.status())) {
                 pendente += centavos(conta);
+                doMes[1] += centavos(conta);
+                quantidadePendentes++;
                 if (conta.vencimento().isBefore(hoje)) {
                     vencidas += centavos(conta);
                 } else {
                     aVencer += centavos(conta);
                 }
             }
-            if (noPeriodo && conta.categoria() != null) {
+            if (conta.categoria() != null) {
                 porCategoria.merge(conta.categoria(), centavos(conta), Long::sum);
             }
         }
@@ -87,10 +104,14 @@ public class DashboardController {
         porCategoria.forEach((nome, total) -> categorias.add(new CategoriaTotal(nome, total)));
         categorias.sort(Comparator.comparingLong(CategoriaTotal::totalCentavos).reversed());
         List<MesTotal> meses = new ArrayList<>();
-        porMes.forEach((mes, total) -> meses.add(new MesTotal(mes, total)));
+        porMes.forEach((mes, totais) -> meses.add(new MesTotal(mes, totais[0], totais[1])));
         meses.sort(Comparator.comparing(MesTotal::mes));
+        List<FornecedorTotal> fornecedores = new ArrayList<>();
+        porFornecedor.forEach((nome, totais) -> fornecedores.add(new FornecedorTotal(nome, totais[0], (int) totais[1])));
+        fornecedores.sort(Comparator.comparingLong(FornecedorTotal::totalCentavos).reversed());
 
-        return new Resumo(pago, pendente, vencidas, aVencer, categorias, meses);
+        return new Resumo(pago, pendente, vencidas, aVencer, categorias, meses,
+                quantidadePagas, quantidadePendentes, fornecedores.stream().limit(5).toList());
     }
 
     @GetMapping("/contas/alertas")

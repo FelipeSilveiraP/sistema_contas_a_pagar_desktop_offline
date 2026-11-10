@@ -10,6 +10,7 @@ import { confirmarExclusao } from "../componentes";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { formatarDataBR, parseDataBR, mascaraDinamica } from "../mascaras";
+import { hojeIso } from "../filtros";
 
 let avisos: AvisoDados[] = [];
 let pesquisa = "";
@@ -22,7 +23,7 @@ function el<T extends HTMLElement>(id: string): T {
 }
 
 function hoje(): string {
-  return new Date().toISOString().split("T")[0];
+  return hojeIso();
 }
 
 function ativoEm(aviso: AvisoDados, data: string): boolean {
@@ -39,6 +40,8 @@ function filtrados(): AvisoDados[] {
     if (termo && !`${a.titulo} ${a.mensagem}`.toLowerCase().includes(termo)) return false;
     if (filtro === "ATIVOS") return ativoEm(a, hojeStr);
     if (filtro === "EXPIRADOS") return !ativoEm(a, hojeStr) && a.dataFim < hojeStr;
+    // recados que aparecem em pelo menos um dia util (segunda a sexta)
+    if (filtro === "UTEIS") return a.diaSemana === "TODOS" || ["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA"].some((d) => a.diaSemana.split(",").includes(d));
     return true;
   });
   if (ordenarCronologico || filtro === "ORDEM") {

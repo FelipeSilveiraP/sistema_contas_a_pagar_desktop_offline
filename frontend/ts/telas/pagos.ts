@@ -14,6 +14,7 @@ import { confirmarEstorno } from "../componentes";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
+import { correspondeBusca, EstadoFiltroAvancado, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
 
 let pagamentos: PagamentoDados[] = [];
 let contas: ContaDados[] = [];
@@ -29,13 +30,13 @@ function contaDo(idConta: number): ContaDados | undefined {
   return contas.find((c) => c.id === idConta);
 }
 
+let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_DESC" };
+
 function filtrados(): PagamentoDados[] {
-  const termo = pesquisa.toLowerCase();
-  return pagamentos.filter((p) => {
-    if (!termo) return true;
-    return `${p.nomeEmpresa} ${p.instituicaoBanco ?? ""} ${contaDo(p.idConta)?.numeroDocumento ?? ""}`
-      .toLowerCase().includes(termo);
-  });
+  const lista = pagamentos.filter((p) =>
+    correspondeBusca(pesquisa, [p.nomeEmpresa, p.instituicaoBanco, contaDo(p.idConta)?.numeroDocumento], p.valorPago)
+    && noPeriodo(p.dataPagamento, avancado.periodo));
+  return ordenar(lista, avancado.ordem, { data: (p) => p.dataPagamento, valor: (p) => p.valorPago, nome: (p) => p.nomeEmpresa });
 }
 
 function celula(texto: string, classe: string): HTMLTableCellElement {
@@ -176,6 +177,10 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("pagos");
+  avancado = montarControlesAvancados(el("searchInput").closest("div.w-full")!, avancado, (e) => {
+    avancado = e;
+    renderTabela();
+  }, "Pagamento");
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();

@@ -34,5 +34,7 @@ interface Window {
     fecharAplicativo: () => Promise<void>;
     salvarNota: (nome: string, bytes: Uint8Array) => Promise<{ ok: boolean; caminho?: string }>;
     abrirNota: (caminho: string) => Promise<boolean>;
+    abrirArquivo: (caminho: string) => Promise<boolean>;
+    imprimirPdf: (nome: string) => Promise<{ ok: boolean; caminho?: string }>;
   };
 }

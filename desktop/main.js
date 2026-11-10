@@ -397,10 +397,36 @@ ipcMain.handle("findesk:salvar-nota", (_evento, nome, bytes) => {
   return { ok: true, caminho: destino };
 });
 
-ipcMain.handle("findesk:abrir-nota", async (_evento, caminho) => {
+function pastaRelatorios() {
+  return path.join(app.getPath("downloads"), "Chaveiro Universal - Relatórios");
+}
+
+// Abre SO arquivos gerados pelo app (notas fiscais e relatorios) no programa padrao.
+async function abrirGerado(caminho) {
   const alvo = path.resolve(String(caminho || ""));
-  if (!alvo.startsWith(pastaNotas() + path.sep) || !fs.existsSync(alvo)) return false;
+  const permitido = [pastaNotas(), pastaRelatorios()].some((p) => alvo.startsWith(p + path.sep));
+  if (!permitido || !fs.existsSync(alvo)) return false;
   return (await shell.openPath(alvo)) === "";
+}
+
+ipcMain.handle("findesk:abrir-nota", (_evento, caminho) => abrirGerado(caminho));
+ipcMain.handle("findesk:abrir-arquivo", (_evento, caminho) => abrirGerado(caminho));
+
+// Impressao: gera PDF da tela atual (CSS @media print esconde navbar/botoes) em
+// Downloads e o usuario imprime pelo leitor de PDF — sem a janela nativa de
+// impressao, que e modal e causava o bug de foco dos inputs.
+ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome) => {
+  if (!janela || janela.isDestroyed()) return { ok: false };
+  const agora = new Date();
+  const carimbo = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")} ${String(agora.getHours()).padStart(2, "0")}h${String(agora.getMinutes()).padStart(2, "0")}`;
+  const base = String(nome || "Relatorio").replace(/[^A-Za-z0-9 _-]/g, "_").slice(0, 40);
+  const pasta = pastaRelatorios();
+  fs.mkdirSync(pasta, { recursive: true });
+  const destino = path.join(pasta, `${base} - ${carimbo}.pdf`);
+  const pdf = await janela.webContents.printToPDF({ printBackground: true, landscape: true, pageSize: "A4" });
+  fs.writeFileSync(destino, pdf);
+  await shell.openPath(destino);
+  return { ok: true, caminho: destino };
 });
 
 ipcMain.handle("findesk:fechar", () => {

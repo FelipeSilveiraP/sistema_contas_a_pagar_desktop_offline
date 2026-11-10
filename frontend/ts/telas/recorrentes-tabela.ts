@@ -11,6 +11,7 @@ import {
 } from "../api";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
+import { correspondeBusca, EstadoFiltroAvancado, hojeIso, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
 import { notificar } from "../notificacoes";
 import { confirmar } from "../componentes";
 
@@ -28,21 +29,25 @@ function el<T extends HTMLElement>(id: string): T {
 }
 
 function hoje(): string {
-  return new Date().toISOString().split("T")[0];
+  return hojeIso();
 }
 
+let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_ASC" };
+
 function filtradas(): ContaDados[] {
-  const termo = pesquisa.toLowerCase();
-  return contas.filter((c) => {
-    if (termo && !`${c.nomeEmpresa} ${c.numeroDocumento ?? ""} ${c.pagadorResponsavel}`.toLowerCase().includes(termo)) {
+  const lista = contas.filter((c) => {
+    if (!correspondeBusca(pesquisa, [c.nomeEmpresa, c.numeroDocumento, c.pagadorResponsavel], c.valor)) {
       return false;
     }
+    if (!noPeriodo(c.vencimento, avancado.periodo)) return false;
+    if (filtro === "PF" || filtro === "PJ") return c.tipoPessoa === filtro;
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
     if (filtro === "AVENCER") return c.status === "PENDENTE" && diff > 0;
     if (filtro === "HOJE") return c.status === "PENDENTE" && diff === 0;
     if (filtro === "ATRASADO") return c.status === "PENDENTE" && diff < 0;
     return true;
   });
+  return ordenar(lista, avancado.ordem, { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
 }
 
 function celula(texto: string, classe: string): HTMLTableCellElement {
@@ -261,6 +266,10 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("recorrentes-tabela");
+  avancado = montarControlesAvancados(el("filterPillsGroup").parentElement!, avancado, (e) => {
+    avancado = e;
+    renderTabela();
+  }, "Vencimento");
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();

@@ -722,3 +722,31 @@
     animation: none;
   }
 }
+
+/* ===== Impressao (PDF gerado por findesk:imprimir-pdf) =====
+   So o conteudo do relatorio: sem navbar, notificacoes, botoes e editores. */
+@media print {
+  #nav-global,
+  .notificacoes,
+  .dialogo-veu,
+  [data-nao-imprimir],
+  button,
+  select,
+  input[type="search"] {
+    display: none !important;
+  }
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+  body {
+    padding: 0 !important;
+  }
+  body > #nav-global + * {
+    margin: 0 !important;
+  }
+  section, table, tr {
+    break-inside: avoid;
+  }
+}

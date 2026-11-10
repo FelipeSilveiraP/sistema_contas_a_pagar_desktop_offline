@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld("finDesk", {
   fecharAplicativo: () => ipcRenderer.invoke("findesk:fechar"),
   salvarNota: (nome, bytes) => ipcRenderer.invoke("findesk:salvar-nota", nome, bytes),
   abrirNota: (caminho) => ipcRenderer.invoke("findesk:abrir-nota", caminho),
+  abrirArquivo: (caminho) => ipcRenderer.invoke("findesk:abrir-arquivo", caminho),
+  imprimirPdf: (nome) => ipcRenderer.invoke("findesk:imprimir-pdf", nome),
 });

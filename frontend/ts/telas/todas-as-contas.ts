@@ -13,8 +13,10 @@ import {
  baixarAnexoConta } from "../api";
 import { confirmarEstorno, confirmarExclusao } from "../componentes";
 import { notificar } from "../notificacoes";
+import { imprimirRelatorio } from "../impressao";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
+import { correspondeBusca, EstadoFiltroAvancado, hojeIso, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
 
 type Filtro = "TODOS" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
 
@@ -38,7 +40,7 @@ function el<T extends HTMLElement>(id: string): T {
 }
 
 function hoje(): string {
-  return new Date().toISOString().split("T")[0];
+  return hojeIso();
 }
 
 function statusDerivado(conta: ContaDados): { rotulo: string; classe: string } {
@@ -51,12 +53,14 @@ function statusDerivado(conta: ContaDados): { rotulo: string; classe: string } {
   return { rotulo: "A Vencer", classe: "bg-[#fde400]/30 text-[#6a5f00]" };
 }
 
+let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_ASC" };
+
 function filtradas(): ContaDados[] {
-  const termo = pesquisa.toLowerCase();
-  return contas.filter((c) => {
-    if (termo && !`${c.nomeEmpresa} ${c.numeroDocumento ?? ""} ${c.categoria ?? ""}`.toLowerCase().includes(termo)) {
+  const lista = contas.filter((c) => {
+    if (!correspondeBusca(pesquisa, [c.nomeEmpresa, c.numeroDocumento, c.categoria, c.pagadorResponsavel], c.valor)) {
       return false;
     }
+    if (!noPeriodo(c.vencimento, avancado.periodo)) return false;
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
     switch (filtro) {
       case "PAGO": return c.status === "PAGO";
@@ -67,6 +71,7 @@ function filtradas(): ContaDados[] {
       default: return true;
     }
   });
+  return ordenar(lista, avancado.ordem, { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
 }
 
 function celulaTexto(texto: string, classe: string): HTMLTableCellElement {
@@ -370,6 +375,10 @@ async function verificarApi(): Promise<void> {
 function iniciar(): void {
   montarNavbar("todas-as-contas");
 
+  avancado = montarControlesAvancados(el("filterPillsGroup").parentElement!, avancado, (e) => {
+    avancado = e;
+    renderTabela();
+  }, "Vencimento");
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();
@@ -421,6 +430,7 @@ function iniciar(): void {
   ajustarTeclado();
   el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
   // nota fiscal anexada: salva em Downloads (sem dialogo nativo) e oferece ABRIR
+  el("btnImprimirLista").addEventListener("click", () => void imprimirRelatorio("Lista de contas"));
   el("btnBaixarAnexo").addEventListener("click", async () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (!conta || !conta.anexoNome) return;

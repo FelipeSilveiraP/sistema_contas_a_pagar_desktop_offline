@@ -74,6 +74,29 @@ class AlertasApiTest {
     }
 
     @Test
+    void resumoDeveConsolidarPendentesPorMesEMaioresFornecedores() throws Exception {
+        String s = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        long idEmpresa = empresas.cadastrar(new Empresa(null, null, "Empresa Resumo " + s, null, null, null, List.of())).id();
+        LocalDate base = LocalDate.of(2031, 3, 10);
+        for (String[] c : new String[][] {{"GRANDE " + s, "900.00"}, {"GRANDE " + s, "100.00"}, {"PEQUENO " + s, "50.25"}}) {
+            contas.cadastrar(new Conta(null, c[0], idEmpresa, null, "Balcão 01", "PJ", "boleto", "Aluguel",
+                    null, new BigDecimal(c[1]), base, false, null, null), null, true);
+        }
+
+        mvc.perform(get("/api/dashboard/resumo").param("de", "2031-03-01").param("ate", "2031-03-31")
+                        .header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPendenteCentavos").value(105025))
+                .andExpect(jsonPath("$.quantidadePendentes").value(3))
+                .andExpect(jsonPath("$.porMes[0].mes").value("2031-03"))
+                .andExpect(jsonPath("$.porMes[0].totalPendenteCentavos").value(105025))
+                .andExpect(jsonPath("$.maioresFornecedores[0].nomeEmpresa").value("GRANDE " + s))
+                .andExpect(jsonPath("$.maioresFornecedores[0].totalCentavos").value(100000))
+                .andExpect(jsonPath("$.maioresFornecedores[0].quantidade").value(2))
+                .andExpect(jsonPath("$.maioresFornecedores[1].nomeEmpresa").value("PEQUENO " + s));
+    }
+
+    @Test
     void deveTrazerSomenteRecadosVigentesHoje() throws Exception {
         String s = UUID.randomUUID().toString().substring(0, 8);
         LocalDate hoje = LocalDate.now();

@@ -62,3 +62,10 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
   - Os campos de pagador sugerem os pagadores cadastrados.
   - A tabela de empresas mostra telefone e endereço.
   - As mensagens ganharam o status AGENDADO.
+
+## Fase 4 — filtros, gráficos e impressão (2026-11-10)
+
+- **2026-11-10 — Filtros avançados em Todas as Contas, Pagos e Recorrentes.** Período (todo, este mês, mês passado, próximo mês, este ano) e ordenação (data, valor, empresa A-Z). A busca aceita texto sem acento ou **valor** ("150" acha R$ 150,00 e R$ 1.150,00), como o `RealizarBusca` do VBA. Também entraram os filtros do Stitch que faltavam: PF/PJ nas Recorrentes e DIAS ÚTEIS nas Mensagens. Módulo `filtros.ts`, testado em `desktop/teste-filtros.js`.
+- **2026-11-10 — "Hoje" é calculado no horário local.** O `toISOString()` usava UTC, e das 21h à meia-noite as contas que vencem hoje apareciam como atrasadas.
+- **2026-11-10 — Gráficos consolidados.** O fluxo mostra sempre os últimos 6 meses, com pago × pendente por mês, independente do período escolhido. Entraram os 5 maiores fornecedores do período e a quantidade de contas pagas e pendentes nos indicadores.
+- **2026-11-10 — Impressão por PDF, sem a janela nativa de impressão.** O botão IMPRIMIR (Gráficos) e IMPRIMIR LISTA (Todas as Contas) geram um PDF da tela em `Downloads\Chaveiro Universal - Relatórios` e o abrem no leitor padrão, onde o usuário imprime. O CSS `@media print` esconde navbar, botões e editores.
