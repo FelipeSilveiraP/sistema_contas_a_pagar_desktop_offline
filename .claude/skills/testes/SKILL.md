@@ -39,6 +39,8 @@ Antes de rodar: `mvn -f backend/pom.xml package` (gera o jar) e `npm run build`.
 | `desktop/smoke-real.js` | `npx electron desktop/smoke-real.js` | Clique, digitação, TAB e hover **reais** do Windows (`entrada-real.ps1`, SendInput) |
 | `desktop/smoke-dev.js` | `node desktop/smoke-dev.js` | Reproduz o `npm run dev` com entrada real. **Regressão obrigatória do bug de foco dos inputs.** |
 | `desktop/teste-persistencia.js` | `node desktop/teste-persistencia.js` | Grava, mata o processo, reabre a frio e confere os dados |
+| `desktop/teste-crud-real.js` | `npx electron desktop/teste-crud-real.js` | O sistema usado como um funcionário: clique e digitação reais, dados concretos, e criar, ler, editar e excluir em todas as telas (inclusive baixa, desfazer pagamento, PDF da nota e impressão). Banco, Downloads e PDFs em `%TEMP%`. |
+| `desktop/teste-filtros.js` | `npm run test:filtros` | Período, ordenação, busca por texto/valor e "hoje" no horário local. |
 | `desktop/teste-mascaras.js` | `npm run test:mascaras` | Funções puras das máscaras: formatação, cursor, Backspace sobre separador, CPF/CNPJ (inclusive alfanumérico), `paraCentavos` e datas. Roda sem Electron. |
 | `desktop/medir-layout.js` | `npx electron desktop/medir-layout.js --capturas` | Rolagem e centralização das 18 telas em 3 resoluções. É uma ferramenta de inspeção, sem aprovado/reprovado. |
 

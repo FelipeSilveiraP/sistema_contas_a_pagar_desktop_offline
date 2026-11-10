@@ -2,22 +2,33 @@
 
 > Máximo 30 linhas. **Reescreva** este arquivo a cada entrega (não acrescente histórico — decisões vão em `docs/decisoes.md`, histórico fica no Git).
 
-**Atualizado em:** 2026-11-09 — branch `feature/layout-mascaras-contexto`
-
-## Entrega atual (concluída, aguardando validação visual do usuário)
-- **Layout:** todas as telas cabem sem rolar a partir de 1366×768; os formulários longos usam 2 colunas em telas largas; os botões de ação estão centralizados; a navbar fica na mesma posição em todas as telas; o Menu não corta mais os cartões.
-- **Máscaras:** reescritas como funções puras e testadas. Trazem o "R$" sem duplicar, Backspace sobre separadores, CNPJ alfanumérico, máscara nos editores das tabelas e o dia com 2 dígitos. O CPF é opcional também na edição.
+**Atualizado em:** 2026-11-10 — branch `feature/fase4-auditoria`
 
 ## Situação
-- Fases 1–3 concluídas: todas as telas do Stitch estão implementadas e gravam no SQLite.
-- Testes: JUnit, `teste-mascaras`, smoke, smoke-boot, smoke-real, smoke-dev e persistência. Os números estão no último commit da entrega.
+- **Fases 1 a 5 concluídas.** Todas as telas gravam no SQLite, com filtros avançados, gráficos consolidados e impressão em PDF. O instalador Windows tem o Java embutido e há logs com rotação.
+- Auditoria de formulários feita (agente `auditor-formularios`): os bugs claros foram corrigidos; os itens que dependem de decisão estão abaixo.
+- **Testes (2026-11-10):**
 
-## Pendências
-- **Menu:** a tabela "Mensagens do dia" ainda mostra dados FICTÍCIOS fixos do design (contas de 2023), ligados a nada. Precisa ser conectada a `/api/contas/alertas`.
-- Validação visual final na resolução real do monitor da empresa.
-- Validação manual do bug de foco/digitação no uso real (`npm run dev`).
-- Revogar a chave de API da Xiaomi que está em `chat_mimo.ps1` (fora do Git).
+| Teste | Resultado |
+|---|---|
+| JUnit | 130/130 |
+| Máscaras | 65/65 |
+| Filtros | 32/32 |
+| smoke | 331/331 |
+| smoke-boot | 44/44 |
+| persistência | 11/11 |
+| smoke-real | 50/50 |
+| smoke-dev | 83/83 |
+| CRUD real | 62/62 |
 
-## Próximos passos
-- Fase 4: filtros avançados, gráficos consolidados e impressão.
-- Fase 5: logs com rotação e instalador Windows (Electron + JRE via `jpackage`).
+## Pendências — decisões do usuário (auditoria)
+- Trilha de auditoria (`auditoria_operacoes`): implementar ou descartar.
+- Empresa: endereço estruturado (CEP, cidade, UF…), nome fantasia e vários e-mails (estão no Stitch); CNPJ e representante obrigatórios?
+- Virada de ano (VBA `cmdCriarAnoNovo`): gerar as contas fixas automaticamente ao abrir ou manter o botão "Gerar próximos meses"?
+- Editar uma conta fixa deve alterar as contas pendentes já geradas (modo ALTERAR do VBA)?
+- Exclusão de banco/empresa com contas: hoje o vínculo é desfeito (SET NULL); bloquear?
+- Baixa rápida pedir o banco usado no pagamento?
+
+## Pendências do usuário
+- Instalar o `release/...Instalador 1.0.0.exe` no computador da loja e validar na resolução real.
+- Revogar a chave de API da Xiaomi em `chat_mimo.ps1` (fora do Git).

@@ -16,6 +16,7 @@ const ARQ_EVENTOS = path.join(DIAG_DIR, "eventos.jsonl");
 const ARQ_PEDIDOS = path.join(DIAG_DIR, "requisicoes.jsonl");
 const ARQ_RESPOSTAS = path.join(DIAG_DIR, "respostas.jsonl");
 const ARQ_APP = path.join(DIAG_DIR, "app-stdout.log");
+const BANCO_DEV = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "findesk-dev-banco-")), "contas-a-pagar-dev.db");
 
 const resultados = [];
 
@@ -135,7 +136,8 @@ function matarApp() {
 function iniciarApp() {
   const proc = spawn("cmd.exe", ["/c", "npm", "run", "dev"], {
     cwd: RAIZ,
-    env: { ...process.env, FINDESK_DIAG_DIR: DIAG_DIR },
+    // REGRA DE OURO: banco isolado (nunca o operacional), fora da pasta de evidencias
+    env: { ...process.env, FINDESK_DIAG_DIR: DIAG_DIR, FINDESK_DB_PATH: BANCO_DEV },
     stdio: ["ignore", "pipe", "pipe"],
   });
   proc.stdout.on("data", (d) => fs.appendFileSync(ARQ_APP, d));

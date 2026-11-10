@@ -53,7 +53,8 @@ Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 2. **Testes Unitários e de Integração:** Executar suíte JUnit 5 no backend (`backend/src/test`).
 3. **Smoke Tests:** Executar `npx electron desktop/smoke.js`, `npx electron desktop/smoke-boot.js`, `npx electron desktop/smoke-real.js` e `node desktop/smoke-dev.js` (smoke-real e smoke-dev usam entrada real via PowerShell `SendInput`; o smoke-dev reproduz o cenário real de `npm run dev` e é a regressão obrigatória do bug de foco/interação dos inputs).
 4. **Teste de Persistência:** Validar ciclo de cold start com `desktop/teste-persistencia.js`.
-5. **Máscaras:** `npm run test:mascaras` (`desktop/teste-mascaras.js`) sempre que tocar em `frontend/ts/mascaras.ts` ou em campos com máscara.
+5. **Máscaras e filtros:** `npm run test:frontend` (`desktop/teste-mascaras.js` + `desktop/teste-filtros.js`) sempre que tocar em `mascaras.ts`, `filtros.ts` ou em campos com máscara.
+7. **CRUD real (antes de cada entrega):** `npx electron desktop/teste-crud-real.js`. Usa clique e digitação reais e faz criar, ler, editar e excluir em todas as telas, com banco e Downloads temporários. Não use o computador enquanto ele roda e rode um teste de Electron por vez.
 6. **Layout (quando mexer em telas):** `npx electron desktop/medir-layout.js --capturas` mede rolagem e centralização das 18 telas em 1366×768, 1536×864 e 1920×1080 (capturas em `%TEMP%\findesk-layout`).
 
 ---

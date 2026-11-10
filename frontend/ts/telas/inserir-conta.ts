@@ -99,6 +99,20 @@ function validar(dados: CamposFormulario): Record<string, string> {
   return erros;
 }
 
+const ETAPA1 = ["vencimento", "valor", "nomeEmpresa", "numeroDocumento"];
+
+/** Some com o erro de um campo assim que ele passa a ser valido (sem esperar o SALVAR). */
+function revalidarErrosVisiveis(): void {
+  const atuais = validar(lerCampos());
+  document.querySelectorAll<HTMLElement>(".campo-erro:not(.hidden)").forEach((elErro) => {
+    const nome = elErro.dataset.erroCampo ?? "";
+    if (nome !== "anexo" && !atuais[nome]) {
+      elErro.textContent = "";
+      elErro.classList.add("hidden");
+    }
+  });
+}
+
 function mostrarErros(erros: Record<string, string>): void {
   document.querySelectorAll<HTMLElement>(".campo-erro").forEach((elErro) => {
     const nome = elErro.dataset.erroCampo ?? "";
@@ -310,10 +324,14 @@ function iniciar(): void {
   });
 
   el<HTMLFormElement>("form-conta").addEventListener("input", marcarSujo);
+  el<HTMLFormElement>("form-conta").addEventListener("input", revalidarErrosVisiveis);
+  el<HTMLFormElement>("form-conta").addEventListener("change", revalidarErrosVisiveis);
   el("btn-proxima").addEventListener("click", () => {
-    const erros = validar(lerCampos());
-    mostrarErros(erros);
-    if (erros.vencimento || erros.valor || erros.nomeEmpresa) return;
+    // so os erros da ETAPA 1: os campos da etapa 2 ainda nem foram mostrados ao usuario
+    const todos = validar(lerCampos());
+    const daEtapa1 = Object.fromEntries(Object.entries(todos).filter(([c]) => ETAPA1.includes(c)));
+    mostrarErros(daEtapa1);
+    if (Object.keys(daEtapa1).length) return;
     alternarEtapa(2);
   });
   el("btn-voltar-etapa").addEventListener("click", () => alternarEtapa(1));

@@ -77,3 +77,10 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - **2026-11-10 — Sem assinatura digital do `.exe`.** Não há certificado; o Windows mostra "O Windows protegeu o computador" na primeira vez (documentado em `docs/instalacao.md`).
 - **2026-11-10 — Atualização = rodar o instalador novo por cima.** Os dados ficam em `%LOCALAPPDATA%` e não são tocados, e o backup automático pré-migração protege as mudanças de estrutura. Não há atualização automática pela internet, porque o sistema é offline.
 - **2026-11-10 — JSON ilegível na API devolve 400 ("dados invalidos"), não 500.**
+
+## Testes reais e isolamento (2026-11-10)
+
+- **2026-11-10 — `smoke-real`, `smoke-boot` e `smoke-dev` passaram a usar banco temporário.** Eles rodavam contra o banco operacional, violando a regra de ouro. A data do arquivo mostrou que não houve gravação. Todo teste novo define `FINDESK_DB_PATH` antes de subir o app.
+- **2026-11-10 — Teste de CRUD real (`desktop/teste-crud-real.js`).** Usa clique e digitação reais do Windows, dados concretos e todos os campos, e faz criar, ler, editar e excluir em cada tela, além de baixa, desfazer pagamento, PDF da nota e impressão. O banco, os Downloads e os PDFs ficam em `%TEMP%`.
+- **2026-11-10 — Notificações nunca bloqueiam a tela.** São compactas e no máximo 2. O corpo deixa o clique passar e só os botões ABRIR e × recebem clique. O teste real mostrou que as notificações cobriam os botões PAGO e APLICAR.
+- **2026-11-10 — Inserir Conta mostra só os erros da etapa atual, e o erro some quando o campo é corrigido.**

@@ -10,8 +10,8 @@ export async function imprimirRelatorio(nome: string): Promise<void> {
     if (!r.ok || !r.caminho) throw new Error("falha ao gerar o PDF");
     const caminho = r.caminho;
     document.body.dataset.relatorioPdf = caminho;
-    notificar("Relatório aberto em PDF para imprimir (cópia salva em Downloads › Chaveiro Universal - Relatórios).", "sucesso", {
-      rotulo: "Abrir de novo",
+    notificar("Relatório aberto em PDF para imprimir.", "sucesso", {
+      rotulo: "Abrir",
       aoClicar: () => void window.finDesk!.abrirArquivo(caminho),
     });
   } catch {

@@ -28,7 +28,9 @@ npx electron desktop/smoke-boot.js     # tempos de boot + interação imediata
 npx electron desktop/smoke-real.js     # entrada real do Windows (SendInput via desktop/entrada-real.ps1)
 node desktop/smoke-dev.js              # reproduz `npm run dev` com entrada real — regressão obrigatória do bug de foco dos inputs
 node desktop/teste-persistencia.js     # cold start: dados sobrevivem ao reinício do backend
-npm run test:mascaras                  # testes unitários das máscaras (sem Electron)
+npm run test:frontend                  # testes unitários de máscaras + filtros (sem Electron)
+npx electron desktop/teste-crud-real.js   # CRUD real (SendInput) em todas as telas, banco/Downloads em %TEMP%
+npm run instalador                     # instalador Windows com Java embutido (ver docs/instalacao.md)
 npx electron desktop/medir-layout.js --capturas   # rolagem/centralização das 18 telas em 3 resoluções
 ```
 

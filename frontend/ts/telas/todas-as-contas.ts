@@ -441,7 +441,7 @@ function iniciar(): void {
       if (!salvo.ok || !salvo.caminho) throw new Error("falha ao gravar");
       const caminho = salvo.caminho;
       document.body.dataset.notaSalva = caminho;
-      notificar("Nota fiscal salva na pasta Downloads › Chaveiro Universal - Notas Fiscais.", "sucesso", {
+      notificar("Nota fiscal salva em Downloads.", "sucesso", {
         rotulo: "Abrir",
         aoClicar: () => void window.finDesk!.abrirNota(caminho),
       });

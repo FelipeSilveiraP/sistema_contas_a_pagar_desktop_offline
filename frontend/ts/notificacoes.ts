@@ -9,7 +9,7 @@
 export type TipoNotificacao = "sucesso" | "erro" | "info";
 
 const DURACAO_MS = 5000;
-const MAXIMO = 3;
+const MAXIMO = 2;
 const CHAVE_PENDENTE = "findesk:notificacao-pendente";
 
 const ICONES: Record<TipoNotificacao, string> = { sucesso: "check_circle", erro: "error", info: "info" };
@@ -107,9 +107,9 @@ export function notificar(
   botaoFechar.addEventListener("click", fechar);
   item.appendChild(botaoFechar);
 
-  // pausa enquanto o usuario le (mouse ou foco em cima)
-  item.addEventListener("mouseenter", () => timer !== undefined && window.clearTimeout(timer));
-  item.addEventListener("mouseleave", agendar);
+  // pausa enquanto o usuario usa o teclado nos botoes do aviso. O corpo do aviso
+  // deixa o clique PASSAR para a tela (pointer-events: none no CSS): um aviso
+  // nunca pode bloquear o botao que esta embaixo dele (ex.: PAGO, APLICAR).
   item.addEventListener("focusin", () => timer !== undefined && window.clearTimeout(timer));
   item.addEventListener("focusout", agendar);
 

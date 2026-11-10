@@ -7,6 +7,17 @@ const { app, screen, BrowserWindow } = require("electron");
 const { execFileSync, spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+// REGRA DE OURO: testes NUNCA usam o banco operacional da empresa. Banco isolado em
+// %TEMP%; o 2o ciclo (relancamento) herda o mesmo arquivo para conferir persistencia.
+if (!process.env.FINDESK_DB_PATH) {
+  const bancoTeste = path.join(require("os").tmpdir(), "contas-a-pagar-smoke-real.db");
+  if (!process.env.SMOKE_REAL_CICLO) {
+    for (const sufixo of ["", "-wal", "-shm"]) {
+      try { fs.unlinkSync(bancoTeste + sufixo); } catch { /* nao existia */ }
+    }
+  }
+  process.env.FINDESK_DB_PATH = bancoTeste;
+}
 require("./main.js");
 
 let janela = null;
