@@ -51,7 +51,7 @@ O sistema é uma aplicação desktop híbrida, 100% offline, composta por 3 cama
 Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 1. **Tipagem e Compilação:** Executar `npm run typecheck` e compilação Java sem erros.
 2. **Testes Unitários e de Integração:** Executar suíte JUnit 5 no backend (`backend/src/test`).
-3. **Smoke Tests:** Executar `desktop/smoke.js`, `desktop/smoke-real.js` e `desktop/smoke-dev.js` (os dois �ltimos com entrada real via PowerShell `SendInput`; o smoke-dev reproduz o cenario real de `npm run dev` e e a regressao obrigatoria do bug de foco/interacao dos inputs).
+3. **Smoke Tests:** Executar `npx electron desktop/smoke.js`, `npx electron desktop/smoke-boot.js`, `npx electron desktop/smoke-real.js` e `node desktop/smoke-dev.js` (smoke-real e smoke-dev usam entrada real via PowerShell `SendInput`; o smoke-dev reproduz o cenário real de `npm run dev` e é a regressão obrigatória do bug de foco/interação dos inputs).
 4. **Teste de Persistência:** Validar ciclo de cold start com `desktop/teste-persistencia.js`.
 
 ---
@@ -73,26 +73,17 @@ Para otimizar o consumo de tokens da API e manter o contexto contínuo entre ses
 
 ---
 
-## 7. Organização e Utilização Seletiva de Skills
+## 7. Skills do Projeto
 
-O ecossistema adota a separação estrita entre **Processo de Desenvolvimento (GSD)** e **Conhecimento Técnico Especializado**:
+As skills ficam em `.claude/skills/<nome>/SKILL.md` (lidas pelo Claude Code e pelo OpenCode). Carregue só as necessárias para a tarefa:
 
-### 7.1 Fases do Ciclo de Desenvolvimento (GSD Process)
-* **Planejamento:** `gsd-plan-phase`, `project-memory-bank`, `project-architecture-map`
-* **Execução:** `gsd-execute-phase` acompanhada da skill técnica especializada da tarefa
-* **Verificação:** `gsd-verify-work`, `desktop-smoke-testing`, `tdd-junit5-assertj`, `debugging-and-error-recovery`
-
-### 7.2 Roteamento de Skills Técnicas por Especialidade
-Carregue e consulte apenas as skills técnicas necessárias para o escopo imediato:
-
-| Tipo de Trabalho Técnico | Skills Especializadas |
+| Tipo de trabalho | Skill |
 |---|---|
-| **Corrigir inicialização do Electron** | `electron-desktop-lifecycle`, `desktop-electron-java-bridge` |
-| **Criar formulários e telas** | `vanilla-typescript-dom`, `frontend-ui-engineering`, `spring-boot-rest-craft` |
-| **Criar endpoints REST** | `spring-boot-rest-craft`, `java-clean-di-wiring`, `tdd-junit5-assertj` |
-| **Alterar SQLite e esquemas** | `sqlite-financial-integrity`, `sqlite-crash-resilience`, `tdd-junit5-assertj` |
-| **Implementar pagamentos e finanças** | `sqlite-financial-integrity`, `desktop-security-guard`, `java-modern-craft` |
-| **Diagnosticar bugs e travamentos** | `debugging-and-error-recovery`, `java-global-exception-safety`, `desktop-smoke-testing` |
-| **Observabilidade e Logs** | `java-observability-logging` |
-| **Revisar código contra complexidade** | `ponytail-review`, `ponytail`, `java-modern-craft` |
-
+| Planejar, executar e verificar uma entrega | `fluxo-de-entrega` |
+| Electron: janela, foco, IPC, inicialização/encerramento do backend | `electron-desktop` |
+| Telas, formulários, tabelas, Tailwind | `frontend-telas` |
+| Endpoints, services, repositories, erros, logs | `backend-spring` |
+| Esquema SQLite, migrações, pagamentos, recorrência, backup | `sqlite-financeiro` |
+| Escrever testes ou validar entrega | `testes` |
+| Bug, travamento, teste falhando | `depuracao` |
+| Escrever/revisar com mínimo de complexidade | `simplicidade` |
