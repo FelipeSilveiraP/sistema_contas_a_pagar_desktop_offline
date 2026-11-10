@@ -9,6 +9,10 @@
     height: 100%;
     overflow-x: hidden;
   }
+  /* NEOBRUTALISMO A RISCA: cantos sempre retos (selos, campos, botoes, checkboxes) */
+  *, *::before, *::after {
+    border-radius: 0 !important;
+  }
   /* reserva o espaco da barra de rolagem nos dois lados: navbar e conteudo
      ficam no MESMO centro com ou sem rolagem. So em janelas largas: abaixo de
      1024px os ~30px reservados derrubariam os submenus de 2 para 1 coluna. */
@@ -38,31 +42,66 @@
   }
 }
 
-/* ===== Tela de carregamento — chave giratoria 3D (eixo vertical) ===== */
+/* ===== Tela de carregamento — chave neobrutalista entrando no cadeado =====
+   2D chapado (sem 3D): chave laranja com contorno preto grosso e sombra dura
+   (desenhada ATRAS do cadeado, a lamina some dentro dele) entra na fechadura, o cadeado "estala" e abre (haste sobe + riscos de impacto),
+   depois tudo volta. Movimento em degraus curtos, sem easing suave. */
 
-.chave-giratoria {
-  width: 4.5rem;
-  height: 4.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 480px;
+.chave-carregando {
+  width: 13rem;
+  max-width: 70vw;
 }
 
-.chave-giratoria__svg {
-  width: 3.25rem;
-  height: 3.25rem;
-  transform-style: preserve-3d;
-  animation: chave-girar 2.4s linear infinite;
+.chave-carregando__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  animation: chave-ciclo 2.6s steps(1, end) infinite;
 }
 
-@keyframes chave-girar {
-  from { transform: rotateY(0deg); }
-  to   { transform: rotateY(360deg); }
+.chave-carregando__chave {
+  animation: chave-entrar 2.6s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+
+.chave-carregando__haste {
+  animation: cadeado-abrir 2.6s cubic-bezier(0.2, 1.6, 0.4, 1) infinite;
+}
+
+.chave-carregando__estalo {
+  opacity: 0;
+  animation: cadeado-estalo 2.6s steps(1, end) infinite;
+}
+
+/* marcador para os testes: a animacao principal existe e roda sem timers */
+@keyframes chave-ciclo {
+  from { opacity: 1; }
+  to { opacity: 1; }
+}
+
+@keyframes chave-entrar {
+  0%, 8% { transform: translateX(-42px); }
+  32%, 78% { transform: translateX(0); }
+  92%, 100% { transform: translateX(-42px); }
+}
+
+@keyframes cadeado-abrir {
+  0%, 36% { transform: translateY(0); }
+  44%, 76% { transform: translateY(-14px); }
+  84%, 100% { transform: translateY(0); }
+}
+
+@keyframes cadeado-estalo {
+  0%, 40% { opacity: 0; }
+  42%, 62% { opacity: 1; }
+  64%, 100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chave-giratoria__svg {
+  .chave-carregando__svg,
+  .chave-carregando__chave,
+  .chave-carregando__haste,
+  .chave-carregando__estalo {
     animation: none;
   }
 }

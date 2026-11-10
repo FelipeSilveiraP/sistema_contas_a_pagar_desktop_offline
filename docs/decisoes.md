@@ -84,3 +84,9 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - **2026-11-10 — Teste de CRUD real (`desktop/teste-crud-real.js`).** Usa clique e digitação reais do Windows, dados concretos e todos os campos, e faz criar, ler, editar e excluir em cada tela, além de baixa, desfazer pagamento, PDF da nota e impressão. O banco, os Downloads e os PDFs ficam em `%TEMP%`.
 - **2026-11-10 — Notificações nunca bloqueiam a tela.** São compactas e no máximo 2. O corpo deixa o clique passar e só os botões ABRIR e × recebem clique. O teste real mostrou que as notificações cobriam os botões PAGO e APLICAR.
 - **2026-11-10 — Inserir Conta mostra só os erros da etapa atual, e o erro some quando o campo é corrigido.**
+
+## Neobrutalismo à risca (2026-11-10)
+
+- **2026-11-10 — Cantos sempre retos.** Uma regra no CSS base zera o `border-radius` de tudo. Os selos (status, pasta, PF/PJ, alertas do Menu) passaram de pílulas arredondadas para quadrados com borda preta de 2 px.
+- **2026-11-10 — Painéis com borda grossa e sombra dura.** As telas de tabela (Todas as Contas, Pagos, Recorrentes, Mensagens) tinham painéis com borda de 1 px e sem sombra; agora têm borda de 3 px e sombra `4px 4px 0 #1c1b1b`. Os botões [HOJE] e [DIAS ÚTEIS] também ganharam borda de 2 px e sombra.
+- **2026-11-10 — Nova chave de carregamento (substitui a chave 3D girando no próprio eixo).** O desenho 2D chapado mostra uma chave laranja com contorno preto grosso e sombra dura entrando no cadeado amarelo; o cadeado "estala" e abre (a haste sobe, com riscos de impacto) e o ciclo recomeça. É feita só com CSS, sem timers, e com `prefers-reduced-motion` a animação fica parada.

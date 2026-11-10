@@ -125,16 +125,16 @@ function renderTabela(): void {
     const valor = celulaTexto(formatarMoedaBR(Math.round(conta.valor * 100)), "py-3 px-3 text-right font-mono font-bold whitespace-nowrap");
     valor.firstElementChild!.className = "";
     const pastaTd = celulaTexto(conta.boletoNaPasta ? "SIM" : "NÃO", "py-3 px-3 text-center whitespace-nowrap");
-    pastaTd.firstElementChild!.className = `inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${conta.boletoNaPasta ? "bg-[#006c46]/10 text-[#006c46]" : "bg-neutral-200 text-neutral-700"}`;
+    pastaTd.firstElementChild!.className = `inline-block border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${conta.boletoNaPasta ? "bg-[#006c46]/10 text-[#006c46]" : "bg-neutral-200 text-neutral-700"}`;
     const status = statusDerivado(conta);
     const statusTd = celulaTexto(status.rotulo, "py-3 px-3 text-center whitespace-nowrap");
-    statusTd.firstElementChild!.className = `status-badge inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${status.classe}`;
+    statusTd.firstElementChild!.className = `status-badge inline-block border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${status.classe}`;
     const doc = celulaTexto(conta.numeroDocumento ?? "—", "py-3 px-3 font-mono text-xs whitespace-nowrap");
     doc.firstElementChild!.className = "";
     const tipoTd = celulaTexto(conta.tipoPessoa, "py-3 px-3 text-center whitespace-nowrap");
-    tipoTd.firstElementChild!.className = "inline-block bg-neutral-100 text-neutral-600 rounded-full px-2.5 py-1 text-xs font-mono font-bold leading-none";
+    tipoTd.firstElementChild!.className = "inline-block bg-neutral-100 text-neutral-600 border-2 border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold leading-none";
     const formaTd = celulaTexto(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "py-3 px-3 text-center whitespace-nowrap");
-    formaTd.firstElementChild!.className = "inline-block bg-neutral-100 border border-[#1c1b1b] text-neutral-700 px-2 py-0.5 text-xs font-mono font-bold uppercase";
+    formaTd.firstElementChild!.className = "inline-block bg-neutral-100 border-2 border-[#1c1b1b] text-neutral-700 px-2 py-0.5 text-xs font-mono font-bold uppercase";
     const pagador = celulaTexto(conta.pagadorResponsavel, "py-3 px-3 font-mono text-xs text-neutral-700 whitespace-nowrap");
     pagador.firstElementChild!.className = "";
 

@@ -75,7 +75,7 @@ function celula(texto: string, classe: string, rotulo: string): HTMLTableCellEle
 
 function selo(texto: string, cores: string): HTMLSpanElement {
   const s = document.createElement("span");
-  s.className = `inline-block border rounded text-[11px] sm:text-xs font-bold uppercase px-2.5 py-0.5 ${cores}`;
+  s.className = `inline-block border-2 border-[#1c1b1b] text-[11px] sm:text-xs font-bold uppercase px-2.5 py-0.5 ${cores}`;
   s.textContent = texto;
   return s;
 }
@@ -83,10 +83,10 @@ function selo(texto: string, cores: string): HTMLSpanElement {
 function situacao(dias: number): { texto: string; cores: string; atrasada: boolean } {
   if (dias < 0) {
     const n = Math.abs(dias);
-    return { texto: `Atrasada ${n} dia${n > 1 ? "s" : ""}`, cores: "bg-[#ffdad6] text-[#93000a] border-[#93000a]/40", atrasada: true };
+    return { texto: `Atrasada ${n} dia${n > 1 ? "s" : ""}`, cores: "bg-[#ffdad6] text-[#93000a]", atrasada: true };
   }
-  if (dias === 0) return { texto: "Vence hoje", cores: "bg-[#FF5E89]/20 text-[#b6212a] border-[#b6212a]/30", atrasada: false };
-  return { texto: `Vence em ${dias} dia${dias > 1 ? "s" : ""}`, cores: "bg-[#FFE600]/30 text-[#6a5f00] border-[#6a5f00]/30", atrasada: false };
+  if (dias === 0) return { texto: "Vence hoje", cores: "bg-[#FF5E89]/20 text-[#b6212a]", atrasada: false };
+  return { texto: `Vence em ${dias} dia${dias > 1 ? "s" : ""}`, cores: "bg-[#FFE600]/30 text-[#6a5f00]", atrasada: false };
 }
 
 function linhaAlerta(conta: AlertaContaDados): HTMLTableRowElement {
@@ -99,7 +99,7 @@ function linhaAlerta(conta: AlertaContaDados): HTMLTableRowElement {
   tr.appendChild(celula(formatarMoedaBR(Math.round(conta.valor * 100)), "p-2.5 sm:px-4 py-2 text-right font-mono whitespace-nowrap", "Valor"));
   const pasta = celula("", "p-2.5 sm:px-4 py-2 text-center", "Na Pasta?");
   pasta.appendChild(conta.boletoNaPasta
-    ? selo("Sim", "bg-[#00FF66]/20 text-[#006c46] border-[#006c46]/30")
+    ? selo("Sim", "bg-[#00FF66]/20 text-[#006c46]")
     : selo("Não", "bg-[#e5e2e1] text-[#4b4731] border-[#cdc7aa]"));
   tr.appendChild(pasta);
   const status = celula("", "p-2.5 sm:px-4 py-2 text-center", "Status");

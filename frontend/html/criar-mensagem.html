@@ -27,7 +27,7 @@
 <div class="flex flex-col gap-1.5">
 <div class="flex items-center justify-between">
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]" for="dt_inicio">DATA INÍCIO LEMBRETE <span class="text-[#dc2626]">*</span></label>
-<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-1.5 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-hoje" type="button">[HOJE]</button>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-1.5 py-0.5 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] transition-colors" id="btn-hoje" type="button">[HOJE]</button>
 </div>
 <input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-mono font-bold uppercase text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fff5f5] focus:shadow-[4px_4px_0px_0px_#dc2626] transition-all" id="dt_inicio" type="date">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#dc2626]" data-erro-campo="dataInicio"></p>
@@ -44,8 +44,8 @@
 <div class="flex flex-wrap items-center justify-between gap-2">
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">DIAS DA SEMANA <span class="text-[#dc2626]">*</span></label>
 <div class="flex items-center gap-2">
-<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-dias-uteis" type="button">[DIAS ÚTEIS]</button>
-<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border border-[#1c1b1b] transition-colors" id="btn-todos-dias" type="button">[TODOS OS DIAS]</button>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] transition-colors" id="btn-dias-uteis" type="button">[DIAS ÚTEIS]</button>
+<button class="font-mono text-xs font-bold uppercase text-[#1c1b1b] hover:bg-[#f6f3f2] px-2 py-0.5 border-2 border-[#1c1b1b] shadow-[2px_2px_0px_0px_#1c1b1b] transition-colors" id="btn-todos-dias" type="button">[TODOS OS DIAS]</button>
 </div>
 </div>
 <div class="grid grid-cols-7 gap-2 pt-1" id="days-container">

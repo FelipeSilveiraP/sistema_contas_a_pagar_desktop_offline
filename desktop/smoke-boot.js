@@ -142,23 +142,25 @@ async function ciclo() {
     fs.writeFileSync(destino, imagem.toPNG());
     teste("Captura da tela de carregamento gerada", fs.existsSync(destino), destino);
 
-    // chave giratoria 3D: rotateY + perspectiva + prefers-reduced-motion
+    // chave neobrutalista 2D entrando no cadeado + prefers-reduced-motion
     const chave = JSON.parse(await js(`(() => {
-      const wrap = document.querySelector('.chave-giratoria');
-      const svg = document.querySelector('.chave-giratoria__svg');
+      const wrap = document.querySelector('.chave-carregando');
+      const svg = document.querySelector('.chave-carregando__svg');
+      const chaveEl = document.querySelector('.chave-carregando__chave');
       const cs = svg ? getComputedStyle(svg) : null;
       const msg = document.getElementById('iniciando');
       return JSON.stringify({
         existe: Boolean(wrap && svg),
         animacao: cs ? cs.animationName : null,
         duracao: cs ? cs.animationDuration : null,
-        perspectiva: wrap ? getComputedStyle(wrap).perspective : null,
+        entrar: chaveEl ? getComputedStyle(chaveEl).animationName : null,
+        sem3d: wrap ? getComputedStyle(wrap).perspective === 'none' : false,
         mensagem: msg ? msg.textContent : null,
       });
     })()`));
-    teste("Chave giratoria presente na tela de carregamento", chave.existe === true, JSON.stringify(chave));
-    teste("Chave anima em rotateY/3D (sem timers)", chave.animacao === "chave-girar" && parseFloat(chave.duracao) > 0, JSON.stringify(chave));
-    teste("Perspectiva 3D ativa no conteiner da chave", chave.perspectiva && chave.perspectiva !== "none" && parseFloat(chave.perspectiva) > 0, JSON.stringify(chave));
+    teste("Chave neobrutalista presente na tela de carregamento", chave.existe === true, JSON.stringify(chave));
+    teste("Chave anima entrando no cadeado (CSS, sem timers)", chave.animacao === "chave-ciclo" && chave.entrar === "chave-entrar" && parseFloat(chave.duracao) > 0, JSON.stringify(chave));
+    teste("Chave chapada 2D (sem perspectiva 3D)", chave.sem3d === true, JSON.stringify(chave));
     teste("Mensagem INICIANDO O SISTEMA preservada", String(chave.mensagem).toUpperCase().includes("INICIANDO O SISTEMA"), String(chave.mensagem));
     let animacaoReduzida = null;
     try {
@@ -167,7 +169,7 @@ async function ciclo() {
         features: [{ name: "prefers-reduced-motion", value: "reduce" }],
       });
       await esperar(300);
-      animacaoReduzida = await js(`(() => { const svg = document.querySelector('.chave-giratoria__svg'); return svg ? getComputedStyle(svg).animationName : null; })()`);
+      animacaoReduzida = await js(`(() => { const svg = document.querySelector('.chave-carregando__svg'); return svg ? getComputedStyle(svg).animationName : null; })()`);
       await janela.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
       janela.webContents.debugger.detach();
     } catch (erro) {
@@ -180,14 +182,14 @@ async function ciclo() {
             const midia = r.conditionText || (r.media && r.media.mediaText) || '';
             if (r.type !== 4 || !String(midia).includes('prefers-reduced-motion')) continue;
             for (const rr of r.cssRules) {
-              if (rr.selectorText && rr.selectorText.includes('chave-giratoria') && /animation:\s*none/.test(rr.style.cssText)) return 'none';
+              if (rr.selectorText && rr.selectorText.includes('chave-carregando') && /animation:\s*none/.test(rr.style.cssText)) return 'none';
             }
           }
         }
         return 'ausente';
       })()`);
     }
-    teste("prefers-reduced-motion desativa a rotacao continua", animacaoReduzida === "none", String(animacaoReduzida));
+    teste("prefers-reduced-motion desativa a animacao continua", animacaoReduzida === "none", String(animacaoReduzida));
 
     // estado de erro da tela de carregamento (UI testada por injecao do evento)
     janela.webContents.send("findesk:inicializacao", { estado: "falhou" });

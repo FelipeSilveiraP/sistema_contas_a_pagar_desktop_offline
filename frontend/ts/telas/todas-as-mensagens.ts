@@ -76,7 +76,7 @@ function renderTabela(): void {
       EXPIRADO: "bg-neutral-200 text-neutral-600",
       "OUTRO DIA": "bg-[#FFE600]/30 text-[#6a5f00]",
     };
-    selo.className = `inline-block rounded-full px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${cores[status]}`;
+    selo.className = `inline-block border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${cores[status]}`;
     selo.textContent = status;
     selo.title = status === "OUTRO DIA" ? "Dentro do período, mas não aparece no dia da semana de hoje" : "";
     tdStatus.appendChild(selo);

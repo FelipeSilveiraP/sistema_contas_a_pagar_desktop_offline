@@ -9,7 +9,7 @@
 <header id="nav-global"></header>
 <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 flex flex-col gap-4">
 <header class="w-full flex flex-col gap-4">
-<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border">
+<div class="w-full bg-white border-[#1c1b1b] px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 border-[3px] shadow-[4px_4px_0px_0px_#1c1b1b]">
 <div class="flex items-center gap-4">
 <div class="h-6 w-[2px] bg-[#1c1b1b] hidden sm:block"></div>
 <h1 class="text-lg sm:text-xl font-bold tracking-tight uppercase flex items-center gap-2 whitespace-nowrap">
@@ -22,10 +22,10 @@
 <span class="bg-[#4dffb2] text-[#1c1b1b] border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none shadow-[2px_2px_0px_0px_#1c1b1b]" id="tableSummaryAmount">R$ 0,00</span>
 </div>
 </div>
-<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border">
+<div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border-[3px] shadow-[4px_4px_0px_0px_#1c1b1b]">
 <div class="relative flex-1 min-w-[240px]">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
-<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border" id="searchInput" placeholder="Pesquisar empresa, documento, pagador ou valor..." type="text">
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border-2" id="searchInput" placeholder="Pesquisar empresa, documento, pagador ou valor..." type="text">
 </div>
 <div class="flex flex-wrap items-center gap-2" id="filterPillsGroup">
 <button class="filter-btn active-filter bg-[#1c1b1b] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="TODOS" type="button">TODOS</button>
@@ -37,7 +37,7 @@
 </div>
 </div>
 </header>
-<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border">
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border-[3px] shadow-[4px_4px_0px_0px_#1c1b1b]">
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse" id="billsTable">
 <thead>
@@ -57,7 +57,7 @@
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase">Nenhuma conta fixa gerada — cadastre uma recorrência em "Cadastrar Nova Conta Recorrente".</p>
 </div>
 </main>
-<section class="w-full bg-white border-[#1c1b1b] border" aria-labelledby="tituloCadastradas">
+<section class="w-full bg-white border-[#1c1b1b] border-[3px] shadow-[4px_4px_0px_0px_#1c1b1b]" aria-labelledby="tituloCadastradas">
 <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#1c1b1b] bg-[#ede9fe] px-4 py-2.5">
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-tight flex items-center gap-2" id="tituloCadastradas"><span class="material-symbols-outlined text-lg">event_repeat</span>Contas fixas cadastradas</h2>
 <span class="text-xs font-mono font-bold text-neutral-600 uppercase">Cada uma gera os próximos 12 meses</span>
@@ -73,7 +73,7 @@
 </div>
 </section>
 <section class="w-full bg-white border-[#1c1b1b] shadow-[4px_4px_0px_0px_#1c1b1b] p-4 sm:p-5 flex flex-col gap-4 hidden" id="editorContainer">
-<div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border">
+<div class="flex flex-wrap items-center justify-between gap-3 border-[#1c1b1b] pb-3 bg-[#fcf9f8] p-3 border-2">
 <div class="flex flex-wrap items-center gap-3">
 <span class="material-symbols-outlined text-2xl text-[#1c1b1b] font-bold">edit_note</span>
 <div class="flex flex-col">
