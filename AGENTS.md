@@ -61,8 +61,8 @@ Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 
 ## 5. Política de Git e Restrições de Operação
 
-1. **Branch Main Intocável:** Nunca comitar ou realizar alterações diretamente na branch `main`.
-2. **Zero Push Não Autorizado:** Proibido executar `git push` sem autorização prévia e explícita do usuário.
+1. **Trabalho direto na `main` (autorizado pelo usuário em 2026-11-12):** o agente pode comitar na `main` e fazer `git push origin main` sem pedir de novo, **desde que** os testes obrigatórios (§4) tenham passado. Branches de feature continuam opcionais para trabalhos grandes.
+2. **Nada de reescrever o histórico:** proibido `git push --force`, `git reset --hard` em commits já enviados, `rebase` de commits publicados ou apagar branches remotas sem ordem explícita do usuário.
 3. **Escopo Focado:** Não modificar arquivos fora do escopo da tarefa solicitada.
 
 ---

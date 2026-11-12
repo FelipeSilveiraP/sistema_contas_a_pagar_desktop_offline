@@ -63,4 +63,4 @@ node desktop/smoke-dev.js                # regressão obrigatória do bug de foc
 ## 4. Registrar
 
 - Ao fechar a entrega: **reescreva** `docs/estado-atual.md` (máx. 30 linhas: foco, situação, pendências) e acrescente cada decisão nova em `docs/decisoes.md` (2–3 linhas, com data). Sem colar código.
-- Faça commits locais atômicos numa branch de feature. **Nunca commit direto na `main` e nunca `git push` sem ordem explícita.**
+- Faça commits atômicos. Desde 2026-11-12 o usuário autorizou comitar direto na `main` e dar `git push origin main` depois dos testes verdes (ver `AGENTS.md` §5). **Nunca** force-push nem reescrever histórico publicado.
