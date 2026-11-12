@@ -19,6 +19,8 @@ export interface ContaDados {
   boletoNaPasta: boolean;
   anexoNome: string | null;
   semNotaFiscal: boolean;
+  /** data (aaaa-mm-dd) em que a limpeza trimestral apagou o arquivo da nota */
+  anexoRemovidoEm: string | null;
   status: string;
 }
 
@@ -408,6 +410,18 @@ export function buscarResumo(cfg: FinDeskConfig, de?: string, ate?: string): Pro
   if (ate) params.set("ate", ate);
   const consulta = params.toString() ? `?${params.toString()}` : "";
   return get<ResumoDashboard>(cfg, `/api/dashboard/resumo${consulta}`);
+}
+
+export interface SituacaoBackupDrive {
+  estado: "aguardando" | "executando" | "ok" | "erro" | "desligado";
+  mensagem: string;
+  arquivo: string | null;
+  quando: string | null;
+}
+
+/** Resultado do backup em planilha na pasta do Google Drive, feito na abertura. */
+export function buscarBackupDrive(cfg: FinDeskConfig): Promise<SituacaoBackupDrive> {
+  return get<SituacaoBackupDrive>(cfg, "/api/backup-drive");
 }
 
 export function buscarAlertas(cfg: FinDeskConfig): Promise<AlertasDados> {

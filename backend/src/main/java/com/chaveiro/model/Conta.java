@@ -24,5 +24,7 @@ public record Conta(
     boolean boletoNaPasta,
     String anexoNome,
     boolean semNotaFiscal,
+    /** data (aaaa-mm-dd) em que a limpeza trimestral apagou o arquivo da nota */
+    String anexoRemovidoEm,
     String status
 ) {}

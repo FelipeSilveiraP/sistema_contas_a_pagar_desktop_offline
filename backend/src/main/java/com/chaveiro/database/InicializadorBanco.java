@@ -1,6 +1,9 @@
 package com.chaveiro.database;
 
+import com.chaveiro.service.BackupDriveService;
 import com.chaveiro.service.BackupService;
+import com.chaveiro.service.LimpezaAnexosService;
+import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -26,10 +29,15 @@ public class InicializadorBanco implements ApplicationRunner {
 
     private final DatabaseInitializer initializer;
     private final BackupService backupService;
+    private final LimpezaAnexosService limpezaAnexos;
+    private final BackupDriveService backupDrive;
 
-    public InicializadorBanco(DatabaseInitializer initializer, BackupService backupService) {
+    public InicializadorBanco(DatabaseInitializer initializer, BackupService backupService,
+                              LimpezaAnexosService limpezaAnexos, BackupDriveService backupDrive) {
         this.initializer = initializer;
         this.backupService = backupService;
+        this.limpezaAnexos = limpezaAnexos;
+        this.backupDrive = backupDrive;
     }
 
     @Override
@@ -41,7 +49,11 @@ public class InicializadorBanco implements ApplicationRunner {
             }
             initializer.inicializar();
             backupService.backupDiarioSeNecessario();
+            // a cada 3 meses: apaga os arquivos das notas de contas pagas antigas
+            limpezaAnexos.limparSeNecessario(LocalDate.now());
             pronto = true;
+            // planilha com os dados na pasta do Google Drive (sem atrasar a abertura)
+            backupDrive.exportarEmSegundoPlano();
             log.info("banco SQLite pronto (esquema v{})", initializer.getVersaoAtual());
         } catch (Exception erro) {
             log.error("falha critica ao inicializar o banco de dados", erro);

@@ -81,6 +81,8 @@ class AvisoServiceTest {
                         titulo TEXT NOT NULL, mensagem TEXT NOT NULL,
                         criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')))""");
             st.execute("CREATE INDEX idx_avisos_vigencia ON avisos(data_inicio, data_fim)");
+            // a v16 acrescenta coluna em contas_a_pagar: o banco simulado precisa da tabela
+            st.execute("CREATE TABLE contas_a_pagar (id_conta INTEGER PRIMARY KEY)");
             st.execute("INSERT INTO avisos (data_inicio, data_fim, dia_semana, titulo, mensagem)"
                     + " VALUES ('2026-01-01', '2026-12-31', 'SEGUNDA', 'REVISAR DDA', 'Revise o DDA')");
             st.execute("PRAGMA user_version = 14");

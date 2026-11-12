@@ -108,6 +108,7 @@ public class ContaController {
                 Boolean.TRUE.equals(requisicao.boletoNaPasta()),
                 requisicao.anexoNome(),
                 Boolean.TRUE.equals(requisicao.semNotaFiscal()),
+                null,
                 "PENDENTE"
         );
     }

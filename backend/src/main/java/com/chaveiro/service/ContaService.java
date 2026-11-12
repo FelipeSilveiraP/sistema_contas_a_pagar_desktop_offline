@@ -195,6 +195,7 @@ public class ContaService {
                 dados.boletoNaPasta(),
                 dados.anexoNome() == null || dados.anexoNome().isBlank() ? null : dados.anexoNome().trim(),
                 dados.semNotaFiscal(),
+                dados.anexoRemovidoEm(),
                 dados.status() == null ? "PENDENTE" : dados.status()
         );
     }
@@ -209,7 +210,7 @@ public class ContaService {
                 .orElse(c.anexoNome());
         return new Conta(c.id(), c.nomeEmpresa(), c.idEmpresa(), c.razaoSocial(), c.pagadorResponsavel(),
                 c.tipoPessoa(), c.formaPagamento(), c.categoria(), c.numeroDocumento(), c.valor(),
-                c.vencimento(), c.boletoNaPasta(), nome, false, c.status());
+                c.vencimento(), c.boletoNaPasta(), nome, false, null, c.status());
     }
 
     /** Tipo MIME do anexo pelo conteudo (para o download). */

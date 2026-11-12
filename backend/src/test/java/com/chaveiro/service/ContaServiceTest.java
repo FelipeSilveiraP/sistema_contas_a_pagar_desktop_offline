@@ -40,7 +40,7 @@ class ContaServiceTest {
 
     private Conta conta(String nomeEmpresa, String valor, String vencimento, String doc) {
         return new Conta(null, nomeEmpresa, idEmpresa, null, "Balcão 01", "PJ", "boleto",
-                "Aluguel", doc, new BigDecimal(valor), LocalDate.parse(vencimento), false, null, true, "PENDENTE");
+                "Aluguel", doc, new BigDecimal(valor), LocalDate.parse(vencimento), false, null, true, null, "PENDENTE");
     }
 
     @Test
@@ -75,15 +75,15 @@ class ContaServiceTest {
     void deveRecusarContaSemVencimentoSemNomeOuSemPagador() {
         assertThatThrownBy(() -> service.cadastrar(
                 new Conta(null, "Enel", idEmpresa, null, "Balcão", "PJ", "boleto", null, null,
-                        new BigDecimal("10.00"), null, false, null, true, "PENDENTE"), null, false))
+                        new BigDecimal("10.00"), null, false, null, true, null, "PENDENTE"), null, false))
                 .isInstanceOf(DadosInvalidosException.class);
         assertThatThrownBy(() -> service.cadastrar(
                 new Conta(null, "", idEmpresa, null, "Balcão", "PJ", "boleto", null, null,
-                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE"), null, false))
+                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, null, "PENDENTE"), null, false))
                 .isInstanceOf(DadosInvalidosException.class);
         assertThatThrownBy(() -> service.cadastrar(
                 new Conta(null, "Enel", idEmpresa, null, "", "PJ", "boleto", null, null,
-                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE"), null, false))
+                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, null, "PENDENTE"), null, false))
                 .isInstanceOf(DadosInvalidosException.class);
     }
 
@@ -91,11 +91,11 @@ class ContaServiceTest {
     void deveRecusarFormaPagamentoOuTipoPessoaInvalidos() {
         assertThatThrownBy(() -> service.cadastrar(
                 new Conta(null, "Enel", idEmpresa, null, "Balcão", "PJ", "cheque", null, null,
-                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE"), null, false))
+                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, null, "PENDENTE"), null, false))
                 .isInstanceOf(DadosInvalidosException.class);
         assertThatThrownBy(() -> service.cadastrar(
                 new Conta(null, "Enel", idEmpresa, null, "Balcão", "XX", "boleto", null, null,
-                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE"), null, false))
+                        new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, null, "PENDENTE"), null, false))
                 .isInstanceOf(DadosInvalidosException.class);
     }
 

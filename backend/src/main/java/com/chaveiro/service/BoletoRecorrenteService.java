@@ -102,7 +102,7 @@ public class BoletoRecorrenteService {
                             recorrente.idEmpresa(), null, recorrente.pagadorResponsavel(), recorrente.tipoPessoa(),
                             recorrente.formaPagamento() == null ? "boleto" : recorrente.formaPagamento(),
                             recorrente.categoria(), recorrente.numeroDocumento(), recorrente.valor(),
-                            vencimento, false, null, false, "PENDENTE"), recorrente.id());
+                            vencimento, false, null, false, null, "PENDENTE"), recorrente.id());
                     gerados.add(vencimento);
                 }
                 mes = mes.plusMonths(passo);

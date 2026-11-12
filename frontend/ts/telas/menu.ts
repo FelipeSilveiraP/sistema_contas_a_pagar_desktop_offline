@@ -1,4 +1,5 @@
-import { AlertaContaDados, AlertasDados, buscarAlertas, buscarStatus } from "../api";
+import { AlertaContaDados, AlertasDados, buscarAlertas, buscarBackupDrive, buscarStatus } from "../api";
+import { notificar } from "../notificacoes";
 import { formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { Tela, irPara } from "../navegacao";
 import { respostaProvisoria } from "../componentes";
@@ -283,6 +284,31 @@ function erroAlertas(): void {
   corpo?.replaceChildren(linhaUnica("Não foi possível carregar as contas do dia. Abra CONTROLE para conferir.", "p-3 text-center text-[#ba1a1a] uppercase"));
 }
 
+// ===== backup da abertura no Google Drive: avisa so se falhar (uma vez por sessao) =====
+async function conferirBackupDrive(cfg: FinDeskConfig): Promise<void> {
+  try {
+    if (sessionStorage.getItem("findesk:backup-drive-avisado")) return;
+  } catch {
+    // sem sessionStorage: segue e avisa
+  }
+  for (let tentativa = 0; tentativa < 20; tentativa++) {
+    const s = await buscarBackupDrive(cfg).catch(() => null);
+    if (!s) return;
+    document.body.dataset.backupDrive = s.estado;
+    if (s.estado === "erro") {
+      notificar(`Backup no Google Drive: ${s.mensagem}`, "erro");
+      try {
+        sessionStorage.setItem("findesk:backup-drive-avisado", "1");
+      } catch {
+        // ignora
+      }
+      return;
+    }
+    if (s.estado !== "aguardando" && s.estado !== "executando") return;
+    await new Promise((ok) => setTimeout(ok, 1500));
+  }
+}
+
 async function iniciar(): Promise<void> {
   try {
     if (!window.finDesk) {
@@ -295,6 +321,7 @@ async function iniciar(): Promise<void> {
     console.info("[ContasAPagar] API:", status);
     try {
       renderAlertas(await buscarAlertas(cfg));
+      void conferirBackupDrive(cfg);
     } catch (erro) {
       erroAlertas();
       console.warn("[ContasAPagar] alertas indisponiveis:", erro instanceof Error ? erro.message : erro);

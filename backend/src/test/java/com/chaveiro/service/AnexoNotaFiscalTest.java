@@ -74,17 +74,17 @@ class AnexoNotaFiscalTest {
         ContaService service = new ContaService(new ContaRepository(conexao));
 
         Conta semNada = new Conta(null, "Enel", null, null, "Balcão", "PJ", "boleto", null, null,
-                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, false, "PENDENTE");
+                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, false, null, "PENDENTE");
         assertThatThrownBy(() -> service.cadastrar(semNada, null, true))
                 .isInstanceOf(DadosInvalidosException.class);
 
         Conta marcada = new Conta(null, "Enel", null, null, "Balcão", "PJ", "boleto", null, null,
-                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE");
+                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, true, null, "PENDENTE");
         assertThat(service.cadastrar(marcada, null, true).semNotaFiscal()).isTrue();
 
         byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
         Conta comFoto = new Conta(null, "Sabesp", null, null, "Balcão", "PJ", "boleto", null, null,
-                new BigDecimal("20.00"), LocalDate.parse("2026-12-11"), false, "nota.pdf", true, "PENDENTE");
+                new BigDecimal("20.00"), LocalDate.parse("2026-12-11"), false, "nota.pdf", true, null, "PENDENTE");
         Conta criada = service.cadastrar(comFoto, png, true);
         assertThat(criada.anexoNome()).isEqualTo("nota.png");
         assertThat(criada.semNotaFiscal()).isFalse();

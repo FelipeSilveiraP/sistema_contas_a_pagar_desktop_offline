@@ -7,8 +7,9 @@
 ## Situação
 - Fases 1 a 5 concluídas. Entrega de 2026-11-11 com 15 ajustes de uso (ver `decisoes.md` › "Ajustes de uso"): chave pela fechadura, bordas simples, colunas recolhíveis, área de edição única, impressão formal com a nota, nota obrigatória (ou "sem nota"), navbar estreita e tabelas do legado.
 - 2ª rodada (2026-11-12): mensagens voltam a salvar no banco da loja (migração v15), área de edição única em todas as telas, pagador em caixa de seleção, Mensagens do dia com EXPANDIR/VER NO CONTROLE.
-- Esquema SQLite **v15**. Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
-- **Testes (2026-11-12), todos verdes:** JUnit 135 · máscaras 65 · filtros 22 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições. Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
+- Limpeza trimestral das notas antigas e backup em planilha no Google Drive a cada abertura.
+- Esquema SQLite **v16**. Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
+- **Testes (2026-11-12), todos verdes:** JUnit 139 · máscaras 65 · filtros 22 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições (rodada final sem falhas). Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
 
 ## Próximos passos
 - Importador da planilha legada para `legado_*` e, depois, para `contas_a_pagar`/`boletos_recorrentes`/`avisos`, quando o usuário enviar os dados.
@@ -22,5 +23,5 @@
 - Baixa rápida pedir o banco usado no pagamento?
 
 ## Pendências do usuário
-- Instalar `release/Contas a Pagar - Chaveiro Universal - Instalador 1.1.0.exe` (gerado em 2026-11-12, `pdf-lib` conferido no pacote) no computador da loja, por cima da versão anterior, e validar na resolução real.
+- Instalar `release/Contas a Pagar - Chaveiro Universal - Instalador 1.2.0.exe` no computador da loja, por cima da versão anterior, validar na resolução real e conferir se aparece `Meu Drive\Chaveiro Universal - Backup` com a planilha do dia.
 - Revogar a chave de API da Xiaomi em `chat_mimo.ps1` (fora do Git).

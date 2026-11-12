@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 15;
+    private static final int VERSAO_ATUAL = 16;
 
     private final ConnectionFactory conexao;
 
@@ -375,6 +375,18 @@ public class DatabaseInitializer {
                 "ALTER TABLE avisos RENAME TO avisos_antes_v15",
                 "ALTER TABLE avisos_v15 RENAME TO avisos",
                 "CREATE INDEX IF NOT EXISTS idx_avisos_vigencia_v15 ON avisos(data_inicio, data_fim)",
+            };
+            case 16 -> new String[] {
+                // Limpeza trimestral das notas fiscais (pedido do usuario): o arquivo
+                // sai do banco, a conta fica; guarda QUANDO a nota foi removida.
+                "ALTER TABLE contas_a_pagar ADD COLUMN anexo_removido_em TEXT",
+                // Datas das rotinas automaticas (ultima limpeza, etc.).
+                """
+                CREATE TABLE IF NOT EXISTS manutencao (
+                    chave TEXT PRIMARY KEY,
+                    valor TEXT NOT NULL
+                )
+                """,
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

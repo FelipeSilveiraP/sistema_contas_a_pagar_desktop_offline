@@ -187,7 +187,7 @@ function selecionar(id: number): void {
   el("detailDate").textContent = formatarDataBR(conta.vencimento);
   el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
   el("detailAnexo").textContent = textoNota(conta);
-  el("btnBaixarAnexo").classList.toggle("hidden", !conta.anexoNome);
+  el("btnBaixarAnexo").classList.toggle("hidden", !notaDisponivel(conta));
   el<HTMLButtonElement>("btnPayAction").disabled = conta.status === "PAGO";
   el<HTMLButtonElement>("btnUnpayAction").disabled = conta.status !== "PAGO";
   const pagamento = pagamentos.find((p) => p.idConta === id);
@@ -200,7 +200,15 @@ function selecionar(id: number): void {
   renderTabela();
 }
 
+/** O arquivo da nota ainda esta no banco (a limpeza trimestral apaga os antigos). */
+function notaDisponivel(conta: ContaDados): boolean {
+  return Boolean(conta.anexoNome) && !conta.anexoRemovidoEm;
+}
+
 function textoNota(conta: ContaDados): string {
+  if (conta.anexoNome && conta.anexoRemovidoEm) {
+    return `${conta.anexoNome} (arquivo apagado na limpeza de ${formatarDataBR(conta.anexoRemovidoEm)})`;
+  }
   if (conta.anexoNome) return conta.anexoNome;
   return conta.semNotaFiscal ? "Conta sem nota fiscal" : "Não anexada";
 }
@@ -458,7 +466,7 @@ async function imprimirConta(conta: ContaDados): Promise<void> {
   // foto entra como imagem na pagina 2; Word nao pode ser desenhado aqui
   let anexo: Uint8Array | null = null;
   const ext = (conta.anexoNome ?? "").split(".").pop()?.toLowerCase() ?? "";
-  if (conta.anexoNome) {
+  if (notaDisponivel(conta)) {
     try {
       anexo = await baixarAnexoConta(await window.finDesk!.config(), conta.id);
     } catch (erro) {
@@ -488,7 +496,7 @@ async function imprimirConta(conta: ContaDados): Promise<void> {
   const juntou = await imprimirDocumento(`Conta ${conta.nomeEmpresa}`, (folha) => {
     const p1 = criar("section", "folha__pagina");
     p1.append(cabecalhoFolha("Ficha de conta a pagar"), tabelaCampos(linhas));
-    if (conta.anexoNome && !ehPdf && !imagem) {
+    if (notaDisponivel(conta) && !ehPdf && !imagem) {
       p1.appendChild(criar("p", "folha__nota", `A nota fiscal "${conta.anexoNome}" está em formato Word: use BAIXAR NOTA e imprima pelo Word.`));
     } else if (ehPdf && anexo) {
       p1.appendChild(criar("p", "folha__nota", "A nota fiscal anexada segue nas próximas páginas."));
@@ -562,7 +570,7 @@ function iniciar(): void {
   });
   el("btnBaixarAnexo").addEventListener("click", async () => {
     const conta = contas.find((c) => c.id === selecionadoId);
-    if (!conta || !conta.anexoNome) return;
+    if (!conta || !conta.anexoNome || !notaDisponivel(conta)) return;
     try {
       const cfg = await window.finDesk!.config();
       const bytes = await baixarAnexoConta(cfg, conta.id);

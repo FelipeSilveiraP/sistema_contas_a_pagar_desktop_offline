@@ -30,7 +30,7 @@ public class ContaRepository {
     private static final String COLUNAS = """
             c.id_conta, c.nome_empresa, c.id_empresa, e.razao_social, c.pagador_responsavel,
             c.tipo_pessoa, c.forma_pagamento, c.categoria, c.numero_documento,
-            c.valor_centavos, c.vencimento, c.boleto_na_pasta, c.anexo_nome, c.sem_nota_fiscal, c.status
+            c.valor_centavos, c.vencimento, c.boleto_na_pasta, c.anexo_nome, c.sem_nota_fiscal, c.anexo_removido_em, c.status
             FROM contas_a_pagar c
             LEFT JOIN empresas e ON e.id_empresa = c.id_empresa
             """;
@@ -101,7 +101,7 @@ public class ContaRepository {
                 return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
                         dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
                         dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.status());
+                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.anexoRemovidoEm(), dados.status());
             } catch (SQLException erro) {
                 conn.rollback();
                 tratarForeignKey(erro, "empresa emissora inexistente");
@@ -137,7 +137,7 @@ public class ContaRepository {
                 return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
                         dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
                         dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.status());
+                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.anexoRemovidoEm(), dados.status());
             } catch (SQLException erro) {
                 conn.rollback();
                 throw erro;
@@ -157,7 +157,7 @@ public class ContaRepository {
                 + " pagador_responsavel = ?, tipo_pessoa = ?, forma_pagamento = ?, categoria = ?,"
                 + " numero_documento = ?, valor_centavos = ?, vencimento = ?, boleto_na_pasta = ?,"
                 + " sem_nota_fiscal = ?"
-                + (trocarAnexo ? ", anexo_nome = ?, anexo_pdf = ?" : "")
+                + (trocarAnexo ? ", anexo_nome = ?, anexo_pdf = ?, anexo_removido_em = NULL" : "")
                 + " WHERE id_conta = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
@@ -271,6 +271,7 @@ public class ContaRepository {
                 rs.getInt("boleto_na_pasta") == 1,
                 rs.getString("anexo_nome"),
                 rs.getInt("sem_nota_fiscal") == 1,
+                rs.getString("anexo_removido_em"),
                 rs.getString("status")
         );
     }
