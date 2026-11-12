@@ -22,5 +22,5 @@
 - Baixa rápida pedir o banco usado no pagamento?
 
 ## Pendências do usuário
-- Instalar o instalador no computador da loja e validar na resolução real.
+- Instalar `release/Contas a Pagar - Chaveiro Universal - Instalador 1.1.0.exe` (gerado em 2026-11-12, `pdf-lib` conferido no pacote) no computador da loja, por cima da versão anterior, e validar na resolução real.
 - Revogar a chave de API da Xiaomi em `chat_mimo.ps1` (fora do Git).
