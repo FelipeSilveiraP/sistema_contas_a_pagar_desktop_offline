@@ -2,7 +2,7 @@
 
 > Máximo 30 linhas. **Reescreva** este arquivo a cada entrega (não acrescente histórico — decisões vão em `docs/decisoes.md`, histórico fica no Git).
 
-**Atualizado em:** 2026-11-12 (2ª rodada) — branch `feature/fase4-auditoria` (alterações ainda **não commitadas**)
+**Atualizado em:** 2026-11-12 — branch `main` (tudo commitado e enviado; o agente pode comitar/enviar direto na `main`, ver `AGENTS.md` §5)
 
 ## Situação
 - Fases 1 a 5 concluídas. Entrega de 2026-11-11 com 15 ajustes de uso (ver `decisoes.md` › "Ajustes de uso"): chave pela fechadura, bordas simples, colunas recolhíveis, área de edição única, impressão formal com a nota, nota obrigatória (ou "sem nota"), navbar estreita e tabelas do legado.
@@ -12,7 +12,6 @@
 
 ## Próximos passos
 - Importador da planilha legada para `legado_*` e, depois, para `contas_a_pagar`/`boletos_recorrentes`/`avisos`, quando o usuário enviar os dados.
-- Conferir o instalador com `pdf-lib` (gerar com `npm run instalador` e testar a impressão de uma conta com nota em PDF).
 
 ## Pendências — decisões do usuário (auditoria)
 - Trilha de auditoria (`auditoria_operacoes`): implementar ou descartar.
