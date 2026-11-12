@@ -309,6 +309,21 @@ async function conferirBackupDrive(cfg: FinDeskConfig): Promise<void> {
   }
 }
 
+// ===== atualizacao pelo Google Drive: aviso fixo com o botao ATUALIZAR =====
+async function oferecerAtualizacao(): Promise<void> {
+  const nova = await window.finDesk?.atualizacaoDisponivel?.().catch(() => null);
+  if (!nova) return;
+  document.body.dataset.atualizacao = nova.versao;
+  const novidades = nova.novidades ? ` ${nova.novidades}` : "";
+  notificar(`Nova versão ${nova.versao} disponível (você usa a ${nova.atual}).${novidades}`, "info", {
+    rotulo: "Atualizar",
+    aoClicar: () => {
+      notificar("Instalando a atualização. O sistema vai fechar e abrir de novo sozinho.", "info", undefined, { fixa: true });
+      void window.finDesk!.instalarAtualizacao();
+    },
+  }, { fixa: true });
+}
+
 async function iniciar(): Promise<void> {
   try {
     if (!window.finDesk) {
@@ -322,6 +337,7 @@ async function iniciar(): Promise<void> {
     try {
       renderAlertas(await buscarAlertas(cfg));
       void conferirBackupDrive(cfg);
+      void oferecerAtualizacao();
     } catch (erro) {
       erroAlertas();
       console.warn("[ContasAPagar] alertas indisponiveis:", erro instanceof Error ? erro.message : erro);

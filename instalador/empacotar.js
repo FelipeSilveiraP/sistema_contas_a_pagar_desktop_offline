@@ -52,6 +52,7 @@ await etapa("Instalador (electron-builder / NSIS)", () => {
         "package.json",
         "desktop/main.js",
         "desktop/preload.js",
+        "desktop/automacoes.js",
         "frontend/html/**",
         "frontend/css/fonts.css",
         "frontend/dist/**",

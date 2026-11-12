@@ -56,6 +56,7 @@ export function notificar(
   mensagem: string,
   tipo: TipoNotificacao = "sucesso",
   acao?: { rotulo: string; aoClicar: () => void },
+  opcoes: { fixa?: boolean } = {},
 ): void {
   const alvo = regiao(tipo);
   const todas = document.querySelectorAll(".notificacao");
@@ -82,7 +83,7 @@ export function notificar(
     item.remove();
   };
   const agendar = (): void => {
-    if (tipo === "erro") return;
+    if (tipo === "erro" || opcoes.fixa) return;
     if (timer !== undefined) window.clearTimeout(timer);
     timer = window.setTimeout(fechar, DURACAO_MS);
   };

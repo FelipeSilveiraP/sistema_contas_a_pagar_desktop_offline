@@ -31,6 +31,7 @@ node desktop/teste-persistencia.js     # cold start: dados sobrevivem ao reiníc
 npm run test:frontend                  # testes unitários de máscaras + filtros (sem Electron)
 npx electron desktop/teste-crud-real.js   # CRUD real (SendInput) em todas as telas, banco/Downloads em %TEMP%
 npm run instalador                     # instalador Windows com Java embutido (ver docs/instalacao.md)
+npm run publicar -- "novidades"        # põe o instalador na pasta de atualizações do Google Drive (a loja oferece ATUALIZAR)
 npx electron desktop/medir-layout.js --capturas   # rolagem/centralização das 18 telas em 3 resoluções
 ```
 

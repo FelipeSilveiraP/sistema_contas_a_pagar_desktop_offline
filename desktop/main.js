@@ -4,6 +4,10 @@ const net = require("net");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const automacoes = require("./automacoes");
+// versao DO SISTEMA (package.json): app.getVersion() devolve a do Electron quando
+// o app roda por script (desenvolvimento/testes)
+const VERSAO_SISTEMA = require(path.join(__dirname, "..", "package.json")).version;
 
 let processoBackend = null;
 let janela = null;
@@ -512,6 +516,21 @@ ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
   return { ok: true, caminho: destino, anexoIncluido };
 });
 
+// Atualizacao pelo Google Drive: a tela pergunta se ha versao nova e, com o
+// clique do usuario em ATUALIZAR, o instalador roda e o sistema fecha.
+let atualizacaoEncontrada = null;
+ipcMain.handle("findesk:atualizacao-disponivel", () => {
+  atualizacaoEncontrada = automacoes.procurarAtualizacao(app, registrarLog, VERSAO_SISTEMA);
+  return atualizacaoEncontrada
+    ? { versao: atualizacaoEncontrada.versao, atual: VERSAO_SISTEMA, novidades: atualizacaoEncontrada.novidades }
+    : null;
+});
+ipcMain.handle("findesk:instalar-atualizacao", () => {
+  if (!atualizacaoEncontrada) return false;
+  automacoes.instalarAtualizacao(app, atualizacaoEncontrada, registrarLog);
+  return true;
+});
+
 ipcMain.handle("findesk:fechar", () => {
   app.quit();
 });
@@ -530,6 +549,15 @@ if (!instanciaUnica) {
   app.whenReady()
     .then(() => {
       marco("app-pronto");
+      // automacoes do sistema instalado: abrir com o Windows e, nesse inicio
+      // automatico, abrir o Chrome no e-mail da firma (configuracoes.json)
+      try {
+        const config = automacoes.lerConfiguracoes(path.dirname(caminhoBanco()), registrarLog);
+        automacoes.configurarInicioComWindows(app, config, registrarLog);
+        automacoes.abrirEmailSeInicioAutomatico(process.argv, config, shell, registrarLog);
+      } catch (erro) {
+        registrarLog("WARN", `automacoes de inicio nao aplicadas: ${erro && erro.message}`);
+      }
       // A janela aparece imediatamente (tela de carregamento); o backend
       // Java/SQLite sobe em paralelo e a interface so e liberada quando a
       // API responder com o banco ja inicializado.

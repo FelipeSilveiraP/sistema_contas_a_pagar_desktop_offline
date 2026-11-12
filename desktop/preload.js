@@ -13,4 +13,6 @@ contextBridge.exposeInMainWorld("finDesk", {
   abrirNota: (caminho) => ipcRenderer.invoke("findesk:abrir-nota", caminho),
   abrirArquivo: (caminho) => ipcRenderer.invoke("findesk:abrir-arquivo", caminho),
   imprimirPdf: (nome, opcoes) => ipcRenderer.invoke("findesk:imprimir-pdf", nome, opcoes),
+  atualizacaoDisponivel: () => ipcRenderer.invoke("findesk:atualizacao-disponivel"),
+  instalarAtualizacao: () => ipcRenderer.invoke("findesk:instalar-atualizacao"),
 });

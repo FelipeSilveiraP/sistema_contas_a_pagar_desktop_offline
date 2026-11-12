@@ -39,5 +39,7 @@ interface Window {
       nome: string,
       opcoes?: { retrato?: boolean; anexoPdf?: Uint8Array; formal?: boolean },
     ) => Promise<{ ok: boolean; caminho?: string; anexoIncluido?: boolean }>;
+    atualizacaoDisponivel: () => Promise<{ versao: string; atual: string; novidades: string } | null>;
+    instalarAtualizacao: () => Promise<boolean>;
   };
 }
