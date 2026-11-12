@@ -8,7 +8,7 @@
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center px-4 sm:px-6 lg:px-8 font-headline" data-tela="inserir-conta">
 <header id="nav-global"></header>
 <div class="w-full max-w-5xl flex flex-col gap-6 mt-4 sm:mt-5">
-<main class="w-full bg-white border-4 border-[#1c1b1b] shadow-[6px_6px_0px_0px_#1c1b1b] p-5 sm:p-6">
+<main class="w-full bg-white border-2 border-[#1c1b1b] p-5 sm:p-6">
 <div class="flex items-center gap-3 pb-3 mb-4 border-b-2 border-[#1c1b1b]">
 <div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
 <span class="material-symbols-outlined text-2xl text-[#1c1b1b]">post_add</span>
@@ -49,7 +49,7 @@
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]">
 <span>TIPO DE CONTA (PESSOA FÍSICA OU JURÍDICA) <strong class="text-[#ba1a1a]">*</strong></span>
 </label>
-<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3">
 <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
 <input checked="" class="hidden peer" name="account_type" type="radio" value="PJ">
 <div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
@@ -98,7 +98,7 @@
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide text-[#1c1b1b]">
 <span>CONTA ESTÁ NA PASTA? (DOCUMENTO FÍSICO ARQUIVADO)</span>
 </label>
-<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3 shadow-[3px_3px_0px_0px_#1c1b1b]">
+<div class="flex items-center gap-4 bg-white border-2 border-[#1c1b1b] p-3">
 <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
 <input class="hidden peer" name="in_folder" type="radio" value="sim">
 <div class="w-6 h-6 border-2 border-[#1c1b1b] bg-white peer-checked:bg-[#FFE600] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b] transition-all">
@@ -176,26 +176,32 @@
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="payer_responsible">
 <span>PAGADOR RESPONSÁVEL <strong class="text-[#ba1a1a]">*</strong></span>
 </label>
-<input class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] placeholder:text-[#a09c89] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all" id="payer_responsible" name="payer_responsible" list="lista-pagadores" placeholder="Ex: Balcão 01, Chaveiro Carlos, Gerência, Caixa Principal..." type="text" maxlength="120" autocomplete="off">
-<datalist id="lista-pagadores"></datalist>
+<div class="relative w-full"><select class="w-full bg-white border-2 border-[#1c1b1b] px-3.5 py-2.5 text-sm sm:text-base font-headline font-semibold text-[#1c1b1b] shadow-[3px_3px_0px_0px_#1c1b1b] focus:outline-none focus:bg-[#fffde6] focus:shadow-[4px_4px_0px_0px_#FFE600] transition-all cursor-pointer appearance-none pr-10" id="payer_responsible" name="payer_responsible">
+<option value="">Carregando pagadores...</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xl text-[#1c1b1b]">expand_more</span></div>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="pagadorResponsavel"></p>
 </div>
 
 <div class="flex flex-col gap-1.5 w-full lg:col-span-2">
 <label class="text-xs sm:text-sm font-bold uppercase tracking-wide flex justify-between items-center text-[#1c1b1b]" for="invoice_pdf">
-<span>ANEXAR NOTA FISCAL (PDF)</span>
-<span class="text-xs font-mono font-medium text-[#7c775f]">PDF ATÉ 15MB</span>
+<span>NOTA FISCAL <strong class="text-[#ba1a1a]">*</strong></span>
+<span class="text-xs font-mono font-medium text-[#7c775f]">PDF, FOTO OU WORD · ATÉ 10 MB</span>
 </label>
-<div class="w-full bg-white border-2 border-dashed border-[#1c1b1b] p-3 flex flex-col items-center justify-center gap-2 text-center shadow-[3px_3px_0px_0px_#1c1b1b] hover:bg-[#fffde6] transition-all cursor-pointer relative" id="anexo-area">
-<input accept=".pdf,application/pdf" class="sr-only absolute opacity-0 pointer-events-none" id="invoice_pdf" name="invoice_pdf" type="file">
+<div class="w-full bg-white border-2 border-dashed border-[#1c1b1b] p-3 flex flex-col items-center justify-center gap-2 text-center hover:bg-[#fffde6] transition-all cursor-pointer relative" id="anexo-area">
+<input accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,application/pdf,image/jpeg,image/png,image/webp,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="sr-only absolute opacity-0 pointer-events-none" id="invoice_pdf" name="invoice_pdf" type="file">
 <div class="w-10 h-10 bg-[#FFE600] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]">
 <span class="material-symbols-outlined text-2xl text-[#1c1b1b]">upload_file</span>
 </div>
 <div>
-<span class="font-headline font-bold text-xs sm:text-sm uppercase text-[#1c1b1b] block" id="file_label">ESCOLHER ARQUIVO PDF OU ARRASTAR AQUI</span>
+<span class="font-headline font-bold text-xs sm:text-sm uppercase text-[#1c1b1b] block" id="file_label">ESCOLHER ARQUIVO OU ARRASTAR AQUI</span>
 <span class="text-xs font-mono text-[#7c775f]">Guarda digital automática com opção de download no sistema</span>
 </div>
 </div>
+<label class="flex items-center gap-2.5 self-start cursor-pointer select-none font-headline text-xs sm:text-sm font-bold uppercase text-[#1c1b1b]" for="sem_nota">
+<input class="w-5 h-5 border-2 border-[#1c1b1b] accent-[#1c1b1b] cursor-pointer" id="sem_nota" name="sem_nota" type="checkbox">
+<span>Conta sem nota fiscal (veio sem nota)</span>
+</label>
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" data-erro-campo="anexo"></p>
 </div>
 

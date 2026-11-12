@@ -30,7 +30,7 @@ public class ContaRepository {
     private static final String COLUNAS = """
             c.id_conta, c.nome_empresa, c.id_empresa, e.razao_social, c.pagador_responsavel,
             c.tipo_pessoa, c.forma_pagamento, c.categoria, c.numero_documento,
-            c.valor_centavos, c.vencimento, c.boleto_na_pasta, c.anexo_nome, c.status
+            c.valor_centavos, c.vencimento, c.boleto_na_pasta, c.anexo_nome, c.sem_nota_fiscal, c.status
             FROM contas_a_pagar c
             LEFT JOIN empresas e ON e.id_empresa = c.id_empresa
             """;
@@ -82,8 +82,8 @@ public class ContaRepository {
         String sql = "INSERT INTO contas_a_pagar"
                 + " (nome_empresa, id_empresa, pagador_responsavel, tipo_pessoa, forma_pagamento,"
                 + " categoria, numero_documento, valor_centavos, vencimento, boleto_na_pasta,"
-                + " anexo_nome, anexo_pdf, status)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " anexo_nome, anexo_pdf, sem_nota_fiscal, status)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -101,7 +101,7 @@ public class ContaRepository {
                 return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
                         dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
                         dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                        dados.boletoNaPasta(), dados.anexoNome(), dados.status());
+                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.status());
             } catch (SQLException erro) {
                 conn.rollback();
                 tratarForeignKey(erro, "empresa emissora inexistente");
@@ -117,13 +117,13 @@ public class ContaRepository {
         String sql = "INSERT INTO contas_a_pagar"
                 + " (nome_empresa, id_empresa, pagador_responsavel, tipo_pessoa, forma_pagamento,"
                 + " categoria, numero_documento, valor_centavos, vencimento, boleto_na_pasta,"
-                + " anexo_nome, anexo_pdf, status, id_recorrente)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " anexo_nome, anexo_pdf, sem_nota_fiscal, status, id_recorrente)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 preencher(stmt, dados, null);
-                stmt.setLong(14, idRecorrente);
+                stmt.setLong(15, idRecorrente);
                 stmt.executeUpdate();
                 long id;
                 try (ResultSet chaves = stmt.getGeneratedKeys()) {
@@ -137,7 +137,7 @@ public class ContaRepository {
                 return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
                         dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
                         dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                        dados.boletoNaPasta(), dados.anexoNome(), dados.status());
+                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.status());
             } catch (SQLException erro) {
                 conn.rollback();
                 throw erro;
@@ -155,13 +155,15 @@ public class ContaRepository {
         boolean trocarAnexo = anexoPdf != null;
         String sql = "UPDATE contas_a_pagar SET nome_empresa = ?, id_empresa = ?,"
                 + " pagador_responsavel = ?, tipo_pessoa = ?, forma_pagamento = ?, categoria = ?,"
-                + " numero_documento = ?, valor_centavos = ?, vencimento = ?, boleto_na_pasta = ?"
+                + " numero_documento = ?, valor_centavos = ?, vencimento = ?, boleto_na_pasta = ?,"
+                + " sem_nota_fiscal = ?"
                 + (trocarAnexo ? ", anexo_nome = ?, anexo_pdf = ?" : "")
                 + " WHERE id_conta = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 int pos = preencherComuns(stmt, dados);
+                stmt.setInt(pos++, dados.semNotaFiscal() ? 1 : 0);
                 if (trocarAnexo) {
                     stmt.setString(pos++, dados.anexoNome());
                     stmt.setBytes(pos++, anexoPdf);
@@ -246,7 +248,8 @@ public class ContaRepository {
         } else {
             stmt.setBytes(p, anexoPdf);
         }
-        stmt.setString(p + 1, dados.status());
+        stmt.setInt(p + 1, dados.semNotaFiscal() ? 1 : 0);
+        stmt.setString(p + 2, dados.status());
     }
 
     private static Conta paraRegistro(ResultSet rs) throws SQLException {
@@ -267,6 +270,7 @@ public class ContaRepository {
                 java.sql.Date.valueOf(rs.getString("vencimento")).toLocalDate(),
                 rs.getInt("boleto_na_pasta") == 1,
                 rs.getString("anexo_nome"),
+                rs.getInt("sem_nota_fiscal") == 1,
                 rs.getString("status")
         );
     }

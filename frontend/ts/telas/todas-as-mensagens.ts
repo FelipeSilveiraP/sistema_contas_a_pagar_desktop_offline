@@ -9,7 +9,8 @@ import {
 import { confirmarExclusao } from "../componentes";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
-import { formatarDataBR, parseDataBR, mascaraDinamica } from "../mascaras";
+import { formatarDataBR, parseDataBR } from "../mascaras";
+import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { hojeIso } from "../filtros";
 
 let avisos: AvisoDados[] = [];
@@ -17,6 +18,7 @@ let pesquisa = "";
 let filtro = "TODOS";
 let ordenarCronologico = false;
 let selecionadoId: number | null = null;
+let editor: EditorCampo;
 
 function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -112,15 +114,14 @@ function selecionar(id: number): void {
   if (!aviso) return;
   el("editorContainer").classList.remove("hidden");
   el("editorRecordName").textContent = aviso.titulo;
-  el<HTMLInputElement>("newValueInput").value = valorAtual(aviso, el<HTMLSelectElement>("fieldSelect").value);
+  el("detailPeriodo").textContent = `${formatarDataBR(aviso.dataInicio)} a ${formatarDataBR(aviso.dataFim)}`;
+  el("detailDias").textContent = aviso.diaSemana;
+  editor.atualizar();
   renderTabela();
 }
 
 function mostrarErro(mensagem?: string): void {
-  const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
-  if (!alvo) return;
-  alvo.textContent = mensagem ?? "";
-  alvo.classList.toggle("hidden", !mensagem);
+  editor?.erro(mensagem);
 }
 
 async function recarregar(): Promise<void> {
@@ -132,8 +133,8 @@ async function recarregar(): Promise<void> {
 async function aplicarAlteracao(): Promise<void> {
   const aviso = avisos.find((a) => a.id === selecionadoId);
   if (!aviso) return;
-  const campo = el<HTMLSelectElement>("fieldSelect").value;
-  const bruto = el<HTMLInputElement>("newValueInput").value.trim();
+  const campo = editor.campo();
+  const bruto = editor.ler();
   const patch = {
     dataInicio: aviso.dataInicio,
     dataFim: aviso.dataFim,
@@ -222,25 +223,20 @@ function iniciar(): void {
   el("btnClearSelection").addEventListener("click", () => {
     selecionadoId = null;
     el("editorContainer").classList.add("hidden");
+    mostrarErro();
     renderTabela();
   });
-  el("btnCancelEdit").addEventListener("click", () => mostrarErro());
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   el("btnDeleteAction").addEventListener("click", () => void excluirSelecionado());
-  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
-  const tiposEditor: Record<string, "data" | "moeda"> = { dataInicio: "data", dataFim: "data" };
-  const editor = el<HTMLInputElement>("newValueInput");
-  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
-  const ajustarTeclado = (): void => {
-    editor.inputMode = tipoEditor() ? "numeric" : "text";
-  };
-  mascaraDinamica(editor, tipoEditor);
-  ajustarTeclado();
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
+  editor = criarEditorCampo([
+    { valor: "titulo", rotulo: "Título" },
+    { valor: "mensagem", rotulo: "Mensagem" },
+    { valor: "dataInicio", rotulo: "Data início", mascara: "data" },
+    { valor: "dataFim", rotulo: "Data final", mascara: "data" },
+    { valor: "diaSemana", rotulo: "Dias da semana (ex.: SEGUNDA,QUARTA ou TODOS)" },
+  ], (campo) => {
     const aviso = avisos.find((a) => a.id === selecionadoId);
-    if (aviso) el<HTMLInputElement>("newValueInput").value = valorAtual(aviso, el<HTMLSelectElement>("fieldSelect").value);
-    mostrarErro();
+    return aviso ? valorAtual(aviso, campo) : "";
   });
 
   void verificarApi();

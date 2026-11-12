@@ -50,7 +50,7 @@ class ContaApiTest {
         return json.writeValueAsString(new ContaController.ContaRequest(
                 "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "boleto",
                 "Material", doc, new BigDecimal(valor), LocalDate.parse(vencimento),
-                Boolean.FALSE, null, null, forcar));
+                Boolean.FALSE, null, null, true, forcar));
     }
 
     @Test
@@ -84,7 +84,7 @@ class ContaApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new ContaController.ContaRequest(
                                 "Empresa", idEmpresa, "Balcão", "PJ", "boleto", null, null,
-                                new BigDecimal("10.00"), null, false, null, null, null))))
+                                new BigDecimal("10.00"), null, false, null, null, true, null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.vencimento").exists());
 
@@ -92,7 +92,7 @@ class ContaApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(new ContaController.ContaRequest(
                                 "Empresa", idEmpresa, "Balcão", "PJ", "cheque", null, null,
-                                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, null, null))))
+                                new BigDecimal("10.00"), LocalDate.parse("2026-12-10"), false, null, null, true, null))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.formaPagamento").exists());
     }
@@ -232,7 +232,7 @@ class ContaApiTest {
         String corpoComAnexo = json.writeValueAsString(new ContaController.ContaRequest(
                 "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", "Material",
                 "AN-" + sufixo(), new BigDecimal("10.00"), LocalDate.parse("2026-12-10"),
-                true, "nota.pdf", pdfBase64, true));
+                true, "nota.pdf", pdfBase64, false, true));
         String criado = mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpoComAnexo))
@@ -250,7 +250,7 @@ class ContaApiTest {
         String corpoInvalido = json.writeValueAsString(new ContaController.ContaRequest(
                 "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", null,
                 null, new BigDecimal("10.00"), LocalDate.parse("2026-12-11"),
-                false, "nota.pdf", Base64.getEncoder().encodeToString("nao-pdf".getBytes()), true));
+                false, "nota.pdf", Base64.getEncoder().encodeToString("nao-pdf".getBytes()), false, true));
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpoInvalido))

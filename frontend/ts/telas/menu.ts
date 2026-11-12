@@ -53,6 +53,7 @@ function registrarAtalhos(): void {
     "4": "graficos-e-relatorios",
   };
   document.addEventListener("keydown", (evento) => {
+    if (popupAberto) return;
     const alvo = atalhos[evento.key];
     if (!alvo) return;
     evento.preventDefault();
@@ -62,7 +63,7 @@ function registrarAtalhos(): void {
 
 // ===== "Mensagens do dia": alertas reais (regra do VBA VerificarVencimentosAoAbrir) =====
 // atrasadas de 1 a 15 dias + a vencer de hoje ate 10 dias + recados vigentes hoje.
-const MAX_LINHAS = 4;
+const MAX_LINHAS = 3;
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 function celula(texto: string, classe: string, rotulo: string): HTMLTableCellElement {
@@ -118,36 +119,163 @@ function linhaUnica(texto: string, classe: string): HTMLTableRowElement {
   return tr;
 }
 
+const MAX_RECADOS = 2;
+let ultimosDados: AlertasDados | null = null;
+
+function itemRecado(titulo: string, mensagem: string, completo: boolean): HTMLLIElement {
+  const li = document.createElement("li");
+  li.className = `recado-dia${completo ? " recado-dia--completo" : ""}`;
+  const t = document.createElement("strong");
+  t.textContent = titulo;
+  const m = document.createElement("span");
+  m.textContent = mensagem;
+  li.append(t, m);
+  li.title = `${titulo}: ${mensagem}`;
+  return li;
+}
+
+function renderRecados(lista: HTMLElement, dados: AlertasDados, limite: number): void {
+  const completo = limite === Infinity;
+  const itens: HTMLLIElement[] = dados.avisosHoje.slice(0, limite).map((a) => itemRecado(a.titulo, a.mensagem, completo));
+  if (!dados.avisosHoje.length) {
+    const vazio = document.createElement("li");
+    vazio.className = "font-mono text-xs text-neutral-500 uppercase";
+    vazio.textContent = "Nenhum recado para hoje.";
+    itens.push(vazio);
+  } else if (dados.avisosHoje.length > limite) {
+    const resto = dados.avisosHoje.length - limite;
+    const mais = document.createElement("li");
+    mais.className = "font-mono text-xs text-neutral-600 uppercase";
+    mais.textContent = `+ ${resto} recado${resto > 1 ? "s" : ""} — use EXPANDIR para ver todos`;
+    itens.push(mais);
+  }
+  lista.replaceChildren(...itens);
+}
+
+function linhasContas(dados: AlertasDados, limite: number): HTMLTableRowElement[] {
+  const todas = [...dados.atrasados, ...dados.aVencer];
+  const linhas = todas.slice(0, limite).map(linhaAlerta);
+  if (!todas.length) {
+    linhas.push(linhaUnica("Tudo em dia! Nenhuma conta atrasada ou vencendo nos próximos 10 dias.", "p-3 text-center text-[#006c46] uppercase"));
+  } else if (todas.length > limite) {
+    const resto = todas.length - limite;
+    linhas.push(linhaUnica(`+ ${resto} conta${resto > 1 ? "s" : ""} — use EXPANDIR para ver todas`, "p-2 text-center font-mono text-xs text-neutral-600 uppercase"));
+  }
+  return linhas;
+}
+
+function resumoContas(dados: AlertasDados): string {
+  const partes: string[] = [];
+  if (dados.atrasados.length) partes.push(`${dados.atrasados.length} atrasada${dados.atrasados.length > 1 ? "s" : ""}`);
+  if (dados.aVencer.length) partes.push(`${dados.aVencer.length} a vencer`);
+  const n = dados.avisosHoje.length;
+  const recados = n ? ` · ${n} recado${n > 1 ? "s" : ""} hoje` : "";
+  return (partes.length ? `Contas: ${partes.join(" e ")}` : "Contas: tudo em dia") + recados + ".";
+}
+
 function renderAlertas(dados: AlertasDados): void {
+  ultimosDados = dados;
   const [ano, mes, dia] = dados.hoje.split("-").map(Number);
   const hoje = document.getElementById("alertas-hoje");
   if (hoje) hoje.textContent = `Hoje: ${dia} de ${MESES[mes - 1]} de ${ano}`;
 
-  const corpo = document.getElementById("alertas-corpo");
-  if (!corpo) return;
-  const todas = [...dados.atrasados, ...dados.aVencer];
-  const linhas = todas.slice(0, MAX_LINHAS).map(linhaAlerta);
-  if (!todas.length) {
-    linhas.push(linhaUnica("Tudo em dia! Nenhuma conta atrasada ou vencendo nos próximos 10 dias.", "p-3 text-center text-[#006c46] uppercase"));
-  } else if (todas.length > MAX_LINHAS) {
-    const resto = todas.length - MAX_LINHAS;
-    linhas.push(linhaUnica(`+ ${resto} conta${resto > 1 ? "s" : ""} — veja todas em CONTROLE › TODAS AS CONTAS`, "p-2 text-center font-mono text-xs text-neutral-600 uppercase"));
-  }
-  corpo.replaceChildren(...linhas);
-
+  document.getElementById("alertas-corpo")?.replaceChildren(...linhasContas(dados, MAX_LINHAS));
+  const recados = document.getElementById("recados-dia");
+  if (recados) renderRecados(recados, dados, MAX_RECADOS);
   const rodape = document.getElementById("alertas-rodape");
-  if (rodape) {
-    const partes: string[] = [];
-    if (dados.atrasados.length) partes.push(`${dados.atrasados.length} atrasada${dados.atrasados.length > 1 ? "s" : ""}`);
-    if (dados.aVencer.length) partes.push(`${dados.aVencer.length} a vencer`);
-    const recados = dados.avisosHoje.map((a) => `${a.titulo}: ${a.mensagem}`).join("  •  ");
-    rodape.textContent = recados
-      ? `Recados de hoje — ${recados}`
-      : partes.length ? `Contas: ${partes.join(" e ")}. Nenhum recado para hoje.` : "Nenhum recado para hoje.";
-    rodape.title = rodape.textContent;
-    rodape.classList.add("truncate");
-  }
-  document.body.dataset.alertas = String(todas.length);
+  if (rodape) rodape.textContent = resumoContas(dados);
+  document.body.dataset.alertas = String(dados.atrasados.length + dados.aVencer.length);
+}
+
+// ===== pop-up "Mensagens do dia" em tela cheia (todas as contas e recados) =====
+let popupAberto = false;
+
+function fecharPopup(veu: HTMLElement, origem: HTMLElement | null): void {
+  veu.remove();
+  popupAberto = false;
+  delete document.body.dataset.mensagensExpandidas;
+  origem?.focus();
+}
+
+function botaoPainel(texto: string, id?: string): HTMLButtonElement {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "btn-painel-dia";
+  b.textContent = texto;
+  if (id) b.id = id;
+  return b;
+}
+
+function abrirPopup(): void {
+  if (popupAberto) return;
+  const origem = document.activeElement as HTMLElement | null;
+  const veu = document.createElement("div");
+  veu.className = "dialogo-veu painel-expandido-veu";
+  const caixa = document.createElement("div");
+  caixa.className = "painel-expandido";
+  caixa.setAttribute("role", "dialog");
+  caixa.setAttribute("aria-modal", "true");
+  caixa.setAttribute("aria-labelledby", "titulo-mensagens-expandidas");
+
+  const cab = document.createElement("div");
+  cab.className = "painel-expandido__cabecalho";
+  const titulo = document.createElement("h2");
+  titulo.id = "titulo-mensagens-expandidas";
+  const hoje = document.getElementById("alertas-hoje")?.textContent ?? "";
+  titulo.textContent = `Mensagens do dia${hoje ? ` — ${hoje}` : ""}`;
+  const acoes = document.createElement("div");
+  acoes.className = "flex flex-wrap gap-2";
+  const irControle = botaoPainel("Ver no Controle →");
+  irControle.addEventListener("click", () => void irPara("todas-as-contas"));
+  const fechar = botaoPainel("Fechar ✕", "btn-fechar-mensagens");
+  fechar.addEventListener("click", () => fecharPopup(veu, origem));
+  acoes.append(irControle, fechar);
+  cab.append(titulo, acoes);
+
+  const corpo = document.createElement("div");
+  corpo.className = "painel-expandido__corpo";
+  const secaoContas = document.createElement("h3");
+  secaoContas.className = "painel-expandido__secao";
+  secaoContas.textContent = "Contas atrasadas e a vencer (próximos 10 dias)";
+  const tabela = document.querySelector("#painel-mensagens-dia table")!.cloneNode(true) as HTMLTableElement;
+  const tbody = tabela.querySelector("tbody")!;
+  tbody.id = "alertas-corpo-expandido";
+  if (ultimosDados) tbody.replaceChildren(...linhasContas(ultimosDados, Infinity));
+  const moldura = document.createElement("div");
+  moldura.className = "border-2 border-[#1c1b1b]";
+  moldura.appendChild(tabela);
+  const secaoRecados = document.createElement("h3");
+  secaoRecados.className = "painel-expandido__secao";
+  secaoRecados.textContent = "Recados de hoje";
+  const lista = document.createElement("ul");
+  lista.className = "recados-dia flex flex-col gap-2";
+  lista.id = "recados-expandidos";
+  if (ultimosDados) renderRecados(lista, ultimosDados, Infinity);
+  corpo.append(secaoContas, moldura, secaoRecados, lista);
+
+  caixa.append(cab, corpo);
+  veu.appendChild(caixa);
+  veu.addEventListener("click", (evento) => {
+    if (evento.target === veu) fecharPopup(veu, origem);
+  });
+  veu.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") {
+      evento.preventDefault();
+      evento.stopPropagation();
+      fecharPopup(veu, origem);
+    } else if (evento.key === "Tab") {
+      // foco preso dentro do pop-up
+      const focaveis = [...caixa.querySelectorAll<HTMLElement>("button")];
+      const i = focaveis.indexOf(document.activeElement as HTMLElement);
+      const proximo = evento.shiftKey ? (i <= 0 ? focaveis.length - 1 : i - 1) : (i + 1) % focaveis.length;
+      evento.preventDefault();
+      focaveis[proximo]?.focus();
+    }
+  });
+  document.body.appendChild(veu);
+  popupAberto = true;
+  document.body.dataset.mensagensExpandidas = "true";
+  fechar.focus();
 }
 
 function erroAlertas(): void {
@@ -179,8 +307,15 @@ async function iniciar(): Promise<void> {
   }
 }
 
+/** Botoes do painel "Mensagens do dia": expandir (pop-up) e ir para o Controle. */
+function registrarPainelMensagens(): void {
+  document.getElementById("btn-expandir-mensagens")?.addEventListener("click", abrirPopup);
+  document.getElementById("btn-ir-controle")?.addEventListener("click", () => void irPara("todas-as-contas"));
+}
+
 export function iniciarMenu(): void {
   registrarBotoes();
+  registrarPainelMensagens();
   registrarAtalhos();
   void iniciar();
 }

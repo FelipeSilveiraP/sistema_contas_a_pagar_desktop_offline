@@ -39,13 +39,19 @@
   body:not(.submenu-body):not(.menu-body) > #nav-global + * {
     flex: 0 0 auto;
     margin-bottom: auto;
+    /* largura explicita: com margem auto o item encolhia/esticava pelo conteudo
+       (tabela larga) e a tela inteira ficava maior que a janela, cortando itens */
+    width: 100%;
+    min-width: 0;
   }
 }
 
 /* ===== Tela de carregamento — chave neobrutalista entrando no cadeado =====
-   2D chapado (sem 3D): chave laranja com contorno preto grosso e sombra dura
-   (desenhada ATRAS do cadeado, a lamina some dentro dele) entra na fechadura, o cadeado "estala" e abre (haste sobe + riscos de impacto),
-   depois tudo volta. Movimento em degraus curtos, sem easing suave. */
+   2D chapado: chave laranja com contorno preto grosso e sombra dura, desenhada
+   NA FRENTE do cadeado. Ela vem de frente ate o buraco da fechadura e a lamina
+   e cortada (clip-path) na borda do buraco: parece entrar pela fechadura, nao
+   passar por tras do cadeado. Depois o cadeado "estala" e abre (haste sobe +
+   riscos de impacto) e tudo volta. Movimento em degraus curtos. */
 
 .chave-carregando {
   width: 13rem;
@@ -80,9 +86,9 @@
 }
 
 @keyframes chave-entrar {
-  0%, 8% { transform: translateX(-42px); }
+  0%, 8% { transform: translateX(-44px); }
   32%, 78% { transform: translateX(0); }
-  92%, 100% { transform: translateX(-42px); }
+  92%, 100% { transform: translateX(-44px); }
 }
 
 @keyframes cadeado-abrir {
@@ -450,7 +456,8 @@
 }
 
 @media (max-width: 850px) {
-  .nav-hamburguer { display: inline-flex; }
+  /* mesma margem esquerda do conteudo (calculada em navbar.ts) */
+  .nav-hamburguer { display: inline-flex; margin-left: var(--nav-esquerda, 1rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -791,3 +798,185 @@
     break-inside: avoid;
   }
 }
+
+/* ===== Folha formal de impressao (impressao.ts > imprimirDocumento) =====
+   Documento simples e sobrio (preto no branco, bordas finas), sem o visual
+   neobrutalista da tela. Fica escondida na tela; na impressao, so ela aparece. */
+.folha-impressao { display: none; }
+
+@media print {
+  body.imprimindo-documento > *:not(.folha-impressao) { display: none !important; }
+  body.imprimindo-documento { display: block !important; }
+  body.imprimindo-documento .folha-impressao { display: block; }
+}
+
+.folha-impressao {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #000;
+  font-size: 11pt;
+  line-height: 1.35;
+}
+.folha__pagina { padding: 10mm 12mm; }
+.folha__pagina + .folha__pagina { break-before: page; }
+.folha__cabecalho { border-bottom: 1.5pt solid #000; padding-bottom: 6pt; margin-bottom: 12pt; }
+.folha__empresa { margin: 0; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.04em; }
+.folha__titulo { margin: 2pt 0; font-size: 15pt; font-weight: 700; text-transform: uppercase; }
+.folha__emissao { margin: 0; font-size: 9pt; }
+.folha__secao { margin: 14pt 0 6pt; font-size: 10pt; font-weight: 700; text-transform: uppercase; }
+.folha__campos { width: 100%; border-collapse: collapse; }
+.folha__campos th,
+.folha__campos td { border: 0.75pt solid #000; padding: 5pt 7pt; text-align: left; vertical-align: top; }
+.folha__campos th { width: 34%; font-weight: 700; background: #f2f2f2; }
+.folha__lista { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.folha__lista th,
+.folha__lista td { border: 0.75pt solid #000; padding: 3pt 5pt; text-align: left; }
+.folha__lista th { background: #f2f2f2; font-weight: 700; text-transform: uppercase; font-size: 8pt; }
+.folha__lista td.folha__num,
+.folha__lista th.folha__num { text-align: right; white-space: nowrap; }
+.folha__lista tr { break-inside: avoid; }
+.folha__lista tfoot td { font-weight: 700; }
+.folha__nota { margin: 8pt 0 0; font-size: 9pt; }
+.folha__assinaturas { display: flex; gap: 24pt; margin-top: 36pt; }
+.folha__assinatura { flex: 1; display: flex; flex-direction: column; gap: 3pt; font-size: 9pt; text-align: center; }
+.folha__linha { border-top: 0.75pt solid #000; height: 0; }
+.folha__imagem { display: block; max-width: 100%; max-height: 250mm; margin: 0 auto; object-fit: contain; }
+
+/* ===== Tabelas: colunas principais + botao » que mostra as demais =====
+   As colunas .col-extra ficam escondidas ate o usuario expandir a tabela. */
+.tabela-colunas:not(.tabela-expandida) .col-extra { display: none; }
+
+.btn-expandir-colunas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: #ffffff;
+  color: #1c1b1b;
+  border: 2px solid #1c1b1b;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-expandir-colunas:hover { background: #ffe600; }
+.btn-expandir-colunas:focus-visible { outline: 3px solid #ffe600; outline-offset: 2px; }
+.btn-expandir-colunas[aria-expanded="true"] > span:first-child { display: inline-block; transform: scaleX(-1); }
+
+/* Aviso FORA da tabela marcando onde surge a area de edicao */
+.area-edicao-vazia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1rem;
+  border: 2px dashed #1c1b1b;
+  color: #57534e;
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+}
+.area-edicao-vazia p { margin: 0; }
+
+/* Botoes de acao da area de edicao (mesma altura, borda simples) */
+.btn-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.875rem;
+  border: 2px solid #1c1b1b;
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.btn-acao:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-acao:focus-visible { outline: 3px solid #2165ef; outline-offset: 2px; }
+
+/* o aviso some quando a area de edicao logo depois dele aparece */
+.aviso-selecao:has(+ #editorContainer:not(.hidden)) { display: none; }
+/* as classes acima ficam fora de @layer: garantir que .hidden continue valendo */
+.area-edicao-vazia.hidden,
+.btn-acao.hidden { display: none; }
+/* listas longas podem quebrar entre paginas (so as LINHAS ficam inteiras);
+   o cabecalho repete em cada pagina e o total aparece so no fim */
+@media print {
+  .folha-impressao section,
+  .folha-impressao table { break-inside: auto; }
+  .folha__lista thead { display: table-header-group; }
+  .folha__lista tfoot { display: table-row-group; }
+}
+@media print {
+  .folha__pagina:last-child { padding-bottom: 0; }
+}
+
+/* ===== Menu: painel "Mensagens do dia" (botoes EXPANDIR / VER NO CONTROLE,
+   recados em lista propria e pop-up de tela cheia) ===== */
+.btn-painel-dia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.65rem;
+  background: #ffffff;
+  color: #1c1b1b;
+  border: 2px solid #1c1b1b;
+  box-shadow: 2px 2px 0 0 #1c1b1b;
+  font-family: "Space Grotesk", Arial, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.btn-painel-dia:hover { background: #1c1b1b; color: #ffffff; }
+.btn-painel-dia:active { transform: translate(2px, 2px); box-shadow: none; }
+.btn-painel-dia:focus-visible { outline: 3px solid #2165ef; outline-offset: 2px; }
+
+.recado-dia {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+.recado-dia strong { flex: 0 0 auto; text-transform: uppercase; }
+.recado-dia strong::after { content: ":"; }
+.recado-dia span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recado-dia--completo { padding: 0.5rem 0.75rem; border: 2px solid #1c1b1b; background: #fcf9f8; }
+.recado-dia--completo span { white-space: normal; }
+
+.painel-expandido {
+  width: min(78rem, 100%);
+  height: calc(100vh - 2rem);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 4px solid #1c1b1b;
+  box-shadow: 10px 10px 0 0 #1c1b1b;
+  font-family: "Space Grotesk", Arial, sans-serif;
+}
+.painel-expandido__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: #ffe600;
+  border-bottom: 4px solid #1c1b1b;
+}
+.painel-expandido__cabecalho h2 { margin: 0; font-size: 1.125rem; font-weight: 700; text-transform: uppercase; }
+.painel-expandido__corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.5rem;
+}
+.painel-expandido__secao { margin: 0.5rem 0 0; font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; }

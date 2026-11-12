@@ -18,6 +18,7 @@ export interface ContaDados {
   vencimento: string;
   boletoNaPasta: boolean;
   anexoNome: string | null;
+  semNotaFiscal: boolean;
   status: string;
 }
 
@@ -34,6 +35,7 @@ export interface ContaEntrada {
   boletoNaPasta?: boolean;
   anexoNome?: string;
   anexoPdfBase64?: string;
+  semNotaFiscal?: boolean;
   forcar?: boolean;
 }
 
@@ -53,7 +55,7 @@ async function get<T>(cfg: FinDeskConfig, caminho: string): Promise<T> {
   return (await resposta.json()) as T;
 }
 
-/** Bytes do PDF anexado a uma conta (nota fiscal). */
+/** Bytes do arquivo da nota fiscal anexada (PDF, foto ou Word). */
 export async function baixarAnexoConta(cfg: FinDeskConfig, id: number): Promise<Uint8Array> {
   const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/contas/${id}/anexo`, {
     headers: { "X-FinDesk-Token": cfg.token },

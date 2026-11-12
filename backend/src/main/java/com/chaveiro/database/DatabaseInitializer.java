@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 12;
+    private static final int VERSAO_ATUAL = 15;
 
     private final ConnectionFactory conexao;
 
@@ -288,6 +288,93 @@ public class DatabaseInitializer {
                 // Tipo de conta (PF/PJ) escolhido no form roxo: antes era descartado e
                 // as contas geradas saiam sempre PJ. Aditiva: registros antigos ficam PJ.
                 "ALTER TABLE boletos_recorrentes ADD COLUMN tipo_pessoa TEXT NOT NULL DEFAULT 'PJ'",
+            };
+            case 13 -> new String[] {
+                // Nota fiscal obrigatoria na conta nova: anexo OU a marca "veio sem nota".
+                // Aditiva: contas antigas ficam 0 (nao marcadas).
+                "ALTER TABLE contas_a_pagar ADD COLUMN sem_nota_fiscal INTEGER NOT NULL DEFAULT 0"
+                        + " CHECK (sem_nota_fiscal IN (0, 1))",
+            };
+            case 14 -> new String[] {
+                // Area de recepcao dos dados da planilha legada (VBA/Excel), SEPARADA das
+                // tabelas do sistema: guarda cada linha como veio (texto bruto) + origem,
+                // para importar e conferir depois sem misturar com as contas atuais.
+                // Abas mensais JANEIRO..DEZEMBRO: DATA | NRO DOCTO | FORNECEDOR | VALOR |
+                // PAGOS | OBSERVACOES (na pasta/negociacao) | QUEM VAI PAGAR.
+                """
+                CREATE TABLE IF NOT EXISTS legado_lancamentos (
+                    id_legado INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arquivo_origem TEXT NOT NULL,
+                    aba_origem TEXT NOT NULL,
+                    linha_origem INTEGER NOT NULL CHECK (linha_origem > 0),
+                    data_vencimento TEXT,
+                    numero_documento TEXT,
+                    fornecedor TEXT,
+                    valor_original TEXT,
+                    valor_centavos INTEGER,
+                    situacao TEXT,
+                    observacoes TEXT,
+                    quem_vai_pagar TEXT,
+                    cor_linha TEXT,
+                    id_conta_migrada INTEGER REFERENCES contas_a_pagar(id_conta) ON DELETE SET NULL,
+                    importado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    UNIQUE (arquivo_origem, aba_origem, linha_origem)
+                )
+                """,
+                "CREATE INDEX IF NOT EXISTS idx_legado_lanc_venc ON legado_lancamentos(data_vencimento)",
+                // Aba Config_Padroes: contas fixas (DIA | NOME | VALOR | DOC | PAGADOR).
+                """
+                CREATE TABLE IF NOT EXISTS legado_padroes (
+                    id_legado INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arquivo_origem TEXT NOT NULL,
+                    linha_origem INTEGER NOT NULL CHECK (linha_origem > 0),
+                    dia TEXT,
+                    nome TEXT,
+                    valor_original TEXT,
+                    valor_centavos INTEGER,
+                    numero_documento TEXT,
+                    pagador TEXT,
+                    importado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    UNIQUE (arquivo_origem, linha_origem)
+                )
+                """,
+                // Aba Config_Avisos: recados (PERIODO DE | TEMPO (ate) | DIA | TITULO | MENSAGEM).
+                """
+                CREATE TABLE IF NOT EXISTS legado_avisos (
+                    id_legado INTEGER PRIMARY KEY AUTOINCREMENT,
+                    arquivo_origem TEXT NOT NULL,
+                    linha_origem INTEGER NOT NULL CHECK (linha_origem > 0),
+                    periodo_de TEXT,
+                    periodo_ate TEXT,
+                    dia_semana TEXT,
+                    titulo TEXT,
+                    mensagem TEXT,
+                    importado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    UNIQUE (arquivo_origem, linha_origem)
+                )
+                """,
+            };
+            case 15 -> new String[] {
+                // Bancos criados com a 1a versao da v11 tem CHECK (dia_semana IN (...um dia...))
+                // e recusam "SEGUNDA,TERCA,..." (varios dias) -> nao salvava mensagem.
+                // SQLite nao altera CHECK: recria a tabela SEM o CHECK, copia os dados e
+                // GUARDA a antiga renomeada (nada e apagado; ha backup pre-migracao).
+                """
+                CREATE TABLE avisos_v15 (
+                    id_aviso INTEGER PRIMARY KEY AUTOINCREMENT,
+                    data_inicio TEXT NOT NULL,
+                    data_fim TEXT NOT NULL,
+                    dia_semana TEXT NOT NULL DEFAULT 'TODOS',
+                    titulo TEXT NOT NULL,
+                    mensagem TEXT NOT NULL,
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+                )
+                """,
+                "INSERT INTO avisos_v15 (id_aviso, data_inicio, data_fim, dia_semana, titulo, mensagem, criado_em)"
+                        + " SELECT id_aviso, data_inicio, data_fim, dia_semana, titulo, mensagem, criado_em FROM avisos",
+                "ALTER TABLE avisos RENAME TO avisos_antes_v15",
+                "ALTER TABLE avisos_v15 RENAME TO avisos",
+                "CREATE INDEX IF NOT EXISTS idx_avisos_vigencia_v15 ON avisos(data_inicio, data_fim)",
             };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };

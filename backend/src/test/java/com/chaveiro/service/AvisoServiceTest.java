@@ -66,4 +66,32 @@ class AvisoServiceTest {
                 LocalDate.parse("2026-12-31"), "TODOS", "Título", "Mensagem");
         assertThat(AvisoService.ativoEm(todos, sabado)).isTrue();
     }
+
+    @Test
+    void migracaoV15RemoveCheckAntigoEAceitaVariosDias() throws Exception {
+        // reproduz o banco da loja: avisos criada pela 1a versao da v11 (CHECK de um dia so)
+        ConnectionFactory conexao = new ConnectionFactory(pastaTemporaria.resolve("banco_antigo.db").toString());
+        try (java.sql.Connection conn = conexao.getConnection(); java.sql.Statement st = conn.createStatement()) {
+            st.execute("""
+                    CREATE TABLE avisos (
+                        id_aviso INTEGER PRIMARY KEY AUTOINCREMENT,
+                        data_inicio TEXT NOT NULL, data_fim TEXT NOT NULL,
+                        dia_semana TEXT NOT NULL DEFAULT 'TODOS'
+                            CHECK (dia_semana IN ('TODOS','DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO')),
+                        titulo TEXT NOT NULL, mensagem TEXT NOT NULL,
+                        criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')))""");
+            st.execute("CREATE INDEX idx_avisos_vigencia ON avisos(data_inicio, data_fim)");
+            st.execute("INSERT INTO avisos (data_inicio, data_fim, dia_semana, titulo, mensagem)"
+                    + " VALUES ('2026-01-01', '2026-12-31', 'SEGUNDA', 'REVISAR DDA', 'Revise o DDA')");
+            st.execute("PRAGMA user_version = 14");
+        }
+        new DatabaseInitializer(conexao).inicializar();
+        AvisoService antigo = new AvisoService(new AvisoRepository(conexao));
+
+        assertThat(antigo.listar()).extracting(Aviso::titulo).containsExactly("REVISAR DDA");
+        Aviso varios = antigo.cadastrar(new Aviso(null, LocalDate.parse("2026-12-01"),
+                LocalDate.parse("2026-12-31"), "SEGUNDA,TERCA,QUARTA,QUINTA,SEXTA", "TESTE", "TESTE"));
+        assertThat(varios.id()).isNotNull();
+        assertThat(antigo.listar()).hasSize(2);
+    }
 }

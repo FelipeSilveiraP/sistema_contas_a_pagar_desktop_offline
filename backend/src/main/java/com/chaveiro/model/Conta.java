@@ -23,5 +23,6 @@ public record Conta(
     LocalDate vencimento,
     boolean boletoNaPasta,
     String anexoNome,
+    boolean semNotaFiscal,
     String status
 ) {}

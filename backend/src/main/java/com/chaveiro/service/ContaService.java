@@ -27,7 +27,6 @@ public class ContaService {
 
     static final int JANELA_DIAS_DUPLICATA = 5;
     static final BigDecimal TOLERANCIA_VALOR_DUPLICATA = new BigDecimal("150.00");
-    static final long LIMITE_ANEXO_BYTES = 15L * 1024 * 1024;
 
     static final Set<String> FORMAS_PAGAMENTO =
             Set.of("boleto", "pix", "cartao", "transferencia", "dinheiro", "debito");
@@ -78,7 +77,12 @@ public class ContaService {
     }
 
     public Conta cadastrar(Conta dados, byte[] anexoPdf, boolean forcar) {
-        Conta normalizado = normalizar(dados, null);
+        Conta normalizado = comAnexo(normalizar(dados, null), anexoPdf);
+        if (anexoPdf == null && !normalizado.semNotaFiscal()) {
+            // regra do usuario: toda conta nova tem nota anexada OU a marca "sem nota"
+            throw new DadosInvalidosException(Map.of("anexo",
+                    "Anexe a nota fiscal ou marque \"Conta sem nota fiscal\"."));
+        }
         validar(normalizado, anexoPdf);
         try {
             if (!forcar) {
@@ -97,7 +101,7 @@ public class ContaService {
     }
 
     public Conta atualizar(long id, Conta dados, byte[] anexoPdf) {
-        Conta normalizado = normalizar(dados, id);
+        Conta normalizado = comAnexo(normalizar(dados, id), anexoPdf);
         validar(normalizado, anexoPdf);
         try {
             if (!repository.atualizar(id, normalizado, anexoPdf)) {
@@ -190,8 +194,27 @@ public class ContaService {
                 dados.vencimento(),
                 dados.boletoNaPasta(),
                 dados.anexoNome() == null || dados.anexoNome().isBlank() ? null : dados.anexoNome().trim(),
+                dados.semNotaFiscal(),
                 dados.status() == null ? "PENDENTE" : dados.status()
         );
+    }
+
+    /** Com arquivo: nome com a extensao do tipo REAL e "sem nota" desmarcado. */
+    private static Conta comAnexo(Conta c, byte[] anexo) {
+        if (anexo == null) {
+            return c;
+        }
+        String nome = AnexoNotaFiscal.detectar(anexo)
+                .map(tipo -> AnexoNotaFiscal.nomeComExtensao(c.anexoNome(), tipo))
+                .orElse(c.anexoNome());
+        return new Conta(c.id(), c.nomeEmpresa(), c.idEmpresa(), c.razaoSocial(), c.pagadorResponsavel(),
+                c.tipoPessoa(), c.formaPagamento(), c.categoria(), c.numeroDocumento(), c.valor(),
+                c.vencimento(), c.boletoNaPasta(), nome, false, c.status());
+    }
+
+    /** Tipo MIME do anexo pelo conteudo (para o download). */
+    public static String tipoMimeAnexo(byte[] anexo) {
+        return AnexoNotaFiscal.detectar(anexo).map(t -> t.mime).orElse("application/octet-stream");
     }
 
     private static void validar(Conta conta, byte[] anexoPdf) {
@@ -231,12 +254,7 @@ public class ContaService {
             erros.put("anexoNome", "O nome do arquivo deve ter até 200 caracteres.");
         }
         if (anexoPdf != null) {
-            if (anexoPdf.length > LIMITE_ANEXO_BYTES) {
-                erros.put("anexo", "O arquivo deve ter no máximo 15 MB.");
-            } else if (anexoPdf.length < 5
-                    || anexoPdf[0] != '%' || anexoPdf[1] != 'P' || anexoPdf[2] != 'D' || anexoPdf[3] != 'F') {
-                erros.put("anexo", "O arquivo deve ser um PDF.");
-            }
+            AnexoNotaFiscal.validar(anexoPdf).ifPresent(msg -> erros.put("anexo", msg));
         }
         if (!"PENDENTE".equals(conta.status()) && !"PAGO".equals(conta.status())) {
             erros.put("status", "Situação inválida.");

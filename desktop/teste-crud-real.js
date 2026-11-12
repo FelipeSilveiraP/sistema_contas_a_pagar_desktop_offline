@@ -217,9 +217,12 @@ async function executar() {
   teste("Cadastros: empresa listada com CNPJ e telefone formatados",
     await js(`(() => { const tr = ${linhaEmpresa}; return !!tr && tr.textContent.includes('11.222.333/0001-81') && tr.textContent.includes('(11) 3333-4444'); })()`));
   await clicar(linhaEmpresa);
-  teste("Cadastros: clicar na empresa abre o painel preenchido", (await valor("#campo-edt-representante")) === "Marcos Pereira");
-  await digitarEm("#campo-edt-representante", "Marcos Pereira Junior");
-  await clicarSel("#btn-edt-salvar");
+  teste("Cadastros: clicar na empresa abre a área de edição padrão", await js("!document.getElementById('editorContainer').classList.contains('hidden')") &&
+    (await texto("#editorRecordName")).includes("Silca"));
+  await escolher("#fieldSelect", "nomeRepresentante");
+  teste("Cadastros: campo Representante carrega o valor gravado", (await valor("#newValueInput")) === "Marcos Pereira", await valor("#newValueInput"));
+  await digitarEm("#newValueInput", "Marcos Pereira Junior");
+  await clicarSel("#btnApplyChange");
   teste("Cadastros: editar o representante salva", await esperarNotificacao("Alterações salvas") &&
     await esperarPredicado(`(${linhaEmpresa} || {}).textContent?.includes('Marcos Pereira Junior')`, 5000));
 
@@ -231,8 +234,10 @@ async function executar() {
   await esperar(300);
   const linhaBanco = linhaCom("#tabela-area", "Banco do Brasil");
   await clicar(linhaBanco);
-  await digitarEm("#campo-edt-chave-pix", "pix@chaveirouniversal.com.br");
-  await clicarSel("#btn-edt-salvar");
+  teste("Cadastros: banco mostra só campos de banco", await js("[...document.getElementById('fieldSelect').options].map((o) => o.value).join(',') === 'instituicao,chavePix'"));
+  await escolher("#fieldSelect", "chavePix");
+  await digitarEm("#newValueInput", "pix@chaveirouniversal.com.br");
+  await clicarSel("#btnApplyChange");
   teste("Cadastros: editar a chave Pix do banco salva", await esperarPredicado(`(${linhaBanco} || {}).textContent?.includes('pix@chaveirouniversal.com.br')`, 6000));
   await clicar(linhaBanco);
   await clicarSel("#btn-edt-excluir");
@@ -260,7 +265,9 @@ async function executar() {
   teste("Conta: categoria livre com acentos digitada", (await valor("#category")) === "Insumos (Chaves, Lâminas, Cilindros)", await valor("#category"));
   await escolher("#payment_method", "boleto");
   await escolher("#issuer_company", String(idEmpresa));
-  await digitarEm("#payer_responsible", "Carlos Eduardo Silva");
+  await escolher("#payer_responsible", "Carlos Eduardo Silva");
+  teste("Conta: pagador é caixa de seleção com os cadastrados", await js("document.getElementById('payer_responsible').tagName === 'SELECT'") &&
+    (await valor("#payer_responsible")) === "Carlos Eduardo Silva");
   const pdf = "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n";
   await js(`(() => { const dt = new DataTransfer(); dt.items.add(new File([${JSON.stringify(pdf)}], 'NF-e 14892.pdf', { type: 'application/pdf' }));
     const i = document.getElementById('invoice_pdf'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
@@ -286,7 +293,11 @@ async function executar() {
   teste("Todas as Contas: busca sem resultado esvazia a lista", await esperarPredicado(`document.querySelectorAll('#tableBody tr.bill-row').length === 0`, 3000));
   await digitarEm("#searchInput", "silca");
   await clicar(linhaConta);
-  teste("Todas as Contas: detalhe mostra a nota fiscal anexada", (await texto("#detailAnexo")).includes("14892"));
+  teste("Todas as Contas: área de edição mostra a nota fiscal anexada", (await texto("#detailAnexo")).includes("14892"));
+  teste("Todas as Contas: colunas extras escondidas até clicar em »", await js(`getComputedStyle(document.querySelector('#billsTable th.col-extra')).display === 'none'`));
+  await clicarSel("#btnExpandirColunas");
+  teste("Todas as Contas: » mostra as colunas extras", await js(`getComputedStyle(document.querySelector('#billsTable th.col-extra')).display !== 'none'`));
+  await clicarSel("#btnExpandirColunas");
   await clicarSel("#btnBaixarAnexo");
   const notaSalva = (await esperarPredicado("!!document.body.dataset.notaSalva", 6000)) ? await js("document.body.dataset.notaSalva") : "";
   teste("Todas as Contas: BAIXAR PDF grava a nota na pasta Downloads (isolada)", notaSalva && fs.existsSync(notaSalva) && fs.readFileSync(notaSalva, "latin1").startsWith("%PDF"), notaSalva);
@@ -299,6 +310,10 @@ async function executar() {
   teste("Todas as Contas: botão PAGO dá baixa", await esperarNotificacao("marcada como paga") && await esperarPredicado(`(${linhaConta} || {}).textContent?.includes('Pago')`, 5000), await notificacoes());
   await clicarSel("#btnImprimirLista");
   teste("Todas as Contas: IMPRIMIR LISTA gera o PDF do relatório", await esperarPredicado("!!document.body.dataset.relatorioPdf", 10000) &&
+    fs.existsSync(await js("document.body.dataset.relatorioPdf")));
+  await clicar(linhaConta);
+  await clicarSel("#btnImprimirConta");
+  teste("Todas as Contas: IMPRIMIR CONTA gera a ficha + nota (PDF)", await esperarPredicado("(document.body.dataset.relatorioPdf || '').includes('Conta ')", 10000) &&
     fs.existsSync(await js("document.body.dataset.relatorioPdf")));
   await capturar("06-todas-as-contas-paga");
 
@@ -341,7 +356,7 @@ async function executar() {
   await digitarEm("#valor_previsto", "250000");
   await digitarEm("#dia_vencimento", "10");
   await escolher("#formato_cobranca", "DEBITO");
-  await digitarEm("#pagador_responsavel", "Carlos Eduardo Silva");
+  await escolher("#pagador_responsavel", "Carlos Eduardo Silva");
   teste("Recorrente: campos preenchidos (PF, 2.500,00, dia 10)", await js(`document.querySelector('input[name="tipo_pessoa"][value="PF"]').checked`) &&
     (await valor("#valor_previsto")) === "2.500,00" && (await valor("#dia_vencimento")) === "10");
   await capturar("08-form-recorrente");
@@ -390,7 +405,13 @@ async function executar() {
   teste("Mensagens: editar o título salva", await esperarNotificacao("Mensagem atualizada") && await esperarPredicado(`!!(${linhaCom("#tableBody", "Conferir caixa e cofre")})`, 5000));
   await ir("menu");
   await esperarPredicado("document.body.dataset.alertas !== undefined", 8000);
-  teste("Menu: recado de hoje aparece no rodapé 'Mensagens do dia'", (await texto("#alertas-rodape")).includes("Conferir caixa e cofre"), await texto("#alertas-rodape"));
+  teste("Menu: recado de hoje aparece em 'Recados de hoje'", (await texto("#recados-dia")).includes("Conferir caixa e cofre"), await texto("#recados-dia"));
+  await clicarSel("#btn-expandir-mensagens");
+  teste("Menu: EXPANDIR abre o pop-up com contas e recados", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 3000) &&
+    (await texto("#recados-expandidos")).includes("Conferir caixa e cofre"));
+  await capturar("10-menu-mensagens-expandidas");
+  await clicarSel("#btn-fechar-mensagens");
+  teste("Menu: FECHAR fecha o pop-up", await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined", 3000));
   await ir("todas-as-mensagens");
   await clicar(linhaCom("#tableBody", "Conferir caixa e cofre"));
   await clicarSel("#btnDeleteAction");

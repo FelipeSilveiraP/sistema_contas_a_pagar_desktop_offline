@@ -1,4 +1,5 @@
-import { buscarStatus, criarRecorrente, listarPagadores, ErroValidacaoApi, ErroApi } from "../api";
+import { buscarStatus, criarRecorrente, ErroValidacaoApi, ErroApi } from "../api";
+import { preencherSelectPagadores } from "../pagadores";
 import { confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { notificar } from "../notificacoes";
 import { voltar } from "../navegacao";
@@ -25,7 +26,7 @@ function lerCampos() {
     dia: Number(el<HTMLInputElement>("dia_vencimento").value),
     periodicidade: periodicidade ? periodicidade.value : "MENSAL",
     formato: el<HTMLSelectElement>("formato_cobranca").value,
-    pagador: el<HTMLInputElement>("pagador_responsavel").value.trim(),
+    pagador: el<HTMLSelectElement>("pagador_responsavel").value.trim(),
   };
 }
 
@@ -129,20 +130,10 @@ function iniciar(): void {
   montarNavbar("form-recorrente");
   mascaraMoeda(el<HTMLInputElement>("valor_previsto"));
   mascaraDia(el<HTMLInputElement>("dia_vencimento"));
-  // sugere os pagadores cadastrados (o campo continua aceitando texto livre)
-  void (async () => {
-    try {
-      const pagadores = await listarPagadores(await window.finDesk!.config());
-      const lista = document.getElementById("lista-pagadores-rec");
-      for (const p of pagadores) {
-        const opcao = document.createElement("option");
-        opcao.value = p.nome;
-        lista?.appendChild(opcao);
-      }
-    } catch {
-      // sem sugestoes: o campo segue funcionando como texto livre
-    }
-  })();
+  // pagador: escolha entre os cadastrados (opcional nas recorrentes)
+  preencherSelectPagadores(el<HTMLSelectElement>("pagador_responsavel"), "Não informado").catch((erro) => {
+    console.error("[ContasAPagar] falha ao carregar pagadores:", erro);
+  });
 
   el<HTMLFormElement>("recorrente-form").addEventListener("input", () => {
     sujo = true;

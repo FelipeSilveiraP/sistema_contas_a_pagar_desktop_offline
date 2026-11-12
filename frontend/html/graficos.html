@@ -8,17 +8,17 @@
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black" data-tela="graficos">
 <header id="nav-global"></header>
 <main class="max-w-7xl mx-auto flex flex-col gap-4 py-4 px-4 sm:px-6">
-<header class="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 bg-white border-[3px] border-black shadow-[4px_4px_0px_0px_#000]">
+<header class="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5 bg-white border-2 border-black">
 <div class="flex items-center gap-4">
 <div class="flex items-center gap-3">
-<div class="w-11 h-11 bg-[#00FF66] flex items-center justify-center border-[3px] border-black shadow-[3px_3px_0px_0px_#000]">
+<div class="w-11 h-11 bg-[#00FF66] flex items-center justify-center border-2 border-black">
 <span class="material-symbols-outlined text-black font-bold text-[26px]">bar_chart</span>
 </div>
 <h1 class="text-2xl sm:text-3xl font-bold uppercase tracking-tight text-black">GRÁFICOS</h1>
 </div>
 </div>
 <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-<div class="flex items-center border-[3px] border-black bg-white shadow-[3px_3px_0px_0px_#000] p-1 gap-1" id="periodoGroup">
+<div class="flex items-center border-2 border-black bg-white p-1 gap-1" id="periodoGroup">
 <button type="button" class="periodo-btn px-3 py-1.5 bg-[#00FF66] text-black border-2 border-black font-bold uppercase tracking-wider shadow-[2px_2px_0px_0px_#000]" data-periodo="mes">ESTE MÊS</button>
 <button type="button" class="periodo-btn px-3 py-1.5 bg-white hover:bg-neutral-100 text-black font-bold uppercase tracking-wider transition-all" data-periodo="trimestre">ÚLTIMOS 3 MESES</button>
 <button type="button" class="periodo-btn px-3 py-1.5 bg-white hover:bg-neutral-100 text-black font-bold uppercase tracking-wider transition-all" data-periodo="ano">ESTE ANO</button>
@@ -30,7 +30,7 @@
 </div>
 </header>
 <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
-<div class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000] flex flex-col justify-between">
+<div class="bg-white border-2 border-black p-5 sm:p-6 flex flex-col justify-between">
 <div class="flex items-center justify-between gap-2 mb-3">
 <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black">TOTAL PAGO NO MÊS</span>
 <span class="px-2.5 py-1 bg-[#00FF66] text-black border-2 border-black text-xs font-bold uppercase tracking-wider">QUITADO</span>
@@ -41,7 +41,7 @@
 <span id="kpiPagoSub">0 CONTAS PAGAS NO MÊS</span>
 </div>
 </div>
-<div class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000] flex flex-col justify-between">
+<div class="bg-white border-2 border-black p-5 sm:p-6 flex flex-col justify-between">
 <div class="flex items-center justify-between gap-2 mb-3">
 <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black">CONTAS A VENCER</span>
 <span class="px-2.5 py-1 bg-[#FFE600] text-black border-2 border-black text-xs font-bold uppercase tracking-wider">EM ABERTO</span>
@@ -52,7 +52,7 @@
 <span id="kpiVencerSub">0 TÍTULOS PENDENTES</span>
 </div>
 </div>
-<div class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000] flex flex-col justify-between">
+<div class="bg-white border-2 border-black p-5 sm:p-6 flex flex-col justify-between">
 <div class="flex items-center justify-between gap-2 mb-3">
 <span class="text-xs sm:text-sm font-bold uppercase tracking-wider text-black">TOTAL EM ATRASO</span>
 <span class="px-2.5 py-1 bg-[#ffdad6] text-[#ba1a1a] border-2 border-black text-xs font-bold uppercase tracking-wider">VENCIDO</span>
@@ -65,7 +65,7 @@
 </div>
 </section>
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-<section class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000]">
+<section class="bg-white border-2 border-black p-5 sm:p-6">
 <div class="flex items-center gap-2 pb-3 mb-4 border-b-2 border-black">
 <span class="material-symbols-outlined text-[20px]">show_chart</span>
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider">FLUXO MENSAL (ÚLTIMOS 6 MESES)</h2>
@@ -75,7 +75,7 @@
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase self-center" id="graficoMensalVazio">Sem movimentação registrada no período.</p>
 </div>
 </section>
-<section class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000]">
+<section class="bg-white border-2 border-black p-5 sm:p-6">
 <div class="flex items-center gap-2 pb-3 mb-4 border-b-2 border-black">
 <span class="material-symbols-outlined text-[20px]">donut_small</span>
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider">POR CATEGORIA</h2>
@@ -84,7 +84,7 @@
 <p class="font-mono text-sm font-bold text-neutral-500 uppercase" id="graficoCategoriasVazio">Nenhuma categoria com lançamentos no período.</p>
 </div>
 </section>
-<section class="bg-white border-[3px] border-black p-5 sm:p-6 shadow-[5px_5px_0px_0px_#000]">
+<section class="bg-white border-2 border-black p-5 sm:p-6">
 <div class="flex items-center gap-2 pb-3 mb-4 border-b-2 border-black">
 <span class="material-symbols-outlined text-[20px]">storefront</span>
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider">MAIORES FORNECEDORES</h2>

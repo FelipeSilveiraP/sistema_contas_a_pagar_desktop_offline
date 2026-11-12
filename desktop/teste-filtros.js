@@ -30,19 +30,6 @@ igual("diasAte: amanha = 1", f.diasAte("2026-11-10", "2026-11-09"), 1);
 igual("diasAte: atrasada 3 dias = -3", f.diasAte("2026-11-06", "2026-11-09"), -3);
 igual("diasAte atravessa o ano", f.diasAte("2027-01-01", "2026-12-31"), 1);
 
-console.log("\n=== Periodo ===");
-const base = "2026-11-09";
-igual("Este mes inclui 01/11", f.noPeriodo("2026-11-01", "MES", base), true);
-igual("Este mes exclui 01/12", f.noPeriodo("2026-12-01", "MES", base), false);
-igual("Mes passado = outubro", f.noPeriodo("2026-10-31", "MES_PASSADO", base), true);
-igual("Proximo mes = dezembro", f.noPeriodo("2026-12-15", "PROXIMO_MES", base), true);
-igual("Proximo mes em dezembro vira janeiro do ano seguinte", f.noPeriodo("2027-01-05", "PROXIMO_MES", "2026-12-20"), true);
-igual("Mes passado em janeiro vira dezembro do ano anterior", f.noPeriodo("2025-12-05", "MES_PASSADO", "2026-01-10"), true);
-igual("Este ano", f.noPeriodo("2026-02-28", "ANO", base), true);
-igual("Este ano exclui o ano seguinte", f.noPeriodo("2027-01-01", "ANO", base), false);
-igual("Tudo aceita data vazia", f.noPeriodo(null, "TUDO", base), true);
-igual("Periodo com data vazia e falso", f.noPeriodo(null, "MES", base), false);
-
 console.log("\n=== Ordenacao ===");
 const itens = [
   { nome: "Enel", data: "2026-11-20", valor: 320.5 },

@@ -47,7 +47,7 @@ class AlertasApiTest {
 
     private void conta(long idEmpresa, String nome, int diasAteVencimento, boolean naPasta) {
         contas.cadastrar(new Conta(null, nome, idEmpresa, null, "Balcão 01", "PJ", "boleto", "Aluguel",
-                null, new BigDecimal("150.75"), LocalDate.now().plusDays(diasAteVencimento), naPasta, null, null),
+                null, new BigDecimal("150.75"), LocalDate.now().plusDays(diasAteVencimento), naPasta, null, true, null),
                 null, true);
     }
 
@@ -80,7 +80,7 @@ class AlertasApiTest {
         LocalDate base = LocalDate.of(2031, 3, 10);
         for (String[] c : new String[][] {{"GRANDE " + s, "900.00"}, {"GRANDE " + s, "100.00"}, {"PEQUENO " + s, "50.25"}}) {
             contas.cadastrar(new Conta(null, c[0], idEmpresa, null, "Balcão 01", "PJ", "boleto", "Aluguel",
-                    null, new BigDecimal(c[1]), base, false, null, null), null, true);
+                    null, new BigDecimal(c[1]), base, false, null, true, null), null, true);
         }
 
         mvc.perform(get("/api/dashboard/resumo").param("de", "2031-03-01").param("ate", "2031-03-31")

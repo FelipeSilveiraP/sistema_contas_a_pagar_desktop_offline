@@ -13,13 +13,15 @@ import {
 import { confirmarEstorno } from "../componentes";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
-import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
-import { correspondeBusca, EstadoFiltroAvancado, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { criarEditorCampo, EditorCampo } from "../editor-registro";
+import { correspondeBusca, ordenar } from "../filtros";
 
 let pagamentos: PagamentoDados[] = [];
 let contas: ContaDados[] = [];
 let bancos: BancoDados[] = [];
 let pesquisa = "";
+let editor: EditorCampo;
 let selecionadoId: number | null = null;
 
 function el<T extends HTMLElement>(id: string): T {
@@ -30,13 +32,11 @@ function contaDo(idConta: number): ContaDados | undefined {
   return contas.find((c) => c.id === idConta);
 }
 
-let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_DESC" };
 
 function filtrados(): PagamentoDados[] {
   const lista = pagamentos.filter((p) =>
-    correspondeBusca(pesquisa, [p.nomeEmpresa, p.instituicaoBanco, contaDo(p.idConta)?.numeroDocumento], p.valorPago)
-    && noPeriodo(p.dataPagamento, avancado.periodo));
-  return ordenar(lista, avancado.ordem, { data: (p) => p.dataPagamento, valor: (p) => p.valorPago, nome: (p) => p.nomeEmpresa });
+    correspondeBusca(pesquisa, [p.nomeEmpresa, p.instituicaoBanco, contaDo(p.idConta)?.numeroDocumento], p.valorPago));
+  return ordenar(lista, "DATA_DESC", { data: (p) => p.dataPagamento, valor: (p) => p.valorPago, nome: (p) => p.nomeEmpresa });
 }
 
 function celula(texto: string, classe: string): HTMLTableCellElement {
@@ -73,7 +73,7 @@ function renderTabela(): void {
 function valorAtual(pagamento: PagamentoDados, campo: string): string {
   switch (campo) {
     case "dataPagamento": return formatarDataBR(pagamento.dataPagamento);
-    case "banco": return pagamento.instituicaoBanco ?? "";
+    case "banco": return pagamento.idBanco ? String(pagamento.idBanco) : "";
     default: return formatarMoedaBR(Math.round(pagamento.valorPago * 100));
   }
 }
@@ -83,25 +83,26 @@ function selecionar(id: number): void {
   const pagamento = pagamentos.find((p) => p.id === id);
   if (!pagamento) return;
   const conta = contaDo(pagamento.idConta);
-  el("selectionDetailBox").classList.remove("hidden");
   el("editorContainer").classList.remove("hidden");
-  el("selectionEmptyState").classList.add("hidden");
-  el("detailProvider").textContent = pagamento.nomeEmpresa;
+  el("detailStatusText").textContent = "PAGO";
   el("detailDoc").textContent = conta?.numeroDocumento ?? "—";
   el("detailDate").textContent = formatarDataBR(conta?.vencimento ?? "");
   el("detailAmount").textContent = formatarMoedaBR(Math.round(pagamento.valorPago * 100));
-  el("detailCategory").textContent = conta?.categoria ?? "—";
   el("detailBank").textContent = pagamento.instituicaoBanco ?? "—";
   el("editorRecordName").textContent = `${pagamento.nomeEmpresa} (${formatarDataBR(pagamento.dataPagamento)})`;
-  el<HTMLInputElement>("newValueInput").value = valorAtual(pagamento, el<HTMLSelectElement>("fieldSelect").value);
+  editor.atualizar();
   renderTabela();
 }
 
 function mostrarErro(mensagem?: string): void {
-  const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
-  if (!alvo) return;
-  alvo.textContent = mensagem ?? "";
-  alvo.classList.toggle("hidden", !mensagem);
+  editor?.erro(mensagem);
+}
+
+function fecharEdicao(): void {
+  selecionadoId = null;
+  el("editorContainer").classList.add("hidden");
+  mostrarErro();
+  renderTabela();
 }
 
 async function recarregar(): Promise<void> {
@@ -114,8 +115,8 @@ async function recarregar(): Promise<void> {
 async function aplicarAlteracao(): Promise<void> {
   const pagamento = pagamentos.find((p) => p.id === selecionadoId);
   if (!pagamento) return;
-  const campo = el<HTMLSelectElement>("fieldSelect").value;
-  const bruto = el<HTMLInputElement>("newValueInput").value.trim();
+  const campo = editor.campo();
+  const bruto = editor.ler();
   let dataPagamento = pagamento.dataPagamento;
   let valorPago = pagamento.valorPago.toFixed(2);
   let idBanco = pagamento.idBanco ?? undefined;
@@ -128,9 +129,7 @@ async function aplicarAlteracao(): Promise<void> {
     if (centavos === null) return mostrarErro("Valor inválido. Exemplo: 150,00.");
     valorPago = (centavos / 100).toFixed(2);
   } else {
-    const alvo = bancos.find((b) => b.instituicao.toLowerCase() === bruto.toLowerCase());
-    if (bruto && !alvo) return mostrarErro("Banco não encontrado no cadastro. Deixe vazio para remover o banco.");
-    idBanco = alvo?.id;
+    idBanco = bruto ? Number(bruto) : undefined;
   }
   mostrarErro();
   try {
@@ -154,9 +153,7 @@ async function estornarSelecionado(): Promise<void> {
   try {
     const cfg = await window.finDesk!.config();
     await estornarPagamento(cfg, pagamento.idConta);
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
+    fecharEdicao();
     await recarregar();
     notificar("Pagamento desfeito. A conta voltou a ficar pendente.");
   } catch (erro) {
@@ -177,43 +174,21 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("pagos");
-  avancado = montarControlesAvancados(el("searchInput").closest("div.w-full")!, avancado, (e) => {
-    avancado = e;
-    renderTabela();
-  }, "Pagamento");
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();
   });
-  el("btnCloseSelection").addEventListener("click", () => {
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
-    renderTabela();
-  });
-  el("btnClearSelection").addEventListener("click", () => {
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
-    renderTabela();
-  });
-  el("btnCancelEdit").addEventListener("click", () => mostrarErro());
+  el("btnClearSelection").addEventListener("click", fecharEdicao);
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   el("btnUnpayAction").addEventListener("click", () => void estornarSelecionado());
-  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
-  const tiposEditor: Record<string, "data" | "moeda"> = { dataPagamento: "data", valorPago: "moeda" };
-  const editor = el<HTMLInputElement>("newValueInput");
-  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
-  const ajustarTeclado = (): void => {
-    editor.inputMode = tipoEditor() ? "numeric" : "text";
-  };
-  mascaraDinamica(editor, tipoEditor);
-  ajustarTeclado();
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
+  editor = criarEditorCampo([
+    { valor: "dataPagamento", rotulo: "Data do pagamento", mascara: "data" },
+    { valor: "valorPago", rotulo: "Valor pago (R$)", mascara: "moeda" },
+    { valor: "banco", rotulo: "Banco usado", opcoes: () => [{ valor: "", rotulo: "Sem banco" },
+      ...bancos.map((b) => ({ valor: String(b.id), rotulo: b.instituicao }))] },
+  ], (campo) => {
     const pagamento = pagamentos.find((p) => p.id === selecionadoId);
-    if (pagamento) el<HTMLInputElement>("newValueInput").value = valorAtual(pagamento, el<HTMLSelectElement>("fieldSelect").value);
-    mostrarErro();
+    return pagamento ? valorAtual(pagamento, campo) : "";
   });
 
   void verificarApi();

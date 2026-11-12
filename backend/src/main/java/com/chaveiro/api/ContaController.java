@@ -42,6 +42,7 @@ public class ContaController {
             Boolean boletoNaPasta,
             String anexoNome,
             String anexoPdfBase64,
+            Boolean semNotaFiscal,
             Boolean forcar
     ) {}
 
@@ -68,8 +69,8 @@ public class ContaController {
         Conta conta = service.buscarPorId(id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + (conta.anexoNome() == null ? "anexo.pdf" : conta.anexoNome().replace("\"", "")) + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
+                        "attachment; filename=\"" + (conta.anexoNome() == null ? "anexo" : conta.anexoNome().replace("\"", "")) + "\"")
+                .contentType(MediaType.parseMediaType(ContaService.tipoMimeAnexo(pdf)))
                 .body(pdf);
     }
 
@@ -106,6 +107,7 @@ public class ContaController {
                 requisicao.vencimento(),
                 Boolean.TRUE.equals(requisicao.boletoNaPasta()),
                 requisicao.anexoNome(),
+                Boolean.TRUE.equals(requisicao.semNotaFiscal()),
                 "PENDENTE"
         );
     }
@@ -117,7 +119,7 @@ public class ContaController {
         try {
             return Base64.getDecoder().decode(requisicao.anexoPdfBase64());
         } catch (IllegalArgumentException erro) {
-            throw new DadosInvalidosException(Map.of("anexo", "O arquivo anexado está corrompido. Escolha o PDF de novo."));
+            throw new DadosInvalidosException(Map.of("anexo", "O arquivo anexado está corrompido. Escolha o arquivo de novo."));
         }
     }
 }

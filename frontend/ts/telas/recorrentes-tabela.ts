@@ -8,10 +8,13 @@ import {
   atualizarConta,
   ContaDados,
   ErroValidacaoApi,
+  listarPagadores,
+  PagadorDados,
 } from "../api";
+import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { montarNavbar } from "../navbar";
-import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
-import { correspondeBusca, EstadoFiltroAvancado, hojeIso, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { correspondeBusca, hojeIso, ordenar } from "../filtros";
 import { notificar } from "../notificacoes";
 import { confirmar } from "../componentes";
 
@@ -32,14 +35,12 @@ function hoje(): string {
   return hojeIso();
 }
 
-let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_ASC" };
 
 function filtradas(): ContaDados[] {
   const lista = contas.filter((c) => {
     if (!correspondeBusca(pesquisa, [c.nomeEmpresa, c.numeroDocumento, c.pagadorResponsavel], c.valor)) {
       return false;
     }
-    if (!noPeriodo(c.vencimento, avancado.periodo)) return false;
     if (filtro === "PF" || filtro === "PJ") return c.tipoPessoa === filtro;
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
     if (filtro === "AVENCER") return c.status === "PENDENTE" && diff > 0;
@@ -47,7 +48,7 @@ function filtradas(): ContaDados[] {
     if (filtro === "ATRASADO") return c.status === "PENDENTE" && diff < 0;
     return true;
   });
-  return ordenar(lista, avancado.ordem, { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
+  return ordenar(lista, "DATA_ASC", { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
 }
 
 function celula(texto: string, classe: string): HTMLTableCellElement {
@@ -105,22 +106,25 @@ function selecionar(id: number): void {
   if (!conta) return;
   el("editorContainer").classList.remove("hidden");
   el("editorRecordName").textContent = `${conta.nomeEmpresa} (${formatarDataBR(conta.vencimento)})`;
-  el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);
+  el("detailStatusText").textContent = conta.status === "PAGO" ? "PAGO" : "PENDENTE";
+  el("detailDate").textContent = formatarDataBR(conta.vencimento);
+  el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
+  el("detailPayer").textContent = conta.pagadorResponsavel;
+  editor.atualizar();
   renderTabela();
 }
 
 function mostrarErro(mensagem?: string): void {
-  const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
-  if (!alvo) return;
-  alvo.textContent = mensagem ?? "";
-  alvo.classList.toggle("hidden", !mensagem);
+  editor?.erro(mensagem);
 }
 
 let recorrentes: RecorrenteDados[] = [];
+let pagadores: PagadorDados[] = [];
+let editor: EditorCampo;
 
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
-  [contas, recorrentes] = await Promise.all([listarContasFixas(cfg), listarRecorrentes(cfg)]);
+  [contas, recorrentes, pagadores] = await Promise.all([listarContasFixas(cfg), listarRecorrentes(cfg), listarPagadores(cfg)]);
   renderTabela();
   renderCadastradas();
 }
@@ -203,8 +207,8 @@ async function excluirFixa(r: RecorrenteDados): Promise<void> {
 async function aplicarAlteracao(): Promise<void> {
   const conta = contas.find((c) => c.id === selecionadoId);
   if (!conta) return;
-  const campo = el<HTMLSelectElement>("fieldSelect").value;
-  const bruto = el<HTMLInputElement>("newValueInput").value.trim();
+  const campo = editor.campo();
+  const bruto = editor.ler();
   const patch = {
     nomeEmpresa: conta.nomeEmpresa,
     // sem isto o PUT gravava id_empresa = NULL e apagava o vinculo com a empresa emissora
@@ -266,10 +270,6 @@ async function verificarApi(): Promise<void> {
 
 function iniciar(): void {
   montarNavbar("recorrentes-tabela");
-  avancado = montarControlesAvancados(el("filterPillsGroup").parentElement!, avancado, (e) => {
-    avancado = e;
-    renderTabela();
-  }, "Vencimento");
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();
@@ -289,24 +289,18 @@ function iniciar(): void {
   el("btnClearSelection").addEventListener("click", () => {
     selecionadoId = null;
     el("editorContainer").classList.add("hidden");
+    mostrarErro();
     renderTabela();
   });
-  el("btnCancelEdit").addEventListener("click", () => mostrarErro());
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
-  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
-  const tiposEditor: Record<string, "data" | "moeda"> = { vencimento: "data", valor: "moeda" };
-  const editor = el<HTMLInputElement>("newValueInput");
-  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
-  const ajustarTeclado = (): void => {
-    editor.inputMode = tipoEditor() ? "numeric" : "text";
-  };
-  mascaraDinamica(editor, tipoEditor);
-  ajustarTeclado();
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
+  editor = criarEditorCampo([
+    { valor: "valor", rotulo: "Valor (R$)", mascara: "moeda" },
+    { valor: "vencimento", rotulo: "Vencimento (Data)", mascara: "data" },
+    { valor: "pagadorResponsavel", rotulo: "Pagador responsável", opcoes: () => pagadores.map((p) => ({ valor: p.nome, rotulo: p.nome })) },
+    { valor: "formaPagamento", rotulo: "Documento de cobrança", opcoes: () => Object.entries(ROTULO_FORMA).map(([valor, rotulo]) => ({ valor, rotulo })) },
+  ], (campo) => {
     const conta = contas.find((c) => c.id === selecionadoId);
-    if (conta) el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);
-    mostrarErro();
+    return conta ? valorAtual(conta, campo) : "";
   });
 
   void verificarApi();

@@ -129,7 +129,42 @@ function menuEstaAberto(raiz: HTMLElement): boolean {
   return raiz.dataset.menuAberto === "true";
 }
 
+/**
+ * Hamburguer na MESMA margem esquerda do conteudo: alinha com o primeiro
+ * painel/cartao (elemento com borda) da tela, qualquer que seja a largura.
+ */
+function alinharHamburguer(raiz: HTMLElement): void {
+  const conteudo = raiz.nextElementSibling as HTMLElement | null;
+  const hamburguer = raiz.querySelector<HTMLElement>(".nav-hamburguer");
+  if (!conteudo || !hamburguer || getComputedStyle(hamburguer).display === "none") return;
+  let alvo: HTMLElement = conteudo;
+  const candidatos = conteudo.querySelectorAll<HTMLElement>("*");
+  for (let i = 0; i < candidatos.length && i < 400; i++) {
+    const e = candidatos[i];
+    // "> 0": com zoom da janela, 2px de borda podem ser reportados como 1.x px
+    if (parseFloat(getComputedStyle(e).borderLeftWidth) > 0 && e.getBoundingClientRect().width > 0) {
+      alvo = e;
+      break;
+    }
+  }
+  const esquerda = alvo.getBoundingClientRect().left - raiz.getBoundingClientRect().left;
+  raiz.style.setProperty("--nav-esquerda", `${Math.max(0, Math.round(esquerda))}px`);
+}
+
+/** Menu lateral colado logo ABAIXO do botao (o botao fica por cima, encostado no topo do menu). */
+function posicionarPainel(raiz: HTMLElement): void {
+  const hamburguer = raiz.querySelector<HTMLElement>(".nav-hamburguer");
+  const painel = raiz.querySelector<HTMLElement>(".nav-painel");
+  if (!hamburguer || !painel) return;
+  const r = hamburguer.getBoundingClientRect();
+  const borda = 4; // as bordas de 4px se sobrepoem: botao e menu ficam colados
+  painel.style.top = `${Math.max(0, r.bottom - borda)}px`;
+  painel.style.left = `${Math.max(0, r.left)}px`;
+  painel.style.width = `${Math.min(320, window.innerWidth - r.left - 16)}px`;
+}
+
 function definirMenu(raiz: HTMLElement, aberto: boolean): void {
+  if (aberto) posicionarPainel(raiz);
   raiz.dataset.menuAberto = aberto ? "true" : "false";
   raiz.querySelector(".nav-hamburguer")?.setAttribute("aria-expanded", String(aberto));
 }
@@ -189,6 +224,17 @@ ${ITENS_NAV.filter((item) => item.noPainel)
     definirMenu(raiz, false);
     acionar(item);
   });
+
+  const realinhar = (): void => {
+    alinharHamburguer(raiz);
+    if (menuEstaAberto(raiz)) posicionarPainel(raiz);
+  };
+  requestAnimationFrame(realinhar);
+  window.addEventListener("resize", realinhar);
+  window.addEventListener("scroll", () => {
+    if (menuEstaAberto(raiz)) posicionarPainel(raiz);
+  }, { passive: true });
+  void document.fonts?.ready.then(realinhar);
 
   raiz.querySelector(".nav-hamburguer")?.addEventListener("click", () => {
     definirMenu(raiz, !menuEstaAberto(raiz));

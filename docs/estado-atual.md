@@ -2,21 +2,26 @@
 
 > Máximo 30 linhas. **Reescreva** este arquivo a cada entrega (não acrescente histórico — decisões vão em `docs/decisoes.md`, histórico fica no Git).
 
-**Atualizado em:** 2026-11-10 — branch `feature/fase4-auditoria`
+**Atualizado em:** 2026-11-12 (2ª rodada) — branch `feature/fase4-auditoria` (alterações ainda **não commitadas**)
 
 ## Situação
-- **Fases 1 a 5 concluídas.** Todas as telas gravam no SQLite, com filtros avançados, gráficos consolidados e impressão em PDF. O instalador Windows tem o Java embutido e há logs com rotação.
-- Auditoria de formulários feita (agente `auditor-formularios`): os bugs claros foram corrigidos; os itens que dependem de decisão estão abaixo.
-- **Testes (2026-11-10), todos verdes:** JUnit 130 · máscaras 65 · filtros 32 · smoke 331 · smoke-boot 44 · persistência 11 · smoke-real 50 · smoke-dev 83 · CRUD real 62.
+- Fases 1 a 5 concluídas. Entrega de 2026-11-11 com 15 ajustes de uso (ver `decisoes.md` › "Ajustes de uso"): chave pela fechadura, bordas simples, colunas recolhíveis, área de edição única, impressão formal com a nota, nota obrigatória (ou "sem nota"), navbar estreita e tabelas do legado.
+- 2ª rodada (2026-11-12): mensagens voltam a salvar no banco da loja (migração v15), área de edição única em todas as telas, pagador em caixa de seleção, Mensagens do dia com EXPANDIR/VER NO CONTROLE.
+- Esquema SQLite **v15**. Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
+- **Testes (2026-11-12), todos verdes:** JUnit 135 · máscaras 65 · filtros 22 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições. Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
+
+## Próximos passos
+- Importador da planilha legada para `legado_*` e, depois, para `contas_a_pagar`/`boletos_recorrentes`/`avisos`, quando o usuário enviar os dados.
+- Conferir o instalador com `pdf-lib` (gerar com `npm run instalador` e testar a impressão de uma conta com nota em PDF).
 
 ## Pendências — decisões do usuário (auditoria)
 - Trilha de auditoria (`auditoria_operacoes`): implementar ou descartar.
-- Empresa: endereço estruturado (CEP, cidade, UF…), nome fantasia e vários e-mails (estão no Stitch); CNPJ e representante obrigatórios?
-- Virada de ano (VBA `cmdCriarAnoNovo`): gerar as contas fixas automaticamente ao abrir ou manter o botão "Gerar próximos meses"?
-- Editar uma conta fixa deve alterar as contas pendentes já geradas (modo ALTERAR do VBA)?
-- Exclusão de banco/empresa com contas: hoje o vínculo é desfeito (SET NULL); bloquear?
+- Empresa: endereço estruturado, nome fantasia e vários e-mails; CNPJ e representante obrigatórios?
+- Virada de ano: gerar as contas fixas ao abrir ou manter o botão "Gerar próximos meses"?
+- Editar uma conta fixa altera as pendentes já geradas (modo ALTERAR do VBA)?
+- Exclusão de banco/empresa com contas: hoje desfaz o vínculo (SET NULL); bloquear?
 - Baixa rápida pedir o banco usado no pagamento?
 
 ## Pendências do usuário
-- Instalar o `release/...Instalador 1.0.0.exe` no computador da loja e validar na resolução real.
+- Instalar o instalador no computador da loja e validar na resolução real.
 - Revogar a chave de API da Xiaomi em `chat_mimo.ps1` (fora do Git).

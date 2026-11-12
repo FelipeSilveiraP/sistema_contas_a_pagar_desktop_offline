@@ -428,9 +428,13 @@ function pastaNotas() {
   return path.join(app.getPath("downloads"), "Chaveiro Universal - Notas Fiscais");
 }
 
+// extensoes que a API aceita para a nota fiscal (o backend decide pelo conteudo)
+const EXTENSOES_NOTA = [".pdf", ".jpg", ".png", ".webp", ".docx"];
+
 function nomeSeguro(nome) {
   const base = String(nome || "nota-fiscal.pdf").replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").slice(0, 120);
-  return base.toLowerCase().endsWith(".pdf") ? base : `${base}.pdf`;
+  const ext = path.extname(base).toLowerCase();
+  return EXTENSOES_NOTA.includes(ext) ? base : `${base}.pdf`;
 }
 
 ipcMain.handle("findesk:salvar-nota", (_evento, nome, bytes) => {
@@ -442,7 +446,8 @@ ipcMain.handle("findesk:salvar-nota", (_evento, nome, bytes) => {
   const arquivo = nomeSeguro(nome);
   let destino = path.join(pasta, arquivo);
   for (let n = 2; fs.existsSync(destino); n++) {
-    destino = path.join(pasta, arquivo.replace(/\.pdf$/i, ` (${n}).pdf`));
+    const ext = path.extname(arquivo);
+    destino = path.join(pasta, `${arquivo.slice(0, arquivo.length - ext.length)} (${n})${ext}`);
   }
   fs.writeFileSync(destino, Buffer.from(bytes));
   return { ok: true, caminho: destino };
@@ -466,7 +471,9 @@ ipcMain.handle("findesk:abrir-arquivo", (_evento, caminho) => abrirGerado(caminh
 // Impressao: gera PDF da tela atual (CSS @media print esconde navbar/botoes) em
 // Downloads e o usuario imprime pelo leitor de PDF — sem a janela nativa de
 // impressao, que e modal e causava o bug de foco dos inputs.
-ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome) => {
+// opcoes.retrato: pagina em pe (formulario da conta); opcoes.anexoPdf: bytes da
+// nota fiscal em PDF, acrescentada depois do formulario (pagina 2 em diante).
+ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
   if (!janela || janela.isDestroyed()) return { ok: false };
   const agora = new Date();
   const carimbo = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")} ${String(agora.getHours()).padStart(2, "0")}h${String(agora.getMinutes()).padStart(2, "0")}`;
@@ -474,10 +481,35 @@ ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome) => {
   const pasta = pastaRelatorios();
   fs.mkdirSync(pasta, { recursive: true });
   const destino = path.join(pasta, `${base} - ${carimbo}.pdf`);
-  const pdf = await janela.webContents.printToPDF({ printBackground: true, landscape: true, pageSize: "A4" });
+  const retrato = Boolean(opcoes && opcoes.retrato);
+  // documento formal: as margens do PDF sao pintadas com a cor de fundo da janela
+  // (bege); fica branco so durante a geracao
+  const formal = Boolean(opcoes && opcoes.formal);
+  if (formal) janela.setBackgroundColor("#ffffff");
+  let pdf;
+  try {
+    pdf = await janela.webContents.printToPDF({ printBackground: true, landscape: !retrato, pageSize: "A4" });
+  } finally {
+    if (formal) janela.setBackgroundColor("#fcf9f8");
+  }
+  let anexoIncluido = false;
+  const anexo = opcoes && opcoes.anexoPdf;
+  if (anexo instanceof Uint8Array && anexo.length > 0 && anexo.length <= LIMITE_NOTA_BYTES) {
+    try {
+      const { PDFDocument } = require("pdf-lib");
+      const final = await PDFDocument.load(pdf);
+      const nota = await PDFDocument.load(anexo, { ignoreEncryption: true });
+      const paginas = await final.copyPages(nota, nota.getPageIndices());
+      paginas.forEach((pagina) => final.addPage(pagina));
+      pdf = Buffer.from(await final.save());
+      anexoIncluido = true;
+    } catch (erro) {
+      registrarLog("WARN", `[imprimir] nota fiscal nao pode ser juntada ao PDF: ${erro && erro.message}`);
+    }
+  }
   fs.writeFileSync(destino, pdf);
   await shell.openPath(destino);
-  return { ok: true, caminho: destino };
+  return { ok: true, caminho: destino, anexoIncluido };
 });
 
 ipcMain.handle("findesk:fechar", () => {

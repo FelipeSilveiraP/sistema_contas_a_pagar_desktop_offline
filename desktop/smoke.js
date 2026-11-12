@@ -995,7 +995,7 @@ async function executar() {
       filtros: document.querySelectorAll('.btn-filtro').length,
       pesquisa: !!document.getElementById('campo-pesquisa'),
       area: !!document.getElementById('tabela-area'),
-      painelOculto: document.getElementById('painel-edicao').hidden,
+      painelOculto: document.getElementById('editorContainer').classList.contains('hidden'),
       navbar: !!document.querySelector('#nav-global .nav-barra'),
     })`)
   );
@@ -1044,10 +1044,11 @@ async function executar() {
   await esperar(200);
   await clicar(`#tabela-area tbody tr`);
   await esperar(300);
-  await js(`(() => { const el = document.getElementById('campo-edt-funcao'); el.value = 'Caixa Editado'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await clicar("#btn-edt-salvar");
+  await js(`(() => { const s = document.getElementById('fieldSelect'); s.value = 'funcao'; s.dispatchEvent(new Event('change', { bubbles: true }));
+    const el = document.getElementById('newValueInput'); el.value = 'Caixa Editado'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btnApplyChange");
   const semCpfSalvo = await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
-  teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("sucesso"),
+  teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("salvas"),
     await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.textContent))`));
   await js(`(() => { delete document.body.dataset.registroSalvo; const el = document.getElementById('campo-pesquisa'); el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
   await esperar(200);
@@ -1072,17 +1073,20 @@ async function executar() {
   await esperar(300);
   const painelAberto = JSON.parse(
     await js(`JSON.stringify({
-      visivel: !document.getElementById('painel-edicao').hidden,
+      visivel: !document.getElementById('editorContainer').classList.contains('hidden'),
       edicao: document.body.dataset.registroEdicao || null,
-      instituicao: document.getElementById('campo-edt-instituicao').value,
+      campo: document.getElementById('fieldSelect').value,
+      instituicao: document.getElementById('newValueInput').value,
+      soCamposDeBanco: [...document.getElementById('fieldSelect').options].map((o) => o.value).join(',') === 'instituicao,chavePix',
     })`)
   );
   teste("Clique na linha abre painel de edicao preenchido", painelAberto.visivel && painelAberto.instituicao === `TC BANCO ${sufixoTc}`, JSON.stringify(painelAberto));
+  teste("Painel de BANCO mostra so campos de banco (nada de razao social/CNPJ)", painelAberto.soCamposDeBanco === true, JSON.stringify(painelAberto));
 
-  await js(`(() => { const el = document.getElementById('campo-edt-instituicao'); el.value = 'TC BANCO EDITADO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await clicar("#btn-edt-salvar");
+  await js(`(() => { const el = document.getElementById('newValueInput'); el.value = 'TC BANCO EDITADO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await clicar("#btnApplyChange");
   await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
-  teste("Salvar no painel atualiza o registro (notificacao de sucesso)", (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("sucesso"));
+  teste("Salvar no painel atualiza o registro (notificacao de sucesso)", (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("salvas"));
   teste("Linha atualizada reflete a edicao", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO ${sufixoTc}')`)) === true);
 
   await clicar("#btn-edt-excluir");
@@ -1097,7 +1101,7 @@ async function executar() {
   teste("Exclusao reabre o dialogo de confirmacao", await esperarDialogo());
   await responderDialogo("confirmar");
   const excluidoOk = await esperarPredicado(`document.body.dataset.registroExcluido !== undefined`, 10000);
-  teste("Exclusao confirmada remove o registro e fecha o painel", excluidoOk && (await js("document.getElementById('painel-edicao').hidden")) === true);
+  teste("Exclusao confirmada remove o registro e fecha o painel", excluidoOk && (await js("document.getElementById('editorContainer').classList.contains('hidden')")) === true);
   teste("Registro excluido nao aparece mais na tabela", (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === false);
 
   await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'TC BANCO ${sufixoTc}'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
@@ -1207,7 +1211,7 @@ async function executar() {
   await js(`(() => {
     document.getElementById('due_date').value = '20/12/2026';
     document.getElementById('company_name').value = 'IC EMPRESA ${sufixoIc}';
-    document.getElementById('payer_responsible').value = 'Balcão 01';
+    const pg = document.getElementById('payer_responsible'); pg.value = [...pg.options].find((o) => o.value && !o.disabled)?.value ?? '';
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
@@ -1225,6 +1229,7 @@ async function executar() {
   await clicar("#btn-salvar");
   await esperar(300);
   teste("Etapa 2: documento de cobranca obrigatorio", (await js(`!document.querySelector('[data-erro-campo="formaPagamento"]').classList.contains('hidden')`)) === true);
+  teste("Etapa 2: nota fiscal obrigatoria (anexo ou 'sem nota')", (await js(`!document.querySelector('[data-erro-campo="anexo"]').classList.contains('hidden')`)) === true);
 
   await js(`(() => {
     const sel = document.getElementById('payment_method');
@@ -1236,6 +1241,7 @@ async function executar() {
     document.getElementById('doc_number').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
     const pasta = document.querySelector('input[name="in_folder"][value="sim"]');
     pasta.checked = true;
+    document.getElementById('sem_nota').checked = true;
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
@@ -1256,7 +1262,7 @@ async function executar() {
     "Inserir Conta: registro persistido com valor exato (1234.56) e campos do Stitch",
     Boolean(contaCriadaIc) && Math.abs(contaCriadaIc.valor - 1234.56) < 0.001
       && contaCriadaIc.status === "PENDENTE" && contaCriadaIc.formaPagamento === "boleto"
-      && contaCriadaIc.tipoPessoa === "PJ" && contaCriadaIc.pagadorResponsavel === "Balcão 01"
+      && contaCriadaIc.tipoPessoa === "PJ" && Boolean(contaCriadaIc.pagadorResponsavel)
       && contaCriadaIc.boletoNaPasta === true && contaCriadaIc.idEmpresa === empresaIc.body.id,
     JSON.stringify(contaCriadaIc ?? null)
   );
@@ -1269,7 +1275,7 @@ async function executar() {
   await js(`(() => {
     document.getElementById('due_date').value = '28/12/2026';
     document.getElementById('company_name').value = 'IC EMPRESA ${sufixoIc}';
-    document.getElementById('payer_responsible').value = 'Balcão 01';
+    const pg = document.getElementById('payer_responsible'); pg.value = [...pg.options].find((o) => o.value && !o.disabled)?.value ?? '';
     const el = document.getElementById('total_amount');
     el.value = '99900';
     el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1281,6 +1287,7 @@ async function executar() {
   await js(`(() => {
     document.getElementById('payment_method').value = 'pix';
     document.getElementById('doc_number').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    document.getElementById('sem_nota').checked = true;
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);

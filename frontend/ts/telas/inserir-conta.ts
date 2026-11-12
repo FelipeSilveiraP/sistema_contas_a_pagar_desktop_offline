@@ -3,7 +3,6 @@ import {
   criarConta,
   listarContas,
   listarEmpresas,
-  listarPagadores,
   ErroValidacaoApi,
   ErroDuplicidadeApi,
   ErroApi,
@@ -13,6 +12,7 @@ import { confirmarDuplicidade, confirmarSaida, dialogoEstaAberto, menuLateralAbe
 import { notificarAoAbrir } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
+import { preencherSelectPagadores } from "../pagadores";
 import {
   mascaraMoeda,
   mascaraData,
@@ -22,7 +22,10 @@ import {
   formatarDataBR,
 } from "../mascaras";
 
-const LIMITE_ANEXO = 15 * 1024 * 1024;
+// nota fiscal: PDF, foto ou Word .docx ate 10 MB. O backend confere de novo
+// pelo conteudo (assinatura do arquivo), sem confiar na extensao.
+const LIMITE_ANEXO = 10 * 1024 * 1024;
+const EXTENSOES_ANEXO = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".docx"];
 
 interface CamposFormulario {
   vencimento: string;
@@ -54,7 +57,7 @@ function lerCampos(): CamposFormulario {
     categoria: el<HTMLInputElement>("category").value.trim(),
     formaPagamento: el<HTMLSelectElement>("payment_method").value.trim(),
     idEmpresa: el<HTMLSelectElement>("issuer_company").value.trim(),
-    pagadorResponsavel: el<HTMLInputElement>("payer_responsible").value.trim(),
+    pagadorResponsavel: el<HTMLSelectElement>("payer_responsible").value.trim(),
   };
 }
 
@@ -94,7 +97,10 @@ function validar(dados: CamposFormulario): Record<string, string> {
     erros.formaPagamento = "Selecione o documento de cobrança.";
   }
   if (!dados.pagadorResponsavel || dados.pagadorResponsavel.length > 120) {
-    erros.pagadorResponsavel = "Informe o pagador responsável (de 1 a 120 caracteres).";
+    erros.pagadorResponsavel = "Selecione o pagador responsável.";
+  }
+  if (!anexoSelecionado && !el<HTMLInputElement>("sem_nota").checked) {
+    erros.anexo = "Anexe a nota fiscal ou marque \"Conta sem nota fiscal\".";
   }
   return erros;
 }
@@ -106,7 +112,7 @@ function revalidarErrosVisiveis(): void {
   const atuais = validar(lerCampos());
   document.querySelectorAll<HTMLElement>(".campo-erro:not(.hidden)").forEach((elErro) => {
     const nome = elErro.dataset.erroCampo ?? "";
-    if (nome !== "anexo" && !atuais[nome]) {
+    if (!atuais[nome]) {
       elErro.textContent = "";
       elErro.classList.add("hidden");
     }
@@ -158,6 +164,7 @@ function montarPayload(forcar: boolean) {
     boletoNaPasta: dados.boletoNaPasta === "sim",
     anexoNome: anexoSelecionado?.nome,
     anexoPdfBase64: anexoSelecionado?.base64,
+    semNotaFiscal: !anexoSelecionado && el<HTMLInputElement>("sem_nota").checked,
     forcar,
   };
 }
@@ -219,23 +226,47 @@ async function submeter(): Promise<void> {
   }
 }
 
-function verificarAnexo(arquivo: File | undefined): boolean {
+/** Assinatura (primeiros bytes) dos formatos aceitos. */
+function assinaturaAceita(b: Uint8Array): boolean {
+  const ini = (...x: number[]): boolean => x.every((v, k) => b[k] === v);
+  return ini(0x25, 0x50, 0x44, 0x46) // %PDF
+    || ini(0xff, 0xd8, 0xff) // JPG
+    || ini(0x89, 0x50, 0x4e, 0x47) // PNG
+    || (ini(0x52, 0x49, 0x46, 0x46) && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) // WEBP
+    || ini(0x50, 0x4b, 0x03, 0x04); // DOCX (zip)
+}
+
+function limparAnexo(): void {
   anexoSelecionado = null;
-  const rotulo = el("file_label");
-  if (!arquivo) {
-    rotulo.textContent = "ESCOLHER ARQUIVO PDF OU ARRASTAR AQUI";
-    return true;
+  el("file_label").textContent = "ESCOLHER ARQUIVO OU ARRASTAR AQUI";
+  el<HTMLInputElement>("invoice_pdf").value = "";
+}
+
+async function receberAnexo(arquivo: File | undefined): Promise<void> {
+  limparAnexo();
+  if (!arquivo) return;
+  const nome = arquivo.name.toLowerCase();
+  if (!EXTENSOES_ANEXO.some((ext) => nome.endsWith(ext))) {
+    mostrarErros({ anexo: "Formato não aceito. Envie PDF, foto (JPG, PNG ou WEBP) ou Word (.docx)." });
+    return;
   }
-  if (arquivo.size > LIMITE_ANEXO) {
-    mostrarErros({ anexo: "O arquivo deve ter no máximo 15 MB." });
-    return false;
+  if (arquivo.size === 0 || arquivo.size > LIMITE_ANEXO) {
+    mostrarErros({ anexo: "O arquivo deve ter no máximo 10 MB." });
+    return;
   }
-  if (!arquivo.name.toLowerCase().endsWith(".pdf") && arquivo.type !== "application/pdf") {
-    mostrarErros({ anexo: "O arquivo deve ser um PDF." });
-    return false;
+  const bytes = new Uint8Array(await arquivo.arrayBuffer());
+  if (!assinaturaAceita(bytes)) {
+    mostrarErros({ anexo: "O conteúdo do arquivo não corresponde a um PDF, foto ou Word válido." });
+    return;
   }
-  rotulo.textContent = arquivo.name.toUpperCase();
-  return true;
+  let binario = "";
+  for (let k = 0; k < bytes.length; k += 0x8000) {
+    binario += String.fromCharCode(...bytes.subarray(k, k + 0x8000));
+  }
+  anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
+  el("file_label").textContent = arquivo.name.toUpperCase();
+  el<HTMLInputElement>("sem_nota").checked = false;
+  revalidarErrosVisiveis();
 }
 
 async function verificarApi(): Promise<void> {
@@ -253,9 +284,9 @@ async function carregarEmissoras(): Promise<void> {
   try {
     const cfg = await window.finDesk!.config();
     const empresas = await listarEmpresas(cfg);
-    // sugestoes: categorias ja usadas + pagadores cadastrados (texto livre continua valendo)
-    const [pagadores, contasExistentes] = await Promise.all([listarPagadores(cfg), listarContas(cfg)]);
-    preencherSugestoes("lista-pagadores", pagadores.map((p) => p.nome));
+    // pagadores: caixa de selecao; categorias: sugestoes das ja usadas (texto livre)
+    const contasExistentes = await listarContas(cfg);
+    await preencherSelectPagadores(el<HTMLSelectElement>("payer_responsible"), "Selecione o pagador...");
     preencherSugestoes("lista-categorias", contasExistentes.map((c) => c.categoria ?? ""));
     const sel = el<HTMLSelectElement>("issuer_company");
     for (const empresa of empresas) {
@@ -301,26 +332,16 @@ function iniciar(): void {
   areaAnexo.addEventListener("dragover", (evento) => evento.preventDefault());
   areaAnexo.addEventListener("drop", (evento) => {
     evento.preventDefault();
-    const arquivo = evento.dataTransfer?.files[0];
-    if (verificarAnexo(arquivo) && arquivo) {
-      arquivo.arrayBuffer().then((buf) => {
-        let binario = "";
-        new Uint8Array(buf).forEach((b) => (binario += String.fromCharCode(b)));
-        anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
-      });
-    }
+    void receberAnexo(evento.dataTransfer?.files[0]);
     marcarSujo();
   });
   inputAnexo.addEventListener("change", () => {
-    const arquivo = inputAnexo.files?.[0];
-    if (verificarAnexo(arquivo) && arquivo) {
-      arquivo.arrayBuffer().then((buf) => {
-        let binario = "";
-        new Uint8Array(buf).forEach((b) => (binario += String.fromCharCode(b)));
-        anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
-      });
-    }
+    void receberAnexo(inputAnexo.files?.[0]);
     marcarSujo();
+  });
+  // "veio sem nota" e anexo sao excludentes
+  el<HTMLInputElement>("sem_nota").addEventListener("change", () => {
+    if (el<HTMLInputElement>("sem_nota").checked) limparAnexo();
   });
 
   el<HTMLFormElement>("form-conta").addEventListener("input", marcarSujo);

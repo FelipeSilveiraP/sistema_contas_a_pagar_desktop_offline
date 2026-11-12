@@ -37,7 +37,7 @@ class PagamentoServiceTest {
         service = new PagamentoService(new PagamentoRepository(conexao), contas);
         idConta = contas.inserir(new Conta(null, "Enel Energia", null, null, "Balcão 01", "PJ",
                 "boleto", "Utilidades", "NF-1", new BigDecimal("150.00"),
-                LocalDate.parse("2026-12-10"), false, null, "PENDENTE"), null).id();
+                LocalDate.parse("2026-12-10"), false, null, true, "PENDENTE"), null).id();
     }
 
     private Pagamento dados(String valor, String data) {

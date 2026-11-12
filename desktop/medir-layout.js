@@ -54,7 +54,7 @@ const MEDIR = `(() => {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.position === 'fixed' || el.tagName === 'SCRIPT') continue;
     if (el.contains(nav) && nav) {
-      for (const f of el.children) { if (!f.contains(nav) && getComputedStyle(f).display !== 'none') { const b = r(f); c = c ? { l: Math.min(c.l,b.l), r: Math.max(c.r,b.r), t: Math.min(c.t,b.t), b: Math.max(c.b,b.b) } : b; } }
+      for (const f of el.children) { const fs = getComputedStyle(f); if (!f.contains(nav) && fs.display !== 'none' && fs.position !== 'fixed') { const b = r(f); c = c ? { l: Math.min(c.l,b.l), r: Math.max(c.r,b.r), t: Math.min(c.t,b.t), b: Math.max(c.b,b.b) } : b; } }
       continue;
     }
     const b = r(el); if (b.r - b.l < 2) continue;

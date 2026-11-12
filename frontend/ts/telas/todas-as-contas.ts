@@ -10,13 +10,18 @@ import {
   PagamentoDados,
   ErroValidacaoApi,
   ErroApi,
- baixarAnexoConta } from "../api";
+ baixarAnexoConta,
+  listarPagadores,
+  PagadorDados,
+} from "../api";
+import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { confirmarEstorno, confirmarExclusao } from "../componentes";
 import { notificar } from "../notificacoes";
-import { imprimirRelatorio } from "../impressao";
+import { imprimirDocumento, cabecalhoFolha, tabelaCampos, assinaturas, criar } from "../impressao";
+import { ligarExpansaoColunas } from "../tabela-colunas";
 import { montarNavbar } from "../navbar";
-import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR, mascaraDinamica } from "../mascaras";
-import { correspondeBusca, EstadoFiltroAvancado, hojeIso, montarControlesAvancados, noPeriodo, ordenar } from "../filtros";
+import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
+import { correspondeBusca, hojeIso, ordenar } from "../filtros";
 
 type Filtro = "TODOS" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
 
@@ -31,6 +36,8 @@ const ROTULO_FORMA: Record<string, string> = {
 
 let contas: ContaDados[] = [];
 let pagamentos: PagamentoDados[] = [];
+let pagadores: PagadorDados[] = [];
+let editor: EditorCampo;
 let filtro: Filtro = "TODOS";
 let pesquisa = "";
 let selecionadoId: number | null = null;
@@ -53,14 +60,11 @@ function statusDerivado(conta: ContaDados): { rotulo: string; classe: string } {
   return { rotulo: "A Vencer", classe: "bg-[#fde400]/30 text-[#6a5f00]" };
 }
 
-let avancado: EstadoFiltroAvancado = { periodo: "TUDO", ordem: "DATA_ASC" };
-
 function filtradas(): ContaDados[] {
   const lista = contas.filter((c) => {
     if (!correspondeBusca(pesquisa, [c.nomeEmpresa, c.numeroDocumento, c.categoria, c.pagadorResponsavel], c.valor)) {
       return false;
     }
-    if (!noPeriodo(c.vencimento, avancado.periodo)) return false;
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
     switch (filtro) {
       case "PAGO": return c.status === "PAGO";
@@ -71,7 +75,7 @@ function filtradas(): ContaDados[] {
       default: return true;
     }
   });
-  return ordenar(lista, avancado.ordem, { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
+  return ordenar(lista, "DATA_ASC", { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
 }
 
 function celulaTexto(texto: string, classe: string): HTMLTableCellElement {
@@ -129,13 +133,14 @@ function renderTabela(): void {
     const status = statusDerivado(conta);
     const statusTd = celulaTexto(status.rotulo, "py-3 px-3 text-center whitespace-nowrap");
     statusTd.firstElementChild!.className = `status-badge inline-block border-2 border-[#1c1b1b] px-3 py-1 text-xs font-mono font-bold uppercase leading-none ${status.classe}`;
-    const doc = celulaTexto(conta.numeroDocumento ?? "—", "py-3 px-3 font-mono text-xs whitespace-nowrap");
+    const doc = celulaTexto(conta.numeroDocumento ?? "—", "col-extra py-3 px-3 font-mono text-xs whitespace-nowrap");
     doc.firstElementChild!.className = "";
-    const tipoTd = celulaTexto(conta.tipoPessoa, "py-3 px-3 text-center whitespace-nowrap");
+    const tipoTd = celulaTexto(conta.tipoPessoa, "col-extra py-3 px-3 text-center whitespace-nowrap");
     tipoTd.firstElementChild!.className = "inline-block bg-neutral-100 text-neutral-600 border-2 border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold leading-none";
-    const formaTd = celulaTexto(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "py-3 px-3 text-center whitespace-nowrap");
+    const formaTd = celulaTexto(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "col-extra py-3 px-3 text-center whitespace-nowrap");
     formaTd.firstElementChild!.className = "inline-block bg-neutral-100 border-2 border-[#1c1b1b] text-neutral-700 px-2 py-0.5 text-xs font-mono font-bold uppercase";
-    const pagador = celulaTexto(conta.pagadorResponsavel, "py-3 px-3 font-mono text-xs text-neutral-700 whitespace-nowrap");
+    const pagador = celulaTexto(conta.pagadorResponsavel, "col-extra py-3 px-3 font-mono text-xs text-neutral-700 whitespace-nowrap");
+    const vazio = document.createElement("td");
     pagador.firstElementChild!.className = "";
 
     const btnPago = botaoRapido("PAGO", "check",
@@ -151,36 +156,53 @@ function renderTabela(): void {
     tdNao.className = "py-3.5 px-3 text-center whitespace-nowrap";
     tdNao.appendChild(btnNaoPago);
 
-    tr.append(data, empresaTd, valor, pastaTd, statusTd, doc, tipoTd, formaTd, pagador, tdPago, tdNao);
+    tr.append(data, empresaTd, valor, pastaTd, statusTd, doc, tipoTd, formaTd, pagador, vazio, tdPago, tdNao);
     tr.addEventListener("click", () => selecionar(conta.id));
     corpo.appendChild(tr);
   }
-  el("selectionEmptyState").classList.toggle("hidden", filtradas().length === 0);
+  if (!corpo.childElementCount) {
+    const tr = document.createElement("tr");
+    const td = celulaTexto(contas.length ? "Nenhuma conta encontrada com esses filtros." : "Nenhuma conta cadastrada. Use INSERIR CONTA no Menu.",
+      "py-6 px-3 text-center font-mono text-xs uppercase");
+    td.colSpan = 12;
+    td.firstElementChild!.className = "text-neutral-500 font-bold";
+    tr.appendChild(td);
+    corpo.appendChild(tr);
+  }
+  el("selectionEmptyState").classList.toggle("hidden", selecionadoId !== null);
+}
+
+function fecharEdicao(): void {
+  selecionadoId = null;
+  el("editorContainer").classList.add("hidden");
+  mostrarErroEdicao();
+  renderTabela();
 }
 
 function selecionar(id: number): void {
   selecionadoId = id;
   const conta = contas.find((c) => c.id === id);
   if (!conta) return;
-  el("selectionDetailBox").classList.remove("hidden");
   el("editorContainer").classList.remove("hidden");
-  el("selectionEmptyState").classList.add("hidden");
-  el("detailProvider").textContent = conta.nomeEmpresa;
-  el("detailDoc").textContent = conta.numeroDocumento ?? "—";
   el("detailDate").textContent = formatarDataBR(conta.vencimento);
   el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
-  el("detailCategory").textContent = conta.categoria ?? "—";
-  el("detailAnexo").textContent = conta.anexoNome ?? "Sem anexo";
+  el("detailAnexo").textContent = textoNota(conta);
   el("btnBaixarAnexo").classList.toggle("hidden", !conta.anexoNome);
+  el<HTMLButtonElement>("btnPayAction").disabled = conta.status === "PAGO";
+  el<HTMLButtonElement>("btnUnpayAction").disabled = conta.status !== "PAGO";
   const pagamento = pagamentos.find((p) => p.idConta === id);
   el("detailPayment").textContent = pagamento
     ? `${formatarDataBR(pagamento.dataPagamento)} — ${formatarMoedaBR(Math.round(pagamento.valorPago * 100))}`
     : "Sem pagamento registrado";
   el("detailStatusText").textContent = statusDerivado(conta).rotulo;
   el("editorRecordName").textContent = `${conta.nomeEmpresa} (${conta.numeroDocumento ?? "s/ doc"})`;
-  const campo = el<HTMLSelectElement>("fieldSelect").value;
-  el<HTMLInputElement>("newValueInput").value = valorAtual(conta, campo);
+  editor.atualizar();
   renderTabela();
+}
+
+function textoNota(conta: ContaDados): string {
+  if (conta.anexoNome) return conta.anexoNome;
+  return conta.semNotaFiscal ? "Conta sem nota fiscal" : "Não anexada";
 }
 
 function valorAtual(conta: ContaDados, campo: string): string {
@@ -199,15 +221,11 @@ function valorAtual(conta: ContaDados, campo: string): string {
 
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
-  [contas, pagamentos] = await Promise.all([listarContas(cfg), listarPagamentos(cfg)]);
+  [contas, pagamentos, pagadores] = await Promise.all([listarContas(cfg), listarPagamentos(cfg), listarPagadores(cfg)]);
   renderTabela();
   if (selecionadoId !== null) {
     if (contas.some((c) => c.id === selecionadoId)) selecionar(selecionadoId);
-    else {
-      selecionadoId = null;
-      el("selectionDetailBox").classList.add("hidden");
-      el("editorContainer").classList.add("hidden");
-    }
+    else fecharEdicao();
   }
 }
 
@@ -244,8 +262,8 @@ async function estornar(conta: ContaDados): Promise<void> {
 async function aplicarAlteracao(): Promise<void> {
   const conta = contas.find((c) => c.id === selecionadoId);
   if (!conta) return;
-  const campo = el<HTMLSelectElement>("fieldSelect").value;
-  const bruto = el<HTMLInputElement>("newValueInput").value.trim();
+  const campo = editor.campo();
+  const bruto = editor.ler();
   const erros: Record<string, string> = {};
   const patch = {
     nomeEmpresa: conta.nomeEmpresa,
@@ -259,6 +277,7 @@ async function aplicarAlteracao(): Promise<void> {
     valor: conta.valor.toFixed(2),
     vencimento: conta.vencimento,
     boletoNaPasta: conta.boletoNaPasta,
+    semNotaFiscal: conta.semNotaFiscal,
     forcar: true,
   };
   switch (campo) {
@@ -330,10 +349,25 @@ async function aplicarAlteracao(): Promise<void> {
 }
 
 function mostrarErroEdicao(mensagem?: string): void {
-  const alvo = document.querySelector<HTMLElement>('[data-erro-campo="edicao"]');
-  if (!alvo) return;
-  alvo.textContent = mensagem ?? "";
-  alvo.classList.toggle("hidden", !mensagem);
+  editor?.erro(mensagem);
+}
+
+function montarEditor(): EditorCampo {
+  const sel = (pares: [string, string][]) => () => pares.map(([valor, rotulo]) => ({ valor, rotulo }));
+  return criarEditorCampo([
+    { valor: "nomeEmpresa", rotulo: "Empresa / Fornecedor" },
+    { valor: "vencimento", rotulo: "Vencimento (Data)", mascara: "data" },
+    { valor: "valor", rotulo: "Valor (R$)", mascara: "moeda" },
+    { valor: "boletoNaPasta", rotulo: "Está na pasta?", opcoes: sel([["SIM", "Sim, está na pasta"], ["NÃO", "Não"]]) },
+    { valor: "numeroDocumento", rotulo: "Documento / NF-e" },
+    { valor: "tipoPessoa", rotulo: "Tipo de conta (PF / PJ)", opcoes: sel([["PJ", "PJ — Pessoa jurídica"], ["PF", "PF — Pessoa física"]]) },
+    { valor: "formaPagamento", rotulo: "Documento de cobrança", opcoes: () => Object.entries(ROTULO_FORMA).map(([valor, rotulo]) => ({ valor, rotulo })) },
+    { valor: "pagadorResponsavel", rotulo: "Pagador responsável", opcoes: () => pagadores.map((p) => ({ valor: p.nome, rotulo: p.nome })) },
+    { valor: "categoria", rotulo: "Categoria" },
+  ], (campo) => {
+    const conta = contas.find((c) => c.id === selecionadoId);
+    return conta ? valorAtual(conta, campo) : "";
+  });
 }
 
 function mostrarErroEdacao409(): void {
@@ -347,9 +381,7 @@ async function excluirSelecionado(): Promise<void> {
   try {
     const cfg = await window.finDesk!.config();
     await excluirConta(cfg, conta.id);
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
+    fecharEdicao();
     await recarregar();
     notificar("Conta excluída.");
   } catch (erro) {
@@ -359,6 +391,122 @@ async function excluirSelecionado(): Promise<void> {
       mostrarErroEdicao("Não foi possível excluir a conta. Tente de novo.");
       console.error("[ContasAPagar] falha na exclusao:", erro);
     }
+  }
+}
+
+// ---------- impressao formal ----------
+
+const ROTULO_FILTRO: Record<Filtro, string> = {
+  TODOS: "Todas as contas", AVENCER: "A vencer", HOJE: "Vencem hoje",
+  ATRASADO: "Atrasadas", PAGO: "Pagas", NAPASTA: "Boleto na pasta",
+};
+
+async function imprimirLista(): Promise<void> {
+  const lista = filtradas();
+  await imprimirDocumento("Lista de contas", (folha) => {
+    const pagina = criar("section", "folha__pagina");
+    const filtroTxt = `Filtro: ${ROTULO_FILTRO[filtro]}${pesquisa ? ` · Pesquisa: "${pesquisa}"` : ""} · ${lista.length} conta(s)`;
+    pagina.append(cabecalhoFolha("Relação de contas a pagar"), criar("p", "folha__nota", filtroTxt));
+    const tabela = criar("table", "folha__lista");
+    const cab = criar("tr");
+    const colunas: [string, boolean][] = [["Vencimento", false], ["Empresa / fornecedor", false], ["Documento", false],
+      ["Valor", true], ["Situação", false], ["Na pasta", false], ["Cobrança", false], ["Pagador", false]];
+    for (const [t, num] of colunas) cab.appendChild(criar("th", num ? "folha__num" : "", t));
+    const thead = criar("thead");
+    thead.appendChild(cab);
+    const corpo = criar("tbody");
+    let total = 0;
+    for (const c of lista) {
+      total += Math.round(c.valor * 100);
+      const tr = criar("tr");
+      tr.append(
+        criar("td", "", formatarDataBR(c.vencimento)),
+        criar("td", "", c.nomeEmpresa),
+        criar("td", "", c.numeroDocumento ?? "—"),
+        criar("td", "folha__num", formatarMoedaBR(Math.round(c.valor * 100))),
+        criar("td", "", statusDerivado(c).rotulo),
+        criar("td", "", c.boletoNaPasta ? "Sim" : "Não"),
+        criar("td", "", ROTULO_FORMA[c.formaPagamento] ?? c.formaPagamento),
+        criar("td", "", c.pagadorResponsavel),
+      );
+      corpo.appendChild(tr);
+    }
+    const rodape = criar("tfoot");
+    const trTotal = criar("tr");
+    const rotuloTotal = criar("td", "", "Total");
+    rotuloTotal.colSpan = 3;
+    const vazio = criar("td");
+    vazio.colSpan = 4;
+    trTotal.append(rotuloTotal, criar("td", "folha__num", formatarMoedaBR(total)), vazio);
+    rodape.appendChild(trTotal);
+    tabela.append(thead, corpo, rodape);
+    pagina.appendChild(tabela);
+    folha.appendChild(pagina);
+  });
+}
+
+function bytesParaBase64(bytes: Uint8Array): string {
+  let binario = "";
+  for (let k = 0; k < bytes.length; k += 0x8000) binario += String.fromCharCode(...bytes.subarray(k, k + 0x8000));
+  return btoa(binario);
+}
+
+const MIME_IMAGEM: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+
+async function imprimirConta(conta: ContaDados): Promise<void> {
+  // nota fiscal: PDF vira as paginas seguintes (juntada pelo processo principal);
+  // foto entra como imagem na pagina 2; Word nao pode ser desenhado aqui
+  let anexo: Uint8Array | null = null;
+  const ext = (conta.anexoNome ?? "").split(".").pop()?.toLowerCase() ?? "";
+  if (conta.anexoNome) {
+    try {
+      anexo = await baixarAnexoConta(await window.finDesk!.config(), conta.id);
+    } catch (erro) {
+      console.error("[ContasAPagar] falha ao ler a nota para imprimir:", erro);
+    }
+  }
+  const pagamento = pagamentos.find((p) => p.idConta === conta.id);
+  const linhas: [string, string][] = [
+    ["Empresa / fornecedor", conta.nomeEmpresa],
+    ["Empresa emissora (cadastro)", conta.razaoSocial ?? "—"],
+    ["Número do documento", conta.numeroDocumento ?? "—"],
+    ["Vencimento", formatarDataBR(conta.vencimento)],
+    ["Valor", formatarMoedaBR(Math.round(conta.valor * 100))],
+    ["Categoria", conta.categoria ?? "—"],
+    ["Tipo de conta", conta.tipoPessoa === "PF" ? "Pessoa física (PF)" : "Pessoa jurídica (PJ)"],
+    ["Documento de cobrança", ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento],
+    ["Pagador responsável", conta.pagadorResponsavel],
+    ["Boleto na pasta", conta.boletoNaPasta ? "Sim" : "Não"],
+    ["Situação", statusDerivado(conta).rotulo],
+    ["Pagamento", pagamento
+      ? `${formatarDataBR(pagamento.dataPagamento)} — ${formatarMoedaBR(Math.round(pagamento.valorPago * 100))}`
+      : "Sem pagamento registrado"],
+    ["Nota fiscal", textoNota(conta)],
+  ];
+  const ehPdf = ext === "pdf";
+  const imagem = anexo && MIME_IMAGEM[ext] ? `data:${MIME_IMAGEM[ext]};base64,${bytesParaBase64(anexo)}` : null;
+  const juntou = await imprimirDocumento(`Conta ${conta.nomeEmpresa}`, (folha) => {
+    const p1 = criar("section", "folha__pagina");
+    p1.append(cabecalhoFolha("Ficha de conta a pagar"), tabelaCampos(linhas));
+    if (conta.anexoNome && !ehPdf && !imagem) {
+      p1.appendChild(criar("p", "folha__nota", `A nota fiscal "${conta.anexoNome}" está em formato Word: use BAIXAR NOTA e imprima pelo Word.`));
+    } else if (ehPdf && anexo) {
+      p1.appendChild(criar("p", "folha__nota", "A nota fiscal anexada segue nas próximas páginas."));
+    }
+    p1.appendChild(assinaturas(["Conferido por", "Autorizado por", "Data"]));
+    folha.appendChild(p1);
+    if (imagem) {
+      const p2 = criar("section", "folha__pagina");
+      p2.appendChild(cabecalhoFolha(`Nota fiscal — ${conta.nomeEmpresa}`));
+      const img = criar("img", "folha__imagem");
+      img.alt = "Nota fiscal anexada";
+      img.src = imagem;
+      p2.appendChild(img);
+      folha.appendChild(p2);
+    }
+  }, { retrato: true, anexoPdf: ehPdf && anexo ? anexo : undefined });
+  if (ehPdf && anexo && !juntou) {
+    notificar("A nota fiscal em PDF não pôde ser juntada (arquivo protegido). Use BAIXAR NOTA para imprimi-la.", "info");
   }
 }
 
@@ -375,10 +523,7 @@ async function verificarApi(): Promise<void> {
 function iniciar(): void {
   montarNavbar("todas-as-contas");
 
-  avancado = montarControlesAvancados(el("filterPillsGroup").parentElement!, avancado, (e) => {
-    avancado = e;
-    renderTabela();
-  }, "Vencimento");
+  ligarExpansaoColunas(el("billsTable"), el("btnExpandirColunas"));
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
     renderTabela();
@@ -396,19 +541,7 @@ function iniciar(): void {
     });
   });
 
-  el("btnCloseSelection").addEventListener("click", () => {
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
-    renderTabela();
-  });
-  el("btnClearSelection").addEventListener("click", () => {
-    selecionadoId = null;
-    el("selectionDetailBox").classList.add("hidden");
-    el("editorContainer").classList.add("hidden");
-    renderTabela();
-  });
-  el("btnCancelEdit").addEventListener("click", () => mostrarErroEdicao());
+  el("btnClearSelection").addEventListener("click", fecharEdicao);
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   el("btnDeleteAction").addEventListener("click", () => void excluirSelecionado());
   el("btnPayAction").addEventListener("click", () => {
@@ -419,18 +552,14 @@ function iniciar(): void {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) void estornar(conta);
   });
-  // mascara do "novo valor" acompanha o campo escolhido (data, moeda ou texto livre)
-  const tiposEditor: Record<string, "data" | "moeda"> = { vencimento: "data", valor: "moeda" };
-  const editor = el<HTMLInputElement>("newValueInput");
-  const tipoEditor = (): "data" | "moeda" | null => tiposEditor[el<HTMLSelectElement>("fieldSelect").value] ?? null;
-  const ajustarTeclado = (): void => {
-    editor.inputMode = tipoEditor() ? "numeric" : "text";
-  };
-  mascaraDinamica(editor, tipoEditor);
-  ajustarTeclado();
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", ajustarTeclado);
+  // "Alterar um campo": texto com mascara ou caixa de selecao, conforme o campo
+  editor = montarEditor();
   // nota fiscal anexada: salva em Downloads (sem dialogo nativo) e oferece ABRIR
-  el("btnImprimirLista").addEventListener("click", () => void imprimirRelatorio("Lista de contas"));
+  el("btnImprimirLista").addEventListener("click", () => void imprimirLista());
+  el("btnImprimirConta").addEventListener("click", () => {
+    const conta = contas.find((c) => c.id === selecionadoId);
+    if (conta) void imprimirConta(conta);
+  });
   el("btnBaixarAnexo").addEventListener("click", async () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (!conta || !conta.anexoNome) return;
@@ -449,11 +578,6 @@ function iniciar(): void {
       notificar("Não foi possível salvar a nota fiscal. Tente de novo.", "erro");
       console.error("[ContasAPagar] falha ao baixar anexo:", erro);
     }
-  });
-  el<HTMLSelectElement>("fieldSelect").addEventListener("change", () => {
-    const conta = contas.find((c) => c.id === selecionadoId);
-    if (conta) el<HTMLInputElement>("newValueInput").value = valorAtual(conta, el<HTMLSelectElement>("fieldSelect").value);
-    mostrarErroEdicao();
   });
 
   void verificarApi();
