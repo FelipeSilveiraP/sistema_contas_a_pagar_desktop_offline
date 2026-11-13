@@ -55,7 +55,7 @@ Antes de submeter qualquer entrega ou marcar uma tarefa como concluída:
 4. **Teste de Persistência:** Validar ciclo de cold start com `desktop/teste-persistencia.js`.
 5. **Máscaras, filtros e automações:** `npm run test:frontend` (`desktop/teste-mascaras.js` + `desktop/teste-filtros.js` + `desktop/teste-automacoes.js`). Rode sempre que tocar em `mascaras.ts`, `filtros.ts`, campos com máscara ou `desktop/automacoes.js`.
 6. **CRUD real (antes de cada entrega):** `npx electron desktop/teste-crud-real.js`. Usa clique e digitação reais e faz criar, ler, editar e excluir em todas as telas, com banco e Downloads temporários. Não use o computador enquanto ele roda e rode um teste de Electron por vez.
-7. **Hambúrguer (quando mexer em telas ou na navbar):** `npx electron desktop/teste-hamburguer.js`. Confere o alinhamento do botão do menu estreitando cada tela.
+7. **Hambúrguer (quando mexer em telas ou na navbar):** `npx electron desktop/teste-hamburguer.js`. Confere que o botão do menu fica fixo no canto (16 px, 12 px) estreitando e rolando cada tela.
 8. **Layout (quando mexer em telas):** `npx electron desktop/medir-layout.js --capturas` mede rolagem e centralização das 18 telas em 1366×768, 1536×864 e 1920×1080 (capturas em `%TEMP%\findesk-layout`).
 
 ---

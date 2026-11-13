@@ -34,7 +34,7 @@ npm run instalador                     # instalador Windows com Java embutido (v
 npm run publicar -- "novidades"        # põe o instalador na pasta de atualizações do Google Drive (a loja oferece ATUALIZAR)
 python instalador/gerar-icone.py       # regera o emblema (instalador/icone.ico + frontend/assets/icone.png)
 npx electron desktop/medir-layout.js --capturas   # rolagem/centralização das 18 telas em 3 resoluções
-npx electron desktop/teste-hamburguer.js          # hambúrguer alinhado ao estreitar cada tela (17 telas × 12 larguras)
+npx electron desktop/teste-hamburguer.js          # hambúrguer fixo no canto ao estreitar/rolar cada tela (17 telas × 10 larguras)
 ```
 
 Os smokes e o teste de persistência exigem o jar já compilado e o frontend já buildado. smoke-real/smoke-dev movem mouse/teclado de verdade — não interagir com a máquina enquanto rodam.

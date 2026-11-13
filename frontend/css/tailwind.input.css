@@ -472,10 +472,31 @@
   .nav-barra { display: flex; }
 }
 
+/* Janela estreita (e futuro celular): o hamburguer fica SEMPRE no mesmo lugar,
+   canto superior esquerdo, numa faixa fixa no topo (padrao de apps/sites).
+   A faixa continua visivel ao rolar e o conteudo passa por baixo dela (e nao
+   por baixo do botao). O conteudo comeca logo abaixo da faixa. */
 @media (max-width: 1023px) {
-  /* mesma margem esquerda do conteudo (calculada em navbar.ts) */
-  .nav-hamburguer { display: inline-flex; margin-left: var(--nav-esquerda, 1rem); }
+  .nav-hamburguer { display: inline-flex; }
+  #nav-global {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 45;
+    height: var(--altura-faixa-nav);
+    margin: 0 !important;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    background: #fcf9f8;
+    border-bottom: 3px solid #1c1b1b;
+  }
+  body:has(#nav-global) {
+    padding-top: calc(var(--altura-faixa-nav) + clamp(0.75rem, 2.5vmin, 1.25rem)) !important;
+  }
 }
+
+:root { --altura-faixa-nav: 84px; }
 
 @media (prefers-reduced-motion: reduce) {
   .nav-veu,

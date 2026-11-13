@@ -142,33 +142,6 @@ function menuEstaAberto(raiz: HTMLElement): boolean {
   return raiz.dataset.menuAberto === "true";
 }
 
-/**
- * Hamburguer na MESMA margem esquerda do conteudo: alinha com a borda MAIS A
- * ESQUERDA entre os elementos com borda da tela (painel, formulario ou cartao).
- * Antes usava o primeiro elemento com borda, e nos submenus (cartoes montados
- * depois da navbar) pegava o quadradinho do icone, centralizado.
- */
-function alinharHamburguer(raiz: HTMLElement): void {
-  const conteudo = raiz.nextElementSibling as HTMLElement | null;
-  const hamburguer = raiz.querySelector<HTMLElement>(".nav-hamburguer");
-  if (!conteudo || !hamburguer || getComputedStyle(hamburguer).display === "none") return;
-  let menor = Infinity;
-  const candidatos = conteudo.querySelectorAll<HTMLElement>("*");
-  for (let i = 0; i < candidatos.length && i < 1500; i++) {
-    const e = candidatos[i];
-    const r = e.getBoundingClientRect();
-    if (r.width <= 0 || r.height <= 0 || r.left < 0 || r.left >= menor) continue;
-    const cs = getComputedStyle(e);
-    // "> 0": com zoom da janela, 2px de borda podem ser reportados como 1.x px
-    if (parseFloat(cs.borderLeftWidth) > 0 && cs.position !== "fixed") menor = r.left;
-  }
-  if (!Number.isFinite(menor)) {
-    menor = conteudo.getBoundingClientRect().left + parseFloat(getComputedStyle(conteudo).paddingLeft);
-  }
-  const esquerda = menor - raiz.getBoundingClientRect().left;
-  raiz.style.setProperty("--nav-esquerda", `${Math.max(0, Math.round(esquerda))}px`);
-}
-
 /** Menu lateral colado logo ABAIXO do botao (o botao fica por cima, encostado no topo do menu). */
 function posicionarPainel(raiz: HTMLElement): void {
   const hamburguer = raiz.querySelector<HTMLElement>(".nav-hamburguer");
@@ -243,37 +216,12 @@ ${ITENS_NAV.filter((item) => item.noPainel)
     acionar(item);
   });
 
-  const realinhar = (): void => {
-    alinharHamburguer(raiz);
+  // o hamburguer fica fixo no canto (CSS); so o menu aberto acompanha a janela
+  const reposicionar = (): void => {
     if (menuEstaAberto(raiz)) posicionarPainel(raiz);
   };
-  // recalcula no proximo quadro (o layout ja assentado) quando a janela muda OU
-  // quando o conteudo muda de tamanho (ex.: cartoes dos submenus montados depois)
-  let agendado = false;
-  let assentar: number | undefined;
-  const agendarRealinhar = (): void => {
-    // de novo 250 ms depois da ultima mudanca: durante a montagem/redimensionamento
-    // o layout passa por estados intermediarios e o calculo podia ficar no meio
-    window.clearTimeout(assentar);
-    assentar = window.setTimeout(realinhar, 250);
-    if (agendado) return;
-    agendado = true;
-    requestAnimationFrame(() => {
-      agendado = false;
-      realinhar();
-    });
-  };
-  agendarRealinhar();
-  window.addEventListener("resize", agendarRealinhar);
-  const conteudoTela = raiz.nextElementSibling;
-  if (conteudoTela && typeof ResizeObserver !== "undefined") {
-    new ResizeObserver(agendarRealinhar).observe(conteudoTela);
-    new MutationObserver(agendarRealinhar).observe(conteudoTela, { childList: true, subtree: true });
-  }
-  window.addEventListener("scroll", () => {
-    if (menuEstaAberto(raiz)) posicionarPainel(raiz);
-  }, { passive: true });
-  void document.fonts?.ready.then(realinhar);
+  window.addEventListener("resize", reposicionar);
+  window.addEventListener("scroll", reposicionar, { passive: true });
 
   raiz.querySelector(".nav-hamburguer")?.addEventListener("click", () => {
     definirMenu(raiz, !menuEstaAberto(raiz));
