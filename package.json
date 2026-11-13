@@ -1,7 +1,7 @@
 {
   "name": "findesk",
   "private": true,
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Sistema de Contas a Pagar — Chaveiro Universal",
   "author": "Chaveiro Universal",
   "main": "desktop/main.js",

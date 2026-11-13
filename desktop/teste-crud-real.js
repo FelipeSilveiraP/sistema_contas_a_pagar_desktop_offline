@@ -272,6 +272,21 @@ async function executar() {
   await js(`(() => { const dt = new DataTransfer(); dt.items.add(new File([${JSON.stringify(pdf)}], 'NF-e 14892.pdf', { type: 'application/pdf' }));
     const i = document.getElementById('invoice_pdf'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
   await esperarPredicado("document.getElementById('file_label').textContent.includes('14892')", 4000);
+  teste("Conta: o PDF escolhido aparece em pré-visualização abaixo do anexo",
+    await esperarPredicado("!document.getElementById('anexo-previa').classList.contains('hidden') && !!document.querySelector('#anexo-previa-conteudo embed') && document.getElementById('anexo-previa').offsetHeight > 100", 4000));
+  await clicarSel("#btn-remover-anexo");
+  teste("Conta: REMOVER (clique real) tira o arquivo e esconde a pré-visualização",
+    await esperarPredicado("document.getElementById('anexo-previa').classList.contains('hidden') && document.getElementById('file_label').textContent.startsWith('ESCOLHER')", 3000));
+  const fotoPrevia = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  await js(`(() => { const b = Uint8Array.from(atob(${JSON.stringify(fotoPrevia)}), (c) => c.charCodeAt(0)); const dt = new DataTransfer();
+    dt.items.add(new File([b], 'foto.png', { type: 'image/png' }));
+    const i = document.getElementById('invoice_pdf'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+  teste("Conta: foto escolhida aparece como imagem na pré-visualização",
+    await esperarPredicado("!document.getElementById('anexo-previa').classList.contains('hidden') && !!document.querySelector('#anexo-previa-conteudo img')", 4000));
+  // volta ao PDF original (o resto do teste espera a nota 14892 em PDF)
+  await js(`(() => { const dt = new DataTransfer(); dt.items.add(new File([${JSON.stringify(pdf)}], 'NF-e 14892.pdf', { type: 'application/pdf' }));
+    const i = document.getElementById('invoice_pdf'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+  await esperarPredicado("document.getElementById('file_label').textContent.includes('14892') && !!document.querySelector('#anexo-previa-conteudo embed')", 4000);
   await capturar("04-inserir-conta-etapa2");
   await clicarSel("#btn-salvar");
   teste("Conta: INSERIR CONTA grava e volta ao Menu", await esperarPredicado("document.body.dataset.contaSalva === 'true'", 8000) && await esperarTela("menu"));
