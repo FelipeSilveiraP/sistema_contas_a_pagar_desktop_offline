@@ -13,6 +13,7 @@ import { notificarAoAbrir } from "../notificacoes";
 import { voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { preencherSelectPagadores } from "../pagadores";
+import { montarPreviaNota } from "../nota-previa";
 import {
   mascaraMoeda,
   mascaraData,
@@ -236,10 +237,15 @@ function assinaturaAceita(b: Uint8Array): boolean {
     || ini(0x50, 0x4b, 0x03, 0x04); // DOCX (zip)
 }
 
+let liberarPrevia: (() => void) | null = null;
+
 function limparAnexo(): void {
   anexoSelecionado = null;
   el("file_label").textContent = "ESCOLHER ARQUIVO OU ARRASTAR AQUI";
   el<HTMLInputElement>("invoice_pdf").value = "";
+  liberarPrevia?.();
+  liberarPrevia = null;
+  el("anexo-previa").classList.add("hidden");
 }
 
 async function receberAnexo(arquivo: File | undefined): Promise<void> {
@@ -265,6 +271,10 @@ async function receberAnexo(arquivo: File | undefined): Promise<void> {
   }
   anexoSelecionado = { nome: arquivo.name, base64: btoa(binario) };
   el("file_label").textContent = arquivo.name.toUpperCase();
+  // previa logo abaixo: foto, PDF ou cartao do Word
+  liberarPrevia = montarPreviaNota(el("anexo-previa-conteudo"), arquivo.name, bytes,
+    "Arquivo do Word: não dá para mostrar aqui, mas ele será guardado com a conta.");
+  el("anexo-previa").classList.remove("hidden");
   el<HTMLInputElement>("sem_nota").checked = false;
   revalidarErrosVisiveis();
 }
@@ -338,6 +348,11 @@ function iniciar(): void {
   inputAnexo.addEventListener("change", () => {
     void receberAnexo(inputAnexo.files?.[0]);
     marcarSujo();
+  });
+  el("btn-remover-anexo").addEventListener("click", () => {
+    limparAnexo();
+    marcarSujo();
+    revalidarErrosVisiveis();
   });
   // "veio sem nota" e anexo sao excludentes
   el<HTMLInputElement>("sem_nota").addEventListener("change", () => {

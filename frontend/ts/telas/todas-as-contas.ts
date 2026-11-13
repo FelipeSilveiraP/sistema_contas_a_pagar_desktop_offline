@@ -18,6 +18,7 @@ import {
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { confirmar, confirmarEstorno, confirmarExclusao } from "../componentes";
 import { escolher } from "../dialogos";
+import { MIME_IMAGEM, extensaoNota, montarPreviaNota } from "../nota-previa";
 import { notificar } from "../notificacoes";
 import { imprimirDocumento, cabecalhoFolha, tabelaCampos, assinaturas, criar } from "../impressao";
 import { ligarExpansaoColunas } from "../tabela-colunas";
@@ -44,7 +45,7 @@ let filtro: Filtro = "TODOS";
 let pesquisa = "";
 let selecionadoId: number | null = null;
 /** nota fiscal mostrada na area de edicao (chave = id + nome do arquivo) */
-let notaAtual: { chave: string; bytes: Uint8Array; url: string } | null = null;
+let notaAtual: { chave: string; bytes: Uint8Array; liberar: () => void } | null = null;
 
 const LIMITE_NOTA = 10 * 1024 * 1024;
 const EXTENSOES_NOTA = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".docx"];
@@ -211,14 +212,9 @@ function selecionar(id: number): void {
 
 // ---------- nota fiscal: visualizar, imprimir/salvar, trocar e excluir ----------
 
-function extensaoNota(nome: string | null): string {
-  return (nome ?? "").split(".").pop()?.toLowerCase() ?? "";
-}
-
 function limparNota(): void {
-  if (notaAtual) URL.revokeObjectURL(notaAtual.url);
+  notaAtual?.liberar();
   notaAtual = null;
-  el("notaConteudo").replaceChildren();
   el("notaVisualizacao").classList.add("hidden");
   mostrarErroNota();
 }
@@ -269,33 +265,10 @@ async function mostrarNota(conta: ContaDados): Promise<void> {
   }
   // o usuario pode ter clicado em outra conta enquanto a nota carregava
   if (selecionadoId !== conta.id || notaAtual) return;
-  const ext = extensaoNota(conta.anexoNome);
-  const mime = ext === "pdf" ? "application/pdf" : MIME_IMAGEM[ext] ?? "application/octet-stream";
-  const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mime }));
-  notaAtual = { chave, bytes, url };
-  const conteudo = el("notaConteudo");
-  if (ext === "pdf") {
-    // sem eventos de mouse/foco (CSS): o clique vai para o quadro, nao para o leitor de PDF
-    const quadro = document.createElement("embed");
-    quadro.type = "application/pdf";
-    quadro.title = `Nota fiscal ${conta.anexoNome}`;
-    quadro.tabIndex = -1;
-    quadro.src = `${url}#toolbar=0&navpanes=0&view=FitH`;
-    conteudo.appendChild(quadro);
-  } else if (MIME_IMAGEM[ext]) {
-    const img = document.createElement("img");
-    img.alt = `Nota fiscal ${conta.anexoNome}`;
-    img.src = url;
-    conteudo.appendChild(img);
-  } else {
-    const cartao = criar("div", "nota-visualizacao__arquivo");
-    cartao.append(
-      criar("span", "material-symbols-outlined text-5xl", "description"),
-      criar("span", "", conta.anexoNome ?? "nota-fiscal.docx"),
-      criar("span", "text-neutral-600", "Arquivo do Word: não dá para mostrar aqui. Clique para abrir no Word ou salvar."),
-    );
-    conteudo.appendChild(cartao);
-  }
+  // o clique vai para o quadro (CSS), nao para o leitor de PDF
+  const liberar = montarPreviaNota(el("notaConteudo"), conta.anexoNome ?? "nota-fiscal", bytes,
+    "Arquivo do Word: não dá para mostrar aqui. Clique para abrir no Word ou salvar.");
+  notaAtual = { chave, bytes, liberar };
   el("notaVisualizacao").classList.remove("hidden");
 }
 
@@ -681,7 +654,6 @@ function bytesParaBase64(bytes: Uint8Array): string {
   return btoa(binario);
 }
 
-const MIME_IMAGEM: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
 
 async function imprimirConta(conta: ContaDados): Promise<void> {
   // nota fiscal: PDF vira as paginas seguintes (juntada pelo processo principal);

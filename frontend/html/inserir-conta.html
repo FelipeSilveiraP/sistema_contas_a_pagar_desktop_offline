@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Inserir Nova Conta — Sistema de Contas a Pagar — Chaveiro Universal</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-hashes' 'sha256-jpJOxTrdc58x4woq2mVygDDIvjIAGNkLZ2yfx4ppdXo=' 'sha256-tbWZ4NP1341cpcrZVDn7B3o9bt/muXgduILAnC0Zbaw='; font-src 'self'; img-src 'self' data: blob:; frame-src blob:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src blob:; base-uri 'self'">
 <link href="../css/fonts.css" rel="stylesheet">
 <link href="../dist/tailwind.css" rel="stylesheet">
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full flex flex-col items-center px-4 sm:px-6 lg:px-8 font-headline" data-tela="inserir-conta">
@@ -197,6 +197,13 @@
 <span class="font-headline font-bold text-xs sm:text-sm uppercase text-[#1c1b1b] block" id="file_label">ESCOLHER ARQUIVO OU ARRASTAR AQUI</span>
 <span class="text-xs font-mono text-[#7c775f]">Guarda digital automática com opção de download no sistema</span>
 </div>
+</div>
+<div class="nota-previa hidden" id="anexo-previa">
+<div class="nota-previa__cabecalho">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" aria-hidden="true">visibility</span>Pré-visualização da nota</span>
+<button class="btn-acao bg-white hover:bg-[#ffdad6] text-[#ba1a1a]" id="btn-remover-anexo" type="button"><span class="material-symbols-outlined text-base font-bold">close</span>REMOVER</button>
+</div>
+<div class="nota-visualizacao__conteudo nota-previa__conteudo" id="anexo-previa-conteudo"></div>
 </div>
 <label class="flex items-center gap-2.5 self-start cursor-pointer select-none font-headline text-xs sm:text-sm font-bold uppercase text-[#1c1b1b]" for="sem_nota">
 <input class="w-5 h-5 border-2 border-[#1c1b1b] accent-[#1c1b1b] cursor-pointer" id="sem_nota" name="sem_nota" type="checkbox">
