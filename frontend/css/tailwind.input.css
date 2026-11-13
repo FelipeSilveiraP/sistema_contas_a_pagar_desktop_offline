@@ -293,6 +293,10 @@
   background: #ffe600;
 }
 
+.icone-vermelho {
+  background: #ff3b30;
+}
+
 .icone-laranja {
   background: #ff8c00;
 }
@@ -312,6 +316,11 @@
 /* COR DO MODULO + CONTRASTE DE TEXTO POR BOTAO */
 
 .barra-navegacao .nav-item[data-nav="menu"] {
+  --cor-modulo: #ff3b30;
+  --cor-texto-forte: #1c1b1b;
+}
+
+.barra-navegacao .nav-item[data-nav="inserir"] {
   --cor-modulo: #ffe600;
   --cor-texto-forte: #1c1b1b;
 }
@@ -352,6 +361,11 @@
   stroke: #ffffff;
 }
 
+/* no amarelo (INSERIR CONTA) o icone branco sumiria: fica preto */
+.barra-navegacao .nav-item[data-nav="inserir"]:hover .nav-icone svg {
+  stroke: #1c1b1b;
+}
+
 .barra-navegacao .nav-voltar:hover > svg {
   stroke: #1c1b1b;
 }
@@ -370,9 +384,9 @@
   outline-offset: -5px;
 }
 
-/* RESPONSIVIDADE INTERMEDIARIA */
+/* RESPONSIVIDADE INTERMEDIARIA: botoes compactos ate 1279px (7 botoes) */
 
-@media (max-width: 1100px) {
+@media (max-width: 1279px) {
   .barra-navegacao .nav-item {
     gap: 8px;
     padding: 8px 10px;
@@ -452,13 +466,13 @@
   transform: translateY(-0.625rem) rotate(-45deg);
 }
 
-/* A barra cabe a partir de 900px (largura necessária para 6 botões);
-   abaixo disso vale o botão flutuante com menu lateral */
-@media (min-width: 851px) {
+/* Com 7 botoes a barra precisa de ~950px: ela aparece a partir de 1024px de
+   janela; abaixo disso vale o botao hamburguer com menu lateral */
+@media (min-width: 1024px) {
   .nav-barra { display: flex; }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 1023px) {
   /* mesma margem esquerda do conteudo (calculada em navbar.ts) */
   .nav-hamburguer { display: inline-flex; margin-left: var(--nav-esquerda, 1rem); }
 }

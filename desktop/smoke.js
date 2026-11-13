@@ -25,7 +25,8 @@ const CAPTURAS = [
   { w: 768, h: 800 },
   { w: 480, h: 800 },
 ];
-const BREAKPOINT_BARRA = 851;
+// com 7 botoes (INSERIR CONTA entrou em 2026-11-13) a barra aparece a partir de 1024px
+const BREAKPOINT_BARRA = 1024;
 
 const SUBMENUS = [
   {
@@ -515,8 +516,8 @@ async function executar() {
     await js("JSON.stringify([...document.querySelectorAll('.nav-barra button[data-nav]')].map(b => b.dataset.nav))")
   );
   teste(
-    "Barra desktop: ordem VOLTAR/MENU/CADASTROS/CONTROLE/MENSAGENS/GRÁFICOS",
-    JSON.stringify(ordem) === JSON.stringify(["voltar", "menu", "cadastros", "controle", "mensagens", "graficos"]),
+    "Barra desktop: ordem VOLTAR/MENU/INSERIR CONTA/CADASTROS/CONTROLE/MENSAGENS/GRÁFICOS",
+    JSON.stringify(ordem) === JSON.stringify(["voltar", "menu", "inserir", "cadastros", "controle", "mensagens", "graficos"]),
     JSON.stringify(ordem)
   );
   teste("Botao CONTROLE com fundo branco por padrao", (await corBotaoNav("controle")) === "rgb(255, 255, 255)", await corBotaoNav("controle"));
@@ -525,14 +526,14 @@ async function executar() {
   const coresNav = JSON.parse(
     await js(`(() => {
       const pega = (c) => { const el = document.querySelector('.nav-barra button[data-nav="' + c + '"]'); return el ? getComputedStyle(el).getPropertyValue('--cor-modulo').trim() : null; };
-      return JSON.stringify({ menu: pega('menu'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
+      return JSON.stringify({ menu: pega('menu'), inserir: pega('inserir'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
     })()`)
   );
   const normalizaHex = (c) => (c && c.length === 4 ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c);
   const coresNorm = Object.fromEntries(Object.entries(coresNav).map(([k, v]) => [k, normalizaHex(v)]));
   teste(
     "Navbar: cor do modulo declarada por botao (hover preenche o botao)",
-    JSON.stringify(coresNorm) === JSON.stringify({ menu: "#ffe600", cadastros: "#ff8c00", controle: "#2563eb", mensagens: "#ff5e89", graficos: "#00ff66" }),
+    JSON.stringify(coresNorm) === JSON.stringify({ menu: "#ff3b30", inserir: "#ffe600", cadastros: "#ff8c00", controle: "#2563eb", mensagens: "#ff5e89", graficos: "#00ff66" }),
     JSON.stringify(coresNav)
   );
   const estadoAtivo = JSON.parse(
@@ -561,18 +562,22 @@ async function executar() {
   const quadrados = JSON.parse(
     await js(`(() => {
       const pega = (c) => { const el = document.querySelector('.nav-barra button[data-nav="' + c + '"] .nav-icone'); return el ? el.className : null; };
-      return JSON.stringify({ menu: pega('menu'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
+      return JSON.stringify({ menu: pega('menu'), inserir: pega('inserir'), cadastros: pega('cadastros'), controle: pega('controle'), mensagens: pega('mensagens'), graficos: pega('graficos') });
     })()`)
   );
   teste(
     "Navbar: CONTROLE padronizado com quadrado do icone do modulo (icone-azul)",
-    String(quadrados.controle).includes("icone-azul") && String(quadrados.menu).includes("icone-amarelo") && String(quadrados.cadastros).includes("icone-laranja") && String(quadrados.mensagens).includes("icone-rosa") && String(quadrados.graficos).includes("icone-verde"),
+    String(quadrados.controle).includes("icone-azul") && String(quadrados.menu).includes("icone-vermelho") && String(quadrados.inserir).includes("icone-amarelo") && String(quadrados.cadastros).includes("icone-laranja") && String(quadrados.mensagens).includes("icone-rosa") && String(quadrados.graficos).includes("icone-verde"),
     JSON.stringify(quadrados)
   );
 
   // GRÁFICOS = provisório; MENU PRINCIPAL navega; destinos a partir de tela profunda
   teste("Navbar GRÁFICOS navega", await navegarPor('.nav-barra button[data-nav="graficos"]', "graficos"));
   teste("VOLTAR de graficos (navbar) retorna", await voltarPara("controle"));
+  await prepararPagina();
+  teste("Navbar INSERIR CONTA (atalho) abre o formulário", await navegarPor('.nav-barra button[data-nav="inserir"]', "inserir-conta"));
+  teste("Navbar: INSERIR CONTA ativo na própria tela", (await js(`document.querySelector('.nav-barra button[data-nav="inserir"]').getAttribute('aria-current')`)) === "page");
+  teste("VOLTAR de inserir-conta (navbar) retorna", await voltarPara("controle"));
   await prepararPagina();
   await clicar('.nav-barra button[data-nav="menu"]');
   teste("Navbar MENU PRINCIPAL navega ao Menu", await esperarTela("menu"));
@@ -1425,7 +1430,7 @@ async function executar() {
   );
   teste(
     "Painel: VOLTAR presente e primeiro (ordem preservada)",
-    JSON.stringify(ordemPainel) === JSON.stringify(["voltar", "menu", "cadastros", "controle", "mensagens", "graficos"]),
+    JSON.stringify(ordemPainel) === JSON.stringify(["voltar", "menu", "inserir", "cadastros", "controle", "mensagens", "graficos"]),
     JSON.stringify(ordemPainel)
   );
   await js("sessionStorage.removeItem('findesk.pilha-navegacao')");
@@ -1611,8 +1616,8 @@ async function executar() {
     await capturar("nav-barra-desktop-1920x1080.png");
     await definirTamanho(1280, 720);
     await capturar("nav-barra-desktop-1280x720.png");
-    await definirTamanho(960, 540);
-    await capturar("nav-barra-desktop-960x540.png");
+    await definirTamanho(1024, 768);
+    await capturar("nav-barra-desktop-1024x768.png");
     await definirTamanho(1536, 864);
     await capturar("nav-barra-desktop-1536x864.png");
   await definirTamanho(480, 800);

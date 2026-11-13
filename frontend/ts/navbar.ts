@@ -1,7 +1,7 @@
 import { Tela, irPara, voltar, menuPrincipal } from "./navegacao";
 import { respostaProvisoria, dialogoEstaAberto } from "./componentes";
 
-type ChaveNav = "voltar" | "menu" | "cadastros" | "controle" | "mensagens" | "graficos";
+type ChaveNav = "voltar" | "menu" | "inserir" | "cadastros" | "controle" | "mensagens" | "graficos";
 
 interface ItemNav {
   chave: ChaveNav;
@@ -30,10 +30,22 @@ const ITENS_NAV: ItemNav[] = [
     chave: "menu",
     rotulo: "MENU PRINCIPAL",
     icone: "home",
-    cor: "bg-[#FFE600]",
-    corTexto: "text-[#FFE600]",
+    // vermelho: o amarelo e a cor de INSERIR CONTA (como no Menu)
+    cor: "bg-[#FF3B30]",
+    corTexto: "text-[#FF3B30]",
     svg: '<path d="m3 11 9-8 9 8"/><path d="M5 10v11h14V10"/><path d="M10 21v-7h4v7"/>',
+    quadrado: "icone-vermelho",
+    noPainel: true,
+  },
+  {
+    chave: "inserir",
+    rotulo: "INSERIR CONTA",
+    icone: "post_add",
+    cor: "bg-[#FFE600]",
+    corTexto: "text-[#e0c900]",
+    svg: '<path d="M6 3h8l4 4v14H6z"/><path d="M12 10v7M8.5 13.5h7"/>',
     quadrado: "icone-amarelo",
+    destino: "inserir-conta",
     noPainel: true,
   },
   {
@@ -83,6 +95,7 @@ const ITENS_NAV: ItemNav[] = [
 ];
 
 const MODULO_DA_TELA: Partial<Record<Tela, ChaveNav>> = {
+  "inserir-conta": "inserir",
   controle: "controle",
   recorrentes: "controle",
   "todas-as-contas": "controle",
@@ -130,24 +143,29 @@ function menuEstaAberto(raiz: HTMLElement): boolean {
 }
 
 /**
- * Hamburguer na MESMA margem esquerda do conteudo: alinha com o primeiro
- * painel/cartao (elemento com borda) da tela, qualquer que seja a largura.
+ * Hamburguer na MESMA margem esquerda do conteudo: alinha com a borda MAIS A
+ * ESQUERDA entre os elementos com borda da tela (painel, formulario ou cartao).
+ * Antes usava o primeiro elemento com borda, e nos submenus (cartoes montados
+ * depois da navbar) pegava o quadradinho do icone, centralizado.
  */
 function alinharHamburguer(raiz: HTMLElement): void {
   const conteudo = raiz.nextElementSibling as HTMLElement | null;
   const hamburguer = raiz.querySelector<HTMLElement>(".nav-hamburguer");
   if (!conteudo || !hamburguer || getComputedStyle(hamburguer).display === "none") return;
-  let alvo: HTMLElement = conteudo;
+  let menor = Infinity;
   const candidatos = conteudo.querySelectorAll<HTMLElement>("*");
-  for (let i = 0; i < candidatos.length && i < 400; i++) {
+  for (let i = 0; i < candidatos.length && i < 1500; i++) {
     const e = candidatos[i];
+    const r = e.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0 || r.left < 0 || r.left >= menor) continue;
+    const cs = getComputedStyle(e);
     // "> 0": com zoom da janela, 2px de borda podem ser reportados como 1.x px
-    if (parseFloat(getComputedStyle(e).borderLeftWidth) > 0 && e.getBoundingClientRect().width > 0) {
-      alvo = e;
-      break;
-    }
+    if (parseFloat(cs.borderLeftWidth) > 0 && cs.position !== "fixed") menor = r.left;
   }
-  const esquerda = alvo.getBoundingClientRect().left - raiz.getBoundingClientRect().left;
+  if (!Number.isFinite(menor)) {
+    menor = conteudo.getBoundingClientRect().left + parseFloat(getComputedStyle(conteudo).paddingLeft);
+  }
+  const esquerda = menor - raiz.getBoundingClientRect().left;
   raiz.style.setProperty("--nav-esquerda", `${Math.max(0, Math.round(esquerda))}px`);
 }
 
@@ -229,8 +247,29 @@ ${ITENS_NAV.filter((item) => item.noPainel)
     alinharHamburguer(raiz);
     if (menuEstaAberto(raiz)) posicionarPainel(raiz);
   };
-  requestAnimationFrame(realinhar);
-  window.addEventListener("resize", realinhar);
+  // recalcula no proximo quadro (o layout ja assentado) quando a janela muda OU
+  // quando o conteudo muda de tamanho (ex.: cartoes dos submenus montados depois)
+  let agendado = false;
+  let assentar: number | undefined;
+  const agendarRealinhar = (): void => {
+    // de novo 250 ms depois da ultima mudanca: durante a montagem/redimensionamento
+    // o layout passa por estados intermediarios e o calculo podia ficar no meio
+    window.clearTimeout(assentar);
+    assentar = window.setTimeout(realinhar, 250);
+    if (agendado) return;
+    agendado = true;
+    requestAnimationFrame(() => {
+      agendado = false;
+      realinhar();
+    });
+  };
+  agendarRealinhar();
+  window.addEventListener("resize", agendarRealinhar);
+  const conteudoTela = raiz.nextElementSibling;
+  if (conteudoTela && typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(agendarRealinhar).observe(conteudoTela);
+    new MutationObserver(agendarRealinhar).observe(conteudoTela, { childList: true, subtree: true });
+  }
   window.addEventListener("scroll", () => {
     if (menuEstaAberto(raiz)) posicionarPainel(raiz);
   }, { passive: true });
