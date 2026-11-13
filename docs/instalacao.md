@@ -42,6 +42,8 @@ Na loja, depois que o Drive sincroniza:
 4. Ao abrir, o Menu mostra **"Nova versão X disponível"** com o botão **ATUALIZAR**.
 5. Clique em ATUALIZAR. O sistema fecha, o instalador roda sozinho e o sistema abre de novo já atualizado.
 
+**Ligação entre os Drives (uma vez):** na conta da firma, crie em Meu Drive a pasta `Chaveiro Universal - Atualizacoes` e compartilhe com o e-mail do desenvolvedor como **Editor**. No computador de desenvolvimento, em drive.google.com › Compartilhados comigo, clique com o botão direito na pasta e escolha Organizar › Adicionar atalho › Meu Drive. Na loja, no Explorador de Arquivos, clique com o botão direito na pasta e escolha **Disponível off-line**: o instalador fica baixado antes de você clicar em ATUALIZAR.
+
 O sistema só oferece a atualização quando a versão é maior que a instalada **e** o instalador está completo, ou seja, quando o SHA-256 confere. Por isso um arquivo ainda sincronizando pela metade nunca é instalado. Os dados não são tocados, e o backup pré-migração continua automático.
 
 ## Atualizar para uma versão nova — manualmente

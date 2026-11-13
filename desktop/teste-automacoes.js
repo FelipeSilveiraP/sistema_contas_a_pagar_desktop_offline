@@ -88,21 +88,22 @@ function spawnFalso() {
   const conteudo = Buffer.from("instalador de teste");
   fs.writeFileSync(path.join(pastaAtt, nome), conteudo);
   const hash = crypto.createHash("sha256").update(conteudo).digest("hex");
+  teste("SHA-256 lido em pedacos (sem travar) bate com o calculado", (await a.sha256Arquivo(path.join(pastaAtt, nome))) === hash);
   const escrever = (info) => fs.writeFileSync(path.join(pastaAtt, "versao.json"), JSON.stringify(info));
   const app12 = appFalso(true, "1.2.0");
 
-  teste("Sem versao.json: nada a atualizar", a.procurarAtualizacao(app12, log) === null);
+  teste("Sem versao.json: nada a atualizar", await a.procurarAtualizacao(app12, log) === null);
   escrever({ versao: "1.3.0", arquivo: nome, sha256: hash, novidades: "Teste" });
-  const achou = a.procurarAtualizacao(app12, log);
+  const achou = await a.procurarAtualizacao(app12, log);
   teste("Versao maior com instalador completo: oferece atualizar", achou && achou.versao === "1.3.0" && achou.novidades === "Teste", JSON.stringify(achou));
-  teste("Mesma versao instalada: nao oferece", a.procurarAtualizacao(appFalso(true, "1.3.0"), log) === null);
+  teste("Mesma versao instalada: nao oferece", await a.procurarAtualizacao(appFalso(true, "1.3.0"), log) === null);
   escrever({ versao: "1.3.0", arquivo: nome, sha256: "0".repeat(64) });
-  teste("Instalador incompleto/diferente (SHA-256 nao confere): nao oferece", a.procurarAtualizacao(app12, log) === null);
+  teste("Instalador incompleto/diferente (SHA-256 nao confere): nao oferece", await a.procurarAtualizacao(app12, log) === null);
   escrever({ versao: "1.3.0", arquivo: "..\\..\\Windows\\virus.exe", sha256: hash });
-  teste("Nome de arquivo fora do padrao (ex.: ..\\virus.exe): recusado", a.procurarAtualizacao(app12, log) === null);
+  teste("Nome de arquivo fora do padrao (ex.: ..\\virus.exe): recusado", await a.procurarAtualizacao(app12, log) === null);
 
   escrever({ versao: "1.3.0", arquivo: nome, sha256: hash });
-  const att = a.procurarAtualizacao(app12, log);
+  const att = await a.procurarAtualizacao(app12, log);
   sp = spawnFalso();
   const copia = a.instalarAtualizacao(app12, att, log, sp);
   await new Promise((ok) => setTimeout(ok, 700));
@@ -112,7 +113,7 @@ function spawnFalso() {
   teste("ATUALIZAR: fecha o sistema para o instalador trocar os arquivos", app12.fechou === true);
   fs.rmSync(copia, { force: true });
   delete process.env.FINDESK_PASTA_ATUALIZACOES;
-  teste("Sem pasta configurada e nao instalado: nao procura no Drive real", a.procurarAtualizacao(appFalso(false), log) === null);
+  teste("Sem pasta configurada e nao instalado: nao procura no Drive real", await a.procurarAtualizacao(appFalso(false), log) === null);
 
   fs.rmSync(PASTA, { recursive: true, force: true });
   console.log(`\n=== RESULTADO AUTOMACOES: ${ok}/${total} verificacoes passaram ===`);

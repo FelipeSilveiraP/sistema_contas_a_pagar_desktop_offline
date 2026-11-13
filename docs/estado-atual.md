@@ -10,7 +10,7 @@
 - Limpeza trimestral das notas antigas e backup em planilha no Google Drive a cada abertura.
 - Versão **1.3.0**: abre com o Windows e abre o Chrome no e-mail (`configuracoes.json`). As atualizações chegam pelo Drive: `npm run instalador` e depois `npm run publicar -- "novidades"` (passo a passo em `docs/instalacao.md`).
 - Esquema SQLite **v16**. Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
-- **Testes (2026-11-12), todos verdes:** JUnit 139 · máscaras 65 · filtros 22 · automações 23 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições (rodada final sem falhas). Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
+- **Testes (2026-11-12), todos verdes:** JUnit 139 · máscaras 65 · filtros 22 · automações 24 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições (rodada final sem falhas). Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
 
 ## Próximos passos
 - Importador da planilha legada para `legado_*` e, depois, para `contas_a_pagar`/`boletos_recorrentes`/`avisos`, quando o usuário enviar os dados.
@@ -24,5 +24,6 @@
 - Baixa rápida pedir o banco usado no pagamento?
 
 ## Pendências do usuário
+- **Ligar os Drives (antes da 1ª atualização):** na conta da firma, criar em Meu Drive a pasta `Chaveiro Universal - Atualizacoes` e compartilhar como Editor com o e-mail do desenvolvedor. No PC de desenvolvimento, usar "Adicionar atalho ao Meu Drive". Na loja, marcar a pasta como "Disponível off-line" (passo a passo em `docs/instalacao.md`).
 - Instalar `release/Contas a Pagar - Chaveiro Universal - Instalador 1.3.0.exe` no computador da loja, por cima da versão anterior, validar na resolução real e conferir se aparece `Meu Drive\Chaveiro Universal - Backup` com a planilha do dia.
 - Revogar a chave de API da Xiaomi em `chat_mimo.ps1` (fora do Git).

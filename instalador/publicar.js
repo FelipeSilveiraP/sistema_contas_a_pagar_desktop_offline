@@ -48,14 +48,16 @@ for (const arq of fs.readdirSync(pasta)) {
   }
 }
 fs.copyFileSync(instalador, path.join(pasta, nome));
-const info = {
-  versao,
-  arquivo: nome,
-  sha256: automacoes.sha256Arquivo(instalador),
-  novidades,
-  publicadoEm: new Date().toISOString(),
-};
-// versao.json por ultimo: quem le so ve a versao nova depois do .exe copiado
-fs.writeFileSync(path.join(pasta, "versao.json"), `${JSON.stringify(info, null, 2)}\n`);
-console.log(`Versao ${versao} publicada em: ${pasta}`);
-console.log("Quando o Google Drive terminar de sincronizar, o sistema da loja vai oferecer ATUALIZAR ao abrir.");
+(async () => {
+  const info = {
+    versao,
+    arquivo: nome,
+    sha256: await automacoes.sha256Arquivo(instalador),
+    novidades,
+    publicadoEm: new Date().toISOString(),
+  };
+  // versao.json por ultimo: quem le so ve a versao nova depois do .exe copiado
+  fs.writeFileSync(path.join(pasta, "versao.json"), `${JSON.stringify(info, null, 2)}\n`);
+  console.log(`Versao ${versao} publicada em: ${pasta}`);
+  console.log("Quando o Google Drive terminar de sincronizar, o sistema da loja vai oferecer ATUALIZAR ao abrir.");
+})();

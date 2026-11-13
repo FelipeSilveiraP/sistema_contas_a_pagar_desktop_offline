@@ -131,8 +131,19 @@ function versaoMaior(a, b) {
   return false;
 }
 
+/**
+ * SHA-256 lido em pedacos e SEM bloquear: com o Google Drive em modo "streaming"
+ * o arquivo so e baixado quando lido, e uma leitura de uma vez so travaria a tela
+ * ate os ~145 MB chegarem.
+ */
 function sha256Arquivo(arquivo) {
-  return crypto.createHash("sha256").update(fs.readFileSync(arquivo)).digest("hex");
+  return new Promise((resolver, rejeitar) => {
+    const hash = crypto.createHash("sha256");
+    fs.createReadStream(arquivo)
+      .on("data", (pedaco) => hash.update(pedaco))
+      .on("end", () => resolver(hash.digest("hex")))
+      .on("error", rejeitar);
+  });
 }
 
 /**
@@ -140,16 +151,16 @@ function sha256Arquivo(arquivo) {
  * for maior que a instalada E o instalador ja estiver completo (SHA-256 confere:
  * protege contra arquivo pela metade durante a sincronizacao do Drive).
  */
-function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersion()) {
+async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersion()) {
   const pasta = pastaAtualizacoes(app);
   if (!pasta) return null;
   try {
-    const info = JSON.parse(fs.readFileSync(path.join(pasta, "versao.json"), "utf8"));
+    const info = JSON.parse((await fs.promises.readFile(path.join(pasta, "versao.json"), "utf8")).replace(/^\uFEFF/, ""));
     if (!versaoMaior(info.versao, versaoAtual)) return null;
     const nome = path.basename(String(info.arquivo || ""));
     if (!/^Contas a Pagar - Chaveiro Universal - Instalador [\d.]+\.exe$/.test(nome)) return null;
     const instalador = path.join(pasta, nome);
-    if (!fs.existsSync(instalador) || sha256Arquivo(instalador) !== String(info.sha256).toLowerCase()) {
+    if (!fs.existsSync(instalador) || (await sha256Arquivo(instalador)) !== String(info.sha256).toLowerCase()) {
       registrarLog("WARN", `atualizacao ${info.versao} encontrada, mas o instalador ainda nao esta completo no Drive`);
       return null;
     }

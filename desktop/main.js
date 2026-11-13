@@ -519,8 +519,9 @@ ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
 // Atualizacao pelo Google Drive: a tela pergunta se ha versao nova e, com o
 // clique do usuario em ATUALIZAR, o instalador roda e o sistema fecha.
 let atualizacaoEncontrada = null;
-ipcMain.handle("findesk:atualizacao-disponivel", () => {
-  atualizacaoEncontrada = automacoes.procurarAtualizacao(app, registrarLog, VERSAO_SISTEMA);
+ipcMain.handle("findesk:atualizacao-disponivel", async () => {
+  // assincrono: a tela continua usavel enquanto o Drive baixa/confere o instalador
+  atualizacaoEncontrada = await automacoes.procurarAtualizacao(app, registrarLog, VERSAO_SISTEMA);
   return atualizacaoEncontrada
     ? { versao: atualizacaoEncontrada.versao, atual: VERSAO_SISTEMA, novidades: atualizacaoEncontrada.novidades }
     : null;

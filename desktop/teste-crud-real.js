@@ -363,7 +363,10 @@ async function executar() {
   await clicarSel("#btn-salvar");
   teste("Recorrente: SALVAR cria a conta fixa", await esperarPredicado("document.body.dataset.recorrenteSalva !== undefined", 8000), await notificacoes());
   await ir("recorrentes-tabela");
-  const linhasGeradas = await js(`Array.from(document.querySelectorAll('#tableBody tr')).filter((tr) => tr.textContent.toUpperCase().includes('ALUGUEL DO GALPÃO')).length`);
+  // espera a tabela carregar (contar logo apos abrir a tela dava 0 as vezes)
+  const contarGeradas = `Array.from(document.querySelectorAll('#tableBody tr')).filter((tr) => tr.textContent.toUpperCase().includes('ALUGUEL DO GALPÃO')).length`;
+  await esperarPredicado(`${contarGeradas} === 12`, 6000);
+  const linhasGeradas = await js(contarGeradas);
   teste("Recorrentes: 12 contas geradas", linhasGeradas === 12, String(linhasGeradas));
   teste("Recorrentes: contas geradas com PF e Débito automático", await js(`(() => { const tr = ${linhaCom("#tableBody", "Aluguel do Galpão")}; return !!tr && tr.textContent.includes('PF') && tr.textContent.includes('Débito automático') && tr.textContent.includes('Carlos Eduardo Silva'); })()`));
   const linhaFixa = linhaCom("#recorrentesCadastradas", "Aluguel do Galpão");
