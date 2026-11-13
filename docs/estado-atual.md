@@ -9,6 +9,7 @@
 - 2ª rodada (2026-11-12): mensagens voltam a salvar no banco da loja (migração v15), área de edição única em todas as telas, pagador em caixa de seleção, Mensagens do dia com EXPANDIR/VER NO CONTROLE.
 - Limpeza trimestral das notas antigas e backup em planilha no Google Drive a cada abertura.
 - Versão **1.3.0**: abre com o Windows e abre o Chrome no e-mail (`configuracoes.json`). As atualizações chegam pelo Drive: `npm run instalador` e depois `npm run publicar -- "novidades"` (passo a passo em `docs/instalacao.md`).
+- Emblema próprio (cadeado) na janela, barra de tarefas, `.exe` e instalador; `release/` só com o instalador atual; projeto limpo (ver `decisoes.md`).
 - Esquema SQLite **v16**. Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
 - **Testes (2026-11-12), todos verdes:** JUnit 139 · máscaras 65 · filtros 22 · automações 24 · smoke 333 · smoke-boot 2 ciclos · persistência 11 · smoke-real 2 ciclos · smoke-dev 83 · CRUD real 70 · layout 54 medições (rodada final sem falhas). Smoke e smoke-boot tiveram falhas de tempo intermitentes (animação/carregamento) que passaram ao repetir.
 

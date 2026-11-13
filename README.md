@@ -2,7 +2,7 @@
 
 Aplicativo desktop para Windows que substitui a planilha Excel/VBA de contas a pagar do Chaveiro Universal. Funciona **100% sem internet**, com interface de alto contraste (neobrutalista, desenhada no Google Stitch) pensada para usuários leigos, e regras financeiras centralizadas e testadas num backend Java.
 
-> **Status (novembro/2026):** Fases 1 a 3 concluídas — todas as telas do design estão implementadas e gravam no SQLite local. Em validação pelo usuário. Próximas fases: filtros avançados e impressão (Fase 4) e instalador Windows (Fase 5). Detalhes em [Status](#status).
+> **Status (novembro/2026):** versão **1.3.0**. Todas as fases estão concluídas e o sistema está em uso na loja, com instalador próprio, backup no Google Drive e atualização pelo Drive. Detalhes em [Status](#status).
 
 ---
 
@@ -27,11 +27,17 @@ O Menu Principal tem 5 botões (também acessíveis pelas teclas de atalho), e u
 
 | Módulo | O que faz |
 |---|---|
-| **Inserir Conta** | Formulário em 2 etapas (fornecedor, pagador, valor, vencimento, categoria, forma de pagamento, anexo). Alerta de **possível duplicidade** com a mesma regra do VBA: mesma conta no mesmo mês de vencimento. |
-| **Controle** | **Todas as Contas** com filtros e baixa de pagamento; **Contas Pagas**, com edição do pagamento e estorno; **Contas Recorrentes**, cada uma gerando 12 competências automáticas sem duplicar. |
+| **Inserir Conta** | Formulário em 2 etapas (fornecedor, pagador, valor, vencimento, categoria, forma de pagamento). A **nota fiscal é obrigatória**: um arquivo (PDF, foto ou Word de até 10 MB) ou a marca "conta sem nota fiscal". Alerta de **possível duplicidade** com a mesma regra do VBA: mesma conta no mesmo mês de vencimento. |
+| **Controle** | **Todas as Contas** com colunas recolhíveis, baixa de pagamento e impressão formal (lista ou ficha da conta com a nota); **Contas Pagas**, com edição do pagamento; **Contas Recorrentes**, cada uma gerando 12 competências automáticas sem duplicar. A área de edição é a mesma em todas as telas. |
 | **Cadastros** | Empresas/fornecedores (CNPJ e telefones), pagadores (CPF) e bancos (chave Pix), mais uma tela **Todos os Cadastros** com filtros e edição. |
 | **Mensagens** | Quadro de avisos com período de validade e dias da semana. |
 | **Gráficos** | Totais pago / a vencer / em atraso, fluxo mensal, gastos por categoria e impressão. |
+
+Rotinas automáticas:
+- **ao ligar o computador**, o sistema abre sozinho e abre o Chrome no e-mail da firma (configurável em `configuracoes.json`);
+- **a cada abertura**, grava uma planilha Excel com os dados (sem as notas) na pasta do Google Drive, como backup;
+- **a cada 3 meses**, apaga o arquivo das notas fiscais de contas pagas há mais de 3 meses (a conta fica);
+- **atualizações** chegam pelo Google Drive: o Menu mostra "Nova versão" com o botão ATUALIZAR.
 
 Recursos gerais:
 - máscaras de moeda, CPF, CNPJ (inclusive o novo CNPJ alfanumérico), telefone, CEP e data;
@@ -95,9 +101,7 @@ mvn -f backend/pom.xml package   # compila o backend e gera backend/target/finde
 npm run dev                      # compila o frontend e abre o aplicativo
 ```
 
-Depois da primeira compilação, `EXECUTAR_SISTEMA.bat` abre o aplicativo com dois cliques.
-
-**Instalador para o computador da loja:** `npm run instalador` gera `release/Contas a Pagar - Chaveiro Universal - Instalador <versão>.exe`, que já leva o Java dentro. Instalação, atualização, local dos dados e logs estão em [docs/instalacao.md](docs/instalacao.md).
+**Instalador para o computador da loja:** `npm run instalador` gera `release/Contas a Pagar - Chaveiro Universal - Instalador <versão>.exe`, que já leva o Java dentro. A pasta `release/` fica só com o instalador da versão atual. Para mandar a versão para a loja pelo Google Drive, use `npm run publicar -- "o que mudou"`. Instalação, atualização, local dos dados e logs estão em [docs/instalacao.md](docs/instalacao.md).
 
 | Comando | Para quê |
 |---|---|
@@ -105,6 +109,9 @@ Depois da primeira compilação, `EXECUTAR_SISTEMA.bat` abre o aplicativo com do
 | `npm run app` | Abre o app sem recompilar |
 | `npm run build` | Typecheck + CSS + bundle JS em `frontend/dist/` |
 | `npm run typecheck` | Só a checagem de tipos do TypeScript |
+| `npm run instalador` | Gera o instalador Windows em `release/` |
+| `npm run publicar -- "novidades"` | Põe o instalador na pasta de atualizações do Google Drive |
+| `python instalador/gerar-icone.py` | Regera o emblema (`instalador/icone.ico` e `frontend/assets/icone.png`) |
 
 ## Testes
 
@@ -118,7 +125,8 @@ npx electron desktop/smoke-boot.js        # tempo de inicialização
 npx electron desktop/smoke-real.js        # cliques e teclado reais do Windows
 node desktop/smoke-dev.js                 # cenário real do `npm run dev` (regressão do bug de foco)
 node desktop/teste-persistencia.js        # os dados sobrevivem a fechar e reabrir o app
-npm run test:mascaras                     # máscaras de CPF, CNPJ, telefone, data e moeda
+npm run test:frontend                     # máscaras, filtros e automações (sem Electron)
+npx electron desktop/teste-crud-real.js   # criar, ler, editar e excluir em todas as telas (entrada real)
 npx electron desktop/medir-layout.js      # mede rolagem e centralização das telas em 3 resoluções
 ```
 
@@ -137,7 +145,8 @@ npx electron desktop/medir-layout.js      # mede rolagem e centralização das t
 │       ├── model/        # records de domínio
 │       ├── database/     # conexão, migrações e inicialização do banco
 │       └── web/          # filtro de token e CORS
-├── desktop/              # processo Electron (main.js, preload.js) e smoke tests
+├── desktop/              # processo Electron (main.js, preload.js, automacoes.js) e testes
+├── instalador/           # empacotar.js, publicar.js, gerar-jre.js, emblema (icone.ico)
 ├── frontend/
 │   ├── html/             # uma página por tela
 │   ├── ts/               # TypeScript (main.ts despacha para ts/telas/<tela>.ts)
@@ -163,7 +172,7 @@ Todas as rotas ficam em `http://127.0.0.1:<porta>` e exigem o header `X-FinDesk-
 
 | Recurso | Rotas |
 |---|---|
-| Status | `GET /api/status` |
+| Status | `GET /api/status`, `GET /api/backup-drive` (resultado do backup no Drive) |
 | Contas | `GET/POST /api/contas`, `GET/PUT/DELETE /api/contas/{id}`, `GET /api/contas/{id}/anexo`, `GET /api/contas/alertas` |
 | Pagamentos | `GET/POST/DELETE /api/contas/{id}/pagamento` (baixa e estorno), `GET /api/pagamentos`, `PUT /api/pagamentos/{id}` |
 | Recorrentes | `GET/POST /api/recorrentes`, `GET/PUT/DELETE /api/recorrentes/{id}`, `POST /api/recorrentes/{id}/gerar` |
@@ -177,7 +186,7 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 
 ## Segurança e dados
 
-- **Offline total:** fontes e CSS são locais e não há nenhuma chamada à internet em execução.
+- **Offline:** fontes e CSS são locais e o sistema não faz nenhuma chamada à internet. O backup e as atualizações usam só a pasta local do Google Drive, que o próprio Drive sincroniza.
 - **API isolada:** o servidor escuta só em `127.0.0.1`, com um token aleatório novo a cada execução que nunca é gravado em log. CSP ativa em todas as páginas e `contextIsolation` ligado no Electron.
 - **Integridade do banco:**
   - transações ACID e chaves estrangeiras ativas;
@@ -196,6 +205,7 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 | Fase 3 — Cadastros, contas, pagamentos, recorrentes, mensagens e gráficos (SQLite) | Concluída — em validação pelo usuário |
 | Fase 4 — Filtros avançados, gráficos consolidados e impressão | Concluída |
 | Fase 5 — Logs com rotação, instalador Windows (Electron + JRE embutido), atualização | Concluída |
+| Ajustes de uso — nota obrigatória, impressão formal, edição unificada, backup e atualização pelo Drive, início automático | Concluídos (versão 1.3.0) |
 
 Pendências conhecidas:
 - validação visual final na resolução do monitor da empresa;

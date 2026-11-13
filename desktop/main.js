@@ -323,6 +323,8 @@ function criarJanela() {
     minHeight: 480,
     center: true,
     title: NOME_APP,
+    // emblema do sistema (cadeado) na janela e na barra de tarefas
+    icon: path.join(__dirname, "..", "frontend", "assets", "icone.png"),
     backgroundColor: "#fcf9f8",
     autoHideMenuBar: true,
     show: false,
@@ -550,6 +552,9 @@ if (!instanciaUnica) {
   app.whenReady()
     .then(() => {
       marco("app-pronto");
+      // identidade propria no Windows: agrupa na barra de tarefas com o emblema
+      // do sistema (e nao como "Electron")
+      app.setAppUserModelId("br.com.chaveirouniversal.contasapagar");
       // automacoes do sistema instalado: abrir com o Windows e, nesse inicio
       // automatico, abrir o Chrome no e-mail da firma (configuracoes.json)
       try {

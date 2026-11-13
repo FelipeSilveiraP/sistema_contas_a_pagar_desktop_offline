@@ -325,7 +325,8 @@ async function main() {
   await digitarEVerificar("campoInstituicao", "ORDEM-INVERSA", "ciclo3.banco");
 
   // preservar evidencias
-  const destino = path.join(RAIZ, "docs", `diagnostico-${new Date().toISOString().replace(/[:.]/g, "-")}`);
+  // na pasta temporaria do Windows: nao enche docs/ a cada execucao
+  const destino = path.join(require("os").tmpdir(), `findesk-diagnostico-${new Date().toISOString().replace(/[:.]/g, "-")}`);
   fs.mkdirSync(destino, { recursive: true });
   for (const arq of [ARQ_EVENTOS, ARQ_APP]) {
     if (fs.existsSync(arq)) fs.copyFileSync(arq, path.join(destino, path.basename(arq)));

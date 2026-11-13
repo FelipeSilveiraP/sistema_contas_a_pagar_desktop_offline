@@ -70,10 +70,6 @@ export function buscarStatus(cfg: FinDeskConfig): Promise<StatusApi> {
   return get<StatusApi>(cfg, "/api/status");
 }
 
-export function buscarContas(cfg: FinDeskConfig): Promise<ContaDados[]> {
-  return get<ContaDados[]>(cfg, "/api/contas");
-}
-
 export interface BancoDados {
   id: number;
   instituicao: string;
@@ -344,10 +340,6 @@ export function registrarPagamento(
   return post<PagamentoDados>(cfg, `/api/contas/${idConta}/pagamento`, dados);
 }
 
-export function buscarPagamentoConta(cfg: FinDeskConfig, idConta: number): Promise<PagamentoDados> {
-  return get<PagamentoDados>(cfg, `/api/contas/${idConta}/pagamento`);
-}
-
 export async function estornarPagamento(cfg: FinDeskConfig, idConta: number): Promise<void> {
   await excluir(cfg, `/api/contas/${idConta}/pagamento`);
 }
@@ -374,14 +366,6 @@ export function criarRecorrente(cfg: FinDeskConfig, dados: Omit<RecorrenteDados,
 
 export function gerarContasRecorrente(cfg: FinDeskConfig, id: number): Promise<{ geradas: number }> {
   return post<{ geradas: number }>(cfg, `/api/recorrentes/${id}/gerar`, {});
-}
-
-export function atualizarRecorrente(
-  cfg: FinDeskConfig,
-  id: number,
-  dados: Omit<RecorrenteDados, "id">
-): Promise<RecorrenteDados> {
-  return atualizar<RecorrenteDados>(cfg, `/api/recorrentes/${id}`, dados);
 }
 
 export function excluirRecorrente(cfg: FinDeskConfig, id: number): Promise<void> {

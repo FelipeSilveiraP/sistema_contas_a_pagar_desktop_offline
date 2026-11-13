@@ -17,12 +17,7 @@ vba/
 *.xls
 *.csv
 
-# Scripts locais, dumps e chaves de prototipação do Stitch
-inspect_stitch.js
-list_stitch.js
-download_maven.js
-fetch_all_screens.js
-stitch_dump/
+# Configuração local de agentes
 .agents/
 *.zip
 *.tar
@@ -92,8 +87,5 @@ Desktop.ini
 .DS_Store
 $RECYCLE.BIN/
 
-# Logs de diagnostico gerados pelos smoke tests (smoke-dev)
-docs/diagnostico-*/
-
-# Fase 5: Java minimo gerado pelo jlink (instalador/gerar-jre.js)
+# Gerados pelo instalador: Java minimo (jlink) e pasta de trabalho do empacotamento
 build/

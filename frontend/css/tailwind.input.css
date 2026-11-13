@@ -35,6 +35,9 @@
     display: block;
     flex: 0 0 auto;
     margin-top: auto;
+    /* ocupa a largura toda mesmo em telas com "items-center" (Inserir Conta):
+       sem isto a area encolhia para o meio e o hamburguer ficava centralizado */
+    align-self: stretch;
   }
   body:not(.submenu-body):not(.menu-body) > #nav-global + * {
     flex: 0 0 auto;
@@ -846,6 +849,8 @@
 .tabela-colunas:not(.tabela-expandida) .col-extra { display: none; }
 
 .btn-expandir-colunas {
+  /* prende o texto .sr-only (absoluto) ao botao: sem isto ele esticava a pagina */
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
