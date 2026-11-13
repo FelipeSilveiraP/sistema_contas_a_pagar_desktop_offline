@@ -21,11 +21,16 @@ export interface OpcoesConfirmacao {
   textoCancelar?: string;
   detalhes?: string;
   tom?: TomConfirmacao;
+  /** terceiro botao (ex.: "SALVAR NO COMPUTADOR"), entre cancelar e confirmar */
+  textoAlternativa?: string;
+  icone?: string;
 }
+
+export type RespostaDialogo = "confirmar" | "alternativa" | "cancelar";
 
 interface Pedido {
   opcoes: OpcoesConfirmacao;
-  resolver: (confirmado: boolean) => void;
+  resolver: (resposta: RespostaDialogo) => void;
 }
 
 const ICONES: Record<TomConfirmacao, string> = { normal: "help", atencao: "warning", perigo: "delete_forever" };
@@ -49,7 +54,7 @@ async function processarFila(): Promise<void> {
   processando = false;
 }
 
-function botao(acao: "cancelar" | "confirmar", rotulo: string): HTMLButtonElement {
+function botao(acao: RespostaDialogo, rotulo: string): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
   b.dataset.dialogoAcao = acao;
@@ -66,8 +71,8 @@ function definirFundoInerte(inerte: boolean): void {
   }
 }
 
-function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
-  return new Promise<boolean>((resolver) => {
+function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
+  return new Promise<RespostaDialogo>((resolver) => {
     const tom = opcoes.tom ?? "normal";
     const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
@@ -75,7 +80,7 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
     veu.className = "dialogo-veu";
 
     const caixa = document.createElement("div");
-    caixa.className = "dialogo";
+    caixa.className = opcoes.textoAlternativa ? "dialogo dialogo--largo" : "dialogo";
     caixa.setAttribute("role", "alertdialog");
     caixa.setAttribute("aria-modal", "true");
     caixa.setAttribute("aria-labelledby", "dialogo-titulo");
@@ -87,7 +92,7 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
     const icone = document.createElement("span");
     icone.className = "material-symbols-outlined dialogo__icone";
     icone.setAttribute("aria-hidden", "true");
-    icone.textContent = ICONES[tom];
+    icone.textContent = opcoes.icone ?? ICONES[tom];
     const titulo = document.createElement("h2");
     titulo.className = "dialogo__titulo";
     titulo.id = "dialogo-titulo";
@@ -115,7 +120,9 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
     acoes.className = "dialogo__acoes";
     const cancelar = botao("cancelar", opcoes.textoCancelar ?? "CANCELAR");
     const confirmar = botao("confirmar", opcoes.textoConfirmar);
-    acoes.append(cancelar, confirmar);
+    const alternativa = opcoes.textoAlternativa ? botao("alternativa", opcoes.textoAlternativa) : null;
+    if (alternativa) acoes.append(cancelar, alternativa, confirmar);
+    else acoes.append(cancelar, confirmar);
 
     caixa.append(cabecalho, corpo, acoes);
     veu.appendChild(caixa);
@@ -124,7 +131,7 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
     dialogoAberto = true;
 
     let concluido = false;
-    const fechar = (confirmado: boolean): void => {
+    const fechar = (resposta: RespostaDialogo): void => {
       if (concluido) return;
       concluido = true;
       veu.remove();
@@ -132,14 +139,14 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
       dialogoAberto = false;
       document.removeEventListener("keydown", aoTeclar, true);
       if (anterior && anterior.isConnected) anterior.focus();
-      resolver(confirmado);
+      resolver(resposta);
     };
 
     const aoTeclar = (evento: KeyboardEvent): void => {
       if (evento.key === "Escape") {
         evento.preventDefault();
         evento.stopPropagation();
-        fechar(false);
+        fechar("cancelar");
         return;
       }
       if (evento.key === "Tab") {
@@ -154,8 +161,9 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
       }
     };
 
-    cancelar.addEventListener("click", () => fechar(false));
-    confirmar.addEventListener("click", () => fechar(true));
+    cancelar.addEventListener("click", () => fechar("cancelar"));
+    confirmar.addEventListener("click", () => fechar("confirmar"));
+    alternativa?.addEventListener("click", () => fechar("alternativa"));
     veu.addEventListener("mousedown", (evento) => {
       if (evento.target === veu) evento.preventDefault();
     });
@@ -166,7 +174,12 @@ function montar(opcoes: OpcoesConfirmacao): Promise<boolean> {
 
 /** Confirmacao generica — prefira as especificas abaixo. */
 export function confirmar(opcoes: OpcoesConfirmacao): Promise<boolean> {
-  return new Promise<boolean>((resolver) => {
+  return escolher(opcoes).then((resposta) => resposta === "confirmar");
+}
+
+/** Pergunta com ate 3 respostas (use `textoAlternativa` para o terceiro botao). */
+export function escolher(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
+  return new Promise<RespostaDialogo>((resolver) => {
     fila.push({ opcoes, resolver });
     void processarFila();
   });

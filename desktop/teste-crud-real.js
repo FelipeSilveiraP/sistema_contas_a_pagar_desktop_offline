@@ -301,6 +301,40 @@ async function executar() {
   await clicarSel("#btnBaixarAnexo");
   const notaSalva = (await esperarPredicado("!!document.body.dataset.notaSalva", 6000)) ? await js("document.body.dataset.notaSalva") : "";
   teste("Todas as Contas: BAIXAR PDF grava a nota na pasta Downloads (isolada)", notaSalva && fs.existsSync(notaSalva) && fs.readFileSync(notaSalva, "latin1").startsWith("%PDF"), notaSalva);
+
+  // nota fiscal mostrada abaixo da edicao: clique = imprimir ou salvar; trocar e excluir
+  teste("Todas as Contas: a nota em PDF aparece abaixo da edição",
+    await esperarPredicado("!document.getElementById('notaVisualizacao').classList.contains('hidden') && !!document.querySelector('#notaConteudo embed')", 6000));
+  await js("delete document.body.dataset.notaSalva");
+  await clicarSel("#notaVisualizacao");
+  const tituloNota = await responderDialogo("alternativa");
+  teste("Todas as Contas: clicar na nota pergunta e SALVAR NO COMPUTADOR grava em Downloads",
+    String(tituloNota).includes("NOTA FISCAL") && await esperarPredicado("!!document.body.dataset.notaSalva", 6000) &&
+    fs.readFileSync(await js("document.body.dataset.notaSalva"), "latin1").startsWith("%PDF"), String(tituloNota));
+  const abertosAntes = arquivosAbertos.length;
+  await clicarSel("#notaVisualizacao");
+  await responderDialogo("confirmar");
+  teste("Todas as Contas: IMPRIMIR a nota em PDF abre o arquivo no leitor",
+    await esperarNotificacao("Ctrl+P") && arquivosAbertos.length > abertosAntes, await notificacoes());
+  await clicarSel("#btnExcluirNota");
+  const tituloExcluirNota = await responderDialogo("confirmar");
+  teste("Todas as Contas: EXCLUIR NOTA confirma e deixa a conta sem nota",
+    String(tituloExcluirNota).includes("EXCLUIR") && await esperarNotificacao("Nota fiscal excluída") &&
+    await esperarPredicado("!document.getElementById('notaVazia').classList.contains('hidden') && document.getElementById('detailAnexo').textContent === 'Não anexada'", 5000),
+    await texto("#detailAnexo"));
+  const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  // a janela nativa "Abrir arquivo" (botao ANEXAR NOTA) nao e automatizavel: o arquivo entra direto no input
+  teste("Todas as Contas: sem nota, aparece o quadro 'Nenhuma nota fiscal anexada' com ANEXAR NOTA FISCAL",
+    (await texto("#notaVaziaTitulo")) === "Nenhuma nota fiscal anexada" &&
+    await js("document.getElementById('btnAnexarNotaVazia').offsetParent !== null && document.getElementById('btnTrocarNota').classList.contains('hidden')"));
+  await capturar("06a-todas-as-contas-sem-nota");
+  await js(`(() => { const b = Uint8Array.from(atob(${JSON.stringify(png)}), (c) => c.charCodeAt(0)); const dt = new DataTransfer();
+    dt.items.add(new File([b], 'foto nota 14892.png', { type: 'image/png' }));
+    const i = document.getElementById('inputNovaNota'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+  teste("Todas as Contas: ANEXAR NOTA com foto mostra a imagem abaixo da edição",
+    await esperarNotificacao("Nota fiscal anexada") && await esperarPredicado("!!document.querySelector('#notaConteudo img') && document.getElementById('detailAnexo').textContent.includes('.png')", 6000),
+    await texto("#detailAnexo"));
+  await capturar("06b-todas-as-contas-nota-foto");
   await escolher("#fieldSelect", "valor");
   await digitarEm("#newValueInput", "150000");
   teste("Todas as Contas: máscara de moeda no editor", (await valor("#newValueInput")) === "1.500,00", await valor("#newValueInput"));

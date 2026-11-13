@@ -74,6 +74,11 @@ public class ContaController {
                 .body(pdf);
     }
 
+    @DeleteMapping("/{id}/anexo")
+    public Conta removerAnexo(@PathVariable long id) {
+        return service.removerAnexo(id);
+    }
+
     @PostMapping
     public ResponseEntity<Conta> cadastrar(@RequestBody ContaRequest requisicao) {
         Conta criada = service.cadastrar(paraModelo(requisicao), decodificarAnexo(requisicao),

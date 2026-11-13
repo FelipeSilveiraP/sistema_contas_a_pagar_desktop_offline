@@ -246,6 +246,32 @@ class ContaApiTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
                         .contentType(MediaType.APPLICATION_PDF));
 
+        // trocar a nota: PUT com outro arquivo (foto PNG) substitui nome e conteudo
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0x0D};
+        String corpoTroca = json.writeValueAsString(new ContaController.ContaRequest(
+                "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", "Material",
+                null, new BigDecimal("10.00"), LocalDate.parse("2026-12-10"),
+                true, "foto-nota.png", Base64.getEncoder().encodeToString(png), false, true));
+        mvc.perform(put("/api/contas/" + id).header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoTroca))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anexoNome").value("foto-nota.png"));
+        mvc.perform(get("/api/contas/" + id + "/anexo").header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentType(MediaType.IMAGE_PNG));
+
+        // excluir a nota: a conta fica sem anexo e o download responde 404
+        mvc.perform(delete("/api/contas/" + id + "/anexo").header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.anexoNome").doesNotExist())
+                .andExpect(jsonPath("$.valor").value(10.00));
+        mvc.perform(get("/api/contas/" + id + "/anexo").header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isNotFound());
+        mvc.perform(delete("/api/contas/999999999/anexo").header("X-FinDesk-Token", TOKEN))
+                .andExpect(status().isNotFound());
+
         // anexo nao-PDF e recusado
         String corpoInvalido = json.writeValueAsString(new ContaController.ContaRequest(
                 "Empresa API Contas", idEmpresa, "Balcão 01", "PJ", "pix", null,

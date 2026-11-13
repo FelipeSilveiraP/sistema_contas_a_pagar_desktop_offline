@@ -10,12 +10,14 @@ import {
   PagamentoDados,
   ErroValidacaoApi,
   ErroApi,
- baixarAnexoConta,
+  baixarAnexoConta,
+  removerAnexoConta,
   listarPagadores,
   PagadorDados,
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
-import { confirmarEstorno, confirmarExclusao } from "../componentes";
+import { confirmar, confirmarEstorno, confirmarExclusao } from "../componentes";
+import { escolher } from "../dialogos";
 import { notificar } from "../notificacoes";
 import { imprimirDocumento, cabecalhoFolha, tabelaCampos, assinaturas, criar } from "../impressao";
 import { ligarExpansaoColunas } from "../tabela-colunas";
@@ -41,6 +43,11 @@ let editor: EditorCampo;
 let filtro: Filtro = "TODOS";
 let pesquisa = "";
 let selecionadoId: number | null = null;
+/** nota fiscal mostrada na area de edicao (chave = id + nome do arquivo) */
+let notaAtual: { chave: string; bytes: Uint8Array; url: string } | null = null;
+
+const LIMITE_NOTA = 10 * 1024 * 1024;
+const EXTENSOES_NOTA = [".pdf", ".jpg", ".jpeg", ".png", ".webp", ".docx"];
 
 function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -174,6 +181,7 @@ function renderTabela(): void {
 
 function fecharEdicao(): void {
   selecionadoId = null;
+  limparNota();
   el("editorContainer").classList.add("hidden");
   mostrarErroEdicao();
   renderTabela();
@@ -197,7 +205,216 @@ function selecionar(id: number): void {
   el("detailStatusText").textContent = statusDerivado(conta).rotulo;
   el("editorRecordName").textContent = `${conta.nomeEmpresa} (${conta.numeroDocumento ?? "s/ doc"})`;
   editor.atualizar();
+  void mostrarNota(conta);
   renderTabela();
+}
+
+// ---------- nota fiscal: visualizar, imprimir/salvar, trocar e excluir ----------
+
+function extensaoNota(nome: string | null): string {
+  return (nome ?? "").split(".").pop()?.toLowerCase() ?? "";
+}
+
+function limparNota(): void {
+  if (notaAtual) URL.revokeObjectURL(notaAtual.url);
+  notaAtual = null;
+  el("notaConteudo").replaceChildren();
+  el("notaVisualizacao").classList.add("hidden");
+  mostrarErroNota();
+}
+
+function mostrarErroNota(mensagem?: string): void {
+  const p = el("notaErro");
+  p.textContent = mensagem ?? "";
+  p.classList.toggle("hidden", !mensagem);
+}
+
+/** Quadro da conta SEM nota: o motivo (nunca anexada, "veio sem nota" ou apagada na limpeza) e o botao de anexar. */
+function mostrarSemNota(conta: ContaDados): void {
+  const [motivo, icone, titulo, texto] = conta.anexoNome && conta.anexoRemovidoEm
+    ? ["apagada", "auto_delete", "Nota apagada na limpeza",
+      `O arquivo "${conta.anexoNome}" foi apagado em ${formatarDataBR(conta.anexoRemovidoEm)} na limpeza trimestral das contas pagas. Se ainda tiver a nota, anexe de novo.`]
+    : conta.semNotaFiscal
+      ? ["sem-nota", "receipt_long", "Conta sem nota fiscal",
+        "Esta conta foi cadastrada como \"veio sem nota\". Se a nota chegar depois, anexe aqui."]
+      : ["nao-anexada", "note_add", "Nenhuma nota fiscal anexada",
+        "Esta conta ainda não tem nota fiscal. Anexe o PDF, a foto ou o arquivo do Word da nota."];
+  el("notaVazia").dataset.motivo = motivo;
+  el("notaVaziaIcone").textContent = icone;
+  el("notaVaziaTitulo").textContent = titulo;
+  el("notaVaziaTexto").textContent = texto;
+}
+
+/** Mostra a nota da conta logo abaixo da edicao (foto, PDF ou cartao do Word). */
+async function mostrarNota(conta: ContaDados): Promise<void> {
+  const disponivel = notaDisponivel(conta);
+  el("btnTrocarNota").classList.toggle("hidden", !disponivel);
+  el("btnExcluirNota").classList.toggle("hidden", !disponivel);
+  el("notaVazia").classList.toggle("hidden", disponivel);
+  if (!disponivel) {
+    limparNota();
+    mostrarSemNota(conta);
+    return;
+  }
+  const chave = `${conta.id}:${conta.anexoNome}`;
+  if (notaAtual?.chave === chave) return;
+  limparNota();
+  let bytes: Uint8Array;
+  try {
+    bytes = await baixarAnexoConta(await window.finDesk!.config(), conta.id);
+  } catch (erro) {
+    console.error("[ContasAPagar] falha ao ler a nota fiscal:", erro);
+    mostrarErroNota("Não foi possível carregar a nota fiscal. Feche e abra a conta de novo.");
+    return;
+  }
+  // o usuario pode ter clicado em outra conta enquanto a nota carregava
+  if (selecionadoId !== conta.id || notaAtual) return;
+  const ext = extensaoNota(conta.anexoNome);
+  const mime = ext === "pdf" ? "application/pdf" : MIME_IMAGEM[ext] ?? "application/octet-stream";
+  const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mime }));
+  notaAtual = { chave, bytes, url };
+  const conteudo = el("notaConteudo");
+  if (ext === "pdf") {
+    // sem eventos de mouse/foco (CSS): o clique vai para o quadro, nao para o leitor de PDF
+    const quadro = document.createElement("embed");
+    quadro.type = "application/pdf";
+    quadro.title = `Nota fiscal ${conta.anexoNome}`;
+    quadro.tabIndex = -1;
+    quadro.src = `${url}#toolbar=0&navpanes=0&view=FitH`;
+    conteudo.appendChild(quadro);
+  } else if (MIME_IMAGEM[ext]) {
+    const img = document.createElement("img");
+    img.alt = `Nota fiscal ${conta.anexoNome}`;
+    img.src = url;
+    conteudo.appendChild(img);
+  } else {
+    const cartao = criar("div", "nota-visualizacao__arquivo");
+    cartao.append(
+      criar("span", "material-symbols-outlined text-5xl", "description"),
+      criar("span", "", conta.anexoNome ?? "nota-fiscal.docx"),
+      criar("span", "text-neutral-600", "Arquivo do Word: não dá para mostrar aqui. Clique para abrir no Word ou salvar."),
+    );
+    conteudo.appendChild(cartao);
+  }
+  el("notaVisualizacao").classList.remove("hidden");
+}
+
+/** Clique na nota: o usuario escolhe imprimir ou salvar no computador. */
+async function acaoNota(): Promise<void> {
+  const conta = contas.find((c) => c.id === selecionadoId);
+  if (!conta || !notaAtual || !conta.anexoNome) return;
+  const bytes = notaAtual.bytes;
+  const resposta = await escolher({
+    titulo: "NOTA FISCAL",
+    mensagem: `O que deseja fazer com a nota "${conta.anexoNome}"?`,
+    textoConfirmar: "IMPRIMIR",
+    textoAlternativa: "SALVAR NO COMPUTADOR",
+    icone: "receipt_long",
+  });
+  if (resposta === "confirmar") await imprimirNota(conta, bytes);
+  else if (resposta === "alternativa") await salvarNotaNoComputador(conta, bytes);
+}
+
+/** Grava a nota em Downloads e devolve o caminho (lanca erro se falhar). */
+async function gravarNota(conta: ContaDados, bytes: Uint8Array): Promise<string> {
+  const salvo = await window.finDesk!.salvarNota(conta.anexoNome ?? "nota-fiscal.pdf", bytes);
+  if (!salvo.ok || !salvo.caminho) throw new Error("falha ao gravar");
+  document.body.dataset.notaSalva = salvo.caminho;
+  return salvo.caminho;
+}
+
+async function salvarNotaNoComputador(conta: ContaDados, bytes?: Uint8Array): Promise<void> {
+  try {
+    const dados = bytes ?? await baixarAnexoConta(await window.finDesk!.config(), conta.id);
+    const caminho = await gravarNota(conta, dados);
+    notificar("Nota fiscal salva em Downloads.", "sucesso", {
+      rotulo: "Abrir",
+      aoClicar: () => void window.finDesk!.abrirNota(caminho),
+    });
+  } catch (erro) {
+    notificar("Não foi possível salvar a nota fiscal. Tente de novo.", "erro");
+    console.error("[ContasAPagar] falha ao salvar a nota:", erro);
+  }
+}
+
+/** Foto: folha A4 so com a imagem. PDF/Word: abre o proprio arquivo no programa padrao (Ctrl+P). */
+async function imprimirNota(conta: ContaDados, bytes: Uint8Array): Promise<void> {
+  const ext = extensaoNota(conta.anexoNome);
+  if (MIME_IMAGEM[ext]) {
+    const imagem = `data:${MIME_IMAGEM[ext]};base64,${bytesParaBase64(bytes)}`;
+    await imprimirDocumento(`Nota ${conta.nomeEmpresa}`, (folha) => {
+      const pagina = criar("section", "folha__pagina");
+      pagina.appendChild(cabecalhoFolha(`Nota fiscal — ${conta.nomeEmpresa}`));
+      const img = criar("img", "folha__imagem");
+      img.alt = "Nota fiscal anexada";
+      img.src = imagem;
+      pagina.appendChild(img);
+      folha.appendChild(pagina);
+    }, { retrato: true });
+    return;
+  }
+  try {
+    const caminho = await gravarNota(conta, bytes);
+    if (!(await window.finDesk!.abrirNota(caminho))) throw new Error("falha ao abrir");
+    notificar(ext === "pdf"
+      ? "Nota fiscal aberta no leitor de PDF: use Ctrl+P para imprimir."
+      : "Nota fiscal aberta no Word: use Ctrl+P para imprimir.", "sucesso");
+  } catch (erro) {
+    notificar("Não foi possível abrir a nota fiscal para imprimir. Tente de novo.", "erro");
+    console.error("[ContasAPagar] falha ao abrir a nota para imprimir:", erro);
+  }
+}
+
+async function trocarNota(arquivo: File | undefined): Promise<void> {
+  mostrarErroNota();
+  const conta = contas.find((c) => c.id === selecionadoId);
+  if (!arquivo || !conta) return;
+  if (!EXTENSOES_NOTA.some((ext) => arquivo.name.toLowerCase().endsWith(ext))) {
+    mostrarErroNota("Formato não aceito. Envie PDF, foto (JPG, PNG ou WEBP) ou Word (.docx).");
+    return;
+  }
+  if (arquivo.size === 0 || arquivo.size > LIMITE_NOTA) {
+    mostrarErroNota("O arquivo deve ter no máximo 10 MB.");
+    return;
+  }
+  if (notaDisponivel(conta) && !(await confirmar({
+    titulo: "TROCAR A NOTA FISCAL?",
+    mensagem: `A nota "${conta.anexoNome}" será substituída por "${arquivo.name}".`,
+    textoConfirmar: "TROCAR NOTA",
+    tom: "atencao",
+  }))) return;
+  try {
+    const bytes = new Uint8Array(await arquivo.arrayBuffer());
+    await atualizarConta(await window.finDesk!.config(), conta.id, {
+      ...dadosDaConta(conta),
+      anexoNome: arquivo.name,
+      anexoPdfBase64: bytesParaBase64(bytes),
+      semNotaFiscal: false,
+    });
+    await recarregar();
+    notificar("Nota fiscal anexada.");
+  } catch (erro) {
+    if (erro instanceof ErroValidacaoApi) {
+      mostrarErroNota(erro.campos.anexo ?? Object.values(erro.campos)[0] ?? "Arquivo recusado.");
+    } else {
+      mostrarErroNota("Não foi possível anexar a nota fiscal. Tente de novo.");
+      console.error("[ContasAPagar] falha ao trocar a nota:", erro);
+    }
+  }
+}
+
+async function excluirNota(): Promise<void> {
+  const conta = contas.find((c) => c.id === selecionadoId);
+  if (!conta || !notaDisponivel(conta)) return;
+  if (!(await confirmarExclusao(`a nota fiscal "${conta.anexoNome}" desta conta`))) return;
+  try {
+    await removerAnexoConta(await window.finDesk!.config(), conta.id);
+    await recarregar();
+    notificar("Nota fiscal excluída. Use ANEXAR NOTA para colocar outra.");
+  } catch (erro) {
+    mostrarErroNota("Não foi possível excluir a nota fiscal. Tente de novo.");
+    console.error("[ContasAPagar] falha ao excluir a nota:", erro);
+  }
 }
 
 /** O arquivo da nota ainda esta no banco (a limpeza trimestral apaga os antigos). */
@@ -267,13 +484,9 @@ async function estornar(conta: ContaDados): Promise<void> {
   }
 }
 
-async function aplicarAlteracao(): Promise<void> {
-  const conta = contas.find((c) => c.id === selecionadoId);
-  if (!conta) return;
-  const campo = editor.campo();
-  const bruto = editor.ler();
-  const erros: Record<string, string> = {};
-  const patch = {
+/** Dados atuais da conta no formato do PUT (sem anexo: o arquivo existente e preservado). */
+function dadosDaConta(conta: ContaDados) {
+  return {
     nomeEmpresa: conta.nomeEmpresa,
     // sem isto o PUT gravava id_empresa = NULL e apagava o vinculo com a empresa emissora
     idEmpresa: conta.idEmpresa ?? undefined,
@@ -288,6 +501,15 @@ async function aplicarAlteracao(): Promise<void> {
     semNotaFiscal: conta.semNotaFiscal,
     forcar: true,
   };
+}
+
+async function aplicarAlteracao(): Promise<void> {
+  const conta = contas.find((c) => c.id === selecionadoId);
+  if (!conta) return;
+  const campo = editor.campo();
+  const bruto = editor.ler();
+  const erros: Record<string, string> = {};
+  const patch = dadosDaConta(conta);
   switch (campo) {
     case "vencimento": {
       const iso = parseDataBR(bruto);
@@ -568,25 +790,27 @@ function iniciar(): void {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) void imprimirConta(conta);
   });
-  el("btnBaixarAnexo").addEventListener("click", async () => {
+  el("btnBaixarAnexo").addEventListener("click", () => {
     const conta = contas.find((c) => c.id === selecionadoId);
-    if (!conta || !conta.anexoNome || !notaDisponivel(conta)) return;
-    try {
-      const cfg = await window.finDesk!.config();
-      const bytes = await baixarAnexoConta(cfg, conta.id);
-      const salvo = await window.finDesk!.salvarNota(conta.anexoNome, bytes);
-      if (!salvo.ok || !salvo.caminho) throw new Error("falha ao gravar");
-      const caminho = salvo.caminho;
-      document.body.dataset.notaSalva = caminho;
-      notificar("Nota fiscal salva em Downloads.", "sucesso", {
-        rotulo: "Abrir",
-        aoClicar: () => void window.finDesk!.abrirNota(caminho),
-      });
-    } catch (erro) {
-      notificar("Não foi possível salvar a nota fiscal. Tente de novo.", "erro");
-      console.error("[ContasAPagar] falha ao baixar anexo:", erro);
-    }
+    if (conta && notaDisponivel(conta)) void salvarNotaNoComputador(conta);
   });
+  // nota fiscal mostrada abaixo da edicao: clique (ou Enter/Espaco) = imprimir ou salvar
+  const visualizacao = el("notaVisualizacao");
+  visualizacao.addEventListener("click", () => void acaoNota());
+  visualizacao.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Enter" && evento.key !== " ") return;
+    evento.preventDefault();
+    void acaoNota();
+  });
+  const inputNota = el<HTMLInputElement>("inputNovaNota");
+  el("btnTrocarNota").addEventListener("click", () => inputNota.click());
+  el("btnAnexarNotaVazia").addEventListener("click", () => inputNota.click());
+  inputNota.addEventListener("change", () => {
+    const arquivo = inputNota.files?.[0];
+    inputNota.value = "";
+    void trocarNota(arquivo);
+  });
+  el("btnExcluirNota").addEventListener("click", () => void excluirNota());
 
   void verificarApi();
   void recarregar();

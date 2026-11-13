@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Controle de Boletos — Sistema de Contas a Pagar — Chaveiro Universal</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-hashes' 'sha256-jpJOxTrdc58x4woq2mVygDDIvjIAGNkLZ2yfx4ppdXo=' 'sha256-tbWZ4NP1341cpcrZVDn7B3o9bt/muXgduILAnC0Zbaw='; font-src 'self'; img-src 'self' data: blob:; frame-src blob:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src blob:; base-uri 'self'">
 <link href="../css/fonts.css" rel="stylesheet">
 <link href="../dist/tailwind.css" rel="stylesheet">
 </head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased selection:bg-[#FFE600] selection:text-black" data-tela="todas-as-contas">
@@ -112,6 +112,28 @@
 <span>DESFAZER</span>
 </button>
 </div>
+</div>
+</div>
+<div class="flex flex-col gap-3 border-t-2 border-dashed border-[#1c1b1b] pt-4" id="notaPainel">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<span class="font-mono text-xs font-bold uppercase text-neutral-600">Nota fiscal da conta</span>
+<div class="flex flex-wrap gap-2">
+<button class="btn-acao bg-white hover:bg-neutral-100 hidden" id="btnTrocarNota" type="button"><span class="material-symbols-outlined text-base font-bold">upload_file</span>TROCAR NOTA</button>
+<button class="btn-acao bg-white hover:bg-[#ffdad6] text-[#ba1a1a] hidden" id="btnExcluirNota" type="button"><span class="material-symbols-outlined text-base font-bold">delete</span>EXCLUIR NOTA</button>
+</div>
+</div>
+<input class="hidden" id="inputNovaNota" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,application/pdf,image/jpeg,image/png,image/webp">
+<p class="campo-erro hidden font-headline text-xs font-bold text-[#ba1a1a]" id="notaErro"></p>
+<div class="nota-visualizacao hidden" id="notaVisualizacao" role="button" tabindex="0" title="Clique para imprimir ou salvar a nota fiscal" aria-label="Nota fiscal anexada — clique para imprimir ou salvar">
+<div class="nota-visualizacao__conteudo" id="notaConteudo"></div>
+<span class="nota-visualizacao__dica"><span class="material-symbols-outlined text-base" aria-hidden="true">print</span>Clique na nota para imprimir ou salvar</span>
+</div>
+<div class="nota-vazia" id="notaVazia" data-motivo="nao-anexada">
+<span class="material-symbols-outlined nota-vazia__icone" id="notaVaziaIcone" aria-hidden="true">note_add</span>
+<p class="nota-vazia__titulo" id="notaVaziaTitulo">Nenhuma nota fiscal anexada</p>
+<p class="nota-vazia__texto" id="notaVaziaTexto">Esta conta ainda não tem nota fiscal.</p>
+<button class="btn-acao bg-[#FFE600] hover:bg-[#ebd300] shadow-[3px_3px_0px_0px_#1c1b1b]" id="btnAnexarNotaVazia" type="button"><span class="material-symbols-outlined text-base font-bold">upload_file</span>ANEXAR NOTA FISCAL</button>
+<span class="nota-vazia__formatos">PDF, foto (JPG, PNG ou WEBP) ou Word (.docx) — até 10 MB</span>
 </div>
 </div>
 </div>

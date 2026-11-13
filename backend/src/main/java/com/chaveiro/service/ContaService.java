@@ -114,6 +114,19 @@ public class ContaService {
         }
     }
 
+    /** Exclui so a nota fiscal anexada; a conta passa a "Não anexada" e aceita outra nota. */
+    public Conta removerAnexo(long id) {
+        try {
+            if (!repository.removerAnexo(id)) {
+                throw new RecursoNaoEncontradoException("conta");
+            }
+            return repository.buscarPorId(id).orElseThrow(() -> new RecursoNaoEncontradoException("conta"));
+        } catch (SQLException erro) {
+            log.error("falha ao remover a nota fiscal da conta id={}", id, erro);
+            throw new IllegalStateException("falha ao remover a nota fiscal", erro);
+        }
+    }
+
     public void excluir(long id) {
         try {
             if (!repository.excluir(id)) {

@@ -206,6 +206,21 @@ public class ContaRepository {
         }
     }
 
+    /** Apaga o arquivo da nota fiscal (nome e bytes); os demais dados da conta ficam. */
+    public boolean removerAnexo(long id) throws SQLException {
+        String sql = "UPDATE contas_a_pagar SET anexo_nome = NULL, anexo_pdf = NULL, anexo_removido_em = NULL"
+                + " WHERE id_conta = ?";
+        try (Connection conn = conexao.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, id);
+            int linhas = stmt.executeUpdate();
+            if (linhas > 0) {
+                log.info("nota fiscal removida da conta (id={})", id);
+            }
+            return linhas > 0;
+        }
+    }
+
     public Optional<byte[]> buscarAnexoPdf(long id) throws SQLException {
         String sql = "SELECT anexo_pdf FROM contas_a_pagar WHERE id_conta = ?";
         try (Connection conn = conexao.getConnection();

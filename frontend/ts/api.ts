@@ -66,6 +66,15 @@ export async function baixarAnexoConta(cfg: FinDeskConfig, id: number): Promise<
   return new Uint8Array(await resposta.arrayBuffer());
 }
 
+/** Exclui so o arquivo da nota fiscal; a conta continua e aceita outra nota. */
+export async function removerAnexoConta(cfg: FinDeskConfig, id: number): Promise<void> {
+  const resposta = await fetch(`http://127.0.0.1:${cfg.port}/api/contas/${id}/anexo`, {
+    method: "DELETE",
+    headers: { "X-FinDesk-Token": cfg.token },
+  });
+  if (!resposta.ok) throw new ErroApi(resposta.status);
+}
+
 export function buscarStatus(cfg: FinDeskConfig): Promise<StatusApi> {
   return get<StatusApi>(cfg, "/api/status");
 }
