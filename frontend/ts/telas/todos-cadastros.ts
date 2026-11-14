@@ -236,19 +236,6 @@ function valorAtual(campo: string): string {
   return campo === "chavePix" ? b.chavePix ?? "" : b.instituicao;
 }
 
-function resumo(): string {
-  if (tipo === "empresas") {
-    const e = empresaSel();
-    return e ? [e.cnpj ? formatarCNPJ(e.cnpj) : "sem CNPJ", e.telefones.map((t) => formatarTelefone(t.numero)).join(" / ") || "sem telefone"].join(" · ") : "—";
-  }
-  if (tipo === "pagadores") {
-    const p = pagadorSel();
-    return p ? [p.cpf ? formatarCPF(p.cpf) : "sem CPF", p.funcao ?? "sem função"].join(" · ") : "—";
-  }
-  const b = bancoSel();
-  return b ? `Pix: ${b.chavePix ?? "—"}` : "—";
-}
-
 function nomeSelecionado(): string {
   if (tipo === "empresas") return empresaSel()?.razaoSocial ?? "—";
   if (tipo === "pagadores") return pagadorSel()?.nome ?? "—";
@@ -259,8 +246,6 @@ function abrirPainel(id: number): void {
   selecionadoId = id;
   el("editorContainer").classList.remove("hidden");
   el("editorRecordName").textContent = nomeSelecionado();
-  el("detailTipo").textContent = ROTULOS[tipo];
-  el("detailResumo").textContent = resumo();
   editor.recarregarCampos();
   if (tipo === "empresas") preencherTelefones(empresaSel()?.telefones ?? []);
   editor.atualizar();

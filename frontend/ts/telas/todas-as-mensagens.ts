@@ -114,8 +114,6 @@ function selecionar(id: number): void {
   if (!aviso) return;
   el("editorContainer").classList.remove("hidden");
   el("editorRecordName").textContent = aviso.titulo;
-  el("detailPeriodo").textContent = `${formatarDataBR(aviso.dataInicio)} a ${formatarDataBR(aviso.dataFim)}`;
-  el("detailDias").textContent = aviso.diaSemana;
   editor.atualizar();
   renderTabela();
 }

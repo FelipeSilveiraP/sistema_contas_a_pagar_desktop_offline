@@ -82,13 +82,7 @@ function selecionar(id: number): void {
   selecionadoId = id;
   const pagamento = pagamentos.find((p) => p.id === id);
   if (!pagamento) return;
-  const conta = contaDo(pagamento.idConta);
   el("editorContainer").classList.remove("hidden");
-  el("detailStatusText").textContent = "PAGO";
-  el("detailDoc").textContent = conta?.numeroDocumento ?? "—";
-  el("detailDate").textContent = formatarDataBR(conta?.vencimento ?? "");
-  el("detailAmount").textContent = formatarMoedaBR(Math.round(pagamento.valorPago * 100));
-  el("detailBank").textContent = pagamento.instituicaoBanco ?? "—";
   el("editorRecordName").textContent = `${pagamento.nomeEmpresa} (${formatarDataBR(pagamento.dataPagamento)})`;
   editor.atualizar();
   renderTabela();

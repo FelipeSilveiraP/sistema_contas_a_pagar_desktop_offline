@@ -106,10 +106,6 @@ function selecionar(id: number): void {
   if (!conta) return;
   el("editorContainer").classList.remove("hidden");
   el("editorRecordName").textContent = `${conta.nomeEmpresa} (${formatarDataBR(conta.vencimento)})`;
-  el("detailStatusText").textContent = conta.status === "PAGO" ? "PAGO" : "PENDENTE";
-  el("detailDate").textContent = formatarDataBR(conta.vencimento);
-  el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
-  el("detailPayer").textContent = conta.pagadorResponsavel;
   editor.atualizar();
   renderTabela();
 }

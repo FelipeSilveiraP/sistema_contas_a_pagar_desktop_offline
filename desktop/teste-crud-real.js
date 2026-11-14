@@ -308,7 +308,7 @@ async function executar() {
   teste("Todas as Contas: busca sem resultado esvazia a lista", await esperarPredicado(`document.querySelectorAll('#tableBody tr.bill-row').length === 0`, 3000));
   await digitarEm("#searchInput", "silca");
   await clicar(linhaConta);
-  teste("Todas as Contas: área de edição mostra a nota fiscal anexada", (await texto("#detailAnexo")).includes("14892"));
+  teste("Todas as Contas: área de edição mostra a nota fiscal anexada", await esperarPredicado("!!document.querySelector('#notaConteudo embed')", 6000));
   teste("Todas as Contas: colunas extras escondidas até clicar em »", await js(`getComputedStyle(document.querySelector('#billsTable th.col-extra')).display === 'none'`));
   await clicarSel("#btnExpandirColunas");
   teste("Todas as Contas: » mostra as colunas extras", await js(`getComputedStyle(document.querySelector('#billsTable th.col-extra')).display !== 'none'`));
@@ -335,8 +335,8 @@ async function executar() {
   const tituloExcluirNota = await responderDialogo("confirmar");
   teste("Todas as Contas: EXCLUIR NOTA confirma e deixa a conta sem nota",
     String(tituloExcluirNota).includes("EXCLUIR") && await esperarNotificacao("Nota fiscal excluída") &&
-    await esperarPredicado("!document.getElementById('notaVazia').classList.contains('hidden') && document.getElementById('detailAnexo').textContent === 'Não anexada'", 5000),
-    await texto("#detailAnexo"));
+    await esperarPredicado("!document.getElementById('notaVazia').classList.contains('hidden')", 5000),
+    await texto("#notaErro"));
   const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   // a janela nativa "Abrir arquivo" (botao ANEXAR NOTA) nao e automatizavel: o arquivo entra direto no input
   teste("Todas as Contas: sem nota, aparece o quadro 'Nenhuma nota fiscal anexada' com ANEXAR NOTA FISCAL",
@@ -347,8 +347,8 @@ async function executar() {
     dt.items.add(new File([b], 'foto nota 14892.png', { type: 'image/png' }));
     const i = document.getElementById('inputNovaNota'); i.files = dt.files; i.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
   teste("Todas as Contas: ANEXAR NOTA com foto mostra a imagem abaixo da edição",
-    await esperarNotificacao("Nota fiscal anexada") && await esperarPredicado("!!document.querySelector('#notaConteudo img') && document.getElementById('detailAnexo').textContent.includes('.png')", 6000),
-    await texto("#detailAnexo"));
+    await esperarNotificacao("Nota fiscal anexada") && await esperarPredicado("!!document.querySelector('#notaConteudo img')", 6000),
+    await texto("#notaErro"));
   await capturar("06b-todas-as-contas-nota-foto");
   await escolher("#fieldSelect", "valor");
   await digitarEm("#newValueInput", "150000");

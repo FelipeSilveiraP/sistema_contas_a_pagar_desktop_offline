@@ -193,17 +193,9 @@ function selecionar(id: number): void {
   const conta = contas.find((c) => c.id === id);
   if (!conta) return;
   el("editorContainer").classList.remove("hidden");
-  el("detailDate").textContent = formatarDataBR(conta.vencimento);
-  el("detailAmount").textContent = formatarMoedaBR(Math.round(conta.valor * 100));
-  el("detailAnexo").textContent = textoNota(conta);
   el("btnBaixarAnexo").classList.toggle("hidden", !notaDisponivel(conta));
   el<HTMLButtonElement>("btnPayAction").disabled = conta.status === "PAGO";
   el<HTMLButtonElement>("btnUnpayAction").disabled = conta.status !== "PAGO";
-  const pagamento = pagamentos.find((p) => p.idConta === id);
-  el("detailPayment").textContent = pagamento
-    ? `${formatarDataBR(pagamento.dataPagamento)} — ${formatarMoedaBR(Math.round(pagamento.valorPago * 100))}`
-    : "Sem pagamento registrado";
-  el("detailStatusText").textContent = statusDerivado(conta).rotulo;
   el("editorRecordName").textContent = `${conta.nomeEmpresa} (${conta.numeroDocumento ?? "s/ doc"})`;
   editor.atualizar();
   void mostrarNota(conta);
