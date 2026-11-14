@@ -2,7 +2,7 @@
 
 Aplicativo desktop para Windows que substitui a planilha Excel/VBA de contas a pagar do Chaveiro Universal. Funciona **100% sem internet**, com interface de alto contraste (neobrutalista, desenhada no Google Stitch) pensada para usuários leigos, e regras financeiras centralizadas e testadas num backend Java.
 
-> **Status (novembro/2026):** versão **1.3.5**. Todas as fases estão concluídas e o sistema está em uso na loja, com instalador próprio, backup no Google Drive e atualização pelo Drive. Detalhes em [Status](#status).
+> **Status (novembro/2026):** versão **1.3.6**. Todas as fases estão concluídas e o sistema está em uso na loja, com instalador próprio, backup no Google Drive e atualização pelo Drive. Detalhes em [Status](#status).
 
 ---
 
@@ -191,7 +191,10 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 - **Integridade do banco:**
   - transações ACID e chaves estrangeiras ativas;
   - modo WAL, que protege contra desligamento súbito;
-  - migrações versionadas (`PRAGMA user_version`) que só acrescentam, nunca apagam.
+  - migrações versionadas (`PRAGMA user_version`) que só acrescentam, nunca apagam;
+  - transações `IMMEDIATE`, e operações de várias etapas são atômicas (baixa/estorno de pagamento, recorrência com as 12 contas);
+  - gatilhos (triggers) de segurança: conta paga não pode ser excluída, o status da conta é sempre coerente com o pagamento, e o pagamento não muda de conta;
+  - trilha de auditoria automática (`auditoria_operacoes`): toda inclusão, alteração e exclusão de contas e pagamentos fica registrada com o antes e o depois, e não pode ser alterada nem apagada.
 - **Backups automáticos:** feitos via `VACUUM INTO`, que é a cópia segura em modo WAL. Há um backup diário e outro antes de cada migração, os últimos 8 são mantidos, e a restauração verifica a integridade antes.
 - **Repositório sem dados sensíveis:** `.env`, planilhas, bancos SQLite e logs são ignorados pelo Git.
 
@@ -208,6 +211,7 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 | Ajustes de uso — nota obrigatória, impressão formal, edição unificada, backup e atualização pelo Drive, início automático | Concluídos (versão 1.3.0) |
 | Nota fiscal visível — prévia no Inserir Conta; no Controle, ver, imprimir, salvar, trocar e excluir a nota; selos arredondados; emblema maior (só o cadeado) | Concluído (versões 1.3.3 e 1.3.4) |
 | Abrir com o Windows garantido pelo instalador (conferido no Windows real) | Concluído (versão 1.3.5) |
+| Segurança no banco — gatilhos (conta paga não é excluída, status coerente), auditoria automática e transações atômicas | Concluído (versão 1.3.6, esquema v17) |
 
 Pendências conhecidas:
 - validação visual final na resolução do monitor da empresa;

@@ -56,11 +56,15 @@ public class BoletoRecorrenteRepository {
     }
 
     public BoletoRecorrente inserir(BoletoRecorrente dados) throws SQLException {
+        return conexao.emTransacao(conn -> inserir(conn, dados));
+    }
+
+    /** Insercao dentro de uma transacao ja aberta (a recorrencia e as contas geradas juntas). */
+    public BoletoRecorrente inserir(Connection conn, BoletoRecorrente dados) throws SQLException {
         String sql = "INSERT INTO boletos_recorrentes (nome_empresa, id_empresa, pagador_responsavel,"
                 + " categoria, numero_documento, valor_centavos, dia, periodicidade, forma_pagamento, ativo,"
                 + " tipo_pessoa) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = conexao.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             preencher(stmt, dados);
             stmt.executeUpdate();
             try (ResultSet chaves = stmt.getGeneratedKeys()) {
@@ -73,6 +77,11 @@ public class BoletoRecorrenteRepository {
                         dados.ativo(), dados.tipoPessoa());
             }
         }
+    }
+
+    /** Varias gravacoes numa unica transacao (ConnectionFactory.emTransacao). */
+    public <T> T emTransacao(ConnectionFactory.TrabalhoSql<T> trabalho) throws SQLException {
+        return conexao.emTransacao(trabalho);
     }
 
     public boolean atualizar(long id, BoletoRecorrente dados) throws SQLException {

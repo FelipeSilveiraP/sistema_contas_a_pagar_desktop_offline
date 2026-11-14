@@ -114,36 +114,32 @@ public class ContaRepository {
 
     /** Insercao de conta gerada por recorrencia (marca o vinculo id_recorrente). */
     public Conta inserirDeRecorrencia(Conta dados, long idRecorrente) throws SQLException {
+        return conexao.emTransacao(conn -> inserirDeRecorrencia(conn, dados, idRecorrente));
+    }
+
+    /** Mesma insercao, dentro de uma transacao ja aberta (ex.: recorrencia + 12 contas). */
+    public Conta inserirDeRecorrencia(Connection conn, Conta dados, long idRecorrente) throws SQLException {
         String sql = "INSERT INTO contas_a_pagar"
                 + " (nome_empresa, id_empresa, pagador_responsavel, tipo_pessoa, forma_pagamento,"
                 + " categoria, numero_documento, valor_centavos, vencimento, boleto_na_pasta,"
                 + " anexo_nome, anexo_pdf, sem_nota_fiscal, status, id_recorrente)"
                 + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = conexao.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                preencher(stmt, dados, null);
-                stmt.setLong(15, idRecorrente);
-                stmt.executeUpdate();
-                long id;
-                try (ResultSet chaves = stmt.getGeneratedKeys()) {
-                    if (!chaves.next()) {
-                        throw new SQLException("falha ao obter o id da conta inserida");
-                    }
-                    id = chaves.getLong(1);
+        try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            preencher(stmt, dados, null);
+            stmt.setLong(15, idRecorrente);
+            stmt.executeUpdate();
+            long id;
+            try (ResultSet chaves = stmt.getGeneratedKeys()) {
+                if (!chaves.next()) {
+                    throw new SQLException("falha ao obter o id da conta inserida");
                 }
-                conn.commit();
-                log.info("conta recorrente gerada (id={}, recorrente={})", id, idRecorrente);
-                return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
-                        dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
-                        dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
-                        dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.anexoRemovidoEm(), dados.status());
-            } catch (SQLException erro) {
-                conn.rollback();
-                throw erro;
-            } finally {
-                conn.setAutoCommit(true);
+                id = chaves.getLong(1);
             }
+            log.info("conta recorrente gerada (id={}, recorrente={})", id, idRecorrente);
+            return new Conta(id, dados.nomeEmpresa(), dados.idEmpresa(), dados.razaoSocial(),
+                    dados.pagadorResponsavel(), dados.tipoPessoa(), dados.formaPagamento(),
+                    dados.categoria(), dados.numeroDocumento(), dados.valor(), dados.vencimento(),
+                    dados.boletoNaPasta(), dados.anexoNome(), dados.semNotaFiscal(), dados.anexoRemovidoEm(), dados.status());
         }
     }
 
@@ -199,6 +195,10 @@ public class ContaRepository {
                 return linhas > 0;
             } catch (SQLException erro) {
                 conn.rollback();
+                // gatilho trg_conta_paga_nao_exclui (migracao v17)
+                if (erro.getMessage() != null && erro.getMessage().contains("CONTA_COM_PAGAMENTO")) {
+                    throw new ConflitoIntegridadeException("a conta ja possui pagamento registrado");
+                }
                 throw erro;
             } finally {
                 conn.setAutoCommit(true);

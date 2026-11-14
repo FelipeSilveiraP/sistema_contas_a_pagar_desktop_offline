@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import org.slf4j.Logger;
+import org.sqlite.SQLiteConfig;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -51,7 +52,12 @@ public class ConnectionFactory {
     }
 
     public Connection getConnection() throws SQLException {
-        Connection conexao = DriverManager.getConnection("jdbc:sqlite:" + caminhoBanco);
+        // Transacoes IMMEDIATE: quem abre uma transacao de escrita reserva o banco
+        // no BEGIN. Evita o SQLITE_BUSY sem espera (busy_timeout nao ajuda) quando
+        // duas transacoes que comecaram lendo tentam escrever ao mesmo tempo.
+        SQLiteConfig config = new SQLiteConfig();
+        config.setTransactionMode(SQLiteConfig.TransactionMode.IMMEDIATE);
+        Connection conexao = DriverManager.getConnection("jdbc:sqlite:" + caminhoBanco, config.toProperties());
         try (Statement stmt = conexao.createStatement()) {
             stmt.execute("PRAGMA journal_mode = WAL;");
             stmt.execute("PRAGMA synchronous = NORMAL;");
@@ -59,6 +65,32 @@ public class ConnectionFactory {
             stmt.execute("PRAGMA busy_timeout = 5000;");
         }
         return conexao;
+    }
+
+    /** Trabalho que usa a conexao da transacao (nunca abre outra conexao para escrever). */
+    @FunctionalInterface
+    public interface TrabalhoSql<T> {
+        T executar(Connection conn) throws SQLException;
+    }
+
+    /**
+     * Executa varias gravacoes numa UNICA transacao: ou tudo e gravado, ou nada
+     * (rollback em qualquer erro).
+     */
+    public <T> T emTransacao(TrabalhoSql<T> trabalho) throws SQLException {
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                T resultado = trabalho.executar(conn);
+                conn.commit();
+                return resultado;
+            } catch (SQLException | RuntimeException erro) {
+                conn.rollback();
+                throw erro;
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
     }
 
     public Path getCaminhoBanco() {

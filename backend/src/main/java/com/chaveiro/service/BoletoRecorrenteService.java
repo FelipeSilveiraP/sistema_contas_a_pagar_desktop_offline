@@ -66,9 +66,17 @@ public class BoletoRecorrenteService {
         BoletoRecorrente normalizado = normalizar(dados);
         validar(normalizado);
         try {
-            BoletoRecorrente criado = repository.inserir(normalizado);
-            gerarContas(criado);
-            return criado;
+            // a recorrencia e as contas geradas entram JUNTAS: se uma conta falhar,
+            // nada fica gravado (antes sobrava a recorrencia com parte das contas)
+            List<LocalDate> vencimentos = vencimentosAGerar(normalizado);
+            return repository.emTransacao(conn -> {
+                BoletoRecorrente criado = repository.inserir(conn, normalizado);
+                for (LocalDate vencimento : vencimentos) {
+                    contas.inserirDeRecorrencia(conn, contaGerada(criado, vencimento), criado.id());
+                }
+                log.info("recorrencia {}: {} contas geradas", criado.id(), vencimentos.size());
+                return criado;
+            });
         } catch (SQLException erro) {
             log.error("falha ao cadastrar recorrencia", erro);
             throw new IllegalStateException("falha ao salvar a recorrencia", erro);
@@ -89,30 +97,46 @@ public class BoletoRecorrenteService {
         }
     }
 
+    /** Gera as competencias que ainda faltam, todas numa unica transacao. */
     public int gerarContas(BoletoRecorrente recorrente) {
         try {
-            List<LocalDate> gerados = new ArrayList<>();
-            int passo = PASSO_MES.get(recorrente.periodicidade());
-            YearMonth mes = YearMonth.now();
-            YearMonth limite = mes.plusMonths(COMPETENCIAS_A_GERAR);
-            while (!mes.isAfter(limite.minusMonths(1))) {
-                LocalDate vencimento = vencimentoDoMes(mes, recorrente.dia());
-                if (!existeConta(recorrente, vencimento)) {
-                    contas.inserirDeRecorrencia(new Conta(null, recorrente.nomeEmpresa(),
-                            recorrente.idEmpresa(), null, recorrente.pagadorResponsavel(), recorrente.tipoPessoa(),
-                            recorrente.formaPagamento() == null ? "boleto" : recorrente.formaPagamento(),
-                            recorrente.categoria(), recorrente.numeroDocumento(), recorrente.valor(),
-                            vencimento, false, null, false, null, "PENDENTE"), recorrente.id());
-                    gerados.add(vencimento);
+            List<LocalDate> vencimentos = vencimentosAGerar(recorrente);
+            repository.emTransacao(conn -> {
+                for (LocalDate vencimento : vencimentos) {
+                    contas.inserirDeRecorrencia(conn, contaGerada(recorrente, vencimento), recorrente.id());
                 }
-                mes = mes.plusMonths(passo);
-            }
-            log.info("recorrencia {}: {} contas geradas", recorrente.id(), gerados.size());
-            return gerados.size();
+                return null;
+            });
+            log.info("recorrencia {}: {} contas geradas", recorrente.id(), vencimentos.size());
+            return vencimentos.size();
         } catch (SQLException erro) {
             log.error("falha ao gerar contas da recorrencia {}", recorrente.id(), erro);
             throw new IllegalStateException("falha ao gerar as contas recorrentes", erro);
         }
+    }
+
+    /** Vencimentos das proximas 12 competencias que ainda nao existem (anti-duplicacao do VBA). */
+    private List<LocalDate> vencimentosAGerar(BoletoRecorrente recorrente) throws SQLException {
+        List<LocalDate> vencimentos = new ArrayList<>();
+        int passo = PASSO_MES.get(recorrente.periodicidade());
+        YearMonth mes = YearMonth.now();
+        YearMonth limite = mes.plusMonths(COMPETENCIAS_A_GERAR);
+        while (!mes.isAfter(limite.minusMonths(1))) {
+            LocalDate vencimento = vencimentoDoMes(mes, recorrente.dia());
+            if (!existeConta(recorrente, vencimento)) {
+                vencimentos.add(vencimento);
+            }
+            mes = mes.plusMonths(passo);
+        }
+        return vencimentos;
+    }
+
+    private static Conta contaGerada(BoletoRecorrente recorrente, LocalDate vencimento) {
+        return new Conta(null, recorrente.nomeEmpresa(),
+                recorrente.idEmpresa(), null, recorrente.pagadorResponsavel(), recorrente.tipoPessoa(),
+                recorrente.formaPagamento() == null ? "boleto" : recorrente.formaPagamento(),
+                recorrente.categoria(), recorrente.numeroDocumento(), recorrente.valor(),
+                vencimento, false, null, false, null, "PENDENTE");
     }
 
     public void excluir(long id) {

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 16;
+    private static final int VERSAO_ATUAL = 17;
 
     private final ConnectionFactory conexao;
 
@@ -388,7 +388,127 @@ public class DatabaseInitializer {
                 )
                 """,
             };
+            case 17 -> migracaoSeguranca();
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
+        };
+    }
+
+    /** Colunas da conta gravadas na auditoria (o arquivo da nota fica de fora: so "tem_nota"). */
+    private static String jsonConta(String r) {
+        return "json_object('id_conta', " + r + ".id_conta, 'nome_empresa', " + r + ".nome_empresa,"
+                + " 'id_empresa', " + r + ".id_empresa, 'pagador_responsavel', " + r + ".pagador_responsavel,"
+                + " 'tipo_pessoa', " + r + ".tipo_pessoa, 'forma_pagamento', " + r + ".forma_pagamento,"
+                + " 'categoria', " + r + ".categoria, 'numero_documento', " + r + ".numero_documento,"
+                + " 'valor_centavos', " + r + ".valor_centavos, 'vencimento', " + r + ".vencimento,"
+                + " 'boleto_na_pasta', " + r + ".boleto_na_pasta, 'anexo_nome', " + r + ".anexo_nome,"
+                + " 'tem_nota', " + r + ".anexo_pdf IS NOT NULL, 'sem_nota_fiscal', " + r + ".sem_nota_fiscal,"
+                + " 'anexo_removido_em', " + r + ".anexo_removido_em, 'status', " + r + ".status,"
+                + " 'id_recorrente', " + r + ".id_recorrente)";
+    }
+
+    private static String jsonPagamento(String r) {
+        return "json_object('id_pagamento', " + r + ".id_pagamento, 'id_conta', " + r + ".id_conta,"
+                + " 'data_pagamento', " + r + ".data_pagamento, 'valor_pago_centavos', " + r + ".valor_pago_centavos,"
+                + " 'id_banco', " + r + ".id_banco)";
+    }
+
+    private static String auditar(String tabela, String operacao, String idRegistro, String antes, String depois) {
+        return "INSERT INTO auditoria_operacoes (tabela, operacao, id_registro, antes, depois) VALUES ('"
+                + tabela + "', '" + operacao + "', " + idRegistro + ", " + antes + ", " + depois + ");";
+    }
+
+    /**
+     * v17 - gatilhos de seguranca (so acrescenta; nenhum dado existente e alterado):
+     * 1) conta com pagamento nao pode ser excluida (o ON DELETE CASCADE apagava o
+     *    pagamento junto, sem aviso);
+     * 2) status coerente com o pagamento: PAGO so com pagamento, PENDENTE so sem,
+     *    toda conta nasce PENDENTE e o pagamento nao muda de conta;
+     * 3) trilha de auditoria automatica de contas e pagamentos (antes/depois);
+     * 4) a auditoria e somente-inclusao: nao pode ser alterada nem apagada.
+     */
+    private static String[] migracaoSeguranca() {
+        return new String[] {
+            """
+            CREATE TABLE IF NOT EXISTS auditoria_operacoes (
+                id_auditoria INTEGER PRIMARY KEY AUTOINCREMENT,
+                momento TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime')),
+                tabela TEXT NOT NULL,
+                operacao TEXT NOT NULL CHECK (operacao IN ('INSERT', 'UPDATE', 'DELETE')),
+                id_registro INTEGER NOT NULL,
+                antes TEXT,
+                depois TEXT
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_registro ON auditoria_operacoes(tabela, id_registro)",
+            "CREATE INDEX IF NOT EXISTS idx_auditoria_momento ON auditoria_operacoes(momento)",
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_conta_paga_nao_exclui
+            BEFORE DELETE ON contas_a_pagar
+            WHEN EXISTS (SELECT 1 FROM pagamentos WHERE id_conta = OLD.id_conta)
+            BEGIN
+                SELECT RAISE(ABORT, 'CONTA_COM_PAGAMENTO: desfaca o pagamento antes de excluir a conta');
+            END
+            """,
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_conta_nasce_pendente
+            BEFORE INSERT ON contas_a_pagar
+            WHEN NEW.status <> 'PENDENTE'
+            BEGIN
+                SELECT RAISE(ABORT, 'STATUS_INVALIDO: a conta nasce PENDENTE; o PAGO vem do registro do pagamento');
+            END
+            """,
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_status_pago_exige_pagamento
+            BEFORE UPDATE OF status ON contas_a_pagar
+            WHEN NEW.status = 'PAGO' AND NOT EXISTS (SELECT 1 FROM pagamentos WHERE id_conta = NEW.id_conta)
+            BEGIN
+                SELECT RAISE(ABORT, 'STATUS_INVALIDO: conta PAGO sem pagamento registrado');
+            END
+            """,
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_status_pendente_sem_pagamento
+            BEFORE UPDATE OF status ON contas_a_pagar
+            WHEN NEW.status = 'PENDENTE' AND EXISTS (SELECT 1 FROM pagamentos WHERE id_conta = NEW.id_conta)
+            BEGIN
+                SELECT RAISE(ABORT, 'STATUS_INVALIDO: conta PENDENTE com pagamento registrado');
+            END
+            """,
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_pagamento_nao_troca_conta
+            BEFORE UPDATE OF id_conta ON pagamentos
+            WHEN NEW.id_conta <> OLD.id_conta
+            BEGIN
+                SELECT RAISE(ABORT, 'PAGAMENTO_INVALIDO: o pagamento nao pode mudar de conta');
+            END
+            """,
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_conta_insert AFTER INSERT ON contas_a_pagar BEGIN "
+                    + auditar("contas_a_pagar", "INSERT", "NEW.id_conta", "NULL", jsonConta("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_conta_update AFTER UPDATE ON contas_a_pagar"
+                    + " WHEN " + jsonConta("OLD") + " IS NOT " + jsonConta("NEW") + " BEGIN "
+                    + auditar("contas_a_pagar", "UPDATE", "NEW.id_conta", jsonConta("OLD"), jsonConta("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_conta_delete AFTER DELETE ON contas_a_pagar BEGIN "
+                    + auditar("contas_a_pagar", "DELETE", "OLD.id_conta", jsonConta("OLD"), "NULL") + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_pagamento_insert AFTER INSERT ON pagamentos BEGIN "
+                    + auditar("pagamentos", "INSERT", "NEW.id_pagamento", "NULL", jsonPagamento("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_pagamento_update AFTER UPDATE ON pagamentos"
+                    + " WHEN " + jsonPagamento("OLD") + " IS NOT " + jsonPagamento("NEW") + " BEGIN "
+                    + auditar("pagamentos", "UPDATE", "NEW.id_pagamento", jsonPagamento("OLD"), jsonPagamento("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_pagamento_delete AFTER DELETE ON pagamentos BEGIN "
+                    + auditar("pagamentos", "DELETE", "OLD.id_pagamento", jsonPagamento("OLD"), "NULL") + " END",
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_auditoria_nao_altera
+            BEFORE UPDATE ON auditoria_operacoes
+            BEGIN
+                SELECT RAISE(ABORT, 'AUDITORIA_SOMENTE_LEITURA: a auditoria nao pode ser alterada');
+            END
+            """,
+            """
+            CREATE TRIGGER IF NOT EXISTS trg_auditoria_nao_apaga
+            BEFORE DELETE ON auditoria_operacoes
+            BEGIN
+                SELECT RAISE(ABORT, 'AUDITORIA_SOMENTE_LEITURA: a auditoria nao pode ser apagada');
+            END
+            """,
         };
     }
 }
