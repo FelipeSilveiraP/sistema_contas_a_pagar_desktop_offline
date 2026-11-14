@@ -6,7 +6,7 @@
 //    sistema da loja oferece ATUALIZAR quando ve uma versao maior.
 // Tudo isso so vale para o app INSTALADO (app.isPackaged). Em desenvolvimento e
 // nos testes nada e registrado no Windows nem lido do Drive real.
-const { spawn } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
@@ -48,12 +48,52 @@ function lerConfiguracoes(pastaDados, registrarLog) {
   return final;
 }
 
-/** Registra (ou remove) o sistema na inicializacao do Windows. */
-function configurarInicioComWindows(app, config, registrarLog) {
+const CHAVE_RUN = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+/**
+ * Cadastro na inicializacao do Windows, lido e gravado direto no registro com
+ * reg.exe. NAO usa app.setLoginItemSettings: no Electron 33 ele grava o caminho
+ * SEM aspas (o caminho tem espacos) e o getLoginItemSettings ignora o `name`,
+ * respondendo sempre "ausente". Mesmo nome/valor do instalador (instalador.nsh).
+ */
+const registroWindows = {
+  ler() {
+    try {
+      const saida = execFileSync("reg", ["query", CHAVE_RUN, "/v", NOME_INICIO], { encoding: "utf8", windowsHide: true });
+      const linha = saida.split(/\r?\n/).find((l) => l.includes("REG_SZ"));
+      return linha ? linha.slice(linha.indexOf("REG_SZ") + "REG_SZ".length).trim() : null;
+    } catch {
+      return null; // valor inexistente: reg.exe sai com erro
+    }
+  },
+  gravar(valor) {
+    execFileSync("reg", ["add", CHAVE_RUN, "/v", NOME_INICIO, "/t", "REG_SZ", "/d", valor, "/f"], { windowsHide: true, stdio: "ignore" });
+  },
+  apagar() {
+    try {
+      execFileSync("reg", ["delete", CHAVE_RUN, "/v", NOME_INICIO, "/f"], { windowsHide: true, stdio: "ignore" });
+    } catch {
+      // ja nao existia
+    }
+  },
+};
+
+/** Registra (ou remove) o sistema na inicializacao do Windows e confere se ficou gravado. */
+function configurarInicioComWindows(app, config, registrarLog, registro = registroWindows) {
   if (!app.isPackaged) return false;
-  app.setLoginItemSettings({ openAtLogin: Boolean(config.abrirAoLigarComputador), args: [ARG_INICIO], name: NOME_INICIO });
-  registrarLog("INFO", `inicio com o Windows: ${config.abrirAoLigarComputador ? "ligado" : "desligado"}`);
-  return true;
+  const ligar = Boolean(config.abrirAoLigarComputador);
+  const esperado = `"${process.execPath}" ${ARG_INICIO}`;
+  try {
+    if (ligar && registro.ler() !== esperado) registro.gravar(esperado);
+    if (!ligar && registro.ler() !== null) registro.apagar();
+  } catch (erro) {
+    registrarLog("WARN", `inicio com o Windows: falha ao gravar o cadastro: ${erro && erro.message}`);
+  }
+  const atual = registro.ler();
+  const ok = ligar ? atual === esperado : atual === null;
+  registrarLog(ok ? "INFO" : "WARN",
+    `inicio com o Windows: pedido ${ligar ? "ligado" : "desligado"}, cadastro no Windows ${atual ? "presente" : "ausente"}`);
+  return ok;
 }
 
 function caminhoChrome() {

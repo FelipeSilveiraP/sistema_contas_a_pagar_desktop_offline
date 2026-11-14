@@ -22,8 +22,6 @@ function appFalso(empacotado, versao = "1.2.0") {
   return {
     isPackaged: empacotado,
     getVersion: () => versao,
-    chamadasLogin: [],
-    setLoginItemSettings(o) { this.chamadasLogin.push(o); },
     fechou: false,
     quit() { this.fechou = true; },
   };
@@ -55,15 +53,28 @@ function spawnFalso() {
   teste("Arquivo invalido NAO e sobrescrito (o texto do usuario fica)", fs.readFileSync(path.join(dados, "configuracoes.json"), "utf8") === "{ quebrado");
 
   console.log("\n=== Abrir com o Windows ===");
-  const dev = appFalso(false);
-  teste("Em desenvolvimento/testes NAO registra nada no Windows", a.configurarInicioComWindows(dev, cfg, log) === false && dev.chamadasLogin.length === 0);
-  const inst = appFalso(true);
-  a.configurarInicioComWindows(inst, cfg, log);
-  teste("Instalado: registra para abrir ao ligar, com o marcador de inicio automatico",
-    inst.chamadasLogin.length === 1 && inst.chamadasLogin[0].openAtLogin === true && inst.chamadasLogin[0].args.includes(a.ARG_INICIO)
-    && inst.chamadasLogin[0].name === "Contas a Pagar - Chaveiro Universal");
-  a.configurarInicioComWindows(inst, { ...cfg, abrirAoLigarComputador: false }, log);
-  teste("Desligado no configuracoes.json: remove do inicio do Windows", inst.chamadasLogin[1].openAtLogin === false);
+  // registro do Windows simulado (o de verdade e lido/gravado com reg.exe)
+  function registroFalso(perderGravacoes = 0) {
+    return {
+      valor: null, gravacoes: [], perder: perderGravacoes,
+      ler() { return this.valor; },
+      gravar(v) { this.gravacoes.push(v); if (this.perder > 0) { this.perder--; return; } this.valor = v; },
+      apagar() { this.valor = null; },
+    };
+  }
+  const esperado = `"${process.execPath}" ${a.ARG_INICIO}`;
+  const regDev = registroFalso();
+  teste("Em desenvolvimento/testes NAO registra nada no Windows", a.configurarInicioComWindows(appFalso(false), cfg, log, regDev) === false && regDev.gravacoes.length === 0);
+  const reg = registroFalso();
+  teste("Instalado: grava o caminho ENTRE ASPAS com o marcador de inicio automatico",
+    a.configurarInicioComWindows(appFalso(true), cfg, log, reg) === true && reg.valor === esperado);
+  reg.valor = esperado.replace(/"/g, "");
+  a.configurarInicioComWindows(appFalso(true), cfg, log, reg);
+  teste("Cadastro antigo sem aspas (gravado pelo Electron) e corrigido", reg.valor === esperado);
+  teste("Desligado no configuracoes.json: remove do inicio do Windows",
+    a.configurarInicioComWindows(appFalso(true), { ...cfg, abrirAoLigarComputador: false }, log, reg) === true && reg.valor === null);
+  teste("Cadastro que nao fica gravado: avisa no log (WARN) com 'ausente'",
+    a.configurarInicioComWindows(appFalso(true), cfg, log, registroFalso(9)) === false && logs.some((l) => l.startsWith("WARN") && l.includes("ausente")));
 
   console.log("\n=== Chrome com o e-mail ===");
   const shell = { abertos: [], openExternal(u) { this.abertos.push(u); return Promise.resolve(); } };

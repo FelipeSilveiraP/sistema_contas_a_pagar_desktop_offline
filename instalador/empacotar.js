@@ -121,6 +121,8 @@ await etapa("Instalador (electron-builder / NSIS)", () => {
         shortcutName: "Contas a Pagar",
         // os DADOS ficam em %LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar e NUNCA sao apagados
         deleteAppDataOnUninstall: false,
+        // cadastra o sistema na inicializacao do Windows ja na instalacao
+        include: path.join(__dirname, "instalador.nsh"),
       },
     },
   });
