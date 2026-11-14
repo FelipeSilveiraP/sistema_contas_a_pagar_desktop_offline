@@ -9,8 +9,9 @@
     height: 100%;
     overflow-x: hidden;
   }
-  /* NEOBRUTALISMO A RISCA: cantos sempre retos (selos, campos, botoes, checkboxes) */
-  *, *::before, *::after {
+  /* NEOBRUTALISMO A RISCA: cantos sempre retos (campos, botoes, checkboxes).
+     Excecao: os selos de situacao (.selo) sao pilulas, para nao parecerem botoes. */
+  *:not(.selo), *::before, *::after {
     border-radius: 0 !important;
   }
   /* reserva o espaco da barra de rolagem nos dois lados: navbar e conteudo
