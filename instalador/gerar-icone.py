@@ -1,4 +1,4 @@
-"""Gera o emblema do sistema (cadeado neobrutalista) em todos os tamanhos.
+"""Gera o emblema do sistema (cadeado laranja com haste amarela, sem fundo) em todos os tamanhos.
 
 Saidas:
   instalador/icone.ico         -> .exe do sistema, instalador, atalhos (16 a 256 px)
@@ -18,31 +18,31 @@ LARANJA = (255, 140, 0, 255)    # #FF8C00 (cor da chave)
 
 
 def desenhar(lado: int = 1024) -> Image.Image:
+    """So o cadeado, sem placa de fundo, ocupando a imagem inteira (fica maior na
+    barra de tarefas). Haste amarela e corpo laranja, com contorno preto grosso
+    para aparecer tanto na barra clara quanto na escura."""
     img = Image.new("RGBA", (lado, lado), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     u = lado / 1024  # unidade
+    VAZIO = (0, 0, 0, 0)
 
     def ret(x0, y0, x1, y1, cor):
+        # ImageDraw substitui o pixel (sem mistura): VAZIO "recorta" o desenho
         d.rectangle([x0 * u, y0 * u, x1 * u, y1 * u], fill=cor)
 
-    # placa amarela com contorno grosso e sombra dura (deslocada para baixo/direita)
-    ret(152, 152, 960, 960, PRETO)          # sombra
-    ret(64, 64, 872, 872, PRETO)            # contorno
-    ret(120, 120, 816, 816, AMARELO)        # placa
+    # haste (U quadrado): contorno preto, miolo amarelo, vao transparente
+    ret(212, 16, 812, 520, PRETO)
+    ret(252, 56, 772, 520, AMARELO)
+    ret(368, 172, 656, 520, PRETO)
+    ret(408, 212, 616, 520, VAZIO)
 
-    # haste do cadeado (U quadrado, grosso)
-    ret(300, 196, 636, 276, PRETO)          # barra de cima
-    ret(300, 196, 380, 470, PRETO)          # perna esquerda
-    ret(556, 196, 636, 470, PRETO)          # perna direita
-
-    # corpo do cadeado: sombra dura + contorno + laranja
-    ret(248, 452, 744, 776, PRETO)          # sombra do corpo
-    ret(212, 416, 708, 740, PRETO)          # contorno
-    ret(260, 464, 660, 692, LARANJA)        # corpo
+    # corpo: contorno preto + laranja, quase da largura toda
+    ret(40, 420, 984, 1008, PRETO)
+    ret(84, 464, 940, 964, LARANJA)
 
     # buraco da fechadura (quadrado + rasgo, sem curvas)
-    ret(418, 512, 502, 596, PRETO)
-    ret(440, 592, 480, 664, PRETO)
+    ret(440, 584, 584, 728, PRETO)
+    ret(480, 720, 544, 880, PRETO)
     return img
 
 

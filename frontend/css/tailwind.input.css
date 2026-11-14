@@ -994,6 +994,23 @@
   font-weight: 700;
   text-transform: uppercase;
 }
+/* selos de situacao (NAO, VENCE HOJE, PJ, BOLETO...): pilula arredondada, borda
+   fina e sem sombra, para nao parecer botao (botoes sao retangulos com sombra) */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 9999px;
+  font-family: ui-monospace, "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* previa da nota escolhida no Inserir Conta (mesmo desenho do Controle, mais baixa) */
 .nota-previa {
   display: flex;

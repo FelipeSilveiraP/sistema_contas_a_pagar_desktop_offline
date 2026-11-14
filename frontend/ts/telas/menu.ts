@@ -77,7 +77,7 @@ function celula(texto: string, classe: string, rotulo: string): HTMLTableCellEle
 
 function selo(texto: string, cores: string): HTMLSpanElement {
   const s = document.createElement("span");
-  s.className = `inline-block border-2 border-[#1c1b1b] text-[11px] sm:text-xs font-bold uppercase px-2.5 py-0.5 ${cores}`;
+  s.className = `selo ${cores}`;
   s.textContent = texto;
   return s;
 }

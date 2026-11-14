@@ -72,7 +72,7 @@ function renderTabela(): void {
     const tdTipo = celula(conta.tipoPessoa, "py-3.5 px-4 text-center whitespace-nowrap");
     tdTipo.textContent = "";
     const selo = document.createElement("span");
-    selo.className = "inline-block bg-neutral-100 text-neutral-600 border-2 border-[#1c1b1b] px-2.5 py-1 text-xs font-mono font-bold leading-none";
+    selo.className = "selo bg-neutral-100 text-neutral-600";
     selo.textContent = conta.tipoPessoa;
     tdTipo.appendChild(selo);
     tr.append(
