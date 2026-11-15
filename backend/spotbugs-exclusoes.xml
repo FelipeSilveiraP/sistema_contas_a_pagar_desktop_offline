@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Exclusoes do SpotBugs + Find Security Bugs (auditoria de seguranca 2026-11-15).
+  Cada item foi conferido a mao; o CI falha com qualquer achado NOVO.
+-->
+<FindBugsFilter>
+    <!-- Estilo, nao seguranca: records com listas e beans do Spring recebidos no construtor. -->
+    <Match><Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2,CT_CONSTRUCTOR_THROW"/></Match>
+    <!-- Path.getFileName() de arquivos listados numa pasta nunca e nulo. -->
+    <Match><Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/></Match>
+    <!-- Flag "banco pronto" lida pelo /api/status: escrita unica na inicializacao. -->
+    <Match><Class name="com.chaveiro.database.InicializadorBanco"/><Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/></Match>
+    <!-- Falso positivo: migracoes sao textos fixos do codigo e user_version e um int. -->
+    <Match><Class name="com.chaveiro.database.DatabaseInitializer"/><Bug pattern="SQL_INJECTION_JDBC"/></Match>
+    <!-- Falso positivo: o SQL junta apenas trechos fixos ("c.status = ?", colunas); todo
+         valor vai por parametro. Provado por SqlInjectionApiTest. -->
+    <Match><Class name="com.chaveiro.repository.ContaRepository"/><Bug pattern="SQL_INJECTION_JDBC"/></Match>
+    <!-- Falso positivo: o filtro escreve so mensagens fixas em JSON (application/json). -->
+    <Match><Class name="com.chaveiro.web.TokenFilter"/><Bug pattern="XSS_SERVLET"/></Match>
+</FindBugsFilter>

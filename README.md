@@ -2,7 +2,7 @@
 
 Aplicativo desktop para Windows que substitui a planilha Excel/VBA de contas a pagar do Chaveiro Universal. Funciona **100% sem internet**, com interface de alto contraste (neobrutalista, desenhada no Google Stitch) pensada para usuários leigos, e regras financeiras centralizadas e testadas num backend Java.
 
-> **Status (novembro/2026):** versão **1.3.6**. Todas as fases estão concluídas e o sistema está em uso na loja, com instalador próprio, backup no Google Drive e atualização pelo Drive. Detalhes em [Status](#status).
+> **Status (novembro/2026):** versão **1.3.7**. Todas as fases estão concluídas e o sistema está em uso na loja, com instalador próprio, backup no Google Drive e atualização pelo Drive. Detalhes em [Status](#status).
 
 ---
 
@@ -212,6 +212,7 @@ Os erros voltam em JSON padronizado: `400` para dados inválidos (com o erro de 
 | Nota fiscal visível — prévia no Inserir Conta; no Controle, ver, imprimir, salvar, trocar e excluir a nota; selos arredondados; emblema maior (só o cadeado) | Concluído (versões 1.3.3 e 1.3.4) |
 | Abrir com o Windows garantido pelo instalador (conferido no Windows real) | Concluído (versão 1.3.5) |
 | Segurança no banco — gatilhos (conta paga não é excluída, status coerente), auditoria automática e transações atômicas | Concluído (versão 1.3.6, esquema v17) |
+| Auditoria de segurança (OWASP, Semgrep, SpotBugs) + GitHub Actions — ver `docs/seguranca.md` | Concluído (versão 1.3.7, esquema v18) |
 
 Pendências conhecidas:
 - validação visual final na resolução do monitor da empresa;

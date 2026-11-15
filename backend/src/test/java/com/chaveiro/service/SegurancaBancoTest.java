@@ -185,10 +185,30 @@ class SegurancaBancoTest {
         DatabaseInitializer inicializador = new DatabaseInitializer(conexao);
         inicializador.inicializar();
 
-        assertThat(inicializador.lerVersao()).isEqualTo(17);
+        assertThat(inicializador.lerVersao()).isEqualTo(inicializador.getVersaoAtual());
         assertThat(contas.buscarPorId(idConta).orElseThrow().status()).isEqualTo("PAGO");
         assertThat(contar("SELECT COUNT(*) FROM pagamentos WHERE id_conta = " + idConta)).isEqualTo(1);
-        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_%'")).isEqualTo(13);
+        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_%' AND name NOT LIKE '%recorrente%' AND name NOT LIKE '%valor_maximo%'")).isEqualTo(13);
         assertThatThrownBy(() -> contaService.excluir(idConta)).isInstanceOf(ConflitoIntegridadeException.class);
+    }
+
+    @Test
+    void contaFixaEntraNaTrilhaDeAuditoria() throws Exception {
+        BoletoRecorrenteRepository recorrentes = new BoletoRecorrenteRepository(conexao);
+        long id = recorrentes.inserir(new BoletoRecorrente(null, "Aluguel", null, "Gerência", null,
+                null, new BigDecimal("1500.00"), 10, "MENSAL", "boleto", true, "PJ")).id();
+        sql("UPDATE boletos_recorrentes SET valor_centavos = 160000 WHERE id_recorrente = " + id);
+        sql("UPDATE boletos_recorrentes SET valor_centavos = 160000 WHERE id_recorrente = " + id); // sem mudanca: nao registra
+        sql("DELETE FROM boletos_recorrentes WHERE id_recorrente = " + id);
+        assertThat(auditoria("boletos_recorrentes", id)).containsExactly("INSERT", "UPDATE", "DELETE");
+    }
+
+    @Test
+    void bancoRecusaValorAcimaDoTetoMesmoSemPassarPelaApi() {
+        assertThatThrownBy(() -> sql("UPDATE contas_a_pagar SET valor_centavos = 100000000000 WHERE id_conta = " + idConta))
+                .hasMessageContaining("VALOR_INVALIDO");
+        assertThatThrownBy(() -> sql("INSERT INTO pagamentos (id_conta, data_pagamento, valor_pago_centavos)"
+                + " VALUES (" + idConta + ", '2026-12-11', 100000000000)"))
+                .hasMessageContaining("VALOR_INVALIDO");
     }
 }

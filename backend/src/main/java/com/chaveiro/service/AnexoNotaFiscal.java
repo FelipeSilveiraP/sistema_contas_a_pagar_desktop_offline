@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -101,10 +105,76 @@ public final class AnexoNotaFiscal {
         return base + "." + tipo.extensao;
     }
 
-    private static boolean pdfPerigoso(byte[] bytes) {
-        // ISO-8859-1 preserva 1 byte = 1 char: busca simples pelas acoes ativas
+    /** Acoes ativas do PDF (JavaScript, abrir programa). "/JS" so conta como nome inteiro. */
+    private static final Pattern ACAO_PERIGOSA = Pattern.compile("/(JavaScript|Launch|JS)(?![A-Za-z0-9])");
+    private static final Pattern ESCAPE_NOME = Pattern.compile("#([0-9A-Fa-f]{2})");
+    private static final Pattern INICIO_STREAM = Pattern.compile("stream\r?\n");
+
+    /**
+     * Procura acoes ativas no PDF inteiro E dentro dos trechos compactados
+     * (FlateDecode): desde o PDF 1.5 os objetos podem ficar escondidos em
+     * "object streams", e um "/JavaScript" ali nao aparece numa busca simples.
+     * Tambem desfaz o disfarce "#xx" nos nomes (ex.: /J#61vaScript).
+     */
+    static boolean pdfPerigoso(byte[] bytes) {
+        // ISO-8859-1 preserva 1 byte = 1 char
         String conteudo = new String(bytes, StandardCharsets.ISO_8859_1);
-        return conteudo.contains("/JavaScript") || conteudo.contains("/Launch");
+        if (temAcaoPerigosa(conteudo)) {
+            return true;
+        }
+        long descompactado = 0;
+        Matcher inicio = INICIO_STREAM.matcher(conteudo);
+        int busca = 0;
+        while (inicio.find(busca)) {
+            int comeco = inicio.end();
+            int fim = conteudo.indexOf("endstream", comeco);
+            if (fim < 0) {
+                break;
+            }
+            busca = fim;
+            Inflater inflater = new Inflater();
+            try {
+                inflater.setInput(bytes, comeco, fim - comeco);
+                byte[] buffer = new byte[8192];
+                StringBuilder trecho = new StringBuilder();
+                while (!inflater.finished() && !inflater.needsInput()) {
+                    int lidos = inflater.inflate(buffer);
+                    if (lidos == 0 && (inflater.needsDictionary() || inflater.needsInput())) {
+                        break;
+                    }
+                    descompactado += lidos;
+                    if (descompactado > LIMITE_DESCOMPACTADO) {
+                        return true; // "bomba" de compactacao: recusa
+                    }
+                    trecho.append(new String(buffer, 0, lidos, StandardCharsets.ISO_8859_1));
+                }
+                if (temAcaoPerigosa(trecho.toString())) {
+                    return true;
+                }
+            } catch (DataFormatException naoCompactado) {
+                // trecho nao e FlateDecode (imagem JPEG, texto puro...): ja foi lido acima
+            } finally {
+                inflater.end();
+            }
+        }
+        return false;
+    }
+
+    private static boolean temAcaoPerigosa(String texto) {
+        if (ACAO_PERIGOSA.matcher(texto).find()) {
+            return true;
+        }
+        if (texto.indexOf('#') < 0) {
+            return false;
+        }
+        Matcher escape = ESCAPE_NOME.matcher(texto);
+        StringBuilder sb = new StringBuilder(texto.length());
+        while (escape.find()) {
+            escape.appendReplacement(sb, Matcher.quoteReplacement(
+                    String.valueOf((char) Integer.parseInt(escape.group(1), 16))));
+        }
+        escape.appendTail(sb);
+        return ACAO_PERIGOSA.matcher(sb).find();
     }
 
     private static boolean docxValido(byte[] bytes) {

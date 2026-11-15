@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -54,8 +55,10 @@ public class BackupService {
                 destino = getDiretorioBackups().resolve(nome + "_" + sufixo + ".db");
             }
             try (Connection conn = conexao.getConnection();
-                 Statement stmt = conn.createStatement()) {
-                stmt.execute("VACUUM INTO '" + destino.toAbsolutePath().toString().replace("'", "''") + "'");
+                 PreparedStatement stmt = conn.prepareStatement("VACUUM INTO ?")) {
+                // caminho como parametro: nada de SQL montado com texto (OWASP/Semgrep)
+                stmt.setString(1, destino.toAbsolutePath().toString());
+                stmt.execute();
             }
             log.info("backup criado: {}", destino);
             return destino;

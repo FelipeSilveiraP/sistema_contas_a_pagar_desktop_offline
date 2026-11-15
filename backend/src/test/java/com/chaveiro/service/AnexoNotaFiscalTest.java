@@ -111,4 +111,46 @@ class AnexoNotaFiscalTest {
                     .hasMessageContaining("UNIQUE");
         }
     }
+
+    private static byte[] pdfComStream(byte[] conteudoCompactado) throws Exception {
+        ByteArrayOutputStream saida = new ByteArrayOutputStream();
+        saida.write("%PDF-1.7\n1 0 obj<</Type/ObjStm/Filter/FlateDecode>>stream\n".getBytes(StandardCharsets.ISO_8859_1));
+        saida.write(conteudoCompactado);
+        saida.write("\nendstream endobj\ntrailer<<>>\n%%EOF".getBytes(StandardCharsets.ISO_8859_1));
+        return saida.toByteArray();
+    }
+
+    private static byte[] compactar(String texto) {
+        java.util.zip.Deflater deflater = new java.util.zip.Deflater();
+        deflater.setInput(texto.getBytes(StandardCharsets.ISO_8859_1));
+        deflater.finish();
+        byte[] buffer = new byte[4096];
+        int n = deflater.deflate(buffer);
+        deflater.end();
+        return java.util.Arrays.copyOf(buffer, n);
+    }
+
+    @Test
+    void pdfComJavaScriptDisfarcadoERecusado() throws Exception {
+        // nome com escape "#61" = "a": /J#61vaScript e o mesmo que /JavaScript
+        byte[] disfarcado = "%PDF-1.7\n1 0 obj<</S/J#61vaScript/JS(app.alert(1))>>endobj".getBytes(StandardCharsets.ISO_8859_1);
+        assertThat(AnexoNotaFiscal.validar(disfarcado)).isPresent();
+        byte[] soJs = "%PDF-1.7\n1 0 obj<</OpenAction<</S/X/JS (app.alert(1))>>>>endobj".getBytes(StandardCharsets.ISO_8859_1);
+        assertThat(AnexoNotaFiscal.validar(soJs)).isPresent();
+        // escondido dentro de um "object stream" compactado (invisivel numa busca simples)
+        byte[] escondido = pdfComStream(compactar("<</Type/Action/S/JavaScript/JS(app.launchURL('x'))>>"));
+        assertThat(new String(escondido, StandardCharsets.ISO_8859_1)).doesNotContain("JavaScript");
+        assertThat(AnexoNotaFiscal.validar(escondido)).isPresent();
+        byte[] abrePrograma = pdfComStream(compactar("<</S/Launch/F(cmd.exe)>>"));
+        assertThat(AnexoNotaFiscal.validar(abrePrograma)).isPresent();
+    }
+
+    @Test
+    void pdfNormalComTrechosCompactadosContinuaAceito() throws Exception {
+        byte[] normal = pdfComStream(compactar("BT /F1 12 Tf /JSans 1 Tf (Nota fiscal 123) Tj ET"));
+        assertThat(AnexoNotaFiscal.validar(normal)).isEmpty();
+        // trecho que nao e FlateDecode (ex.: imagem) nao atrapalha
+        byte[] binario = pdfComStream(new byte[] {1, 2, 3, 4, 5, 6, 7, 8});
+        assertThat(AnexoNotaFiscal.validar(binario)).isEmpty();
+    }
 }

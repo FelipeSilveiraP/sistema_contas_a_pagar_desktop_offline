@@ -108,6 +108,59 @@ class RotinasAberturaTest {
     }
 
     @Test
+    void backupNuncaApagaArquivosDoUsuarioNoDrive() throws Exception {
+        Path drive = pasta.resolve("Meu Drive");
+        Path sub = drive.resolve(BackupDriveService.SUBPASTA);
+        Files.createDirectories(sub);
+        // arquivos e pastas que NAO sao do sistema (na raiz do Drive e na subpasta)
+        Map<Path, String> alheios = new HashMap<>();
+        for (Path p : new Path[] {drive.resolve("contrato.pdf"), drive.resolve("Contas a Pagar - dados 2020-01-01.xlsx"),
+                sub.resolve("contrato.pdf"), sub.resolve("Contas a Pagar - dados copia.xlsx"),
+                sub.resolve("Contas a Pagar - dados 2026-01-01 (1).xlsx"), sub.resolve("planilha da loja.xlsx"),
+                sub.resolve("Contas a Pagar - dados 2026-01-01.xlsx.bak"), sub.resolve("contas a pagar - dados 2020-01-02.xlsx")}) {
+            Files.writeString(p, "conteudo do usuario " + p.getFileName());
+            alheios.put(p, Files.readString(p));
+        }
+        // subpasta com nome igual ao padrao (nao e arquivo: nunca e apagada) e outra subpasta qualquer
+        Path pastaComNomeDoPadrao = Files.createDirectories(sub.resolve("Contas a Pagar - dados 2000-01-01.xlsx"));
+        Path outraPasta = Files.createDirectories(sub.resolve("fotos"));
+        Files.writeString(outraPasta.resolve("Contas a Pagar - dados 2000-01-02.xlsx"), "dentro de outra pasta");
+        // 35 planilhas antigas do sistema (todas antes de hoje)
+        LocalDate dia = LocalDate.now().minusDays(40);
+        for (int i = 0; i < 35; i++) {
+            Files.writeString(sub.resolve(BackupDriveService.PREFIXO + dia.plusDays(i) + ".xlsx"), "antiga");
+        }
+
+        BackupDriveService.Situacao s = new BackupDriveService(conexao, drive.toString(), "banco-de-teste.db").exportar();
+
+        assertThat(s.estado()).isEqualTo("ok");
+        alheios.forEach((arquivo, conteudo) -> assertThat(arquivo).exists().hasContent(conteudo));
+        assertThat(pastaComNomeDoPadrao).isDirectory();
+        assertThat(outraPasta.resolve("Contas a Pagar - dados 2000-01-02.xlsx")).exists();
+        try (var lista = Files.list(sub)) {
+            assertThat(lista.filter(p -> BackupDriveService.ehPlanilhaDoSistema(p, sub))).hasSize(BackupDriveService.MANTER);
+        }
+        // ficaram as 30 mais recentes, incluindo a de hoje
+        assertThat(sub.resolve(BackupDriveService.PREFIXO + LocalDate.now() + ".xlsx")).exists();
+        assertThat(sub.resolve(BackupDriveService.PREFIXO + dia + ".xlsx")).doesNotExist();
+    }
+
+    @Test
+    void subpastaDeBackupQueEAtalhoNaoEUsada() throws Exception {
+        Path drive = pasta.resolve("Meu Drive");
+        Path outroLugar = Files.createDirectories(pasta.resolve("documentos importantes"));
+        Files.writeString(outroLugar.resolve(BackupDriveService.PREFIXO + "2000-01-01.xlsx"), "nao apagar");
+        Files.createDirectories(drive);
+        try {
+            Files.createSymbolicLink(drive.resolve(BackupDriveService.SUBPASTA), outroLugar);
+        } catch (UnsupportedOperationException | java.io.IOException semPermissao) {
+            return; // Windows sem permissao para criar link: o teste nao se aplica
+        }
+        assertThat(new BackupDriveService(conexao, drive.toString(), "banco-de-teste.db").exportar().estado()).isEqualTo("erro");
+        assertThat(outroLugar.resolve(BackupDriveService.PREFIXO + "2000-01-01.xlsx")).hasContent("nao apagar");
+    }
+
+    @Test
     void comBancoDeTesteESemPastaOBackupFicaDesligado() {
         BackupDriveService backup = new BackupDriveService(conexao, "", "banco-de-teste.db");
         assertThat(backup.exportar().estado()).isEqualTo("desligado");

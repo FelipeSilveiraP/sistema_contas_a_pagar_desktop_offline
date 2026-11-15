@@ -115,6 +115,7 @@ function adicionarLinhaTelefone(): void {
   const lista = document.getElementById("lista-telefones")!;
   const linha = document.createElement("div");
   linha.className = "linha-telefone flex flex-wrap items-center gap-2";
+  // nosemgrep: so modelo fixo do codigo (nenhum dado do usuario ou da API entra aqui)
   linha.innerHTML = `
 <input class="form-campo tel-numero flex-1 min-w-[10rem] border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" inputmode="numeric" maxlength="15" placeholder="(11) 99999-0000" autocomplete="off">
 <input class="form-campo tel-tipo w-36 border-4 border-[#1c1b1b] bg-white px-3 py-2 font-mono text-sm text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none" type="text" maxlength="20" placeholder="Comercial" autocomplete="off">
