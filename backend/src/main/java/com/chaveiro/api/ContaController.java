@@ -9,6 +9,8 @@ import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -67,9 +69,12 @@ public class ContaController {
     public ResponseEntity<byte[]> baixarAnexo(@PathVariable long id) {
         byte[] pdf = service.buscarAnexoPdf(id);
         Conta conta = service.buscarPorId(id);
+        // nome montado pelo Spring (RFC 6266, com acentos em UTF-8): aspas, quebras de
+        // linha e outros caracteres de controle nao conseguem injetar cabecalhos
+        String nome = conta.anexoNome() == null ? "anexo" : conta.anexoNome().replaceAll("[\\p{Cntrl}\"\\\\]", "_");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + (conta.anexoNome() == null ? "anexo" : conta.anexoNome().replace("\"", "")) + "\"")
+                        ContentDisposition.attachment().filename(nome, StandardCharsets.UTF_8).build().toString())
                 .contentType(MediaType.parseMediaType(ContaService.tipoMimeAnexo(pdf)))
                 .body(pdf);
     }

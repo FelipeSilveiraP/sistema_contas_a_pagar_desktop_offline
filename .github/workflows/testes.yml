@@ -1,0 +1,166 @@
+# Testes automaticos no GitHub (rodam na nuvem, com o notebook desligado).
+# Disparam a cada envio (push) e a cada Pull Request; tambem da para rodar a mao
+# em Actions > "Testes" > "Run workflow".
+#
+# Jobs:
+#  1. testes        — Windows: typecheck, build, JUnit, mascaras/filtros/automacoes,
+#                     smoke, smoke-boot e persistencia. TEM que passar.
+#  2. entrada-real  — Windows: smoke-real, smoke-dev e CRUD real (mouse/teclado de
+#                     verdade via SendInput). Instaveis no servidor do GitHub (ver abaixo):
+#                     rodam, mas nao bloqueiam.
+#  3. seguranca     — Linux: dependencias com falha conhecida (npm audit, OSV) e
+#                     analise estatica (SpotBugs + Find Security Bugs, Semgrep).
+name: Testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias (npm ci)
+        run: npm ci
+
+      - name: Conferir tipos (typecheck)
+        run: npm run typecheck
+
+      - name: Montar a interface (build)
+        run: npm run build
+
+      - name: Backend + JUnit (mvn package)
+        run: mvn -B -f backend/pom.xml package
+
+      - name: Mascaras, filtros e automacoes
+        run: npm run test:frontend
+
+      - name: Smoke (navegacao, layout, dialogos)
+        run: npx electron desktop/smoke.js
+
+      - name: Smoke de inicializacao (boot)
+        run: npx electron desktop/smoke-boot.js
+
+      - name: Persistencia (cold start)
+        run: node desktop/teste-persistencia.js
+
+      - name: Guardar relatorios em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-testes
+          path: |
+            backend/target/surefire-reports/
+            docs/responsivo/
+          retention-days: 7
+
+  # Entrada real (SendInput do Windows): move o mouse e digita de verdade. No
+  # servidor do GitHub a sessao grafica nao e a de um usuario sentado na frente
+  # (sem monitor fisico, resolucao 1024x768, foco disputado com o agente do
+  # runner), entao estes testes podem falhar sem que o sistema tenha defeito.
+  # Ficam com continue-on-error: o resultado aparece no relatorio, mas nao
+  # bloqueia o PR. A validacao oficial continua sendo no PC da loja/desenvolvimento.
+  entrada-real:
+    name: Entrada real (Windows, informativo)
+    runs-on: windows-latest
+    needs: testes
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: mvn -B -q -f backend/pom.xml package -DskipTests
+      - name: Smoke real (SendInput)
+        continue-on-error: true
+        run: npx electron desktop/smoke-real.js
+      - name: Smoke dev (regressao do foco dos inputs)
+        continue-on-error: true
+        run: node desktop/smoke-dev.js
+      - name: CRUD real em todas as telas
+        continue-on-error: true
+        run: npx electron desktop/teste-crud-real.js
+
+  seguranca:
+    name: Seguranca (dependencias + analise estatica)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      # BLOQUEIA: o que vai junto com o sistema instalado (pdf-lib) nao pode ter falha alta.
+      - name: npm audit (dependencias do sistema instalado)
+        run: npm audit --omit=dev --audit-level=high
+
+      # Informativo: ferramentas de build (Electron, electron-builder). Ver docs/seguranca.md.
+      - name: npm audit (tudo, informativo)
+        continue-on-error: true
+        run: npm audit
+
+      # BLOQUEIA: SpotBugs + Find Security Bugs (OWASP) no backend Java.
+      # Excecoes conferidas a mao em backend/spotbugs-exclusoes.xml.
+      - name: SpotBugs + Find Security Bugs
+        run: mvn -B -f backend/pom.xml -Pseguranca -DskipTests verify
+
+      # Informativo: falhas conhecidas (CVE) em package-lock.json e backend/pom.xml,
+      # pela base publica OSV do Google (inclui os avisos do GitHub).
+      - name: OSV-Scanner (CVEs em npm e Maven)
+        continue-on-error: true
+        run: |
+          curl -sSL -o osv-scanner https://github.com/google/osv-scanner/releases/download/v2.2.4/osv-scanner_linux_amd64
+          chmod +x osv-scanner
+          ./osv-scanner scan source --lockfile package-lock.json --lockfile backend/pom.xml
+
+      # Informativo: regras da comunidade Semgrep para Java/TypeScript/JavaScript e OWASP Top 10.
+      - name: Semgrep (OWASP Top 10)
+        continue-on-error: true
+        run: |
+          pipx install semgrep
+          semgrep scan --metrics=off --config p/owasp-top-ten --config p/java --config p/typescript \
+            --exclude frontend/dist --exclude docs --exclude telas_referencia --error \
+            backend/src/main frontend/ts desktop/main.js desktop/preload.js desktop/automacoes.js

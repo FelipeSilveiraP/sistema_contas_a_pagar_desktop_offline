@@ -41,11 +41,13 @@ if (!pasta) {
 }
 fs.mkdirSync(pasta, { recursive: true });
 
-// remove instaladores antigos da pasta (so os deste sistema)
+// REGRA: nunca apagar arquivos do usuario no Google Drive. So remove instaladores
+// antigos DESTE sistema: arquivo comum (nao pasta, nao atalho/link), direto nesta
+// pasta, com o nome exato do padrao. Nunca recursivo.
 for (const arq of fs.readdirSync(pasta)) {
-  if (/^Contas a Pagar - Chaveiro Universal - Instalador [\d.]+\.exe$/.test(arq) && arq !== nome) {
-    fs.unlinkSync(path.join(pasta, arq));
-  }
+  if (!/^Contas a Pagar - Chaveiro Universal - Instalador [\d.]+\.exe$/.test(arq) || arq === nome) continue;
+  const alvo = path.join(pasta, arq);
+  if (fs.lstatSync(alvo).isFile()) fs.unlinkSync(alvo);
 }
 fs.copyFileSync(instalador, path.join(pasta, nome));
 (async () => {

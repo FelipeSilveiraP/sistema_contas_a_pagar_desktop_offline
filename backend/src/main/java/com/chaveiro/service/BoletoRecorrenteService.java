@@ -196,7 +196,8 @@ public class BoletoRecorrenteService {
             erros.put("pagadorResponsavel", "Informe o pagador responsável (de 1 a 120 caracteres).");
         }
         if (dados.valor() == null || dados.valor().signum() <= 0
-                || dados.valor().stripTrailingZeros().scale() > 2) {
+                || dados.valor().stripTrailingZeros().scale() > 2
+                || dados.valor().compareTo(ContaService.VALOR_MAXIMO) > 0) {
             erros.put("valor", "Informe um valor válido, maior que zero. Exemplo: 150,00.");
         }
         if (dados.dia() < 1 || dados.dia() > 31) {

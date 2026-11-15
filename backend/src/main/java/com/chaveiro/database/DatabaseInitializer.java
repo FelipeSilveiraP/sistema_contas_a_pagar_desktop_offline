@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 17;
+    private static final int VERSAO_ATUAL = 18;
 
     private final ConnectionFactory conexao;
 
@@ -389,6 +389,7 @@ public class DatabaseInitializer {
                 """,
             };
             case 17 -> migracaoSeguranca();
+            case 18 -> migracaoAuditoriaRecorrentes();
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
     }
@@ -509,6 +510,46 @@ public class DatabaseInitializer {
                 SELECT RAISE(ABORT, 'AUDITORIA_SOMENTE_LEITURA: a auditoria nao pode ser apagada');
             END
             """,
+        };
+    }
+
+    private static String jsonRecorrente(String r) {
+        return "json_object('id_recorrente', " + r + ".id_recorrente, 'nome_empresa', " + r + ".nome_empresa,"
+                + " 'id_empresa', " + r + ".id_empresa, 'pagador_responsavel', " + r + ".pagador_responsavel,"
+                + " 'categoria', " + r + ".categoria, 'numero_documento', " + r + ".numero_documento,"
+                + " 'valor_centavos', " + r + ".valor_centavos, 'dia', " + r + ".dia,"
+                + " 'periodicidade', " + r + ".periodicidade, 'forma_pagamento', " + r + ".forma_pagamento,"
+                + " 'ativo', " + r + ".ativo, 'tipo_pessoa', " + r + ".tipo_pessoa)";
+    }
+
+    /** Teto de valor no proprio banco (R$ 999.999.999,99), igual ao da API. */
+    private static String gatilhoValorMaximo(String nome, String tabela, String coluna, String evento) {
+        return "CREATE TRIGGER IF NOT EXISTS " + nome + " BEFORE " + evento + " ON " + tabela
+                + " WHEN NEW." + coluna + " > 99999999999"
+                + " BEGIN SELECT RAISE(ABORT, 'VALOR_INVALIDO: valor acima de R$ 999.999.999,99'); END";
+    }
+
+    /**
+     * v18 - auditoria de seguranca 2026-11-15 (so acrescenta; nenhum dado muda):
+     * 1) a trilha de auditoria passa a registrar tambem as contas fixas
+     *    (boletos_recorrentes), que geram 12 contas de uma vez;
+     * 2) teto de valor no banco (defesa em profundidade: a API ja recusa).
+     */
+    private static String[] migracaoAuditoriaRecorrentes() {
+        return new String[] {
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_recorrente_insert AFTER INSERT ON boletos_recorrentes BEGIN "
+                    + auditar("boletos_recorrentes", "INSERT", "NEW.id_recorrente", "NULL", jsonRecorrente("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_recorrente_update AFTER UPDATE ON boletos_recorrentes"
+                    + " WHEN " + jsonRecorrente("OLD") + " IS NOT " + jsonRecorrente("NEW") + " BEGIN "
+                    + auditar("boletos_recorrentes", "UPDATE", "NEW.id_recorrente", jsonRecorrente("OLD"), jsonRecorrente("NEW")) + " END",
+            "CREATE TRIGGER IF NOT EXISTS trg_auditoria_recorrente_delete AFTER DELETE ON boletos_recorrentes BEGIN "
+                    + auditar("boletos_recorrentes", "DELETE", "OLD.id_recorrente", jsonRecorrente("OLD"), "NULL") + " END",
+            gatilhoValorMaximo("trg_conta_valor_maximo_ins", "contas_a_pagar", "valor_centavos", "INSERT"),
+            gatilhoValorMaximo("trg_conta_valor_maximo_upd", "contas_a_pagar", "valor_centavos", "UPDATE OF valor_centavos"),
+            gatilhoValorMaximo("trg_pagamento_valor_maximo_ins", "pagamentos", "valor_pago_centavos", "INSERT"),
+            gatilhoValorMaximo("trg_pagamento_valor_maximo_upd", "pagamentos", "valor_pago_centavos", "UPDATE OF valor_pago_centavos"),
+            gatilhoValorMaximo("trg_recorrente_valor_maximo_ins", "boletos_recorrentes", "valor_centavos", "INSERT"),
+            gatilhoValorMaximo("trg_recorrente_valor_maximo_upd", "boletos_recorrentes", "valor_centavos", "UPDATE OF valor_centavos"),
         };
     }
 }

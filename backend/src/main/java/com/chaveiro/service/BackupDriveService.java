@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,17 @@ import org.springframework.stereotype.Service;
  * OPERACIONAL, deteccao automatica de "Meu Drive"/"My Drive" (unidade virtual
  * G:\ etc.). Com banco de teste (FINDESK_DB_PATH) e sem pasta explicita, nao
  * faz nada: teste nunca escreve no Drive real.
+ *
+ * ==========================================================================
+ * REGRA: este servico nunca apaga arquivos do usuario no Google Drive; so as
+ * planilhas que ele mesmo gerou.
+ * - so escreve/apaga DENTRO da subpasta "Chaveiro Universal - Backup";
+ * - nunca apaga pasta, nunca e recursivo, nunca segue atalho/link;
+ * - so apaga arquivo comum cujo nome seja EXATAMENTE
+ *   "Contas a Pagar - dados AAAA-MM-DD.xlsx" (ver NOME_DO_SISTEMA);
+ * - so sobrescreve a planilha do proprio dia (mesmo nome exato).
+ * A pasta "Meu Drive" da loja tem outros arquivos importantes (decisoes.md).
+ * ==========================================================================
  */
 @Service
 public class BackupDriveService {
@@ -44,6 +57,10 @@ public class BackupDriveService {
     static final String SUBPASTA = "Chaveiro Universal - Backup";
     static final String PREFIXO = "Contas a Pagar - dados ";
     static final int MANTER = 30;
+
+    /** Nome EXATO das planilhas geradas pelo sistema; nada fora disso e apagado. */
+    static final Pattern NOME_DO_SISTEMA =
+            Pattern.compile(Pattern.quote(PREFIXO) + "\\d{4}-\\d{2}-\\d{2}\\.xlsx");
 
     public record Situacao(String estado, String mensagem, String arquivo, String quando) {}
 
@@ -85,7 +102,12 @@ public class BackupDriveService {
         situacao = new Situacao("executando", "Enviando backup para o Google Drive...", null, agora());
         try {
             Path pasta = raiz.get().resolve(SUBPASTA);
+            // createDirectories nao mexe no que ja existe; e a subpasta tem de ser
+            // uma pasta de verdade (nao um atalho/link para outro lugar do Drive)
             Files.createDirectories(pasta);
+            if (!Files.isDirectory(pasta, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("a subpasta de backup nao e uma pasta comum: " + pasta);
+            }
             Path destino = pasta.resolve(PREFIXO + LocalDate.now() + ".xlsx");
             Path temporario = pasta.resolve(destino.getFileName() + ".tmp");
             Files.write(temporario, PlanilhaXlsx.gerar(abas()));
@@ -195,18 +217,39 @@ public class BackupDriveService {
         }
     }
 
-    /** Mantem so as 30 planilhas mais recentes (uma por dia de uso). */
-    private void manterUltimos(Path pasta) throws IOException {
-        try (Stream<Path> arquivos = Files.list(pasta)) {
-            List<Path> antigos = arquivos
-                    .filter(p -> p.getFileName().toString().startsWith(PREFIXO) && p.toString().endsWith(".xlsx"))
-                    .sorted(Comparator.comparing((Path p) -> p.getFileName().toString()).reversed())
-                    .skip(MANTER)
-                    .toList();
-            for (Path antigo : antigos) {
+    /**
+     * Mantem so as 30 planilhas mais recentes (uma por dia de uso).
+     * REGRA: so apaga planilhas do proprio sistema (ver topo da classe).
+     */
+    void manterUltimos(Path pasta) throws IOException {
+        Path pastaReal = pasta.toRealPath();
+        List<Path> doSistema;
+        try (Stream<Path> arquivos = Files.list(pastaReal)) { // Files.list: so o 1o nivel, nunca recursivo
+            doSistema = arquivos.filter(p -> ehPlanilhaDoSistema(p, pastaReal)).toList();
+        }
+        List<Path> antigos = doSistema.stream()
+                .sorted(Comparator.comparing((Path p) -> p.getFileName().toString()).reversed())
+                .skip(MANTER)
+                .toList();
+        for (Path antigo : antigos) {
+            if (ehPlanilhaDoSistema(antigo, pastaReal)) { // confere de novo logo antes de apagar
                 Files.deleteIfExists(antigo);
+                log.info("backup antigo do Drive removido: {}", antigo.getFileName());
             }
         }
+    }
+
+    /** Arquivo comum (nao pasta, nao link), com o nome exato do sistema, direto na subpasta de backup. */
+    static boolean ehPlanilhaDoSistema(Path arquivo, Path pastaReal) {
+        Path nome = arquivo.getFileName();
+        if (nome == null || !NOME_DO_SISTEMA.matcher(nome.toString()).matches()) {
+            return false;
+        }
+        if (!Files.isRegularFile(arquivo, LinkOption.NOFOLLOW_LINKS)) {
+            return false;
+        }
+        Path pai = arquivo.toAbsolutePath().normalize().getParent();
+        return pai != null && pai.equals(pastaReal.toAbsolutePath().normalize());
     }
 
     private static String agora() {

@@ -1,9 +1,10 @@
-const { app, BrowserWindow, dialog, ipcMain, screen, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, screen, session, shell } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { fileURLToPath } = require("url");
 const automacoes = require("./automacoes");
 // versao DO SISTEMA (package.json): app.getVersion() devolve a do Electron quando
 // o app roda por script (desenvolvimento/testes)
@@ -199,6 +200,32 @@ const TELAS = new Map([
 
 const NOME_APP = "Sistema de Contas a Pagar — Chaveiro Universal";
 
+// ===== IPC so das telas do proprio sistema (auditoria de seguranca 2026-11-15) =====
+// Checklist de seguranca do Electron (item "validar o remetente de toda mensagem IPC"):
+// o token da API e as acoes de arquivo so respondem a paginas de frontend/html.
+const PASTA_TELAS = path.join(__dirname, "..", "frontend", "html");
+
+function remetenteConfiavel(evento) {
+  try {
+    const url = evento && evento.senderFrame && evento.senderFrame.url;
+    if (!url || !url.startsWith("file:")) return false;
+    const relativo = path.relative(PASTA_TELAS, path.resolve(fileURLToPath(url)));
+    return Boolean(relativo) && !relativo.startsWith("..") && !path.isAbsolute(relativo);
+  } catch {
+    return false;
+  }
+}
+
+function tratarIpc(canal, tratador) {
+  ipcMain.handle(canal, (evento, ...argumentos) => {
+    if (!remetenteConfiavel(evento)) {
+      registrarLog("WARN", `[ipc] ${canal} recusado: remetente fora das telas do sistema`);
+      return null;
+    }
+    return tratador(evento, ...argumentos);
+  });
+}
+
 function portaLivre() {
   return new Promise((resolver, rejeitar) => {
     const servidor = net.createServer();
@@ -332,6 +359,9 @@ function criarJanela() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      // explicito (ja e o padrao): o renderer roda isolado do sistema operacional
+      sandbox: true,
+      webSecurity: true,
     },
   });
   janela.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
@@ -390,14 +420,14 @@ function encerrarBackend() {
   }
 }
 
-ipcMain.handle("findesk:config", () => ({ port: porta, token }));
+tratarIpc("findesk:config", () => ({ port: porta, token }));
 
 // Reparo de foco da pagina apos fechar dialogos modais nativos (alert/confirm):
 // o Chromium/Windows devolve a janela como ativa sem re-emitir o ciclo de foco
 // do widget (document.hasFocus() fica falso e o teclado e engolido). Um ciclo
 // blur->focus na janela re-sincroniza o foco da pagina (mesmo mecanismo que
 // restaura o uso apos minimizar/restaurar — ver smoke-dev.js).
-ipcMain.handle("findesk:reparar-foco", () => {
+tratarIpc("findesk:reparar-foco", () => {
   if (!janela || janela.isDestroyed()) return false;
   janela.blur();
   janela.focus();
@@ -405,16 +435,16 @@ ipcMain.handle("findesk:reparar-foco", () => {
   return true;
 });
 
-ipcMain.handle("findesk:navegar", (_evento, tela) => {
+tratarIpc("findesk:navegar", (_evento, tela) => {
   const destino = TELAS.get(tela);
   if (!destino || !janela) return false;
   janela.loadFile(destino);
   return true;
 });
 
-ipcMain.handle("findesk:estado-inicializacao", () => ({ estado: estadoInicializacao }));
+tratarIpc("findesk:estado-inicializacao", () => ({ estado: estadoInicializacao }));
 
-ipcMain.handle("findesk:reiniciar-backend", async () => {
+tratarIpc("findesk:reiniciar-backend", async () => {
   definirEstadoInicializacao("aguardando");
   try {
     await prepararAplicativo();
@@ -443,7 +473,7 @@ function nomeSeguro(nome) {
   return EXTENSOES_NOTA.includes(ext) ? base : `${base}.pdf`;
 }
 
-ipcMain.handle("findesk:salvar-nota", (_evento, nome, bytes) => {
+tratarIpc("findesk:salvar-nota", (_evento, nome, bytes) => {
   if (!(bytes instanceof Uint8Array) || bytes.length === 0 || bytes.length > LIMITE_NOTA_BYTES) {
     return { ok: false };
   }
@@ -465,21 +495,25 @@ function pastaRelatorios() {
 
 // Abre SO arquivos gerados pelo app (notas fiscais e relatorios) no programa padrao.
 async function abrirGerado(caminho) {
-  const alvo = path.resolve(String(caminho || ""));
-  const permitido = [pastaNotas(), pastaRelatorios()].some((p) => alvo.startsWith(p + path.sep));
+  const texto = String(caminho || "");
+  if (texto.includes("\0")) return false; // byte nulo corta o caminho no Windows
+  const alvo = path.resolve(texto);
+  // so pastas do sistema E so os tipos que o sistema grava (nunca .exe/.bat/.lnk)
+  const extensaoOk = [...EXTENSOES_NOTA, ".pdf"].includes(path.extname(alvo).toLowerCase());
+  const permitido = extensaoOk && [pastaNotas(), pastaRelatorios()].some((p) => alvo.startsWith(p + path.sep));
   if (!permitido || !fs.existsSync(alvo)) return false;
   return (await shell.openPath(alvo)) === "";
 }
 
-ipcMain.handle("findesk:abrir-nota", (_evento, caminho) => abrirGerado(caminho));
-ipcMain.handle("findesk:abrir-arquivo", (_evento, caminho) => abrirGerado(caminho));
+tratarIpc("findesk:abrir-nota", (_evento, caminho) => abrirGerado(caminho));
+tratarIpc("findesk:abrir-arquivo", (_evento, caminho) => abrirGerado(caminho));
 
 // Impressao: gera PDF da tela atual (CSS @media print esconde navbar/botoes) em
 // Downloads e o usuario imprime pelo leitor de PDF — sem a janela nativa de
 // impressao, que e modal e causava o bug de foco dos inputs.
 // opcoes.retrato: pagina em pe (formulario da conta); opcoes.anexoPdf: bytes da
 // nota fiscal em PDF, acrescentada depois do formulario (pagina 2 em diante).
-ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
+tratarIpc("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
   if (!janela || janela.isDestroyed()) return { ok: false };
   const agora = new Date();
   const carimbo = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")} ${String(agora.getHours()).padStart(2, "0")}h${String(agora.getMinutes()).padStart(2, "0")}`;
@@ -521,20 +555,20 @@ ipcMain.handle("findesk:imprimir-pdf", async (_evento, nome, opcoes) => {
 // Atualizacao pelo Google Drive: a tela pergunta se ha versao nova e, com o
 // clique do usuario em ATUALIZAR, o instalador roda e o sistema fecha.
 let atualizacaoEncontrada = null;
-ipcMain.handle("findesk:atualizacao-disponivel", async () => {
+tratarIpc("findesk:atualizacao-disponivel", async () => {
   // assincrono: a tela continua usavel enquanto o Drive baixa/confere o instalador
   atualizacaoEncontrada = await automacoes.procurarAtualizacao(app, registrarLog, VERSAO_SISTEMA);
   return atualizacaoEncontrada
     ? { versao: atualizacaoEncontrada.versao, atual: VERSAO_SISTEMA, novidades: atualizacaoEncontrada.novidades }
     : null;
 });
-ipcMain.handle("findesk:instalar-atualizacao", () => {
+tratarIpc("findesk:instalar-atualizacao", () => {
   if (!atualizacaoEncontrada) return false;
   automacoes.instalarAtualizacao(app, atualizacaoEncontrada, registrarLog);
   return true;
 });
 
-ipcMain.handle("findesk:fechar", () => {
+tratarIpc("findesk:fechar", () => {
   app.quit();
 });
 
@@ -552,6 +586,9 @@ if (!instanciaUnica) {
   app.whenReady()
     .then(() => {
       marco("app-pronto");
+      // nenhuma tela do sistema usa camera, microfone, localizacao, notificacoes...:
+      // qualquer pedido de permissao e negado
+      session.defaultSession.setPermissionRequestHandler((_conteudo, _permissao, responder) => responder(false));
       // identidade propria no Windows: agrupa na barra de tarefas com o emblema
       // do sistema (e nao como "Electron")
       app.setAppUserModelId("br.com.chaveirouniversal.contasapagar");

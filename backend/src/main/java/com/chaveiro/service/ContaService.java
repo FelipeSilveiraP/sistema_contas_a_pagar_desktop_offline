@@ -28,6 +28,12 @@ public class ContaService {
     static final int JANELA_DIAS_DUPLICATA = 5;
     static final BigDecimal TOLERANCIA_VALOR_DUPLICATA = new BigDecimal("150.00");
 
+    /**
+     * Maior valor aceito (R$ 999.999.999,99). Sem teto, um valor absurdo estourava
+     * a conversao para centavos (long) e virava "erro interno" 500.
+     */
+    public static final BigDecimal VALOR_MAXIMO = new BigDecimal("999999999.99");
+
     static final Set<String> FORMAS_PAGAMENTO =
             Set.of("boleto", "pix", "cartao", "transferencia", "dinheiro", "debito");
     static final Set<String> TIPOS_PESSOA = Set.of("PF", "PJ");
@@ -253,6 +259,8 @@ public class ContaService {
                 erros.put("valor", "O valor deve ser maior que zero.");
             } else if (conta.valor().stripTrailingZeros().scale() > 2) {
                 erros.put("valor", "O valor deve ter no máximo 2 casas decimais.");
+            } else if (conta.valor().compareTo(VALOR_MAXIMO) > 0) {
+                erros.put("valor", "O valor deve ser de no máximo R$ 999.999.999,99.");
             }
         }
         if (conta.vencimento() == null) {

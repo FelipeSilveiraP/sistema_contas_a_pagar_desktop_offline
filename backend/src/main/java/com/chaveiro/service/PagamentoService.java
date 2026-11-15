@@ -107,6 +107,8 @@ public class PagamentoService {
                 erros.put("valorPago", "O valor pago deve ser maior que zero.");
             } else if (dados.valorPago().stripTrailingZeros().scale() > 2) {
                 erros.put("valorPago", "O valor deve ter no máximo 2 casas decimais.");
+            } else if (dados.valorPago().compareTo(ContaService.VALOR_MAXIMO) > 0) {
+                erros.put("valorPago", "O valor deve ser de no máximo R$ 999.999.999,99.");
             }
         }
         if (!erros.isEmpty()) {
