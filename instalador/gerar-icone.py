@@ -1,4 +1,4 @@
-"""Gera o emblema do sistema (cadeado laranja com haste amarela, sem fundo) em todos os tamanhos.
+"""Gera o emblema do sistema (placa azul com cadeado laranja) em todos os tamanhos.
 
 Saidas:
   instalador/icone.ico         -> .exe do sistema, instalador, atalhos (16 a 256 px)
@@ -15,12 +15,11 @@ RAIZ = Path(__file__).resolve().parent.parent
 PRETO = (28, 27, 27, 255)       # #1c1b1b
 AMARELO = (255, 230, 0, 255)    # #FFE600 (cor do Menu)
 LARANJA = (255, 140, 0, 255)    # #FF8C00 (cor da chave)
+PLACA = (37, 99, 235, 255)      # #2563EB (placa azul: o cadeado laranja/amarelo se destaca)
 
 
-def desenhar(lado: int = 1024) -> Image.Image:
-    """So o cadeado, sem placa de fundo, ocupando a imagem inteira (fica maior na
-    barra de tarefas). Haste amarela e corpo laranja, com contorno preto grosso
-    para aparecer tanto na barra clara quanto na escura."""
+def cadeado(lado: int = 1024) -> Image.Image:
+    """So o cadeado (haste amarela e corpo laranja, contorno preto grosso), sem fundo."""
     img = Image.new("RGBA", (lado, lado), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     u = lado / 1024  # unidade
@@ -43,6 +42,19 @@ def desenhar(lado: int = 1024) -> Image.Image:
     # buraco da fechadura (quadrado + rasgo, sem curvas)
     ret(440, 584, 584, 728, PRETO)
     ret(480, 720, 544, 880, PRETO)
+    return img
+
+
+def desenhar(lado: int = 1024) -> Image.Image:
+    """Placa quadrada azul com borda preta grossa ocupando o icone INTEIRO e o cadeado
+    grande por cima (pedido do usuario, 2026-11-16: emblema maior e mais facil de ver na
+    Area de Trabalho em qualquer papel de parede; diferente do Garantias, placa vermelha)."""
+    img = Image.new("RGBA", (lado, lado), PRETO)
+    borda = round(lado * 0.07)
+    ImageDraw.Draw(img).rectangle([borda, borda, lado - 1 - borda, lado - 1 - borda], fill=PLACA)
+    miolo = round(lado * 0.80)
+    c = cadeado(1024).resize((miolo, miolo), Image.LANCZOS)
+    img.alpha_composite(c, ((lado - miolo) // 2, (lado - miolo) // 2))
     return img
 
 
