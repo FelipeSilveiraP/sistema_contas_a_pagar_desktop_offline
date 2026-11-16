@@ -25,6 +25,7 @@ const CAPTURAS = path.join(PASTA, "capturas");
 fs.mkdirSync(CAPTURAS, { recursive: true });
 
 require("./main.js");
+const { entrarParaTeste } = require("./entrar-teste");
 
 let janela = null;
 const resultados = [];
@@ -164,6 +165,7 @@ async function executar() {
   if (janela.isMaximized()) janela.unmaximize();
   janela.setContentSize(1366, 768);
   janela.center();
+  await entrarParaTeste(js);
   await esperarTela("menu");
   await esperarPredicado("document.body.dataset.apiStatus === 'ok'", 30000);
   console.log(`\n=== TESTE DE CRUD REAL — pasta isolada: ${PASTA} ===\n`);

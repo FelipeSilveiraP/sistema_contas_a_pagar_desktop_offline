@@ -1,5 +1,6 @@
 package com.chaveiro.api;
 
+import com.chaveiro.service.AcessoNegadoException;
 import com.chaveiro.service.ConflitoIntegridadeException;
 import com.chaveiro.service.DadosInvalidosException;
 import com.chaveiro.service.PossivelDuplicataException;
@@ -22,6 +23,14 @@ import org.springframework.web.ErrorResponse;
 public class ApiExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    /** Contas: 401 (sem sessao/PIN errado), 403 (so admin), 423 (bloqueada). */
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String, Object>> acessoNegado(AcessoNegadoException erro) {
+        Map<String, Object> corpo = new LinkedHashMap<>(erro.getExtra());
+        corpo.put("erro", erro.getMessage());
+        return ResponseEntity.status(erro.getStatus()).body(corpo);
+    }
 
     @ExceptionHandler(DadosInvalidosException.class)
     public ResponseEntity<Map<String, Object>> validacao(DadosInvalidosException erro) {

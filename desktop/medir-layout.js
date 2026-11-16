@@ -23,6 +23,7 @@ const TAMANHOS = [[1366, 768], [1536, 864], [1920, 1080]];
 let janela = null;
 app.on("browser-window-created", (_e, w) => { if (!janela) janela = w; });
 require("./main.js");
+const { entrarParaTeste } = require("./entrar-teste");
 
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const js = (c) => janela.webContents.executeJavaScript(c);
@@ -77,7 +78,7 @@ const MEDIR = `(() => {
 (async () => {
   while (!janela) await esperar(100);
   janela.setIgnoreMouseEvents(true);
-  for (let i = 0; i < 200 && !(await js("document.body?.dataset.tela === 'menu'").catch(() => false)); i++) await esperar(150);
+  await entrarParaTeste(js);
   const linhas = [];
   for (const tela of TELAS) {
     await js(`window.finDesk.navegar(${JSON.stringify(tela)})`);

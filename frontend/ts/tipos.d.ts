@@ -7,6 +7,8 @@ interface FinDeskConfig {
 
 type TelaFinDesk =
   | "menu"
+  | "perfis"
+  | "usuarios"
   | "controle"
   | "cadastros"
   | "mensagens"

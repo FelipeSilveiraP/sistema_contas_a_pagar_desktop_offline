@@ -151,10 +151,35 @@ async function aguardarBoot() {
     if (await janelaExiste()) {
       const e = await estado();
       if (e && e.tela === "menu") return true;
+      // "Quem esta usando?" (contas com PIN): entra com a conta de teste por entrada REAL
+      if (e && e.tela === "perfis") await entrarReal();
     }
     await esperar(500);
   }
   return false;
+}
+
+// 1a abertura (banco novo): cria o admin TESTE ADMIN (PIN 2468) digitando de verdade;
+// depois: clica na bolinha e digita o PIN. Tudo com SendInput, Enter para enviar.
+async function entrarReal() {
+  const e = await estado();
+  if (!e || (e.primeiroAcesso === null && e.perfisCarregados === null)) return; // ainda carregando
+  if (e.primeiroAcesso === "true") {
+    for (const [campo, texto] of [["#adm_nome", "TESTE ADMIN"], ["#adm_email", "teste@exemplo.com"],
+      ["#adm_email_loja", "loja@exemplo.com"], ["#adm_pin", "2468"], ["#adm_pin2", "2468"]]) {
+      if (!(await clicarReal(campo))) return;
+      ps("digitar", { texto });
+      await esperar(150);
+    }
+    ps("enter");
+  } else if (Number(e.perfisCarregados) > 0 && (await clicarReal(".perfil-cartao"))) {
+    await esperar(600);
+    await clicarReal("#pin-campo");
+    ps("digitar", { texto: "2468" });
+    await esperar(150);
+    ps("enter");
+  }
+  await esperar(1500);
 }
 
 // Confirmações nativas de dirty-form: o usuário real confirma com ENTER

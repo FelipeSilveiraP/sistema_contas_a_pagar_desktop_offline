@@ -1,5 +1,7 @@
 export type Tela =
   | "menu"
+  | "perfis"
+  | "usuarios"
   | "controle"
   | "cadastros"
   | "mensagens"

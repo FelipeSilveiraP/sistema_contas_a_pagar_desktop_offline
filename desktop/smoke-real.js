@@ -19,6 +19,7 @@ if (!process.env.FINDESK_DB_PATH) {
   process.env.FINDESK_DB_PATH = bancoTeste;
 }
 require("./main.js");
+const { entrarParaTeste } = require("./entrar-teste");
 
 let janela = null;
 const resultados = [];
@@ -106,6 +107,7 @@ async function digitarReal(texto) {
 
 async function ciclo() {
   await esperarPredicado("!!document.body && !!document.body.dataset.tela");
+  await entrarParaTeste(js);
   await esperarPredicado(`document.body.dataset.apiStatus !== undefined`, 30000);
 
   // 1. nada invisivel bloqueia os inputs do form-banco (verificado no proprio form)

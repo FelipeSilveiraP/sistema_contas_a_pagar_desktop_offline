@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Contas — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head><body class="bg-[#fcf9f8] text-[#1c1b1b] min-h-screen w-full font-headline antialiased" data-tela="usuarios">
+<header id="nav-global"></header>
+<div class="max-w-6xl mx-auto py-4 px-4 sm:px-6 flex flex-col gap-5 mb-8">
+<header class="bg-white border-2 border-[#1c1b1b] px-4 py-3 sm:px-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-[#A78BFA] border-2 border-[#1c1b1b] flex items-center justify-center shadow-[2px_2px_0px_0px_#1c1b1b]"><span class="material-symbols-outlined text-2xl">manage_accounts</span></div>
+<h1 class="text-xl sm:text-2xl font-bold uppercase tracking-tight">Contas</h1>
+<span class="ml-auto selo bg-[#A78BFA]/30 text-[#4c1d95] hidden" id="selo-admin">Administrador</span>
+</header>
+
+<!-- conta propria (todos) -->
+<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-minha">
+<h2 class="secao-titulo" id="titulo-minha"><span class="material-symbols-outlined">person</span>Minha conta</h2>
+<div class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="flex items-center gap-4" id="minha-conta"></div>
+<form class="flex flex-col gap-3" id="form-meu-pin" novalidate>
+<span class="rotulo-form">TROCAR MEU PIN</span>
+<div class="grid grid-cols-3 gap-2">
+<input class="entrada-form font-mono" id="meu_atual" inputmode="numeric" maxlength="6" placeholder="Atual" type="password" autocomplete="current-password" aria-label="PIN atual">
+<input class="entrada-form font-mono" id="meu_novo" inputmode="numeric" maxlength="6" placeholder="Novo" type="password" autocomplete="new-password" aria-label="PIN novo">
+<input class="entrada-form font-mono" id="meu_novo2" inputmode="numeric" maxlength="6" placeholder="Repita" type="password" autocomplete="new-password" aria-label="Repita o PIN novo">
+</div>
+<p class="campo-erro hidden" id="erro-meu-pin"></p>
+<button class="btn-acao bg-[#FFE600] self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">password</span>TROCAR PIN</button>
+</form>
+</div>
+</section>
+
+<div class="flex flex-col gap-5 hidden" id="area-admin">
+<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-novo">
+<h2 class="secao-titulo" id="titulo-novo"><span class="material-symbols-outlined">person_add</span>Cadastrar usuário</h2>
+<form class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-4" id="form-usuario" novalidate>
+<div class="campo-form"><label class="rotulo-form" for="u_nome">NOME (NA BOLINHA)</label><input class="entrada-form uppercase" id="u_nome" maxlength="40" type="text" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="nome"></p></div>
+<div class="campo-form md:col-span-2"><label class="rotulo-form" for="u_email"><span>E-MAIL (É O LOGIN)</span><span class="dica-form">QUALQUER E-MAIL · RECEBE O CÓDIGO SE ESQUECER O PIN</span></label><input class="entrada-form" id="u_email" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com"><p class="campo-erro hidden" data-erro-campo="email"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="u_pin">PIN (4 A 6 NÚMEROS)</label><input class="entrada-form font-mono" id="u_pin" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password"><p class="campo-erro hidden" data-erro-campo="pin"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="u_foto"><span>FOTO</span><span class="dica-form">OPCIONAL</span></label><input class="entrada-form" id="u_foto" type="file" accept="image/png,image/jpeg,image/webp"><p class="campo-erro hidden" data-erro-campo="foto"></p></div>
+<div class="flex flex-col justify-end gap-3">
+<label class="caixa-form"><input id="u_admin" type="checkbox"><span>Administrador</span></label>
+<button class="btn-acao bg-[#FFE600] self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">save</span>CADASTRAR</button>
+</div>
+</form>
+</section>
+
+<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-todos">
+<h2 class="secao-titulo" id="titulo-todos"><span class="material-symbols-outlined">groups</span>Todos os usuários</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead><tr class="bg-[#1d4ed8] text-white font-mono text-xs uppercase tracking-wider"><th class="py-3 px-3 w-14"></th><th class="py-3 px-3">NOME</th><th class="py-3 px-3">E-MAIL (LOGIN)</th><th class="py-3 px-3 text-center">PERFIL</th><th class="py-3 px-3 text-center">SITUAÇÃO</th><th class="py-3 px-3 text-right">ACESSOS</th><th class="py-3 px-3 whitespace-nowrap">ÚLTIMO ACESSO</th></tr></thead>
+<tbody class="divide-y divide-[#1c1b1b] text-sm font-semibold" id="tabela-usuarios"></tbody>
+</table>
+</div>
+</section>
+
+<section class="bg-white border-2 border-[#1c1b1b] hidden" id="editorContainer" aria-labelledby="editorRecordName">
+<div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5 border-b-2 border-[#1c1b1b]">
+<div class="flex items-center gap-3 min-w-0"><span id="editor-bolinha"></span><div class="flex flex-col min-w-0"><span class="text-xs font-mono font-bold uppercase">Conta selecionada</span><h2 class="text-base sm:text-lg font-bold uppercase truncate" id="editorRecordName">—</h2></div></div>
+<button class="bg-white hover:bg-neutral-100 border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-1.5 flex items-center gap-1 cursor-pointer" id="btnClearSelection" type="button"><span class="material-symbols-outlined text-sm font-bold">close</span>FECHAR</button>
+</div>
+<div class="p-4 sm:p-5 flex flex-col gap-5">
+<div class="flex flex-wrap gap-2">
+<button class="btn-acao bg-white hover:bg-neutral-100" id="btnTrocarFoto" type="button"><span class="material-symbols-outlined text-base font-bold">photo_camera</span>TROCAR FOTO</button>
+<button class="btn-acao bg-white hover:bg-neutral-100" id="btnRemoverFoto" type="button"><span class="material-symbols-outlined text-base font-bold">no_photography</span>REMOVER FOTO</button>
+<button class="btn-acao bg-white hover:bg-neutral-100" id="btnAdmin" type="button"><span class="material-symbols-outlined text-base font-bold">admin_panel_settings</span><span id="btnAdminTexto">TORNAR ADMIN</span></button>
+<button class="btn-acao bg-white hover:bg-neutral-100" id="btnAtivo" type="button"><span class="material-symbols-outlined text-base font-bold">toggle_on</span><span id="btnAtivoTexto">DESATIVAR</span></button>
+<button class="btn-acao bg-white hover:bg-[#ffdad6] text-[#ba1a1a] sm:ml-auto" id="btnExcluir" type="button"><span class="material-symbols-outlined text-base font-bold">delete</span>EXCLUIR</button>
+<input class="hidden" id="inputFoto" type="file" accept="image/png,image/jpeg,image/webp">
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 border-t-2 border-dashed border-[#1c1b1b] pt-4">
+<div class="flex flex-col gap-2" data-enter-envia="#btnApplyChange">
+<span class="font-mono text-xs font-bold uppercase text-neutral-600">Alterar um campo</span>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<select class="entrada-form !py-2 uppercase" id="fieldSelect" aria-label="Campo"></select>
+<input class="entrada-form !py-2" id="newValueInput" type="text" autocomplete="off" aria-label="Novo valor">
+<select class="entrada-form !py-2 hidden" id="newValueSelect" aria-label="Novo valor"></select>
+</div>
+<p class="campo-erro hidden" data-erro-campo="edicao"></p>
+<div class="flex gap-2"><button class="btn-acao bg-[#FFE600]" id="btnApplyChange" type="button"><span class="material-symbols-outlined text-base font-bold">check</span>APLICAR</button><button class="btn-acao bg-white" id="btnCancelEdit" type="button">DESFAZER</button></div>
+</div>
+<form class="flex flex-col gap-2" id="form-novo-pin" novalidate>
+<span class="font-mono text-xs font-bold uppercase text-neutral-600">Novo PIN para esta conta (só o admin)</span>
+<input class="entrada-form !py-2 font-mono" id="novo_pin" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password" aria-label="Novo PIN">
+<p class="campo-erro hidden" id="erro-novo-pin"></p>
+<button class="btn-acao bg-[#FFE600] self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">key</span>SALVAR NOVO PIN</button>
+</form>
+</div>
+<div class="flex flex-col gap-2 border-t-2 border-dashed border-[#1c1b1b] pt-4">
+<span class="font-mono text-xs font-bold uppercase text-neutral-600">Acessos desta conta</span>
+<ul class="lista-acessos" id="acessos-conta"></ul>
+</div>
+</div>
+</section>
+
+<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-historico">
+<h2 class="secao-titulo" id="titulo-historico"><span class="material-symbols-outlined">history</span>Histórico de acessos (todos)</h2>
+<ul class="lista-acessos p-4 sm:p-5" id="acessos-todos"></ul>
+</section>
+
+<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-email">
+<h2 class="secao-titulo" id="titulo-email"><span class="material-symbols-outlined">mail</span>E-mail que envia os códigos (Gmail da loja)</h2>
+<div class="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+<form class="flex flex-col gap-3" id="form-email" novalidate>
+<p class="font-mono text-xs font-bold uppercase text-neutral-600" id="email-situacao">—</p>
+<div class="campo-form"><label class="rotulo-form" for="e_remetente">GMAIL DA LOJA</label><input class="entrada-form" id="e_remetente" maxlength="120" type="email" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="remetente"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="e_senha"><span>SENHA DE APP DO GOOGLE</span><span class="dica-form">16 LETRAS</span></label><input class="entrada-form font-mono" id="e_senha" maxlength="19" type="password" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="senhaApp"></p></div>
+<button class="btn-acao bg-[#FFE600] self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">save</span>GRAVAR</button>
+</form>
+<form class="flex flex-col gap-3" id="form-teste" novalidate>
+<p class="text-sm font-medium">Para criar a senha de app: na conta Google da loja, ative a verificação em 2 etapas e entre em <b>Senhas de app</b>. A senha fica criptografada no banco.</p>
+<div class="campo-form"><label class="rotulo-form" for="e_destino">MANDAR UM E-MAIL DE TESTE PARA</label><input class="entrada-form" id="e_destino" maxlength="120" type="email" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="destino"></p></div>
+<button class="btn-acao bg-white self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">send</span>TESTAR</button>
+</form>
+</div>
+</section>
+</div>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

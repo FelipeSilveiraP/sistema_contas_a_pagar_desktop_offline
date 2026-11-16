@@ -1,5 +1,7 @@
 import { Tela, irPara, voltar, menuPrincipal } from "./navegacao";
 import { respostaProvisoria, dialogoEstaAberto } from "./componentes";
+import { perfilAtual } from "./perfil";
+import { criarBotaoConta } from "./conta-menu";
 
 type ChaveNav = "voltar" | "menu" | "inserir" | "cadastros" | "controle" | "mensagens" | "graficos";
 
@@ -203,7 +205,34 @@ ${ITENS_NAV.filter((item) => item.noPainel)
   .join("")}
 </nav>`;
 
+  // conta em uso: UM botao no fim da barra (bolinha + nome + seta) com MINHA CONTA
+  // e SAIR E TROCAR DE CONTA; no menu lateral, as mesmas duas opcoes
+  const perfil = perfilAtual();
+  if (perfil) {
+    raiz.querySelector(".nav-barra")?.appendChild(criarBotaoConta(perfil, "nav-item", tela === "usuarios"));
+    const painel = raiz.querySelector(".nav-painel");
+    const minha = document.createElement("button");
+    minha.type = "button";
+    minha.className = CLASSE_ITEM_PAINEL;
+    minha.dataset.irContas = "";
+    minha.textContent = `${perfil.nome} · MINHA CONTA`;
+    const sair = document.createElement("button");
+    sair.type = "button";
+    sair.className = CLASSE_ITEM_PAINEL;
+    sair.dataset.trocarPerfil = "";
+    sair.textContent = "SAIR E TROCAR DE CONTA";
+    painel?.append(minha, sair);
+  }
+
   raiz.addEventListener("click", (evento) => {
+    if ((evento.target as HTMLElement).closest("[data-ir-contas]")) {
+      void irPara("usuarios");
+      return;
+    }
+    if ((evento.target as HTMLElement).closest("[data-trocar-perfil]")) {
+      void window.finDesk?.navegar("perfis");
+      return;
+    }
     const alvo = (evento.target as HTMLElement).closest<HTMLElement>("[data-nav]");
     if (!alvo || !raiz.contains(alvo)) return;
     const acao = alvo.dataset.nav;

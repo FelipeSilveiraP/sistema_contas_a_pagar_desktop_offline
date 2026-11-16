@@ -170,6 +170,8 @@ function diagProcessarPedidos() {
             return JSON.stringify({
               tela: document.body.dataset.tela || null,
               pronto: document.body.dataset.pronto || null,
+              primeiroAcesso: document.body.dataset.primeiroAcesso || null,
+              perfisCarregados: document.body.dataset.perfisCarregados || null,
               hasFocus: document.hasFocus(),
               ativo: a ? a.tagName + (a.id ? "#" + a.id : "") : null,
               menuAberto: document.getElementById("nav-global") ? document.getElementById("nav-global").dataset.menuAberto : null,
@@ -191,6 +193,8 @@ function diagProcessarPedidos() {
 
 const TELAS = new Map([
   ["menu", path.join(__dirname, "..", "frontend", "html", "menu.html")],
+  ["perfis", path.join(__dirname, "..", "frontend", "html", "perfis.html")],
+  ["usuarios", path.join(__dirname, "..", "frontend", "html", "usuarios.html")],
   ["controle", path.join(__dirname, "..", "frontend", "html", "controle.html")],
   ["cadastros", path.join(__dirname, "..", "frontend", "html", "cadastros.html")],
   ["mensagens", path.join(__dirname, "..", "frontend", "html", "mensagens.html")],
@@ -345,7 +349,8 @@ async function iniciarBackend() {
 function liberarAplicativo() {
   if (!janela || janela.isDestroyed()) return;
   marco("liberando-menu");
-  janela.loadFile(path.join(__dirname, "..", "frontend", "html", "menu.html"));
+  // como na Netflix: antes do Menu, cada pessoa escolhe a sua conta ("Quem esta usando?") e digita o PIN
+  janela.loadFile(path.join(__dirname, "..", "frontend", "html", "perfis.html"));
 }
 
 async function prepararAplicativo() {
@@ -421,7 +426,7 @@ function criarJanela() {
     janela.focus();
     janela.webContents.focus();
     marco("interface-carregada");
-    if (!menuLiberado && janela.webContents.getURL().includes("menu.html")) {
+    if (!menuLiberado && /(menu|perfis)\.html/.test(janela.webContents.getURL())) {
       menuLiberado = true;
       marco("interacao-liberada");
     }

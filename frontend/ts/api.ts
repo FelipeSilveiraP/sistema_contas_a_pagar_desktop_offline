@@ -92,7 +92,8 @@ export class ErroValidacaoApi extends Error {
 }
 
 export class ErroApi extends Error {
-  constructor(public status: number) {
+  /** corpo da resposta de erro (ex.: tentativasRestantes, minutos das contas com PIN) */
+  constructor(public status: number, public corpo: Record<string, unknown> = {}) {
     super(`HTTP ${status}`);
   }
 }

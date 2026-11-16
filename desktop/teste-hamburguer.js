@@ -14,6 +14,7 @@ process.env.FINDESK_DB_PATH = path.join(PASTA, "banco.db");
 let janela = null;
 app.on("browser-window-created", (_e, w) => { if (!janela) janela = w; });
 require("./main.js");
+const { entrarParaTeste } = require("./entrar-teste");
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 const js = (c) => janela.webContents.executeJavaScript(c);
 const TELAS = ["controle", "cadastros", "mensagens", "recorrentes", "novo-cadastro", "form-banco", "form-pagador", "form-empresa",
@@ -43,7 +44,7 @@ const MEDIR = `(() => {
 
 (async () => {
   while (!janela) await esperar(100);
-  for (let i = 0; i < 200 && !(await js("document.body?.dataset.tela === 'menu'").catch(() => false)); i++) await esperar(150);
+  await entrarParaTeste(js);
   let ok = 0;
   let total = 0;
   const conferir = (nome, certo, detalhe) => {

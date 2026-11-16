@@ -180,6 +180,13 @@ class SegurancaBancoTest {
             sql("DROP TRIGGER " + gatilho);
         }
         sql("DROP TABLE auditoria_operacoes");
+        // e sem as contas de usuario da v19
+        for (String gatilho : List.of("trg_auditoria_config_insert", "trg_auditoria_config_update", "trg_auditoria_config_delete")) {
+            sql("DROP TRIGGER " + gatilho);
+        }
+        for (String tabela : List.of("codigos_redefinicao", "acessos_usuario", "usuarios")) {
+            sql("DROP TABLE " + tabela);
+        }
         sql("PRAGMA user_version = 16");
 
         DatabaseInitializer inicializador = new DatabaseInitializer(conexao);
@@ -188,7 +195,8 @@ class SegurancaBancoTest {
         assertThat(inicializador.lerVersao()).isEqualTo(inicializador.getVersaoAtual());
         assertThat(contas.buscarPorId(idConta).orElseThrow().status()).isEqualTo("PAGO");
         assertThat(contar("SELECT COUNT(*) FROM pagamentos WHERE id_conta = " + idConta)).isEqualTo(1);
-        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_%' AND name NOT LIKE '%recorrente%' AND name NOT LIKE '%valor_maximo%'")).isEqualTo(13);
+        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_%' AND name NOT LIKE '%recorrente%' AND name NOT LIKE '%valor_maximo%'"
+                + " AND name NOT LIKE '%usuario%' AND name NOT LIKE '%acessos%' AND name NOT LIKE '%admin%' AND name NOT LIKE '%config%'")).isEqualTo(13);
         assertThatThrownBy(() -> contaService.excluir(idConta)).isInstanceOf(ConflitoIntegridadeException.class);
     }
 

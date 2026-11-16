@@ -1,5 +1,7 @@
 import { AlertaContaDados, AlertasDados, buscarAlertas, buscarBackupDrive, buscarStatus } from "../api";
 import { notificar } from "../notificacoes";
+import { perfilAtual } from "../perfil";
+import { criarBotaoConta } from "../conta-menu";
 import { formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { Tela, irPara } from "../navegacao";
 import { respostaProvisoria } from "../componentes";
@@ -360,7 +362,21 @@ function registrarPainelMensagens(): void {
   document.getElementById("btn-ir-controle")?.addEventListener("click", () => void irPara("todas-as-contas"));
 }
 
+/** Sem perfil escolhido, volta para "Quem esta usando?" (como na Netflix). */
+function mostrarPerfil(): boolean {
+  const perfil = perfilAtual();
+  if (!perfil) {
+    void window.finDesk?.navegar("perfis");
+    return false;
+  }
+  // um botao so para a conta: MINHA CONTA ou SAIR E TROCAR DE CONTA
+  document.getElementById("menu-conta")!.replaceChildren(criarBotaoConta(perfil, "menu-perfil"));
+  document.body.dataset.perfil = perfil.nome;
+  return true;
+}
+
 export function iniciarMenu(): void {
+  if (!mostrarPerfil()) return;
   registrarBotoes();
   registrarPainelMensagens();
   registrarAtalhos();

@@ -3,6 +3,8 @@ package com.chaveiro.database;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 18;
+    private static final int VERSAO_ATUAL = 19;
 
     private final ConnectionFactory conexao;
 
@@ -398,6 +400,7 @@ public class DatabaseInitializer {
             };
             case 17 -> migracaoSeguranca();
             case 18 -> migracaoAuditoriaRecorrentes();
+            case 19 -> contasDeUsuario().toArray(String[]::new);
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
     }
@@ -559,5 +562,124 @@ public class DatabaseInitializer {
             gatilhoValorMaximo("trg_recorrente_valor_maximo_ins", "boletos_recorrentes", "valor_centavos", "INSERT"),
             gatilhoValorMaximo("trg_recorrente_valor_maximo_upd", "boletos_recorrentes", "valor_centavos", "UPDATE OF valor_centavos"),
         };
+    }
+
+    /** Conta de usuario SEM segredos: nada de login/e-mail cifrado nem hash do PIN (so se mudou). */
+    private static String jsonUsuario(String r) {
+        return "json_object('id_usuario', " + r + ".id_usuario, 'nome', " + r + ".nome, 'admin', " + r + ".admin,"
+                + " 'ativo', " + r + ".ativo, 'tem_foto', " + r + ".foto IS NOT NULL, 'login_indice', " + r + ".login_indice)";
+    }
+
+    /**
+     * v19 - contas de usuario (tela "Quem esta usando?" com PIN, igual ao Sistema de
+     * Garantias). Login, e-mail e PIN NUNCA ficam em texto: login e e-mail cifrados
+     * (AES-256-GCM) + indice HMAC do login para a busca; PIN como hash PBKDF2 com sal e
+     * chave secreta fora do banco (service/Cripto). O primeiro usuario criado e o
+     * administrador. Tambem: foto ate 1 MB, auditoria das contas (sem segredos) e das
+     * configuracoes (so a chave, nunca o valor). So acrescenta tabelas e gatilhos.
+     */
+    private static List<String> contasDeUsuario() {
+        List<String> sql = new ArrayList<>();
+        sql.add("""
+                CREATE TABLE usuarios (
+                    id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT NOT NULL CHECK (length(trim(nome)) BETWEEN 2 AND 40),
+                    login_indice TEXT NOT NULL UNIQUE,
+                    login_cifrado TEXT NOT NULL,
+                    email_cifrado TEXT,
+                    pin_hash TEXT NOT NULL,
+                    foto BLOB,
+                    admin INTEGER NOT NULL DEFAULT 0 CHECK (admin IN (0, 1)),
+                    ativo INTEGER NOT NULL DEFAULT 1 CHECK (ativo IN (0, 1)),
+                    falhas INTEGER NOT NULL DEFAULT 0 CHECK (falhas >= 0),
+                    bloqueado_ate TEXT,
+                    acessos INTEGER NOT NULL DEFAULT 0 CHECK (acessos >= 0),
+                    ultimo_acesso TEXT,
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+                )
+                """);
+        // historico de acessos: a conta pode ser excluida, o historico fica (com o nome)
+        sql.add("""
+                CREATE TABLE acessos_usuario (
+                    id_acesso INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_usuario INTEGER REFERENCES usuarios(id_usuario) ON DELETE SET NULL,
+                    nome TEXT NOT NULL,
+                    momento TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
+                    tipo TEXT NOT NULL CHECK (tipo IN ('ENTRADA', 'PIN_ERRADO', 'BLOQUEIO', 'PIN_TROCADO',
+                        'PIN_REDEFINIDO_EMAIL', 'PIN_REDEFINIDO_ADMIN', 'CODIGO_ENVIADO'))
+                )
+                """);
+        sql.add("CREATE INDEX idx_acessos_usuario ON acessos_usuario(id_usuario, momento)");
+        sql.add("""
+                CREATE TABLE codigos_redefinicao (
+                    id_codigo INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_usuario INTEGER NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+                    codigo_hash TEXT NOT NULL,
+                    expira_em TEXT NOT NULL,
+                    tentativas INTEGER NOT NULL DEFAULT 0,
+                    usado INTEGER NOT NULL DEFAULT 0 CHECK (usado IN (0, 1)),
+                    criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+                )
+                """);
+        // nunca ficar sem administrador ativo
+        sql.add("""
+                CREATE TRIGGER trg_ultimo_admin_nao_sai
+                BEFORE UPDATE OF admin, ativo ON usuarios
+                WHEN OLD.admin = 1 AND OLD.ativo = 1 AND (NEW.admin = 0 OR NEW.ativo = 0)
+                    AND (SELECT COUNT(*) FROM usuarios WHERE admin = 1 AND ativo = 1) <= 1
+                BEGIN
+                    SELECT RAISE(ABORT, 'ULTIMO_ADMIN: o sistema precisa de pelo menos um administrador ativo');
+                END
+                """);
+        sql.add("""
+                CREATE TRIGGER trg_ultimo_admin_nao_exclui
+                BEFORE DELETE ON usuarios
+                WHEN OLD.admin = 1 AND OLD.ativo = 1
+                    AND (SELECT COUNT(*) FROM usuarios WHERE admin = 1 AND ativo = 1) <= 1
+                BEGIN
+                    SELECT RAISE(ABORT, 'ULTIMO_ADMIN: o sistema precisa de pelo menos um administrador ativo');
+                END
+                """);
+        // historico somente-inclusao (so o ON DELETE SET NULL da conta pode mexer nele)
+        sql.add("""
+                CREATE TRIGGER trg_acessos_nao_altera
+                BEFORE UPDATE ON acessos_usuario
+                WHEN NOT (NEW.id_usuario IS NULL AND OLD.id_usuario IS NOT NULL
+                    AND NEW.nome = OLD.nome AND NEW.momento = OLD.momento AND NEW.tipo = OLD.tipo)
+                BEGIN
+                    SELECT RAISE(ABORT, 'ACESSOS_SOMENTE_LEITURA: o historico de acessos nao pode ser alterado');
+                END
+                """);
+        sql.add("""
+                CREATE TRIGGER trg_acessos_nao_apaga
+                BEFORE DELETE ON acessos_usuario
+                BEGIN
+                    SELECT RAISE(ABORT, 'ACESSOS_SOMENTE_LEITURA: o historico de acessos nao pode ser apagado');
+                END
+                """);
+        for (String op : new String[] {"INSERT", "UPDATE OF foto"}) {
+            sql.add("CREATE TRIGGER trg_usuario_foto_" + (op.startsWith("I") ? "insert" : "update") + " BEFORE " + op
+                    + " ON usuarios WHEN length(NEW.foto) > 1048576"
+                    + " BEGIN SELECT RAISE(ABORT, 'FOTO_GRANDE: a foto passa de 1 MB'); END");
+        }
+        String depoisUsuario = "json_patch(" + jsonUsuario("NEW") + ", json_object('pin_trocado', OLD.pin_hash IS NOT NEW.pin_hash))";
+        sql.add("CREATE TRIGGER trg_auditoria_usuario_insert AFTER INSERT ON usuarios BEGIN "
+                + auditar("usuarios", "INSERT", "NEW.id_usuario", "NULL", jsonUsuario("NEW")) + " END");
+        sql.add("CREATE TRIGGER trg_auditoria_usuario_update AFTER UPDATE ON usuarios"
+                + " WHEN " + jsonUsuario("OLD") + " IS NOT " + jsonUsuario("NEW") + " OR OLD.pin_hash IS NOT NEW.pin_hash"
+                + " OR OLD.foto IS NOT NEW.foto BEGIN "
+                + auditar("usuarios", "UPDATE", "NEW.id_usuario", jsonUsuario("OLD"), depoisUsuario) + " END");
+        sql.add("CREATE TRIGGER trg_auditoria_usuario_delete AFTER DELETE ON usuarios BEGIN "
+                + auditar("usuarios", "DELETE", "OLD.id_usuario", jsonUsuario("OLD"), "NULL") + " END");
+        // configuracoes: so a chave (o valor pode ser a senha de app cifrada)
+        sql.add("CREATE TRIGGER trg_auditoria_config_insert AFTER INSERT ON manutencao BEGIN "
+                + auditar("manutencao", "INSERT", "NEW.rowid", "NULL", "json_object('chave', NEW.chave)") + " END");
+        sql.add("CREATE TRIGGER trg_auditoria_config_update AFTER UPDATE ON manutencao WHEN OLD.valor IS NOT NEW.valor BEGIN "
+                + auditar("manutencao", "UPDATE", "NEW.rowid", "json_object('chave', OLD.chave)",
+                        "json_object('chave', NEW.chave, 'valor_alterado', 1)") + " END");
+        sql.add("CREATE TRIGGER trg_auditoria_config_delete AFTER DELETE ON manutencao BEGIN "
+                + auditar("manutencao", "DELETE", "OLD.rowid", "json_object('chave', OLD.chave)", "NULL") + " END");
+        sql.add("CREATE INDEX idx_codigos_usuario ON codigos_redefinicao(id_usuario, criado_em)");
+        return sql;
     }
 }

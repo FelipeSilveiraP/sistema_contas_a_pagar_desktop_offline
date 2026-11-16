@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Quem está usando? — Sistema de Contas a Pagar — Chaveiro Universal</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'">
+<link href="../css/fonts.css" rel="stylesheet">
+<link href="../dist/tailwind.css" rel="stylesheet">
+</head>
+<body class="perfis-body bg-[#fcf9f8] text-[#1c1b1b] select-none" data-tela="perfis">
+<main class="perfis-wrap">
+<p class="perfis-boas-vindas" id="perfis-boas-vindas">BEM-VINDO AO SISTEMA DE CONTAS A PAGAR</p>
+<header class="perfis-titulo">
+<img src="../assets/icone.png" alt="" aria-hidden="true">
+<h1 id="perfis-titulo">Quem está usando?</h1>
+</header>
+<p class="perfis-dica" id="perfis-dica">Clique na sua bolinha e digite o seu PIN.</p>
+<ul class="perfis-grade" id="perfis" aria-label="Contas"></ul>
+
+<section class="perfis-admin hidden" id="primeiro-admin" aria-labelledby="titulo-admin">
+<h2 id="titulo-admin">Primeira vez: crie a conta do administrador</h2>
+<p class="perfis-dica">O administrador cadastra as outras contas e pode trocar nome, foto, e-mail e PIN de todos. O login é o e-mail; se esquecer o PIN, o código vai para esse e-mail e para o e-mail da loja.</p>
+<form class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="form-admin" novalidate>
+<div class="campo-form"><label class="rotulo-form" for="adm_nome">NOME (APARECE NA BOLINHA)</label><input class="entrada-form uppercase" id="adm_nome" maxlength="40" type="text" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="nome"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="adm_email"><span>SEU E-MAIL (É O SEU LOGIN)</span></label><input class="entrada-form" id="adm_email" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com"><p class="campo-erro hidden" data-erro-campo="email"></p></div>
+<div class="campo-form sm:col-span-2"><label class="rotulo-form" for="adm_email_loja"><span>E-MAIL DA LOJA</span><span class="dica-form">ENVIA E RECEBE OS CÓDIGOS DE "ESQUECI O PIN"</span></label><input class="entrada-form" id="adm_email_loja" maxlength="120" type="email" autocomplete="off" placeholder="loja@gmail.com"><p class="campo-erro hidden" data-erro-campo="emailLoja"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="adm_pin">PIN (4 A 6 NÚMEROS)</label><input class="entrada-form font-mono" id="adm_pin" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password"><p class="campo-erro hidden" data-erro-campo="pin"></p></div>
+<div class="campo-form"><label class="rotulo-form" for="adm_pin2">REPITA O PIN</label><input class="entrada-form font-mono" id="adm_pin2" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password"><p class="campo-erro hidden" data-erro-campo="pin2"></p></div>
+<div class="sm:col-span-2 flex justify-center pt-2"><button class="btn-principal-form" type="submit"><span class="material-symbols-outlined text-xl">admin_panel_settings</span>CRIAR ADMINISTRADOR</button></div>
+</form>
+</section>
+
+<p class="perfis-erro hidden" id="perfis-erro"></p>
+</main>
+
+<div class="dialogo-veu hidden" id="pin-veu">
+<div class="dialogo dialogo--pin" role="dialog" aria-modal="true" aria-labelledby="pin-nome">
+<div class="dialogo__cabecalho dialogo__cabecalho--pin"><span id="pin-bolinha"></span><h2 class="dialogo__titulo" id="pin-nome">—</h2></div>
+<form class="dialogo__corpo" id="pin-form" novalidate>
+<label class="rotulo-form" for="pin-campo">DIGITE O SEU PIN</label>
+<input class="entrada-form entrada-pin font-mono" id="pin-campo" inputmode="numeric" maxlength="6" type="password" autocomplete="off">
+<p class="campo-erro hidden" id="pin-erro"></p>
+<button class="link-esqueci" id="btn-esqueci" type="button">Esqueci meu PIN</button>
+<div class="dialogo__acoes !p-0 !pt-2"><button class="dialogo-botao dialogo-botao--neutro" id="pin-cancelar" type="button">CANCELAR</button><button class="dialogo-botao dialogo-botao--acao" id="pin-entrar" type="submit">ENTRAR</button></div>
+</form>
+<form class="dialogo__corpo hidden" id="esqueci-form" novalidate>
+<p class="dialogo__mensagem" id="esqueci-texto">Digite o e-mail da sua conta. Vamos mandar um código de 6 números para ele e para o e-mail da loja.</p>
+<label class="rotulo-form" for="esqueci-login">E-MAIL DA CONTA</label>
+<input class="entrada-form" id="esqueci-login" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com">
+<div class="hidden flex-col gap-2" id="esqueci-etapa2">
+<label class="rotulo-form" for="esqueci-codigo">CÓDIGO DO E-MAIL</label>
+<input class="entrada-form font-mono" id="esqueci-codigo" inputmode="numeric" maxlength="6" type="text" autocomplete="one-time-code">
+<label class="rotulo-form" for="esqueci-novo">NOVO PIN (4 A 6 NÚMEROS)</label>
+<input class="entrada-form font-mono" id="esqueci-novo" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password">
+</div>
+<p class="campo-erro hidden" id="esqueci-erro"></p>
+<div class="dialogo__acoes !p-0 !pt-2"><button class="dialogo-botao dialogo-botao--neutro" id="esqueci-voltar" type="button">VOLTAR</button><button class="dialogo-botao dialogo-botao--acao" id="esqueci-acao" type="submit">ENVIAR CÓDIGO</button></div>
+</form>
+</div>
+</div>
+<script type="module" src="../dist/app.js"></script>
+</body></html>

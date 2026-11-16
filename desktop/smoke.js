@@ -475,6 +475,41 @@ async function executar() {
   console.log("\n=== SMOKE TEST — navbar global + navegação completa ===\n");
 
     // 1. Abertura do Menu + API + segurança
+    // 0. "Quem esta usando?" (contas com PIN, como na Netflix) antes do Menu
+    teste("Primeira abertura pede a conta do administrador", await esperarPredicado("document.body.dataset.tela === 'perfis' && document.body.dataset.primeiroAcesso === 'true'", 30000));
+    teste("Primeira conta: BEM-VINDO AO SISTEMA DE CONTAS A PAGAR no topo",
+      (await js("document.getElementById('perfis-boas-vindas').textContent.trim()")) === "BEM-VINDO AO SISTEMA DE CONTAS A PAGAR"
+      && await js("document.getElementById('perfis-boas-vindas').getBoundingClientRect().top < document.querySelector('.perfis-titulo').getBoundingClientRect().top"));
+    await capturar("primeiro-admin-1536x864.png");
+    await js(`(() => { const v = (id, t) => { document.getElementById(id).value = t; }; v('adm_nome', 'TESTE ADMIN');
+      v('adm_email', 'teste@exemplo.com'); v('adm_email_loja', 'loja@exemplo.com'); v('adm_pin', '2468'); v('adm_pin2', '1357'); document.querySelector('#form-admin button[type=submit]').click(); return true; })()`);
+    teste("PINs diferentes não criam o admin", await esperarPredicado("!document.querySelector('[data-erro-campo=pin2]').classList.contains('hidden')", 3000));
+    await js("document.getElementById('adm_pin2').value = '2468'");
+    await enter("#adm_pin2");
+    teste("Enter no último campo cria o admin e entra no Menu com o perfil",
+      await esperarPredicado("document.body.dataset.tela === 'menu' && document.body.dataset.perfil === 'TESTE ADMIN'", 15000));
+    await js("window.finDesk.navegar('perfis')");
+    teste("Bolinhas: mostra a bolinha do admin", await esperarPredicado("document.body.dataset.tela === 'perfis' && Number(document.body.dataset.perfisCarregados) === 1", 15000));
+    teste("Bolinhas: BEM-VINDO AO SISTEMA DE CONTAS A PAGAR continua no topo",
+      (await js("document.getElementById('perfis-boas-vindas').textContent.trim()")) === "BEM-VINDO AO SISTEMA DE CONTAS A PAGAR"
+      && await js("document.getElementById('perfis-boas-vindas').getBoundingClientRect().bottom <= document.getElementById('perfis').getBoundingClientRect().top"));
+    teste("Bolinhas são círculos", await js("getComputedStyle(document.querySelector('.perfil-avatar')).borderTopLeftRadius !== '0px'"));
+    await js("document.querySelector('.perfil-cartao').click()");
+    teste("Clicar na bolinha abre o pop-up do PIN", await esperarPredicado("document.body.dataset.pinAberto === 'true'", 3000));
+    await js("document.getElementById('pin-campo').value = '9999'");
+    await enter("#pin-campo");
+    teste("PIN errado (com Enter) avisa quantas tentativas faltam", await esperarPredicado("document.getElementById('pin-erro').textContent.includes('4 tentativa')", 5000));
+    await capturar("perfis-pin-1536x864.png");
+    await js("document.getElementById('pin-campo').value = '2468'");
+    await enter("#pin-campo");
+    teste("PIN certo + Enter entra no Menu", await esperarPredicado("document.body.dataset.tela === 'menu' && document.body.dataset.perfil === 'TESTE ADMIN'", 15000));
+    teste("Menu mostra o botão da conta (bolinha + nome)", await js("!!document.querySelector('#menu-conta .conta-menu__botao') && document.querySelector('#menu-conta').textContent.includes('TESTE ADMIN')"));
+
+    await js("window.finDesk.navegar('usuarios')");
+    teste("MINHA CONTA abre a tela de contas com o botão da conta na barra",
+      await esperarPredicado("document.body.dataset.tela === 'usuarios' && !!document.querySelector('#nav-global .conta-menu__botao')", 15000));
+    await capturar("usuarios-1536x864.png");
+    await js("window.finDesk.navegar('menu')");
     teste("Abertura do Menu Principal", await esperarPredicado("document.body.dataset.tela === 'menu'", 30000));
   teste(
     "Comunicação com a API (menu)",

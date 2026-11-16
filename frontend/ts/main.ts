@@ -14,6 +14,16 @@ const tela = document.body.dataset.tela ?? "menu";
 
 async function iniciar(): Promise<void> {
   switch (tela) {
+    case "perfis": {
+      const { iniciarPerfis } = await import("./telas/perfis");
+      iniciarPerfis();
+      return;
+    }
+    case "usuarios": {
+      const { iniciarContas } = await import("./telas/usuarios");
+      iniciarContas();
+      return;
+    }
     case "menu": {
       const { iniciarMenu } = await import("./telas/menu");
       iniciarMenu();

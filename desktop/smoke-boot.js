@@ -26,6 +26,7 @@ if (!process.env.FINDESK_DB_PATH) {
   process.env.FINDESK_DB_PATH = bancoTeste;
 }
 require("./main.js");
+const { entrarParaTeste } = require("./entrar-teste");
 
 let janela = null;
 const resultados = [];
@@ -209,6 +210,11 @@ async function ciclo() {
     console.log(`[INFO] tela inicial sem carregamento (fluxo antigo): ${telaInicial}`);
   }
 
+  // "Quem esta usando?" vem antes do Menu: entra com a conta de teste (banco temporario)
+  const perfisPronto = await esperarPredicado(`document.body.dataset.tela === 'perfis' || document.body.dataset.tela === 'menu'`, 30000);
+  tempos.perfis_interativo = Date.now() - t0;
+  teste("Tela Quem esta usando? liberada", perfisPronto, `+${tempos.perfis_interativo}ms`);
+  await entrarParaTeste(js);
   const menuPronto = await esperarPredicado(
     `document.body.dataset.tela === 'menu' && document.body.dataset.apiStatus !== undefined`,
     30000
