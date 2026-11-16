@@ -16,6 +16,7 @@ import {
   EmpresaDados,
 } from "../api";
 import { montarNavbar } from "../navbar";
+import { recolherTabela } from "../tabela-recolhivel";
 import { confirmarExclusao, confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
 import { notificar } from "../notificacoes";
 import { cnpjValido, cpfValido, formatarCNPJ, formatarCPF, formatarTelefone, mascaraTelefone } from "../mascaras";
@@ -120,6 +121,7 @@ function renderTabela(): void {
   for (const linha of linhas) tbody.appendChild(linha);
   tabela.append(thead, tbody);
   area.appendChild(tabela);
+  recolherTabela("cadastros", tbody, tabela, selecionadoId);
   document.body.dataset.tabelaEstado = "pronto";
 }
 

@@ -11,6 +11,7 @@ import {
   ErroValidacaoApi,
 } from "../api";
 import { confirmarEstorno } from "../componentes";
+import { recolherTabela } from "../tabela-recolhivel";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
@@ -67,6 +68,7 @@ function renderTabela(): void {
     corpo.appendChild(tr);
   }
   el("tableSummaryAmount").textContent = formatarMoedaBR(total);
+  recolherTabela("pagos", corpo as HTMLTableSectionElement, corpo.closest("main")!, selecionadoId);
   el("selectionEmptyState").classList.toggle("hidden", filtrados().length > 0);
 }
 

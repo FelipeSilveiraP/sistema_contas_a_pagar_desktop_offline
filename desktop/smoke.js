@@ -1139,6 +1139,34 @@ async function executar() {
   }
   teste("Registros de teste do Todos os Cadastros removidos da base temporaria", true);
 
+  // tabela mostra so 5 linhas; EXPANDIR TABELA (seta para baixo) mostra todas
+  const bancosExp = [];
+  for (let i = 0; i < 7; i++) bancosExp.push(await tcCriar("/api/bancos", { instituicao: `EXP BANCO ${i} ${sufixoTc}` }));
+  await js("window.finDesk.navegar('todos-cadastros')");
+  await esperarTela("todos-cadastros");
+  await clicar("#btn-filtro-bancos");
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'EXP BANCO'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(300);
+  const visiveisExp = () => js(`[...document.querySelectorAll('#tabela-area tbody tr')].filter(tr => tr.getClientRects().length > 0).length`);
+  const rotuloExp = () => js(`(document.querySelector('[data-expandir-tabela="cadastros"]')?.textContent || '').trim()`);
+  teste("Tabela: mostra so 5 das 7 linhas e o botao EXPANDIR TABELA (seta para baixo)",
+    Number(await visiveisExp()) === 5 && (await rotuloExp()).includes("EXPANDIR TABELA (MAIS 2)") && (await rotuloExp()).includes("keyboard_arrow_down"),
+    `${await visiveisExp()} | ${await rotuloExp()}`);
+  await clicar('[data-expandir-tabela="cadastros"]');
+  await esperar(200);
+  teste("Tabela: EXPANDIR TABELA mostra as 7 linhas e vira RECOLHER TABELA",
+    Number(await visiveisExp()) === 7 && (await rotuloExp()).includes("RECOLHER TABELA"), `${await visiveisExp()} | ${await rotuloExp()}`);
+  await clicar('[data-expandir-tabela="cadastros"]');
+  await esperar(200);
+  teste("Tabela: RECOLHER TABELA volta para 5 linhas", Number(await visiveisExp()) === 5, String(await visiveisExp()));
+  await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'EXP BANCO 3'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+  await esperar(200);
+  teste("Tabela: com ate 5 linhas o botao some",
+    (await js(`document.getElementById('expandir-cadastros') === null || document.getElementById('expandir-cadastros').classList.contains('hidden')`)) === true);
+  for (const b of bancosExp) {
+    if (b.body?.id) await js(`(async () => { await fetch('http://127.0.0.1:${cfgTc.port}/api/bancos/${b.body.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgTc.token}' } }); return true; })()`);
+  }
+
   await definirTamanho(1536, 864);
   await js("window.finDesk.navegar('menu')");
   teste("Todos os Cadastros: estado restaurado para o fluxo das secoes seguintes", await esperarTela("menu"));

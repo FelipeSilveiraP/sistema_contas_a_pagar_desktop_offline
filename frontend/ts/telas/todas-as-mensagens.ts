@@ -7,6 +7,7 @@ import {
   ErroValidacaoApi,
 } from "../api";
 import { confirmarExclusao } from "../componentes";
+import { recolherTabela } from "../tabela-recolhivel";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
 import { formatarDataBR, parseDataBR } from "../mascaras";
@@ -94,6 +95,7 @@ function renderTabela(): void {
     tr.addEventListener("click", () => selecionar(aviso.id));
     corpo.appendChild(tr);
   }
+  recolherTabela("mensagens", corpo as HTMLTableSectionElement, corpo.closest("main")!, selecionadoId);
   el("tableSummaryCount").textContent = String(filtrados().length);
   el("selectionEmptyState").classList.toggle("hidden", filtrados().length > 0);
 }

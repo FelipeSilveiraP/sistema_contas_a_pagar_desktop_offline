@@ -12,6 +12,7 @@ import {
   PagadorDados,
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
+import { recolherTabela } from "../tabela-recolhivel";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { correspondeBusca, hojeIso, ordenar } from "../filtros";
@@ -88,6 +89,7 @@ function renderTabela(): void {
   }
   el("tableSummaryCount").textContent = String(filtradas().length);
   el("tableSummaryAmount").textContent = formatarMoedaBR(total);
+  recolherTabela("recorrentes", corpo as HTMLTableSectionElement, corpo.closest("main")!, selecionadoId);
   el("selectionEmptyState").classList.toggle("hidden", filtradas().length > 0);
 }
 
@@ -143,6 +145,7 @@ function renderCadastradas(): void {
     tr.appendChild(celula("Nenhuma conta fixa cadastrada. Use CONTROLE › CONTAS RECORRENTES › CADASTRAR.", "py-3 px-3 text-center font-mono text-xs text-neutral-500 uppercase"));
     (tr.firstChild as HTMLTableCellElement).colSpan = 7;
     corpo.replaceChildren(tr);
+    recolherTabela("fixas", corpo as HTMLTableSectionElement, corpo.closest("section")!);
     return;
   }
   corpo.replaceChildren(...recorrentes.map((r) => {
@@ -167,6 +170,7 @@ function renderCadastradas(): void {
     );
     return tr;
   }));
+  recolherTabela("fixas", corpo as HTMLTableSectionElement, corpo.closest("section")!);
 }
 
 async function gerar(r: RecorrenteDados): Promise<void> {

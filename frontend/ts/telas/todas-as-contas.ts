@@ -16,6 +16,7 @@ import {
   PagadorDados,
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
+import { recolherTabela } from "../tabela-recolhivel";
 import { confirmar, confirmarEstorno, confirmarExclusao } from "../componentes";
 import { escolher } from "../dialogos";
 import { MIME_IMAGEM, extensaoNota, montarPreviaNota } from "../nota-previa";
@@ -177,6 +178,7 @@ function renderTabela(): void {
     tr.appendChild(td);
     corpo.appendChild(tr);
   }
+  recolherTabela("contas", corpo as HTMLTableSectionElement, corpo.closest("main")!, selecionadoId);
   el("selectionEmptyState").classList.toggle("hidden", selecionadoId !== null);
 }
 
