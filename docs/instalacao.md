@@ -72,6 +72,9 @@ O sistema só oferece a atualização quando a versão é maior que a instalada 
 
 ## Abrir com o Windows e abrir o e-mail
 
+**Espera o computador terminar de ligar (desde 2026-11-16):** quando é o Windows que abre o sistema, ele **não sobe na hora**. Fica esperando, sem janela e sem o servidor interno, até o Windows estar ligado há pelo menos **3 minutos** e o processador estar **folgado (abaixo de 35%)**, para os outros programas (WhatsApp, Chrome...) abrirem primeiro. Confere a cada 15 segundos e, se o computador continuar ocupado, abre mesmo assim depois de **10 minutos**. Aberto assim, o servidor interno roda com **prioridade baixa**. Clicar no atalho durante a espera abre o sistema na hora. Aberto à mão, abre normalmente.
+
+
 O sistema instalado se registra para **abrir sozinho quando o computador liga**. Nesse início automático ele também **abre o Chrome no e-mail** (Gmail). Se o sistema for aberto à mão, o e-mail não abre. Tudo isso é configurável no arquivo `configuracoes.json`, ao lado do banco, editável no Bloco de Notas:
 
 ```json

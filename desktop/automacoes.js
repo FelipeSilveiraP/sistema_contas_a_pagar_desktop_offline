@@ -87,6 +87,48 @@ const registroWindows = {
   },
 };
 
+/** Uso do processador (0 a 1) medido em `ms` milissegundos, somando todos os nucleos. */
+function medirUsoCpu(ms = 3000) {
+  const somar = () => os.cpus().reduce((t, c) => {
+    const total = Object.values(c.times).reduce((a, b) => a + b, 0);
+    return { ocupado: t.ocupado + total - c.times.idle, total: t.total + total };
+  }, { ocupado: 0, total: 0 });
+  const antes = somar();
+  return new Promise((ok) => setTimeout(() => {
+    const depois = somar();
+    const total = depois.total - antes.total;
+    ok(total > 0 ? (depois.ocupado - antes.ocupado) / total : 0);
+  }, ms));
+}
+
+/**
+ * Inicio automatico com o Windows (pedido do usuario, 2026-11-16): o sistema ESPERA o
+ * computador terminar de ligar e os outros programas abrirem antes de subir. Sai da
+ * espera quando o Windows ja esta ligado ha `uptimeMinimo` segundos E o processador
+ * esta abaixo de `cpuMaxima` (35%); confere a cada `intervalo` e desiste de esperar
+ * depois de `limite` (abre mesmo assim). Devolve quantos ms esperou.
+ */
+async function esperarComputadorFolgado(registrarLog, opcoes = {}) {
+  const {
+    uptimeMinimo = 180, cpuMaxima = 0.35, intervalo = 15000, limite = 10 * 60 * 1000,
+    uptime = os.uptime, medirCpu = medirUsoCpu, esperar = (ms) => new Promise((ok) => setTimeout(ok, ms)), agora = Date.now,
+  } = opcoes;
+  const inicio = agora();
+  for (;;) {
+    const ligadoHa = uptime();
+    const cpu = ligadoHa >= uptimeMinimo ? await medirCpu() : 1;
+    if (ligadoHa >= uptimeMinimo && cpu <= cpuMaxima) {
+      registrarLog("INFO", `inicio automatico: computador folgado (ligado ha ${Math.round(ligadoHa)} s, CPU ${Math.round(cpu * 100)}%) apos ${Math.round((agora() - inicio) / 1000)} s de espera`);
+      return agora() - inicio;
+    }
+    if (agora() - inicio >= limite) {
+      registrarLog("INFO", `inicio automatico: abrindo depois de ${Math.round(limite / 60000)} min de espera (CPU ${Math.round(cpu * 100)}%)`);
+      return agora() - inicio;
+    }
+    await esperar(intervalo);
+  }
+}
+
 /** Registra (ou remove) o sistema na inicializacao do Windows e confere se ficou gravado. */
 function configurarInicioComWindows(app, config, registrarLog, registro = registroWindows) {
   if (!app.isPackaged) return false;
@@ -345,6 +387,8 @@ module.exports = {
   PADRAO,
   lerConfiguracoes,
   configurarInicioComWindows,
+  esperarComputadorFolgado,
+  medirUsoCpu,
   abrirEmailSeInicioAutomatico,
   enderecoSeguro,
   pastaDrive,

@@ -76,6 +76,32 @@ function spawnFalso() {
   teste("Cadastro que nao fica gravado: avisa no log (WARN) com 'ausente'",
     a.configurarInicioComWindows(appFalso(true), cfg, log, registroFalso(9)) === false && logs.some((l) => l.startsWith("WARN") && l.includes("ausente")));
 
+  console.log("\n=== Inicio automatico: espera o computador ficar folgado ===");
+  // relogio e processador simulados: cada espera avanca o relogio
+  function simulado(uptimes, cpus) {
+    let t = 0;
+    let i = 0;
+    return {
+      esperas: 0,
+      opcoes: {
+        uptime: () => uptimes[Math.min(i, uptimes.length - 1)],
+        medirCpu: async () => cpus[Math.min(i, cpus.length - 1)],
+        esperar: async (ms) => { t += ms; i++; },
+        agora: () => t,
+      },
+    };
+  }
+  let sim = simulado([60, 120, 200, 260], [0.9, 0.9, 0.8, 0.2]);
+  let esperou = await a.esperarComputadorFolgado(log, sim.opcoes);
+  teste("Recem-ligado e processador ocupado: espera; abre quando o Windows ja ligou ha 3 min e a CPU folgou", esperou === 45000, String(esperou));
+  sim = simulado([3600], [0.1]);
+  teste("Computador ja ligado e folgado: abre sem esperar", (await a.esperarComputadorFolgado(log, sim.opcoes)) === 0);
+  sim = simulado([3600], [0.95]);
+  esperou = await a.esperarComputadorFolgado(log, sim.opcoes);
+  teste("Processador sempre ocupado: abre mesmo assim depois de 10 min (nao fica para sempre esperando)", esperou >= 600000 && esperou < 620000, String(esperou));
+  const cpuReal = await a.medirUsoCpu(200);
+  teste("Medicao real do processador da um numero entre 0 e 1", cpuReal >= 0 && cpuReal <= 1, String(cpuReal));
+
   console.log("\n=== Chrome com o e-mail ===");
   const shell = { abertos: [], openExternal(u) { this.abertos.push(u); return Promise.resolve(); } };
   let sp = spawnFalso();

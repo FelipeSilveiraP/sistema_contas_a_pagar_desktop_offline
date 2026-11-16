@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, screen, session, shell } = require("electron");
 const { spawn } = require("child_process");
 const net = require("net");
+const os = require("os");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -9,6 +10,17 @@ const automacoes = require("./automacoes");
 // versao DO SISTEMA (package.json): app.getVersion() devolve a do Electron quando
 // o app roda por script (desenvolvimento/testes)
 const VERSAO_SISTEMA = require(path.join(__dirname, "..", "package.json")).version;
+
+// MAIS LEVE (pedido do usuario, 2026-11-16): a tela e simples e nao precisa da placa de
+// video; sem a aceleracao, o Chromium nao abre o processo de GPU (menos memoria em PC antigo)
+app.disableHardwareAcceleration();
+// Java do servidor interno com pouca memoria e pouco processamento: ~125 MB em vez de
+// ~200 MB (medido), coletor de lixo simples e compilacao rapida (TieredStopAtLevel=1)
+const JAVA_LEVE = ["-Xmx256m", "-Xms16m", "-XX:+UseSerialGC", "-Xss512k", "-XX:TieredStopAtLevel=1",
+  "-XX:ReservedCodeCacheSize=32m", "-XX:MaxMetaspaceSize=128m"];
+// aberto sozinho pelo Windows (atalho de inicializacao com --inicio-automatico)
+const INICIO_AUTOMATICO = process.argv.includes(automacoes.ARG_INICIO);
+let abrirAgora = null; // durante a espera do inicio automatico: abrir ja (atalho clicado)
 
 let processoBackend = null;
 let janela = null;
@@ -290,7 +302,7 @@ async function iniciarBackend() {
     throw new Error("backend nao compilado. Execute: mvn -f backend/pom.xml package");
   }
 
-  const proc = spawn(java, ["-Xmx256m", "-jar", jar], {
+  const proc = spawn(java, [...JAVA_LEVE, "-jar", jar], {
     env: {
       ...process.env,
       SERVER_PORT: String(porta),
@@ -301,6 +313,14 @@ async function iniciarBackend() {
     windowsHide: true,
   });
   processoBackend = proc;
+  if (INICIO_AUTOMATICO) {
+    // aberto pelo Windows: o servidor nao disputa o processador com os outros programas
+    try {
+      os.setPriority(proc.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
+    } catch {
+      // sem permissao: segue na prioridade normal
+    }
+  }
 
   proc.stdout.on("data", (d) => console.log("[backend]", d.toString().trim()));
   proc.stderr.on("data", (d) => console.error("[backend]", d.toString().trim()));
@@ -583,6 +603,7 @@ if (!instanciaUnica) {
   app.quit();
 } else {
   app.on("second-instance", () => {
+    if (abrirAgora) abrirAgora(); // atalho clicado durante a espera: abre na hora
     if (janela) {
       if (janela.isMinimized()) janela.restore();
       janela.focus();
@@ -590,7 +611,7 @@ if (!instanciaUnica) {
   });
 
   app.whenReady()
-    .then(() => {
+    .then(async () => {
       marco("app-pronto");
       // nenhuma tela do sistema usa camera, microfone, localizacao, notificacoes...:
       // qualquer pedido de permissao e negado
@@ -603,6 +624,15 @@ if (!instanciaUnica) {
       try {
         const config = automacoes.lerConfiguracoes(path.dirname(caminhoBanco()), registrarLog);
         automacoes.configurarInicioComWindows(app, config, registrarLog);
+        if (INICIO_AUTOMATICO) {
+          // ligado pelo Windows: espera o computador terminar de ligar e os outros
+          // programas abrirem (sem janela e sem Java ate la); o atalho abre na hora
+          await Promise.race([
+            automacoes.esperarComputadorFolgado(registrarLog),
+            new Promise((ok) => { abrirAgora = ok; }),
+          ]);
+          abrirAgora = null;
+        }
         automacoes.abrirEmailSeInicioAutomatico(process.argv, config, shell, registrarLog);
       } catch (erro) {
         registrarLog("WARN", `automacoes de inicio nao aplicadas: ${erro && erro.message}`);
