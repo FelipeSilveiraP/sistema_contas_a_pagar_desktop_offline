@@ -17,4 +17,11 @@
     <Match><Class name="com.chaveiro.repository.ContaRepository"/><Bug pattern="SQL_INJECTION_JDBC"/></Match>
     <!-- Falso positivo: o filtro escreve so mensagens fixas em JSON (application/json). -->
     <Match><Class name="com.chaveiro.web.TokenFilter"/><Bug pattern="XSS_SERVLET"/></Match>
+    <!-- Contas com PIN (copiado do Sistema de Garantias, ja revisado): UsuarioRepository monta
+         so trechos fixos do codigo (colunas/ordem); todo valor vai por parametro "?". -->
+    <Match><Class name="com.chaveiro.repository.UsuarioRepository"/><Bug pattern="SQL_INJECTION_JDBC"/></Match>
+    <!-- "pbkdf2".equals(...) compara o NOME do algoritmo, nao o hash (o hash usa MessageDigest.isEqual). -->
+    <Match><Class name="com.chaveiro.service.Cripto"/><Bug pattern="UNSAFE_HASH_EQUALS"/></Match>
+    <!-- variavel "senha" e a senha de app digitada pelo admin (validada), nao uma senha fixa no codigo. -->
+    <Match><Class name="com.chaveiro.service.UsuarioService"/><Bug pattern="HARD_CODE_PASSWORD"/></Match>
 </FindBugsFilter>
