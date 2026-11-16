@@ -1,6 +1,8 @@
 interface FinDeskConfig {
   port: number;
   token: string;
+  /** versao instalada (package.json), mostrada no Menu */
+  versao?: string;
 }
 
 type TelaFinDesk =

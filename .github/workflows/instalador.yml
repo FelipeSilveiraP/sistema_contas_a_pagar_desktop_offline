@@ -51,6 +51,18 @@ jobs:
       - name: Gerar o instalador (npm run instalador)
         run: npm run instalador
 
+      # TRAVA: o numero do instalador, o do programa (que aparece no rodape do Menu) e o do
+      # Release tem de ser o MESMO; se nao forem, nada e publicado
+      - name: Conferir que instalador e programa tem a mesma versao
+        shell: bash
+        run: |
+          VERSAO=$(node -p "require('./package.json').version")
+          ARQUIVO="release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe"
+          test -f "$ARQUIVO" || { echo "ERRO: instalador $ARQUIVO nao encontrado"; exit 1; }
+          DENTRO=$(node -e "const asar=require('@electron/asar'); process.stdout.write(JSON.parse(asar.extractFile('build/empacotamento/win-unpacked/resources/app.asar','package.json').toString()).version)")
+          echo "versao do instalador: $VERSAO | versao dentro do programa: $DENTRO"
+          [ "$DENTRO" = "$VERSAO" ] || { echo "ERRO: o programa diz $DENTRO e o instalador $VERSAO"; exit 1; }
+
       - name: Publicar em Releases
         shell: bash
         env:

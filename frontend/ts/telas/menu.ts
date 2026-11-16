@@ -332,6 +332,8 @@ async function iniciar(): Promise<void> {
       throw new Error("configuração indisponível");
     }
     const cfg = await window.finDesk.config();
+    // versao instalada no rodape do Menu (para conferir se a atualizacao entrou)
+    if (cfg.versao) document.getElementById("versao-sistema")!.textContent = `Contas a Pagar · versão ${cfg.versao}`;
     const status = await buscarStatus(cfg);
     document.body.dataset.apiStatus = "ok";
     document.title += " - API OK";
