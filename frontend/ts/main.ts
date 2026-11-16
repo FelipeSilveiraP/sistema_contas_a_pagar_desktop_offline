@@ -2,8 +2,11 @@
 // o modulo que utiliza (chunks ESM gerados pelo esbuild --splitting).
 import { iniciarDiagnostico } from "./diagnostico";
 import { iniciarNotificacoes } from "./notificacoes";
+import { ligarEnterEnvia } from "./enter-envia";
 
 iniciarDiagnostico();
+// Enter em qualquer campo = botao de enviar/concluir daquele formulario
+ligarEnterEnvia();
 // regioes vivas das notificacoes existem desde o carregamento (e mostram o aviso deixado pela tela anterior)
 iniciarNotificacoes();
 

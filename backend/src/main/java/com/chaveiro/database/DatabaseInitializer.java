@@ -40,17 +40,25 @@ public class DatabaseInitializer {
      * Aplica as migracoes pendentes dentro de transacao unica.
      */
     public void inicializar() {
+        inicializarAte(VERSAO_ATUAL);
+    }
+
+    /**
+     * Leva o banco ate a versao `alvo` (os testes usam para montar um banco igual ao de
+     * uma versao antiga do sistema e conferir que a atualizacao nao perde nada).
+     */
+    void inicializarAte(int alvo) {
         try {
             int versao = lerVersao();
-            if (versao >= VERSAO_ATUAL) {
+            if (versao >= alvo) {
                 log.info("esquema SQLite ja esta na versao {}", versao);
                 return;
             }
-            log.info("aplicando migracoes SQLite: versao {} -> {}", versao, VERSAO_ATUAL);
+            log.info("aplicando migracoes SQLite: versao {} -> {}", versao, alvo);
             try (Connection conn = conexao.getConnection()) {
                 conn.setAutoCommit(false);
                 try (Statement stmt = conn.createStatement()) {
-                    for (int v = versao + 1; v <= VERSAO_ATUAL; v++) {
+                    for (int v = versao + 1; v <= alvo; v++) {
                         for (String comando : migracao(v)) {
                             stmt.execute(comando);
                         }

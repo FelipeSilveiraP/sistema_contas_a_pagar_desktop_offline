@@ -19,6 +19,15 @@ O comando faz tudo em sequência:
 
 Resultado: `release/Contas a Pagar - Chaveiro Universal - Instalador <versão>.exe`, com cerca de 143 MB.
 
+## Baixar o instalador pelo GitHub (o jeito mais fácil)
+
+A cada envio para a `main`, o GitHub gera o instalador num Windows dele (`.github/workflows/instalador.yml`) e publica em **Releases**. Na loja:
+
+1. Abra https://github.com/FelipeSilveiraP/sistema_contas_a_pagar_desktop_offline.
+2. À direita, clique em **Releases** (ou no nome da versão, ex.: "Contas a Pagar 1.3.9").
+3. Em **Assets**, clique em `Contas a Pagar - Chaveiro Universal - Instalador X.Y.Z.exe` para baixar.
+4. Siga "Instalar" abaixo.
+
 ## Instalar (computador da loja)
 
 1. Copie o instalador para o computador, por pen drive, rede ou como preferir.
@@ -27,7 +36,16 @@ Resultado: `release/Contas a Pagar - Chaveiro Universal - Instalador <versão>.e
 
 O Windows pode mostrar o aviso "O Windows protegeu o computador", porque o instalador não tem assinatura digital paga. Clique em **Mais informações › Executar assim mesmo**.
 
-## Atualizar para uma versão nova — pelo Google Drive (recomendado)
+## Atualizar para uma versão nova — automático pelo GitHub (recomendado)
+
+1. No seu computador, faça e teste as mudanças e envie para a `main` (`git push origin main`).
+2. O GitHub gera o instalador sozinho, com a **versão aumentada automaticamente**, e publica em **Releases** (~15 min).
+3. Na loja, ao abrir o sistema, o Menu mostra **"Nova versão X disponível"** com o botão **ATUALIZAR**.
+4. Clique em ATUALIZAR: o sistema baixa o instalador do GitHub, **confere a impressão digital SHA-256** (arquivo incompleto ou alterado é recusado e nada é instalado), fecha, instala e abre de novo.
+
+**Os registros nunca se perdem:** o banco fica em `%LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar`, fora da pasta do programa; o instalador não apaga dados; ao abrir a versão nova o sistema faz um **backup do banco antes** de qualquer mudança de estrutura (teste `AtualizacaoSemPerdaTest`, que confere registro por registro a partir de cada versão antiga do banco). Sem internet, o sistema funciona normal e procura a atualização na pasta do Google Drive (abaixo).
+
+## Atualizar para uma versão nova — pelo Google Drive (sem internet no GitHub)
 
 No computador de desenvolvimento:
 

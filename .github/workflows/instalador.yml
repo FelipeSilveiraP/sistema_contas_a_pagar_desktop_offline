@@ -1,0 +1,85 @@
+# Gera o instalador do Windows e publica em Releases (pagina do repositorio > Releases).
+# Na loja: abra o repositorio no GitHub, clique em Releases (a direita), baixe
+# "Contas a Pagar - Chaveiro Universal - Instalador X.Y.Z.exe" e de dois cliques.
+# Roda a cada envio para a main e tambem pelo botao "Run workflow" (aba Actions).
+# Versao automatica: X.Y do package.json + o numero desta execucao (ex.: 1.4.7), sempre
+# maior que a anterior; e ela que faz o sistema da loja oferecer ATUALIZAR sozinho.
+# Para mudar X.Y (ex.: 1.5), troque a versao no package.json.
+name: instalador
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: instalador
+  cancel-in-progress: false
+
+jobs:
+  instalador:
+    name: Gerar e publicar o instalador (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Versao automatica
+        shell: bash
+        run: |
+          VERSAO=$(node -p "const [x,y,z]=require('./package.json').version.split('.').map(Number); [x,y,Math.max(z,${{ github.run_number }})].join('.')")
+          npm version "$VERSAO" --no-git-tag-version --allow-same-version
+          echo "Versao do instalador: $VERSAO"
+
+      # frontend + backend (com os testes JUnit) + Java minimo (jlink) + instalador NSIS
+      - name: Gerar o instalador (npm run instalador)
+        run: npm run instalador
+
+      - name: Publicar em Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSAO=$(node -p "require('./package.json').version")
+          ARQUIVO="release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe"
+          ls -la "$ARQUIVO"
+          SHA=$(sha256sum "$ARQUIVO" | cut -d' ' -f1)
+          NOTAS="Instalador do Sistema de Contas a Pagar ${VERSAO} para o Windows.
+
+          Como instalar: baixe o arquivo .exe abaixo e de dois cliques. Os dados da loja nao sao apagados (antes de mudar o banco o sistema faz um backup sozinho).
+          Se o Windows mostrar \"O Windows protegeu o computador\": clique em Mais informacoes > Executar assim mesmo.
+
+          SHA-256 do instalador: ${SHA}
+          Gerado a partir do commit ${GITHUB_SHA}."
+          if gh release view "v${VERSAO}" > /dev/null 2>&1; then
+            gh release upload "v${VERSAO}" "$ARQUIVO" --clobber
+            gh release edit "v${VERSAO}" --notes "$NOTAS"
+          else
+            gh release create "v${VERSAO}" "$ARQUIVO" --target "$GITHUB_SHA" \
+              --title "Contas a Pagar ${VERSAO}" --notes "$NOTAS" --latest
+          fi
+
+      - name: Guardar o instalador tambem como arquivo do Actions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instalador-windows
+          retention-days: 30
+          path: release/*.exe
+          if-no-files-found: ignore

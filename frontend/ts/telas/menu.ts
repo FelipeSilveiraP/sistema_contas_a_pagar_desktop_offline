@@ -318,8 +318,10 @@ async function oferecerAtualizacao(): Promise<void> {
   notificar(`Nova versão ${nova.versao} disponível (você usa a ${nova.atual}).${novidades}`, "info", {
     rotulo: "Atualizar",
     aoClicar: () => {
-      notificar("Instalando a atualização. O sistema vai fechar e abrir de novo sozinho.", "info", undefined, { fixa: true });
-      void window.finDesk!.instalarAtualizacao();
+      notificar("Baixando e conferindo a atualização. O sistema vai fechar e abrir de novo sozinho (os dados ficam).", "info", undefined, { fixa: true });
+      void window.finDesk!.instalarAtualizacao().then((ok) => {
+        if (!ok) notificar("Não foi possível baixar a atualização. Confira a internet e tente de novo.", "erro");
+      });
     },
   }, { fixa: true });
 }

@@ -126,6 +126,70 @@ function spawnFalso() {
   delete process.env.FINDESK_PASTA_ATUALIZACOES;
   teste("Sem pasta configurada e nao instalado: nao procura no Drive real", await a.procurarAtualizacao(appFalso(false), log) === null);
 
+  console.log("\n=== Atualizacao pelo GitHub (Releases) ===");
+  // "GitHub de mentira" local: API de releases + download do instalador
+  const http = require("http");
+  const instalador = Buffer.alloc(300 * 1024, 7);
+  const shaInst = crypto.createHash("sha256").update(instalador).digest("hex");
+  const nomeGh = "Contas a Pagar - Chaveiro Universal - Instalador 1.5.0.exe";
+  let release = null;
+  let corpoDownload = instalador;
+  const servidor = http.createServer((req, res) => {
+    if (req.url === `/repos/${a.REPO_GITHUB}/releases/latest`) {
+      if (!release) { res.writeHead(404); return res.end("{}"); }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(release));
+    }
+    if (req.url.startsWith("/download/")) {
+      res.writeHead(200, { "Content-Length": corpoDownload.length });
+      return res.end(corpoDownload);
+    }
+    res.writeHead(404); res.end();
+  });
+  await new Promise((ok) => servidor.listen(0, "127.0.0.1", ok));
+  const base = `http://127.0.0.1:${servidor.address().port}`;
+  process.env.FINDESK_API_ATUALIZACOES = base;
+  const ativo = (extra = {}) => ({ name: nomeGh, size: instalador.length, digest: `sha256:${shaInst}`,
+    browser_download_url: `${base}/download/${encodeURIComponent(nomeGh)}`, ...extra });
+  const app14 = appFalso(true, "1.4.0");
+
+  teste("Sem release no GitHub: nada a atualizar", await a.procurarAtualizacao(app14, log) === null);
+  release = { tag_name: "v1.5.0", name: "Garantias 1.5.0", body: "", assets: [ativo()] };
+  const gh = await a.procurarAtualizacao(app14, log);
+  teste("Versao maior no GitHub: oferece atualizar", gh && gh.versao === "1.5.0" && gh.origem === "github" && gh.sha256 === shaInst, JSON.stringify(gh));
+  teste("Mesma versao do GitHub ja instalada: nao oferece", await a.procurarAtualizacao(appFalso(true, "1.5.0"), log) === null);
+  teste("Versao MENOR no GitHub: nao oferece (nunca volta versao)", await a.procurarAtualizacao(appFalso(true, "1.6.0"), log) === null);
+  release = { tag_name: "v1.5.0", body: "", assets: [ativo({ name: "virus.exe" })] };
+  teste("Arquivo com outro nome no release: recusado", await a.procurarAtualizacao(app14, log) === null);
+  release = { tag_name: "v1.5.0", body: "", assets: [ativo({ browser_download_url: "https://site-estranho.com/x.exe" })] };
+  teste("Download fora do repositorio do sistema: recusado", await a.procurarAtualizacao(app14, log) === null);
+  release = { tag_name: "v1.5.0", body: "sem impressao digital", assets: [ativo({ digest: undefined })] };
+  teste("Release sem SHA-256: nao oferece", await a.procurarAtualizacao(app14, log) === null);
+  release = { tag_name: "v1.5.0", body: `SHA-256 do instalador: ${shaInst}`, assets: [ativo({ digest: undefined })] };
+  teste("SHA-256 lido das notas do release (quando a API nao manda o digest)", (await a.procurarAtualizacao(app14, log))?.sha256 === shaInst);
+
+  release = { tag_name: "v1.5.0", body: "", assets: [ativo()] };
+  const paraInstalar = await a.procurarAtualizacao(app14, log);
+  corpoDownload = Buffer.concat([instalador.subarray(0, 1000), Buffer.from("adulterado")]);
+  let recusou = false;
+  try { await a.aplicarAtualizacao(app14, paraInstalar, log, spawnFalso()); } catch { recusou = true; }
+  const pastaBaixa = path.join(os.tmpdir(), "contas-atualizacao");
+  teste("Instalador baixado diferente (SHA-256 nao confere): NAO instala e apaga o arquivo",
+    recusou && app14.fechou === false && !fs.existsSync(path.join(pastaBaixa, nomeGh)) && !fs.existsSync(path.join(pastaBaixa, `${nomeGh}.parcial`)));
+  corpoDownload = instalador;
+  sp = spawnFalso();
+  const instalado = await a.aplicarAtualizacao(app14, paraInstalar, log, sp);
+  await new Promise((ok) => setTimeout(ok, 700));
+  teste("ATUALIZAR pelo GitHub: baixa, confere o SHA-256 e roda o instalador",
+    fs.existsSync(instalado) && fs.readFileSync(instalado).equals(instalador) && sp.chamadas.length === 1 && app14.fechou === true);
+  fs.rmSync(instalado, { force: true });
+  fs.rmSync(path.join(pastaBaixa, nomeGh), { force: true });
+  servidor.close();
+  const appSemNet = appFalso(true, "1.4.0");
+  process.env.FINDESK_API_ATUALIZACOES = "http://127.0.0.1:9"; // ninguem escuta: "sem internet"
+  teste("Sem internet: nao trava nem quebra (tenta o Drive e segue)", await a.procurarAtualizacao(appSemNet, log) === null);
+  delete process.env.FINDESK_API_ATUALIZACOES;
+
   fs.rmSync(PASTA, { recursive: true, force: true });
   console.log(`\n=== RESULTADO AUTOMACOES: ${ok}/${total} verificacoes passaram ===`);
   process.exit(ok === total ? 0 : 1);

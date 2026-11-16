@@ -2,18 +2,18 @@
 
 > Máximo 30 linhas. **Reescreva** este arquivo a cada entrega (não acrescente histórico — decisões vão em `docs/decisoes.md`, histórico fica no Git).
 
-**Atualizado em:** 2026-11-15 — branch `claude/sleepy-mccarthy-w6itjv` (PR de auditoria de segurança aberto para a `main`, aguardando aprovação)
+**Atualizado em:** 2026-11-16 — `main`; instalador gerado pelo GitHub em **Releases** a cada envio (versão automática); o sistema se atualiza sozinho pelo GitHub (botão ATUALIZAR); Enter = botão de enviar em todos os formulários
 
 ## Situação
 - Fases 1 a 5 concluídas. Entrega de 2026-11-11 com 15 ajustes de uso (ver `decisoes.md` › "Ajustes de uso"): chave pela fechadura, bordas simples, colunas recolhíveis, área de edição única, impressão formal com a nota, nota obrigatória (ou "sem nota"), navbar estreita e tabelas do legado. 2ª rodada (2026-11-12): mensagens no banco da loja (v15), pagador em caixa de seleção.
 - **Versão 1.3.7 (2026-11-15) — auditoria de segurança** (relatório em `docs/seguranca.md`): teto de valor, PDF com JavaScript escondido recusado, erros 4xx no lugar de 500, limite de tamanho das requisições, token obrigatório, IPC só das telas do sistema, backup no Drive que nunca apaga arquivo alheio, Spring Boot 3.5.16, sqlite-jdbc 3.54.1.0, GitHub Actions (`.github/workflows/testes.yml`).
 - Versões anteriores: 1.3.6 gatilhos/auditoria/transações no banco; 1.3.5 instalador cadastra abrir com o Windows; 1.3.4 nota fiscal no Controle e prévia no Inserir Conta. Atualizações pelo Drive: `npm run instalador` e `npm run publicar -- "novidades"` (`docs/instalacao.md`).
 - Esquema SQLite **v18** (v17: gatilhos + `auditoria_operacoes`; v18: auditoria das contas fixas e teto de valor no banco). Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
-- **Testes (2026-11-15, nuvem Linux):** JUnit 178 · máscaras 65 · filtros 22 · automações 26 · smoke 336 · persistência 11 · SpotBugs ok. smoke-boot (parcial), smoke-real, smoke-dev e CRUD real precisam do Windows: rodar no PC antes de instalar na loja (o GitHub Actions também tenta).
+- **Testes (2026-11-16, nuvem Linux):** JUnit 196 (com `AtualizacaoSemPerdaTest`) · máscaras 65 · filtros 22 · automações 37 · smoke 336 (com Enter real) · persistência 11. smoke-boot (parcial), smoke-real, smoke-dev e CRUD real precisam do Windows: rodar no PC antes de instalar na loja (o GitHub Actions também tenta).
 
 ## Próximos passos
 - **Atualizar o Electron 33 → atual** (46 avisos de segurança) numa entrega própria, com smoke-real, smoke-dev e CRUD real no Windows.
-- Conferir o 1º resultado do GitHub Actions no PR (os testes de entrada real lá são informativos).
+- Instalar na loja a 1ª versão baixada de Releases (as próximas chegam pelo botão ATUALIZAR).
 - Importador da planilha legada para `legado_*` e, depois, para `contas_a_pagar`/`boletos_recorrentes`/`avisos`, quando o usuário enviar os dados.
 
 ## Pendências — decisões do usuário (auditoria)

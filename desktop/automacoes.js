@@ -1,9 +1,13 @@
 // Automacoes do sistema instalado (pedido do usuario, 2026-11-12):
 // 1) abrir sozinho quando o Windows liga (login do usuario);
 // 2) nesse inicio automatico, abrir o Chrome no e-mail da firma;
-// 3) atualizacao pelo Google Drive: o instalador novo e colocado na pasta
-//    "Meu Drive\Chaveiro Universal - Atualizacoes" (npm run publicar) e o
-//    sistema da loja oferece ATUALIZAR quando ve uma versao maior.
+// 3) atualizacao: o sistema da loja oferece ATUALIZAR quando ve uma versao maior
+//    a) no GitHub (Releases do repositorio; o GitHub gera o instalador a cada envio
+//       para a main - .github/workflows/instalador.yml). E o caminho principal;
+//    b) no Google Drive ("Meu Drive\Chaveiro Universal - Atualizacoes",
+//       npm run publicar), quando o GitHub nao responde (sem internet).
+//    Em todos os casos o instalador so roda se o SHA-256 conferir, e a atualizacao
+//    NUNCA toca nos dados (%LOCALAPPDATA%\ChaveiroUniversal\ContasAPagar).
 // Tudo isso so vale para o app INSTALADO (app.isPackaged). Em desenvolvimento e
 // nos testes nada e registrado no Windows nem lido do Drive real.
 const { execFileSync, spawn } = require("child_process");
@@ -15,6 +19,11 @@ const path = require("path");
 const ARG_INICIO = "--inicio-automatico";
 const NOME_INICIO = "Contas a Pagar - Chaveiro Universal";
 const SUBPASTA_ATUALIZACOES = "Chaveiro Universal - Atualizacoes";
+// repositorio de onde vem as versoes novas (Releases)
+const REPO_GITHUB = "FelipeSilveiraP/sistema_contas_a_pagar_desktop_offline";
+const API_GITHUB = "https://api.github.com";
+const NOME_INSTALADOR = /^Contas a Pagar - Chaveiro Universal - Instalador (\d+\.\d+\.\d+)\.exe$/;
+const LIMITE_INSTALADOR = 400 * 1024 * 1024;
 
 const PADRAO = {
   abrirAoLigarComputador: true,
@@ -191,7 +200,7 @@ function sha256Arquivo(arquivo) {
  * for maior que a instalada E o instalador ja estiver completo (SHA-256 confere:
  * protege contra arquivo pela metade durante a sincronizacao do Drive).
  */
-async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersion()) {
+async function procurarAtualizacaoDrive(app, registrarLog, versaoAtual = app.getVersion()) {
   const pasta = pastaAtualizacoes(app);
   if (!pasta) return null;
   try {
@@ -204,16 +213,122 @@ async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersi
       registrarLog("WARN", `atualizacao ${info.versao} encontrada, mas o instalador ainda nao esta completo no Drive`);
       return null;
     }
-    return { versao: String(info.versao), instalador, novidades: String(info.novidades || "") };
+    return { versao: String(info.versao), origem: "drive", instalador, novidades: String(info.novidades || "") };
   } catch {
     return null; // sem pasta/versao.json: nada a atualizar
   }
 }
 
+/**
+ * Versao nova nos Releases do GitHub. So devolve se: a versao for maior que a
+ * instalada, o instalador tiver o nome exato do sistema, o endereco de download
+ * for do proprio repositorio e houver a impressao digital SHA-256 (conferida
+ * depois do download, antes de instalar). Sem internet: null (tenta o Drive).
+ * FINDESK_API_ATUALIZACOES troca o endereco da API (testes).
+ */
+async function procurarAtualizacaoGithub(app, registrarLog, versaoAtual = app.getVersion()) {
+  const api = process.env.FINDESK_API_ATUALIZACOES || (app.isPackaged ? API_GITHUB : null);
+  if (!api) return null;
+  try {
+    const resposta = await fetch(`${api}/repos/${REPO_GITHUB}/releases/latest`, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "ContasAPagar-Chaveiro-Universal" },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!resposta.ok) return null;
+    const release = await resposta.json();
+    const versao = String(release.tag_name || "").replace(/^v/, "");
+    if (!/^\d+\.\d+\.\d+$/.test(versao) || !versaoMaior(versao, versaoAtual)) return null;
+    const ativo = (release.assets || []).find((a) => {
+      const m = NOME_INSTALADOR.exec(String(a.name || ""));
+      return m && m[1] === versao;
+    });
+    if (!ativo) return null;
+    const url = String(ativo.browser_download_url || "");
+    const origemEsperada = process.env.FINDESK_API_ATUALIZACOES
+      ? `${api}/download/` : `https://github.com/${REPO_GITHUB}/releases/download/`;
+    if (!url.startsWith(origemEsperada) || !(ativo.size > 0 && ativo.size <= LIMITE_INSTALADOR)) return null;
+    const corpo = String(release.body || "");
+    const sha256 = (String(ativo.digest || "").match(/^sha256:([0-9a-f]{64})$/i) || corpo.match(/SHA-256 do instalador: ([0-9a-f]{64})/i) || [])[1];
+    if (!sha256) {
+      registrarLog("WARN", `versao ${versao} no GitHub sem SHA-256: nao oferecida`);
+      return null;
+    }
+    return {
+      versao, origem: "github", url, sha256: sha256.toLowerCase(), nome: ativo.name, tamanho: ativo.size,
+      novidades: String(release.name || "").replace(/^Contas a Pagar\s*/i, "").trim() === versao ? "" : String(release.name || ""),
+    };
+  } catch (erro) {
+    registrarLog("INFO", `GitHub sem resposta ao procurar atualizacao (${erro && erro.name}); tentando o Google Drive`);
+    return null;
+  }
+}
+
+/**
+ * Baixa o instalador do GitHub para a pasta temporaria, calculando o SHA-256
+ * enquanto grava. So devolve o caminho se o SHA-256 conferir; senao apaga o
+ * arquivo baixado e lanca erro (nada e instalado).
+ */
+async function baixarInstalador(atualizacao, registrarLog) {
+  const pasta = path.join(os.tmpdir(), "contas-atualizacao");
+  fs.mkdirSync(pasta, { recursive: true });
+  const destino = path.join(pasta, path.basename(atualizacao.nome));
+  const parcial = `${destino}.parcial`;
+  const resposta = await fetch(atualizacao.url, {
+    headers: { "User-Agent": "ContasAPagar-Chaveiro-Universal" },
+    signal: AbortSignal.timeout(20 * 60 * 1000),
+  });
+  if (!resposta.ok || !resposta.body) throw new Error(`download recusado (HTTP ${resposta.status})`);
+  const hash = crypto.createHash("sha256");
+  const saida = fs.createWriteStream(parcial);
+  let total = 0;
+  try {
+    for await (const pedaco of resposta.body) {
+      total += pedaco.length;
+      if (total > LIMITE_INSTALADOR) throw new Error("instalador maior que o limite");
+      hash.update(pedaco);
+      if (!saida.write(pedaco)) await new Promise((ok) => saida.once("drain", ok));
+    }
+    await new Promise((ok, erro) => saida.end((e) => (e ? erro(e) : ok())));
+  } catch (erro) {
+    saida.destroy();
+    fs.rmSync(parcial, { force: true });
+    throw erro;
+  }
+  const calculado = hash.digest("hex");
+  if (calculado !== atualizacao.sha256) {
+    fs.rmSync(parcial, { force: true });
+    throw new Error("SHA-256 do instalador baixado nao confere");
+  }
+  fs.renameSync(parcial, destino);
+  registrarLog("INFO", `instalador ${atualizacao.versao} baixado do GitHub e conferido (SHA-256)`);
+  return destino;
+}
+
+/** GitHub primeiro; sem resposta de la, a pasta do Google Drive. */
+async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersion()) {
+  // com a pasta do Drive forcada (testes/manutencao), so ela vale
+  if (!process.env.FINDESK_PASTA_ATUALIZACOES) {
+    const doGithub = await procurarAtualizacaoGithub(app, registrarLog, versaoAtual);
+    if (doGithub) return doGithub;
+  }
+  return procurarAtualizacaoDrive(app, registrarLog, versaoAtual);
+}
+
+/** ATUALIZAR: baixa do GitHub (se for de la), confere, executa e fecha o sistema. */
+async function aplicarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn) {
+  const pronta = atualizacao.origem === "github"
+    ? { ...atualizacao, instalador: await baixarInstalador(atualizacao, registrarLog) }
+    : atualizacao;
+  return instalarAtualizacao(app, pronta, registrarLog, iniciar);
+}
+
 /** Copia o instalador para a pasta temporaria, executa e fecha o sistema. */
 function instalarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn) {
   const destino = path.join(os.tmpdir(), path.basename(atualizacao.instalador));
-  fs.copyFileSync(atualizacao.instalador, destino);
+  // o baixado do GitHub ja esta na pasta temporaria (subpasta propria): copiar so do Drive
+  if (path.resolve(destino) !== path.resolve(atualizacao.instalador)) {
+    fs.copyFileSync(atualizacao.instalador, destino);
+  }
   // espera o sistema (e o Java) fecharem antes de o instalador substituir os arquivos
   const comando = `Start-Sleep -Seconds 3; Start-Process -FilePath '${destino.replace(/'/g, "''")}'`;
   const proc = iniciar("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", comando],
@@ -233,7 +348,12 @@ module.exports = {
   abrirEmailSeInicioAutomatico,
   enderecoSeguro,
   pastaDrive,
+  REPO_GITHUB,
   procurarAtualizacao,
+  procurarAtualizacaoGithub,
+  procurarAtualizacaoDrive,
+  baixarInstalador,
+  aplicarAtualizacao,
   instalarAtualizacao,
   versaoMaior,
   sha256Arquivo,

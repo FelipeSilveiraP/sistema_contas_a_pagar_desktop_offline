@@ -106,6 +106,15 @@ async function js(codigo) {
   return janela.webContents.executeJavaScript(codigo);
 }
 
+// Enter DE VERDADE (tecla enviada pela janela) num campo: tem de fazer o mesmo que o
+// botao de enviar/concluir visivel do formulario (frontend/ts/enter-envia.ts)
+async function enter(seletor) {
+  await js(`document.querySelector(${JSON.stringify(seletor)}).focus()`);
+  janela.webContents.sendInputEvent({ type: "keyDown", keyCode: "Enter" });
+  janela.webContents.sendInputEvent({ type: "char", keyCode: "\r" });
+  janela.webContents.sendInputEvent({ type: "keyUp", keyCode: "Enter" });
+}
+
 async function esperarTela(tela, timeoutMs = 15000) {
   const inicio = Date.now();
   while (Date.now() - inicio < timeoutMs) {
@@ -716,9 +725,9 @@ async function executar() {
       document.getElementById(id).dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  await clicar("#btn-salvar");
+  await enter("#campo-chave-pix");
   const salvoOk = await esperarPredicado(`document.body.dataset.bancoSalvo !== undefined`, 10000);
-  teste("Form Banco: salvar com dados validos confirma cadastro", salvoOk);
+  teste("Form Banco: Enter = SALVAR (cadastro confirmado)", salvoOk);
   const feedback = await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`);
   teste("Form Banco: notificacao de sucesso exibida", String(feedback).includes("sucesso"), String(feedback));
   teste("Form Banco: campos limpos apos salvar", (await js(`document.getElementById('campo-instituicao').value`)) === "");
@@ -926,9 +935,9 @@ async function executar() {
     document.getElementById('campo-email').value = 'contato@empresa.com.br';
     return true;
   })()`);
-  await clicar("#btn-proxima");
+  await enter("#campo-cnpj");
   await esperar(300);
-  teste("Form Empresa: etapa 2 exibida apos PROXIMA", (await js(`document.getElementById('etapa-2').classList.contains('hidden')`)) === false);
+  teste("Form Empresa: Enter na etapa 1 = PROXIMA (etapa 2 exibida)", (await js(`document.getElementById('etapa-2').classList.contains('hidden')`)) === false);
   teste("Form Empresa: etapa 1 oculta na etapa 2", (await js(`document.getElementById('etapa-1').classList.contains('hidden')`)) === true);
   await clicar("#btn-add-telefone");
   await esperar(200);
@@ -940,9 +949,9 @@ async function executar() {
 
   const nomeEmpresa = `EMPRESA SMOKE ${Date.now()}`;
   await js(`(() => { document.getElementById('campo-razao-social').value = ${JSON.stringify(nomeEmpresa)}; document.getElementById('campo-razao-social').dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await clicar("#btn-salvar");
+  await enter(".linha-telefone .tel-numero");
   const empresaSalvaOk = await esperarPredicado(`document.body.dataset.empresaSalva !== undefined`, 10000);
-  teste("Form Empresa: salvar com dados validos confirma cadastro", empresaSalvaOk);
+  teste("Form Empresa: Enter na etapa 2 = SALVAR (cadastro confirmado)", empresaSalvaOk);
   const feedbackEmp = await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`);
   teste("Form Empresa: notificacao de sucesso exibida", String(feedbackEmp).includes("sucesso"), String(feedbackEmp));
   teste("Form Empresa: volta a etapa 1 apos salvar", (await js(`document.getElementById('etapa-1').classList.contains('hidden')`)) === false);
@@ -1051,7 +1060,7 @@ async function executar() {
   await esperar(300);
   await js(`(() => { const s = document.getElementById('fieldSelect'); s.value = 'funcao'; s.dispatchEvent(new Event('change', { bubbles: true }));
     const el = document.getElementById('newValueInput'); el.value = 'Caixa Editado'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await clicar("#btnApplyChange");
+  await enter("#newValueInput");
   const semCpfSalvo = await esperarPredicado(`document.body.dataset.registroSalvo !== undefined`, 10000);
   teste("Painel: pagador sem CPF salva sem exigir CPF", semCpfSalvo && (await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`)).includes("salvas"),
     await js(`JSON.stringify([...document.querySelectorAll('.campo-erro')].filter(e => !e.classList.contains('hidden')).map(e => e.textContent))`));
@@ -1226,9 +1235,9 @@ async function executar() {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  await clicar("#btn-proxima");
+  await enter("#total_amount");
   await esperar(300);
-  teste("Etapa 1: dados validos avancam para etapa 2", (await js(`!document.getElementById('step-2').classList.contains('hidden')`)) === true);
+  teste("Etapa 1: Enter com dados validos = PROXIMA (avanca para a etapa 2)", (await js(`!document.getElementById('step-2').classList.contains('hidden')`)) === true);
   teste("Indicador de etapas muda para PAGINA 2 DE 2", (await js(`document.getElementById('step-counter-badge').textContent`)).includes("2 DE 2"));
 
   await clicar("#btn-salvar");
@@ -1250,9 +1259,9 @@ async function executar() {
     document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
     return true;
   })()`);
-  await clicar("#btn-salvar");
+  await enter("#payment_method");
   const contaSalvaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
-  teste("Inserir Conta: salvar com dados validos grava a conta", contaSalvaIc);
+  teste("Inserir Conta: Enter na etapa 2 = SALVAR (conta gravada)", contaSalvaIc);
   teste("Apos salvar, retorno a tela anterior (fluxo do Stitch)", await esperarTela("menu", 5000) || (await js("document.body.dataset.tela")) !== "inserir-conta");
   teste("Notificacao 'Conta ... salva' aparece na tela seguinte", await esperarPredicado(`(Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')).includes('salva')`, 5000), await js(`Array.from(document.querySelectorAll('[data-notificacao="sucesso"] .notificacao__texto')).map((e) => e.textContent).join(' | ')`));
 
