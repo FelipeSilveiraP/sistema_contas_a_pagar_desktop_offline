@@ -736,12 +736,15 @@
 [data-dialogo="atencao"] .dialogo-botao--acao { background: #ffe600; color: #1c1b1b; }
 [data-dialogo="perigo"] .dialogo-botao--acao { background: #dc2626; color: #ffffff; }
 
-/* ===== Notificacoes (toasts) — canto inferior direito, abaixo do veu do dialogo ===== */
+/* ===== Notificacoes (toasts) — NO MEIO DA TELA (pedido do usuario, 2026-11-16: "todo e
+   qualquer pop-up deve aparecer no meio da tela"), abaixo do veu do dialogo ===== */
 
 .notificacoes {
   position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  align-items: stretch;
   z-index: 60;
   display: flex;
   flex-direction: column;
@@ -802,7 +805,7 @@
 .notificacao__fechar:focus-visible { outline: 3px solid #2165ef; outline-offset: 2px; }
 
 @keyframes notificacao-entrar {
-  from { transform: translateY(0.75rem); opacity: 0; }
+  from { transform: scale(0.96); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 
@@ -1285,4 +1288,14 @@
 .barra-navegacao:has(.conta-menu) .nav-item:not(.nav-voltar) { padding-left: 11px; padding-right: 11px; }
 @media (max-width: 1279px) {
   .barra-navegacao:has(.conta-menu) .nav-item:not(.nav-voltar) { gap: 6px; padding-left: 8px; padding-right: 8px; }
+}
+
+/* ===== Barra de carregamento (pop-up da atualizacao) ===== */
+.barra-progresso { position: relative; height: 1.5rem; border: 3px solid #1c1b1b; background: #ffffff; overflow: hidden; }
+.barra-progresso__preenchido { height: 100%; width: 0; background: #00FF66; border-right: 3px solid #1c1b1b; transition: width 0.15s linear; }
+.barra-progresso--indefinida .barra-progresso__preenchido { width: 35%; animation: barra-indefinida 1.1s ease-in-out infinite alternate; }
+@keyframes barra-indefinida { from { transform: translateX(-10%); } to { transform: translateX(200%); } }
+@media (prefers-reduced-motion: reduce) {
+  .barra-progresso__preenchido { transition: none; }
+  .barra-progresso--indefinida .barra-progresso__preenchido { animation: none; width: 100%; }
 }

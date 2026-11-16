@@ -1,5 +1,6 @@
 import { AlertaContaDados, AlertasDados, buscarAlertas, buscarBackupDrive, buscarStatus } from "../api";
 import { notificar } from "../notificacoes";
+import { confirmar, mostrarProgresso } from "../dialogos";
 import { perfilAtual } from "../perfil";
 import { criarBotaoConta } from "../conta-menu";
 import { formatarDataBR, formatarMoedaBR } from "../mascaras";
@@ -312,20 +313,43 @@ async function conferirBackupDrive(cfg: FinDeskConfig): Promise<void> {
 }
 
 // ===== atualizacao pelo Google Drive: aviso fixo com o botao ATUALIZAR =====
+function megas(bytes: number): string {
+  return (bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+}
+
+/** Versao nova no GitHub: pop-up no meio da tela; ao ATUALIZAR, barra de carregamento ate fechar. */
 async function oferecerAtualizacao(): Promise<void> {
   const nova = await window.finDesk?.atualizacaoDisponivel?.().catch(() => null);
   if (!nova) return;
   document.body.dataset.atualizacao = nova.versao;
-  const novidades = nova.novidades ? ` ${nova.novidades}` : "";
-  notificar(`Nova versão ${nova.versao} disponível (você usa a ${nova.atual}).${novidades}`, "info", {
-    rotulo: "Atualizar",
-    aoClicar: () => {
-      notificar("Baixando e conferindo a atualização. O sistema vai fechar e abrir de novo sozinho (os dados ficam).", "info", undefined, { fixa: true });
-      void window.finDesk!.instalarAtualizacao().then((ok) => {
-        if (!ok) notificar("Não foi possível baixar a atualização. Confira a internet e tente de novo.", "erro");
-      });
-    },
-  }, { fixa: true });
+  const quer = await confirmar({
+    titulo: `Nova versão ${nova.versao}`,
+    mensagem: `Você usa a ${nova.atual}. Atualizar agora? O sistema fecha e abre de novo sozinho; os dados ficam (antes de mudar o banco ele faz um backup).`,
+    detalhes: nova.novidades || undefined,
+    textoConfirmar: "ATUALIZAR",
+    textoCancelar: "AGORA NÃO",
+    icone: "system_update",
+  });
+  if (!quer) return;
+  const progresso = mostrarProgresso(`Atualizando para a versão ${nova.versao}`, "Começando o download...");
+  document.body.dataset.atualizando = "true";
+  window.finDesk!.onProgressoAtualizacao?.(({ recebidos, total }) => {
+    if (total > 0 && recebidos >= total) {
+      progresso.atualizar(1, "Download concluído. Conferindo e instalando: o sistema vai fechar e abrir de novo sozinho.");
+    } else if (total > 0) {
+      progresso.atualizar(recebidos / total, `Baixando... ${Math.floor((recebidos / total) * 100)}% (${megas(recebidos)} de ${megas(total)} MB)`);
+    } else {
+      progresso.atualizar(null, `Baixando... ${megas(recebidos)} MB`);
+    }
+  });
+  const ok = await window.finDesk!.instalarAtualizacao();
+  if (ok) {
+    progresso.atualizar(1, "Instalando: o sistema vai fechar e abrir de novo sozinho. Não desligue o computador.");
+    return;
+  }
+  progresso.fechar();
+  delete document.body.dataset.atualizando;
+  notificar("Não foi possível baixar a atualização. Confira a internet e tente de novo (o aviso aparece de novo ao abrir o Menu).", "erro");
 }
 
 async function iniciar(): Promise<void> {

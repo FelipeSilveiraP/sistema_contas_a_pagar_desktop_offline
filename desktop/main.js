@@ -591,7 +591,15 @@ tratarIpc("findesk:instalar-atualizacao", async () => {
   if (!atualizacaoEncontrada) return false;
   try {
     // do GitHub: baixa e confere o SHA-256 antes; os dados nunca sao tocados
-    await automacoes.aplicarAtualizacao(app, atualizacaoEncontrada, registrarLog);
+    // barra de carregamento do pop-up: no maximo ~8 avisos por segundo para a tela
+    let ultimoAviso = 0;
+    const avisarProgresso = (recebidos, total) => {
+      const agora = Date.now();
+      if (agora - ultimoAviso < 120 && recebidos < total) return;
+      ultimoAviso = agora;
+      if (janela && !janela.isDestroyed()) janela.webContents.send("findesk:progresso-atualizacao", { recebidos, total });
+    };
+    await automacoes.aplicarAtualizacao(app, atualizacaoEncontrada, registrarLog, undefined, avisarProgresso);
     return true;
   } catch (erro) {
     registrarLog("WARN", `atualizacao nao instalada: ${erro && erro.message}`);

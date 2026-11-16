@@ -243,3 +243,86 @@ export function confirmarDuplicidade(detalhes: string): Promise<boolean> {
     tom: "atencao",
   });
 }
+
+/** Pop-up de andamento (ex.: atualizacao): barra de carregamento, sem botoes, ESC nao fecha. */
+export interface DialogoProgresso {
+  /** `fracao` de 0 a 1 (null = sem total conhecido: barra em movimento) */
+  atualizar(fracao: number | null, texto: string): void;
+  fechar(): void;
+}
+
+export function mostrarProgresso(titulo: string, texto: string): DialogoProgresso {
+  const veu = document.createElement("div");
+  veu.className = "dialogo-veu";
+  const caixa = document.createElement("div");
+  caixa.className = "dialogo";
+  caixa.setAttribute("role", "dialog");
+  caixa.setAttribute("aria-modal", "true");
+  caixa.setAttribute("aria-labelledby", "progresso-titulo");
+  caixa.dataset.dialogo = "progresso";
+  const cabecalho = document.createElement("div");
+  cabecalho.className = "dialogo__cabecalho";
+  const icone = document.createElement("span");
+  icone.className = "material-symbols-outlined dialogo__icone";
+  icone.setAttribute("aria-hidden", "true");
+  icone.textContent = "downloading";
+  const tituloEl = document.createElement("h2");
+  tituloEl.className = "dialogo__titulo";
+  tituloEl.id = "progresso-titulo";
+  tituloEl.textContent = titulo;
+  cabecalho.append(icone, tituloEl);
+  const corpo = document.createElement("div");
+  corpo.className = "dialogo__corpo";
+  const barra = document.createElement("div");
+  barra.className = "barra-progresso";
+  barra.id = "barra-progresso";
+  barra.setAttribute("role", "progressbar");
+  barra.setAttribute("aria-valuemin", "0");
+  barra.setAttribute("aria-valuemax", "100");
+  barra.setAttribute("aria-labelledby", "progresso-titulo");
+  const preenchido = document.createElement("div");
+  preenchido.className = "barra-progresso__preenchido";
+  barra.appendChild(preenchido);
+  const mensagem = document.createElement("p");
+  mensagem.className = "dialogo__mensagem";
+  mensagem.id = "progresso-texto";
+  mensagem.setAttribute("aria-live", "polite");
+  corpo.append(barra, mensagem);
+  caixa.append(cabecalho, corpo);
+  veu.appendChild(caixa);
+  document.body.appendChild(veu);
+  definirFundoInerte(true);
+  dialogoAberto = true;
+  // nada fecha o andamento pelo teclado (ESC/Enter nao interrompem a atualizacao)
+  const aoTeclar = (evento: KeyboardEvent): void => {
+    if (evento.key === "Escape" || evento.key === "Enter") {
+      evento.preventDefault();
+      evento.stopPropagation();
+    }
+  };
+  document.addEventListener("keydown", aoTeclar, true);
+  const controle: DialogoProgresso = {
+    atualizar(fracao, novoTexto) {
+      mensagem.textContent = novoTexto;
+      barra.classList.toggle("barra-progresso--indefinida", fracao === null);
+      if (fracao === null) {
+        barra.removeAttribute("aria-valuenow");
+        preenchido.style.width = "";
+        return;
+      }
+      const pct = Math.max(0, Math.min(100, Math.round(fracao * 100)));
+      preenchido.style.width = `${pct}%`;
+      barra.setAttribute("aria-valuenow", String(pct));
+      barra.dataset.pct = String(pct);
+    },
+    fechar() {
+      if (!veu.isConnected) return;
+      veu.remove();
+      definirFundoInerte(false);
+      dialogoAberto = false;
+      document.removeEventListener("keydown", aoTeclar, true);
+    },
+  };
+  controle.atualizar(0, texto);
+  return controle;
+}

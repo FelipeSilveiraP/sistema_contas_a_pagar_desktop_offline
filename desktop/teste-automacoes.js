@@ -209,8 +209,12 @@ function spawnFalso() {
     recusou && app14.fechou === false && !fs.existsSync(path.join(pastaBaixa, nomeGh)) && !fs.existsSync(path.join(pastaBaixa, `${nomeGh}.parcial`)));
   corpoDownload = instalador;
   sp = spawnFalso();
-  const instalado = await a.aplicarAtualizacao(app14, paraInstalar, log, sp);
+  const passos = [];
+  const instalado = await a.aplicarAtualizacao(app14, paraInstalar, log, sp, (recebidos, total) => passos.push([recebidos, total]));
   await new Promise((ok) => setTimeout(ok, 700));
+  teste("Barra de carregamento: avisa o andamento do download do 0 ao total (tamanho do Release)",
+    passos.length >= 2 && passos[0][0] === 0 && passos.at(-1)[0] === instalador.length && passos.every(([, t]) => t === instalador.length)
+      && passos.every((p, i) => i === 0 || p[0] >= passos[i - 1][0]), JSON.stringify(passos.slice(0, 3)));
   teste("ATUALIZAR pelo GitHub: baixa, confere o SHA-256 e roda o instalador",
     fs.existsSync(instalado) && fs.readFileSync(instalado).equals(instalador) && sp.chamadas.length === 1 && app14.fechou === true);
   fs.rmSync(instalado, { force: true });
