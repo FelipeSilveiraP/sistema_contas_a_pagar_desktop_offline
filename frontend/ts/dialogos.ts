@@ -7,7 +7,8 @@
 //
 // Acessibilidade (WAI-ARIA APG alertdialog): role=alertdialog, aria-modal,
 // aria-labelledby (titulo) + aria-describedby (mensagem), foco inicial na acao
-// SEGURA (cancelar), Tab preso, ESC cancela, clique fora nao fecha, fundo inert,
+// SEGURA (cancelar) so na exclusao/estorno; nos demais o foco e o Enter vao para o botao de
+// continuar (pedido do usuario, 2026-11-16), Tab preso, ESC cancela, clique fora nao fecha, fundo inert,
 // foco devolvido ao fechar, fila serial (um dialogo por vez).
 // Testes: data-dialogo (tom), data-dialogo-titulo, data-dialogo-mensagem, data-dialogo-acao.
 
@@ -24,6 +25,8 @@ export interface OpcoesConfirmacao {
   /** terceiro botao (ex.: "SALVAR NO COMPUTADOR"), entre cancelar e confirmar */
   textoAlternativa?: string;
   icone?: string;
+  /** Enter CANCELA (em vez de confirmar): acoes que apagam ou desfazem dinheiro */
+  enterCancela?: boolean;
 }
 
 export type RespostaDialogo = "confirmar" | "alternativa" | "cancelar";
@@ -142,11 +145,23 @@ function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
       resolver(resposta);
     };
 
+    // Enter = botao de continuar (pedido do usuario, 2026-11-16). Excecoes: EXCLUIR (tom
+    // "perigo") e DESFAZER PAGAMENTO, onde o Enter CANCELA: um Enter sem querer nunca apaga
+    // um registro nem desfaz um pagamento. Com Tab ate CANCELAR, o Enter vale esse botao.
+    const enterCancela = tom === "perigo" || opcoes.enterCancela === true;
     const aoTeclar = (evento: KeyboardEvent): void => {
       if (evento.key === "Escape") {
         evento.preventDefault();
         evento.stopPropagation();
         fechar("cancelar");
+        return;
+      }
+      if (evento.key === "Enter" && !evento.isComposing && !evento.shiftKey && !evento.ctrlKey && !evento.altKey) {
+        const atual = document.activeElement;
+        if (atual === cancelar || (alternativa && atual === alternativa)) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        fechar(enterCancela ? "cancelar" : "confirmar");
         return;
       }
       if (evento.key === "Tab") {
@@ -168,7 +183,8 @@ function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
       if (evento.target === veu) evento.preventDefault();
     });
     document.addEventListener("keydown", aoTeclar, true);
-    cancelar.focus();
+    // foco no botao que o Enter aciona: CONTINUAR; na exclusao/estorno, CANCELAR
+    (enterCancela ? cancelar : confirmar).focus();
   });
 }
 
@@ -213,6 +229,7 @@ export function confirmarEstorno(nomeEmpresa: string): Promise<boolean> {
     mensagem: `O pagamento de "${nomeEmpresa}" será desfeito e a conta voltará a ficar pendente.`,
     textoConfirmar: "DESFAZER PAGAMENTO",
     tom: "normal",
+    enterCancela: true,
   });
 }
 

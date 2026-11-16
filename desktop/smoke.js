@@ -108,6 +108,12 @@ async function js(codigo) {
 
 // Enter DE VERDADE (tecla enviada pela janela) num campo: tem de fazer o mesmo que o
 // botao de enviar/concluir visivel do formulario (frontend/ts/enter-envia.ts)
+// Enter de verdade com o foco onde estiver (ex.: pop-up aberto)
+function enterNoFoco() {
+  janela.webContents.sendInputEvent({ type: "keyDown", keyCode: "Enter" });
+  janela.webContents.sendInputEvent({ type: "char", keyCode: "\r" });
+  janela.webContents.sendInputEvent({ type: "keyUp", keyCode: "Enter" });
+}
 async function enter(seletor) {
   await js(`document.querySelector(${JSON.stringify(seletor)}).focus()`);
   janela.webContents.sendInputEvent({ type: "keyDown", keyCode: "Enter" });
@@ -1106,10 +1112,11 @@ async function executar() {
   await clicar("#btn-edt-excluir");
   const dialogoExclusao = await esperarDialogo();
   const infoExclusao = dialogoExclusao ? await dialogoInfo() : null;
+  teste("Exclusao: foco inicial em CANCELAR (Enter nunca apaga)", Boolean(infoExclusao) && infoExclusao.foco === "cancelar", JSON.stringify(infoExclusao ? infoExclusao.foco : null));
   teste("Exclusao pede confirmacao (dialogo EXCLUIR? de perigo)", dialogoExclusao && Boolean(infoExclusao) && infoExclusao.titulo.includes("EXCLUIR") && infoExclusao.tipo === "perigo", JSON.stringify(infoExclusao));
-  await responderDialogo("cancelar");
+  enterNoFoco(); // Enter de verdade no pop-up EXCLUIR: cancela
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
-  teste("Exclusao cancelada preserva o registro", (await js(`document.body.dataset.registroExcluido`)) === undefined && (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === true);
+  teste("Enter no pop-up EXCLUIR cancela e preserva o registro", (await js(`document.body.dataset.registroExcluido`)) === undefined && (await js(`document.getElementById('tabela-area').textContent.includes('TC BANCO EDITADO')`)) === true);
 
   await clicar("#btn-edt-excluir");
   teste("Exclusao reabre o dialogo de confirmacao", await esperarDialogo());
@@ -1512,7 +1519,7 @@ async function executar() {
     JSON.stringify(infoDlg)
   );
   teste("Dialogo: acoes certas para confirmacao (cancelar/confirmar)", Boolean(infoDlg) && JSON.stringify(infoDlg.acoes) === JSON.stringify(["cancelar", "confirmar"]), JSON.stringify(infoDlg ? infoDlg.acoes : null));
-  teste("Dialogo: foco inicial no botao seguro (cancelar)", Boolean(infoDlg) && infoDlg.foco === "cancelar", JSON.stringify(infoDlg ? infoDlg.foco : null));
+  teste("Dialogo: foco inicial no botao de continuar (Enter = continuar)", Boolean(infoDlg) && infoDlg.foco === "confirmar", JSON.stringify(infoDlg ? infoDlg.foco : null));
   await tecla("Escape");
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Dialogo: ESC cancela sem executar a acao", (await js("document.body.dataset.tela")) === "form-recorrente");
@@ -1531,7 +1538,8 @@ async function executar() {
   await js(`document.querySelector('[data-dialogo-acao="confirmar"]').focus(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); 'ok'`);
   const focoTab = await js(`document.activeElement ? document.activeElement.getAttribute('data-dialogo-acao') : null`);
   teste("Dialogo: TAB no ultimo botao volta ao primeiro (foco preso no dialogo)", focoTab === "cancelar", String(focoTab));
-  await responderDialogo("confirmar");
+  await js(`document.querySelector('[data-dialogo-acao="confirmar"]').focus()`);
+  enterNoFoco(); // Enter de verdade no pop-up SAIR SEM SALVAR: continua (sai do formulario)
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
   teste("Dialogo: confirmacao executa a acao (sai do formulario)", (await js("document.body.dataset.tela")) !== "form-recorrente");
   await prepararPagina();
