@@ -88,6 +88,9 @@ await etapa("Instalador (electron-builder / NSIS)", () => {
   if (!fs.existsSync(jar)) throw new Error(`jar nao encontrado: ${jar}`);
   return builder.build({
     targets: builder.Platform.WINDOWS.createTarget("nsis", builder.Arch.x64),
+    // so gera o .exe: quem publica em Releases e o passo seguinte do GitHub Actions
+    // (sem isto, no CI o electron-builder tenta publicar sozinho e pede um token)
+    publish: "never",
     config: {
       appId: "br.com.chaveirouniversal.contasapagar",
       productName: "Contas a Pagar - Chaveiro Universal",
