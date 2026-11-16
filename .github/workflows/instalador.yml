@@ -2,7 +2,7 @@
 # Na loja: abra o repositorio no GitHub, clique em Releases (a direita), baixe
 # "Contas a Pagar - Chaveiro Universal - Instalador X.Y.Z.exe" e de dois cliques.
 # Roda a cada envio para a main e tambem pelo botao "Run workflow" (aba Actions).
-# Versao automatica: X.Y do package.json + o numero desta execucao (ex.: 1.4.7), sempre
+# Versao automatica: X.Y.Z do package.json com Z + o numero desta execucao, sempre
 # maior que a anterior; e ela que faz o sistema da loja oferecer ATUALIZAR sozinho.
 # Para mudar X.Y (ex.: 1.5), troque a versao no package.json.
 name: instalador
@@ -43,7 +43,7 @@ jobs:
       - name: Versao automatica
         shell: bash
         run: |
-          VERSAO=$(node -p "const [x,y,z]=require('./package.json').version.split('.').map(Number); [x,y,Math.max(z,${{ github.run_number }})].join('.')")
+          VERSAO=$(node -p "const [x,y,z]=require('./package.json').version.split('.').map(Number); [x,y,z+${{ github.run_number }}].join('.')")
           npm version "$VERSAO" --no-git-tag-version --allow-same-version
           echo "Versao do instalador: $VERSAO"
 
