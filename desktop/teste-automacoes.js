@@ -185,6 +185,11 @@ function spawnFalso() {
   teste("Versao maior no GitHub: oferece atualizar", gh && gh.versao === "1.5.0" && gh.origem === "github" && gh.sha256 === shaInst, JSON.stringify(gh));
   teste("Mesma versao do GitHub ja instalada: nao oferece", await a.procurarAtualizacao(appFalso(true, "1.5.0"), log) === null);
   teste("Versao MENOR no GitHub: nao oferece (nunca volta versao)", await a.procurarAtualizacao(appFalso(true, "1.6.0"), log) === null);
+  const nomePontos = nomeGh.replace(/ /g, ".");
+  release = { tag_name: "v1.5.0", body: "", assets: [ativo({ name: nomePontos, browser_download_url: `${base}/download/${nomePontos}` })] };
+  const comPontos = await a.procurarAtualizacao(app14, log);
+  teste("Nome como o GitHub publica (espacos viram pontos: 'Contas a Pagar.-.Chaveiro...'): oferece atualizar",
+    comPontos && comPontos.versao === "1.5.0" && comPontos.nome === nomePontos, JSON.stringify(comPontos));
   release = { tag_name: "v1.5.0", body: "", assets: [ativo({ name: "virus.exe" })] };
   teste("Arquivo com outro nome no release: recusado", await a.procurarAtualizacao(app14, log) === null);
   release = { tag_name: "v1.5.0", body: "", assets: [ativo({ browser_download_url: "https://site-estranho.com/x.exe" })] };

@@ -22,7 +22,9 @@ const SUBPASTA_ATUALIZACOES = "Chaveiro Universal - Atualizacoes";
 // repositorio de onde vem as versoes novas (Releases)
 const REPO_GITHUB = "FelipeSilveiraP/sistema_contas_a_pagar_desktop_offline";
 const API_GITHUB = "https://api.github.com";
-const NOME_INSTALADOR = /^Contas a Pagar - Chaveiro Universal - Instalador (\d+\.\d+\.\d+)\.exe$/;
+// O GitHub troca os espacos do nome do arquivo por pontos ao publicar em Releases
+// ("Contas a Pagar.-.Chaveiro.Universal.-.Instalador.1.4.11.exe"): aceita os dois jeitos.
+const NOME_INSTALADOR = /^Contas[ .]a[ .]Pagar[ .]-[ .]Chaveiro[ .]Universal[ .]-[ .]Instalador[ .](\d+\.\d+\.\d+)\.exe$/;
 const LIMITE_INSTALADOR = 400 * 1024 * 1024;
 
 const PADRAO = {
