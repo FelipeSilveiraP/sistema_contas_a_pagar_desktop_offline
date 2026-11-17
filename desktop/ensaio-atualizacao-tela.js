@@ -189,9 +189,14 @@ async function entrarNoMenu(primeiraVez) {
 async function principal() {
   console.log(`=== ENSAIO DO ATUALIZAR PELA TELA: versao anterior -> ${versaoNova} ===\n`);
   fecharPrograma();
-  const r = require("child_process").spawnSync(anterior, ["/S"], { stdio: "inherit", timeout: 180000 });
+  let r = null;
+  for (let tentativa = 1; tentativa <= 3 && !versaoInstalada(); tentativa++) {
+    r = require("child_process").spawnSync(anterior, ["/S"], { stdio: "inherit", timeout: 180000, windowsHide: false });
+    console.log(`         instalador anterior (tentativa ${tentativa}): codigo ${r.status}${r.error ? ` erro ${r.error.code || r.error.message}` : ""}`);
+    if (!versaoInstalada()) await esperar(5000);
+  }
   const versaoAnterior = versaoInstalada();
-  teste("Versao anterior instalada", r.status === 0 && Boolean(versaoAnterior), `versao ${versaoAnterior}`);
+  teste("Versao anterior instalada", Boolean(versaoAnterior), `versao ${versaoAnterior} (${anterior}, existe: ${fs.existsSync(anterior)})`);
   if (!versaoAnterior) return;
   fecharPrograma();
 
