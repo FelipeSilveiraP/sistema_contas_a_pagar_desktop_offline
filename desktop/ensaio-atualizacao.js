@@ -28,6 +28,9 @@ const log = (nivel, msg) => console.log(`  [${nivel}] ${msg}`);
 
 function versaoInstalada() {
   try {
+    // a biblioteca guarda o indice do arquivo da 1a leitura: sem limpar, depois que o
+    // instalador troca o app.asar ela le o arquivo novo com o indice velho
+    asar.uncacheAll();
     return JSON.parse(asar.extractFile(path.join(PASTA, "resources", "app.asar"), "package.json").toString()).version;
   } catch {
     return null;
