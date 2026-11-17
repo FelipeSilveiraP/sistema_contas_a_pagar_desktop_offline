@@ -78,6 +78,20 @@ jobs:
           echo "versao anterior: $ANTERIOR"
           node desktop/ensaio-atualizacao.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO"
 
+      # Informativo: o ATUALIZAR das versoes que ja estao instaladas na loja (codigo delas)
+      - name: Ensaio do ATUALIZAR das versoes da loja (1.3.20 e 1.3.16)
+        continue-on-error: true
+        shell: bash
+        run: |
+          VERSAO=$(node -p "require('./package.json').version")
+          git fetch -q --depth=100 origin main
+          ANTERIOR=$(ls anterior/*.exe | head -1)
+          for c in 7e221fd 453a8ce; do
+            git show "$c:desktop/automacoes.js" > "desktop/automacoes-$c.js"
+            echo "===== ATUALIZAR com o codigo do commit $c ====="
+            ENSAIO_AUTOMACOES="desktop/automacoes-$c.js" node desktop/ensaio-atualizacao.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO" || echo "FALHOU com o codigo $c"
+          done
+
       - name: Publicar em Releases
         shell: bash
         env:

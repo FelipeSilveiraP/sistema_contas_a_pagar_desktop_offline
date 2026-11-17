@@ -11,7 +11,8 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const asar = require("@electron/asar");
-const automacoes = require("./automacoes");
+// ENSAIO_AUTOMACOES: ensaiar o ATUALIZAR de uma versao ja instalada na loja (o automacoes.js dela)
+const automacoes = require(process.env.ENSAIO_AUTOMACOES ? path.resolve(process.env.ENSAIO_AUTOMACOES) : "./automacoes");
 
 const [anteriorArg, novoArg, versaoNova] = process.argv.slice(2);
 // caminho completo: o instalador e aberto a partir de outra pasta
@@ -117,6 +118,8 @@ async function principal() {
   const reabriu = await ate(() => processosDoPrograma().some((pid) => !pidsAntigos.has(pid)), 60000);
   console.log(`   programa aberto de novo sozinho: ${reabriu ? "sim" : "NAO"}`);
   if (!instalou || !reabriu) diagnostico();
+  const registro = path.join(os.tmpdir(), "atualizacao.log");
+  if (fs.existsSync(registro)) console.log(`   atualizacao.log:\n${fs.readFileSync(registro, "utf8")}`);
   fecharPrograma();
 
   if (!instalou) throw new Error(`a atualizacao nao instalou (esperado ${versaoNova}, ficou ${versaoInstalada()})`);
