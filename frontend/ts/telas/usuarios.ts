@@ -3,6 +3,9 @@
 // PIN, admin, ativo), o historico de acessos e o Gmail que envia os codigos.
 // O servidor confere o admin em cada pedido (403 para quem nao e).
 import {
+  configEmail,
+  gravarConfigEmail,
+  testarEmail,
   atualizarUsuario,
   cadastrarUsuario,
   excluirUsuario,
@@ -201,6 +204,9 @@ async function recarregarAdmin(): Promise<void> {
   }
   const todos = await listarAcessos(cfg, undefined, 100);
   el("acessos-todos").replaceChildren(...(todos.length ? todos.map((a) => linhaAcesso(a, true)) : [semAcessos()]));
+  const email = await configEmail(cfg);
+  el("email-situacao").textContent = email.configurado ? `Configurado: ${email.remetente}` : "Ainda não configurado: sem ele, \"Esqueci meu PIN\" não funciona.";
+  if (email.remetente) el<HTMLInputElement>("e_remetente").value = email.remetente;
 }
 
 function fecharEditor(): void {
@@ -302,6 +308,30 @@ function ligarAdmin(): void {
     void acao((cfg, u) => novoPinDoUsuario(cfg, u.id, pin), "PIN novo salvo (e a conta foi desbloqueada).").then(() => {
       el<HTMLInputElement>("novo_pin").value = "";
     });
+  });
+  // GRAVAR = grava e ja confere: manda um e-mail de confirmacao para o proprio Gmail da loja
+  el<HTMLFormElement>("form-email").addEventListener("submit", (e) => {
+    e.preventDefault();
+    void (async () => {
+      const cfg = await window.finDesk!.config();
+      const remetente = el<HTMLInputElement>("e_remetente").value.trim();
+      try {
+        await gravarConfigEmail(cfg, remetente, el<HTMLInputElement>("e_senha").value);
+        mostrarErrosForm("form-email", {});
+      } catch (falha) {
+        if (falha instanceof ErroValidacaoApi) mostrarErrosForm("form-email", falha.campos);
+        else notificar(mensagem(falha, "Não foi possível gravar."), "erro");
+        return;
+      }
+      try {
+        await testarEmail(cfg, remetente);
+        el<HTMLInputElement>("e_senha").value = "";
+        notificar(`Gmail da loja conectado: mandamos um e-mail de confirmação para ${remetente}.`);
+      } catch {
+        notificar("Gravado, mas o Google recusou o envio: confira o Gmail da loja e a senha de app (16 letras, criada com a verificação em 2 etapas ligada).", "erro");
+      }
+      await recarregarAdmin();
+    })();
   });
 }
 
