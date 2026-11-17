@@ -58,7 +58,14 @@ async function ate(condicao, ms) {
 
 async function principal() {
   console.log(`1. Instalando a versao anterior (${path.basename(anterior)})...`);
-  execFileSync(anterior, ["/S"], { stdio: "inherit" });
+  const bytes = fs.readFileSync(anterior);
+  console.log(`   tamanho ${bytes.length} bytes, SHA-256 ${require("crypto").createHash("sha256").update(bytes).digest("hex")}`);
+  for (const [nome, args] of [["silencioso (/S)", ["/S"]], ["com janela", []], ["silencioso, caminho completo", ["/S"]]]) {
+    const exe = nome.includes("completo") ? path.resolve(anterior) : anterior;
+    const r = require("child_process").spawnSync(exe, args, { stdio: "inherit", timeout: 180000, cwd: os.tmpdir() });
+    console.log(`   tentativa ${nome}: codigo ${r.status} sinal ${r.signal} erro ${r.error ? r.error.code || r.error.message : "-"}`);
+    if (versaoInstalada()) break;
+  }
   const versaoAnterior = versaoInstalada();
   if (!versaoAnterior) throw new Error(`a versao anterior nao ficou instalada em ${PASTA}`);
   console.log(`   versao anterior instalada: ${versaoAnterior}`);
