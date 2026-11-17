@@ -5,15 +5,12 @@
 import {
   atualizarUsuario,
   cadastrarUsuario,
-  configEmail,
   excluirUsuario,
   fotoDoPerfil,
-  gravarConfigEmail,
   listarAcessos,
   listarUsuarios,
   minhaConta,
   novoPinDoUsuario,
-  testarEmail,
   trocarFotoDoUsuario,
   trocarMeuPin,
   AcessoDados,
@@ -204,9 +201,6 @@ async function recarregarAdmin(): Promise<void> {
   }
   const todos = await listarAcessos(cfg, undefined, 100);
   el("acessos-todos").replaceChildren(...(todos.length ? todos.map((a) => linhaAcesso(a, true)) : [semAcessos()]));
-  const email = await configEmail(cfg);
-  el("email-situacao").textContent = email.configurado ? `Configurado: ${email.remetente}` : "Ainda não configurado: sem ele, \"Esqueci meu PIN\" não funciona.";
-  if (email.remetente) el<HTMLInputElement>("e_remetente").value = email.remetente;
 }
 
 function fecharEditor(): void {
@@ -309,34 +303,6 @@ function ligarAdmin(): void {
       el<HTMLInputElement>("novo_pin").value = "";
     });
   });
-  el<HTMLFormElement>("form-email").addEventListener("submit", (e) => {
-    e.preventDefault();
-    void (async () => {
-      try {
-        await gravarConfigEmail(await window.finDesk!.config(), el<HTMLInputElement>("e_remetente").value, el<HTMLInputElement>("e_senha").value);
-        el<HTMLInputElement>("e_senha").value = "";
-        mostrarErrosForm("form-email", {});
-        notificar("Gmail da loja gravado (criptografado).");
-        await recarregarAdmin();
-      } catch (falha) {
-        if (falha instanceof ErroValidacaoApi) mostrarErrosForm("form-email", falha.campos);
-        else notificar(mensagem(falha, "Não foi possível gravar."), "erro");
-      }
-    })();
-  });
-  el<HTMLFormElement>("form-teste").addEventListener("submit", (e) => {
-    e.preventDefault();
-    void (async () => {
-      try {
-        await testarEmail(await window.finDesk!.config(), el<HTMLInputElement>("e_destino").value);
-        mostrarErrosForm("form-teste", {});
-        notificar("E-mail de teste enviado.");
-      } catch (falha) {
-        if (falha instanceof ErroValidacaoApi) mostrarErrosForm("form-teste", falha.campos);
-        else notificar(mensagem(falha, "Não foi possível enviar."), "erro");
-      }
-    })();
-  });
 }
 
 export function iniciarContas(): void {
@@ -356,6 +322,8 @@ export function iniciarContas(): void {
     if (falha instanceof ErroApi && falha.status === 401) void window.finDesk!.navegar("perfis");
   });
   if (perfil.admin) {
+    // admin troca o proprio PIN (e o de qualquer conta) so na conta selecionada, la embaixo
+    el("form-meu-pin").classList.add("hidden");
     el("area-admin").classList.remove("hidden");
     el("selo-admin").classList.remove("hidden");
     ligarAdmin();
