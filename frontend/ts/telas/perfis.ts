@@ -1,15 +1,13 @@
 // "Quem esta usando?" — como na Netflix: cada pessoa clica na sua bolinha e
 // digita o PIN (4 a 6 numeros). Primeira abertura: cria a conta do administrador.
-// Esqueceu o PIN: codigo de 6 numeros pelo e-mail da conta. Voltar a esta tela
+// Esqueceu o PIN: um administrador cadastra um PIN novo em CONTAS. Voltar a esta tela
 // encerra a sessao do perfil anterior. Teclas 1 a 9 escolhem a bolinha.
 import { buscarStatus } from "../api";
 import {
   criarPrimeiroAdmin,
   entrarComPin,
-  esqueciPin,
   fotoDoPerfil,
   listarPerfis,
-  redefinirPin,
   sairDaSessao,
   ErroApi,
   ErroValidacaoApi,
@@ -21,8 +19,6 @@ import { menuPrincipal } from "../navegacao";
 import { notificar } from "../notificacoes";
 
 let escolhido: (PerfilConta & { foto?: string | null }) | null = null;
-let etapaEsqueci: 1 | 2 = 1;
-let loginEsqueci = "";
 
 function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -74,7 +70,7 @@ async function conferirPin(): Promise<void> {
       const resta = Number(falha.corpo.tentativasRestantes ?? 0);
       erro("pin-erro", resta ? `PIN incorreto. Mais ${resta} tentativa(s) antes de bloquear.` : "PIN incorreto.");
     } else if (falha instanceof ErroApi && falha.status === 423) {
-      erro("pin-erro", `Conta bloqueada por PINs errados. Espere ${falha.corpo.minutos ?? 5} minutos ou use "Esqueci meu PIN".`);
+      erro("pin-erro", `Conta bloqueada por PINs errados. Espere ${falha.corpo.minutos ?? 5} minutos ou peça a um administrador um PIN novo.`);
     } else {
       erro("pin-erro", "Não foi possível entrar. Tente de novo.");
     }
@@ -84,52 +80,10 @@ async function conferirPin(): Promise<void> {
 // ---------- esqueci o PIN ----------
 
 function abrirEsqueci(): void {
-  etapaEsqueci = 1;
+  // sem e-mail: o PIN novo e cadastrado por um administrador em CONTAS (pedido do usuario)
   el("pin-form").classList.add("hidden");
   el("esqueci-form").classList.remove("hidden");
-  el("esqueci-etapa2").classList.add("hidden");
-  el("esqueci-etapa2").classList.remove("flex");
-  el<HTMLInputElement>("esqueci-login").disabled = false;
-  el("esqueci-acao").textContent = "ENVIAR CÓDIGO";
-  el("esqueci-texto").textContent = "Digite o e-mail da sua conta. Vamos mandar um código de 6 números para ele e para o e-mail da loja.";
-  erro("esqueci-erro");
-  el<HTMLInputElement>("esqueci-login").focus();
-}
-
-async function acaoEsqueci(): Promise<void> {
-  const cfg = await window.finDesk!.config();
-  try {
-    if (etapaEsqueci === 1) {
-      loginEsqueci = el<HTMLInputElement>("esqueci-login").value.trim();
-      if (!loginEsqueci) return erro("esqueci-erro", "Digite o e-mail da sua conta.");
-      const r = await esqueciPin(cfg, loginEsqueci);
-      etapaEsqueci = 2;
-      el<HTMLInputElement>("esqueci-login").disabled = true;
-      el("esqueci-etapa2").classList.remove("hidden");
-      el("esqueci-etapa2").classList.add("flex");
-      el("esqueci-acao").textContent = "CRIAR NOVO PIN";
-      el("esqueci-texto").textContent = `Código enviado para ${r.enviadoPara}. Ele vale por 15 minutos.`;
-      erro("esqueci-erro");
-      el<HTMLInputElement>("esqueci-codigo").focus();
-      return;
-    }
-    const codigo = el<HTMLInputElement>("esqueci-codigo").value.trim();
-    const novo = el<HTMLInputElement>("esqueci-novo").value.trim();
-    if (!/^\d{6}$/.test(codigo)) return erro("esqueci-erro", "O código tem 6 números.");
-    if (!/^\d{4,6}$/.test(novo)) return erro("esqueci-erro", "O PIN tem de 4 a 6 números.");
-    await redefinirPin(cfg, loginEsqueci, codigo, novo);
-    notificar("PIN novo criado. Clique na sua bolinha e entre com ele.");
-    fecharPin();
-  } catch (falha) {
-    if (falha instanceof ErroApi && falha.status === 429) {
-      // limite contra envio em massa de e-mails: 1 codigo por minuto, 5 por hora
-      const minutos = Number(falha.corpo.minutos ?? 1);
-      return erro("esqueci-erro", minutos <= 1
-        ? "Espere 1 minuto para pedir outro código."
-        : "Muitos pedidos de código. Tente de novo daqui a 1 hora (ou peça ao administrador um PIN novo).");
-    }
-    erro("esqueci-erro", falha instanceof ErroValidacaoApi ? Object.values(falha.campos)[0] ?? "Dados inválidos." : "Não foi possível. Tente de novo.");
-  }
+  el("esqueci-voltar").focus();
 }
 
 // ---------- primeira abertura: administrador ----------
@@ -237,16 +191,12 @@ export function iniciarPerfis(): void {
   el("pin-cancelar").addEventListener("click", fecharPin);
   el("btn-esqueci").addEventListener("click", abrirEsqueci);
   el("esqueci-voltar").addEventListener("click", () => escolhido && abrirPin(escolhido));
-  el<HTMLFormElement>("esqueci-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    void acaoEsqueci();
-  });
   el<HTMLFormElement>("form-admin").addEventListener("submit", (e) => {
     e.preventDefault();
     void criarAdmin();
   });
   // so numeros nos campos de PIN
-  document.querySelectorAll<HTMLInputElement>("#pin-campo, #adm_pin, #adm_pin2, #esqueci-novo, #esqueci-codigo").forEach((i) => {
+  document.querySelectorAll<HTMLInputElement>("#pin-campo, #adm_pin, #adm_pin2").forEach((i) => {
     i.addEventListener("input", () => {
       i.value = i.value.replace(/\D/g, "").slice(0, 6);
     });

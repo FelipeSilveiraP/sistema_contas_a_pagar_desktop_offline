@@ -37,7 +37,7 @@
 <h2 class="secao-titulo" id="titulo-novo"><span class="material-symbols-outlined">person_add</span>Cadastrar usuário</h2>
 <form class="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-3 gap-4" id="form-usuario" novalidate>
 <div class="campo-form"><label class="rotulo-form" for="u_nome">NOME (NA BOLINHA)</label><input class="entrada-form uppercase" id="u_nome" maxlength="40" type="text" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="nome"></p></div>
-<div class="campo-form md:col-span-2"><label class="rotulo-form" for="u_email"><span>E-MAIL (É O LOGIN)</span><span class="dica-form">QUALQUER E-MAIL · RECEBE O CÓDIGO SE ESQUECER O PIN</span></label><input class="entrada-form" id="u_email" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com"><p class="campo-erro hidden" data-erro-campo="email"></p></div>
+<div class="campo-form md:col-span-2"><label class="rotulo-form" for="u_email"><span>E-MAIL (É O LOGIN)</span><span class="dica-form">QUALQUER E-MAIL</span></label><input class="entrada-form" id="u_email" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com"><p class="campo-erro hidden" data-erro-campo="email"></p></div>
 <div class="campo-form"><label class="rotulo-form" for="u_pin">PIN (4 A 6 NÚMEROS)</label><input class="entrada-form font-mono" id="u_pin" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password"><p class="campo-erro hidden" data-erro-campo="pin"></p></div>
 <div class="campo-form"><label class="rotulo-form" for="u_foto"><span>FOTO</span><span class="dica-form">OPCIONAL</span></label><input class="entrada-form" id="u_foto" type="file" accept="image/png,image/jpeg,image/webp"><p class="campo-erro hidden" data-erro-campo="foto"></p></div>
 <div class="flex flex-col justify-end gap-3">
@@ -99,23 +99,6 @@
 <section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-historico">
 <h2 class="secao-titulo" id="titulo-historico"><span class="material-symbols-outlined">history</span>Histórico de acessos (todos)</h2>
 <ul class="lista-acessos p-4 sm:p-5" id="acessos-todos"></ul>
-</section>
-
-<section class="bg-white border-2 border-[#1c1b1b]" aria-labelledby="titulo-email">
-<h2 class="secao-titulo" id="titulo-email"><span class="material-symbols-outlined">mail</span>E-mail que envia os códigos (Gmail da loja)</h2>
-<div class="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
-<form class="flex flex-col gap-3" id="form-email" novalidate>
-<p class="font-mono text-xs font-bold uppercase text-neutral-600" id="email-situacao">—</p>
-<div class="campo-form"><label class="rotulo-form" for="e_remetente">GMAIL DA LOJA</label><input class="entrada-form" id="e_remetente" maxlength="120" type="email" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="remetente"></p></div>
-<div class="campo-form"><label class="rotulo-form" for="e_senha"><span>SENHA DE APP DO GOOGLE</span><span class="dica-form">16 LETRAS</span></label><input class="entrada-form font-mono" id="e_senha" maxlength="19" type="password" autocomplete="off"><p class="campo-erro hidden" data-erro-campo="senhaApp"></p></div>
-<button class="btn-acao bg-[#FFE600] self-start" type="submit"><span class="material-symbols-outlined text-base font-bold">save</span>GRAVAR</button>
-</form>
-<div class="flex flex-col gap-3 text-sm font-medium">
-<p><b>Para que serve:</b> é por este Gmail que o sistema manda o código do "Esqueci meu PIN" (para o e-mail da pessoa e para o e-mail da loja).</p>
-<p><b>Senha de app (uma vez só):</b> o Google só deixa um programa mandar e-mail pela conta com uma senha de app. Na conta Google da loja: ative a <b>verificação em 2 etapas</b>, procure <b>Senhas de app</b>, crie uma (nome: Contas a Pagar) e cole aqui as 16 letras. Ela fica criptografada no banco.</p>
-<p>Ao clicar em GRAVAR, o sistema confere sozinho: manda um e-mail de confirmação para o Gmail da loja.</p>
-</div>
-</div>
 </section>
 
 </div>
