@@ -366,51 +366,57 @@ async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersi
 }
 
 /** ATUALIZAR: baixa do GitHub (se for de la), confere, executa e fecha o sistema. */
-async function aplicarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, aoProgresso = () => {}, pastaLogs = os.tmpdir()) {
+async function aplicarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, aoProgresso = () => {}, esperaMs = 1500) {
   const pronta = atualizacao.origem === "github"
     ? { ...atualizacao, instalador: await baixarInstalador(atualizacao, registrarLog, aoProgresso) }
     : atualizacao;
-  return instalarAtualizacao(app, pronta, registrarLog, iniciar, pastaLogs);
-}
-
-/** Texto entre aspas simples do PowerShell. */
-function aspasPs(texto) {
-  return `'${String(texto).replace(/'/g, "''")}'`;
+  return instalarAtualizacao(app, pronta, registrarLog, iniciar, esperaMs);
 }
 
 /**
- * Copia o instalador para a pasta temporaria, executa e fecha o sistema.
- * O PowerShell (que continua rodando depois que o sistema fecha):
- * 1. espera o sistema fechar DE VERDADE (e mais 3 s para o Java soltar os arquivos);
- * 2. abre o instalador e espera ELE terminar (so ele: o sistema novo que ele abre nao conta);
- * 3. anota cada passo em logs/atualizacao.log;
- * 4. se o instalador nao abrir ou falhar, REABRE a versao atual (antes o sistema so sumia).
+ * Copia o instalador para a pasta temporaria, abre e fecha o sistema.
+ *
+ * Mesmo jeito do atualizador do proprio electron-builder: o INSTALADOR e aberto direto
+ * (sem PowerShell escondido, que antivirus barram em silencio) com "--updated": nesse
+ * modo ele espera/fecha o sistema antigo sozinho, instala e abre a versao nova
+ * (runAfterFinish). O sistema so fecha depois que o instalador abriu de verdade: se o
+ * Windows barrar, o erro volta para a tela e o sistema continua aberto.
  */
-function instalarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, pastaLogs = os.tmpdir()) {
+function instalarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, esperaMs = 1500) {
   const destino = path.join(os.tmpdir(), path.basename(atualizacao.instalador));
   // o baixado do GitHub ja esta na pasta temporaria (subpasta propria): copiar so do Drive
   if (path.resolve(destino) !== path.resolve(atualizacao.instalador)) {
     fs.copyFileSync(atualizacao.instalador, destino);
   }
-  const versao = String(atualizacao.versao).replace(/[^0-9.]/g, "");
-  const comando = [
-    `$log = ${aspasPs(path.join(pastaLogs, "atualizacao.log"))}`,
-    "function Anotar($t) { try { Add-Content -LiteralPath $log -Value ((Get-Date -Format s) + ' ' + $t) } catch {} }",
-    `Anotar 'atualizacao ${versao}: esperando o sistema fechar'`,
-    `Wait-Process -Id ${process.pid} -Timeout 60 -ErrorAction SilentlyContinue`,
-    "Start-Sleep -Seconds 3",
-    "$ok = $false",
-    `try { $p = Start-Process -FilePath ${aspasPs(destino)} -PassThru -ErrorAction Stop; $null = $p.Handle; $p.WaitForExit();`
-      + " Anotar ('instalador terminou (codigo ' + $p.ExitCode + ')'); $ok = ($p.ExitCode -eq 0) }"
-      + " catch { Anotar ('o instalador nao abriu: ' + $_) }",
-    `if (-not $ok -and (Test-Path -LiteralPath ${aspasPs(process.execPath)})) { Anotar 'instalacao falhou: reabrindo a versao atual'; Start-Process -FilePath ${aspasPs(process.execPath)} }`,
-  ].join("; ");
-  const proc = iniciar("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", comando],
-    { detached: true, stdio: "ignore", windowsHide: true });
-  proc.unref?.();
-  registrarLog("INFO", `instalando a atualizacao ${atualizacao.versao}`);
-  setTimeout(() => app.quit(), 500);
-  return destino;
+  return new Promise((resolver, rejeitar) => {
+    let terminou = false;
+    const falhar = (motivo) => {
+      if (terminou) return;
+      terminou = true;
+      registrarLog("ERROR", `atualizacao ${atualizacao.versao}: ${motivo}`);
+      rejeitar(new Error(motivo));
+    };
+    let proc;
+    try {
+      proc = iniciar(destino, ["--updated"], { detached: true, stdio: "ignore", windowsHide: false });
+    } catch (erro) {
+      falhar(`o instalador nao abriu (${erro && erro.message})`);
+      return;
+    }
+    proc.once?.("error", (erro) => falhar(`o instalador nao abriu (${erro && (erro.code || erro.message)})`));
+    proc.once?.("exit", (codigo) => {
+      if (codigo !== 0) falhar(`o instalador fechou logo ao abrir (codigo ${codigo})`);
+    });
+    setTimeout(() => {
+      if (terminou) return;
+      terminou = true;
+      proc.unref?.();
+      registrarLog("INFO", `instalando a atualizacao ${atualizacao.versao} (instalador aberto: ${path.basename(destino)})`);
+      // o instalador espera o sistema fechar para trocar os arquivos e depois o abre de novo
+      setTimeout(() => app.quit(), 300);
+      resolver(destino);
+    }, esperaMs);
+  });
 }
 
 module.exports = {

@@ -63,6 +63,21 @@ jobs:
           echo "versao do instalador: $VERSAO | versao dentro do programa: $DENTRO"
           [ "$DENTRO" = "$VERSAO" ] || { echo "ERRO: o programa diz $DENTRO e o instalador $VERSAO"; exit 1; }
 
+      # TRAVA: ensaio da atualizacao num Windows de verdade. Instala a ultima versao
+      # publicada, abre o programa e faz o ATUALIZAR (mesmo codigo do botao) para esta
+      # versao; tem de instalar E abrir de novo sozinho. Se falhar, nada e publicado.
+      - name: Ensaio do ATUALIZAR (versao anterior -> esta versao)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSAO=$(node -p "require('./package.json').version")
+          mkdir -p anterior
+          gh release download --pattern "*.exe" --dir anterior
+          ANTERIOR=$(ls anterior/*.exe | head -1)
+          echo "versao anterior: $ANTERIOR"
+          node desktop/ensaio-atualizacao.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO"
+
       - name: Publicar em Releases
         shell: bash
         env:

@@ -142,19 +142,35 @@ function spawnFalso() {
   escrever({ versao: "1.3.0", arquivo: nome, sha256: hash });
   const att = await a.procurarAtualizacao(app12, log);
   sp = spawnFalso();
-  const copia = a.instalarAtualizacao(app12, att, log, sp);
-  await new Promise((ok) => setTimeout(ok, 700));
+  const copia = await a.instalarAtualizacao(app12, att, log, sp, 50);
+  await new Promise((ok) => setTimeout(ok, 500));
   teste("ATUALIZAR: copia o instalador para a pasta temporaria", fs.existsSync(copia) && fs.readFileSync(copia).equals(conteudo));
-  teste("ATUALIZAR: dispara o instalador depois de 3 s (PowerShell oculto)",
-    sp.chamadas.length === 1 && sp.chamadas[0].cmd === "powershell.exe" && sp.chamadas[0].args.join(" ").includes("Start-Sleep -Seconds 3") && sp.chamadas[0].args.join(" ").includes(nome));
-  const script = sp.chamadas[0] ? sp.chamadas[0].args.join(" ") : "";
-  teste("ATUALIZAR: espera o sistema fechar de verdade antes do instalador",
-    script.includes(`Wait-Process -Id ${process.pid}`) && script.indexOf("Wait-Process") < script.indexOf("Start-Process"));
-  teste("ATUALIZAR: espera o instalador terminar e anota cada passo em atualizacao.log",
-    script.includes("WaitForExit()") && script.includes("atualizacao.log") && script.includes("Anotar"));
-  teste("ATUALIZAR: se o instalador falhar ou nao abrir, reabre a versao atual",
-    script.includes("if (-not $ok") && script.includes(`Start-Process -FilePath '${process.execPath.replace(/'/g, "''")}'`));
+  const chamada = sp.chamadas[0] || {};
+  teste("ATUALIZAR: abre o INSTALADOR direto (sem PowerShell escondido) no modo atualizacao",
+    sp.chamadas.length === 1 && chamada.cmd === copia && chamada.args.join(" ") === "--updated" && chamada.opcoes.detached === true);
   teste("ATUALIZAR: fecha o sistema para o instalador trocar os arquivos", app12.fechou === true);
+  // Windows/antivirus barrou o instalador: o sistema NAO fecha e o erro volta para a tela
+  const appBarrado = appFalso(true, "1.2.0");
+  const barrado = (cmd, args, opcoes) => {
+    const ouvintes = {};
+    setTimeout(() => ouvintes.error && ouvintes.error(Object.assign(new Error("spawn UNKNOWN"), { code: "UNKNOWN" })), 10);
+    return { once(evento, f) { ouvintes[evento] = f; }, unref() {} };
+  };
+  let erroBarrado = null;
+  try { await a.instalarAtualizacao(appBarrado, att, log, barrado, 300); } catch (e) { erroBarrado = e; }
+  await new Promise((ok) => setTimeout(ok, 500));
+  teste("ATUALIZAR barrado pelo Windows: avisa o motivo e o sistema continua aberto",
+    erroBarrado && /UNKNOWN/.test(erroBarrado.message) && appBarrado.fechou === false, String(erroBarrado));
+  const appFechou = appFalso(true, "1.2.0");
+  const fechaLogo = () => {
+    const ouvintes = {};
+    setTimeout(() => ouvintes.exit && ouvintes.exit(2), 10);
+    return { once(evento, f) { ouvintes[evento] = f; }, unref() {} };
+  };
+  let erroFechou = null;
+  try { await a.instalarAtualizacao(appFechou, att, log, fechaLogo, 300); } catch (e) { erroFechou = e; }
+  await new Promise((ok) => setTimeout(ok, 500));
+  teste("ATUALIZAR: instalador que fecha logo com erro nao derruba o sistema", erroFechou && appFechou.fechou === false, String(erroFechou));
   fs.rmSync(copia, { force: true });
   delete process.env.FINDESK_PASTA_ATUALIZACOES;
   teste("Sem pasta configurada e nao instalado: nao procura no Drive real", await a.procurarAtualizacao(appFalso(false), log) === null);
