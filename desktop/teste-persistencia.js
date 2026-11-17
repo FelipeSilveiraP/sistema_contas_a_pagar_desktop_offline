@@ -152,6 +152,13 @@ async function main() {
   const falhas = resultados.filter((r) => !r.ok);
   console.log(`\n=== RESULTADO: ${resultados.length - falhas.length}/${resultados.length} verificacoes passaram ===`);
   for (const f of falhas) console.log(` - [FALHA] ${f.nome} ${f.detalhe}`);
+  // falha intermitente (400 "requisicao invalida" no Windows do GitHub): mostra o motivo
+  // que o servidor registrou (linhas de aviso/erro, sem token — conferido acima)
+  if (falhas.length) {
+    const avisos = todosLogs.split(/\r?\n/).filter((l) => /WARN|ERROR|recusad|Exception/.test(l));
+    console.log(`\n--- avisos do servidor (${avisos.length}) ---`);
+    for (const l of avisos.slice(-40)) console.log(l.slice(0, 400));
+  }
   process.exit(falhas.length ? 1 : 0);
 }
 
