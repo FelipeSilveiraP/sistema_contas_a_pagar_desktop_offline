@@ -43,6 +43,23 @@ function processosDoPrograma() {
   }
 }
 
+/** Raio-X quando algo da errado: pasta instalada, registro do desinstalador e de onde o programa roda. */
+function diagnostico() {
+  const ps = (cmd) => {
+    try {
+      return execFileSync("powershell.exe", ["-NoProfile", "-Command", cmd], { encoding: "utf8", timeout: 60000 });
+    } catch (e) {
+      return `(erro: ${e.message})`;
+    }
+  };
+  console.log("\n--- RAIO-X ---");
+  console.log(ps(`Get-ChildItem -LiteralPath '${PASTA}' -ErrorAction SilentlyContinue | Select-Object Name,Length,LastWriteTime | Format-Table -AutoSize | Out-String -Width 200`));
+  console.log(ps(`Get-ChildItem -LiteralPath '${path.join(PASTA, "resources")}' -ErrorAction SilentlyContinue | Select-Object Name,Length,LastWriteTime | Format-Table -AutoSize | Out-String -Width 200`));
+  console.log(ps("Get-ChildItem HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall | ForEach-Object { Get-ItemProperty $_.PSPath } | Where-Object { $_.DisplayName -like '*Contas*' } | Select-Object DisplayName,DisplayVersion,InstallLocation,UninstallString | Format-List | Out-String -Width 300"));
+  console.log(ps(`Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'Contas*' -or $_.Name -like 'java*' -or $_.Name -like '*Instalador*' -or $_.Name -like 'Un_*' } | Select-Object ProcessId,Name,ExecutablePath,CommandLine | Format-List | Out-String -Width 300`));
+  console.log(ps(`Get-ChildItem -LiteralPath '${path.join(process.env.LOCALAPPDATA, "Programs")}' -ErrorAction SilentlyContinue | Select-Object Name,LastWriteTime | Format-Table | Out-String`));
+}
+
 function fecharPrograma() {
   try {
     execFileSync("taskkill", ["/IM", EXE, "/T", "/F"], { stdio: "ignore" });
@@ -92,10 +109,11 @@ async function principal() {
   await esperar(2000);
 
   console.log("4. Esperando o instalador trocar a versao e abrir o programa de novo...");
-  const instalou = await ate(() => versaoInstalada() === versaoNova, 240000);
+  const instalou = await ate(() => versaoInstalada() === versaoNova, 150000);
   console.log(`   versao instalada agora: ${versaoInstalada()}`);
   const reabriu = await ate(() => processosDoPrograma().some((pid) => !pidsAntigos.has(pid)), 60000);
   console.log(`   programa aberto de novo sozinho: ${reabriu ? "sim" : "NAO"}`);
+  if (!instalou || !reabriu) diagnostico();
   fecharPrograma();
 
   if (!instalou) throw new Error(`a atualizacao nao instalou (esperado ${versaoNova}, ficou ${versaoInstalada()})`);
