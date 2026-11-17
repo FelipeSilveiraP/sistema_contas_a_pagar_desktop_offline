@@ -13,10 +13,14 @@ const path = require("path");
 const asar = require("@electron/asar");
 const automacoes = require("./automacoes");
 
-const [anterior, novo, versaoNova] = process.argv.slice(2);
+const [anteriorArg, novoArg, versaoNova] = process.argv.slice(2);
+// caminho completo: o instalador e aberto a partir de outra pasta
+const anterior = path.resolve(anteriorArg);
+const novo = path.resolve(novoArg);
 const NOME = "Contas a Pagar - Chaveiro Universal";
 const EXE = `${NOME}.exe`;
-const PASTA = path.join(process.env.LOCALAPPDATA, "Programs", NOME);
+// o instalador (oneClick, por usuario) instala em Programs\<name do package.json>
+const PASTA = path.join(process.env.LOCALAPPDATA, "Programs", require("../package.json").name);
 const DADOS = fs.mkdtempSync(path.join(os.tmpdir(), "ensaio-atualizacao-"));
 
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -58,14 +62,8 @@ async function ate(condicao, ms) {
 
 async function principal() {
   console.log(`1. Instalando a versao anterior (${path.basename(anterior)})...`);
-  const bytes = fs.readFileSync(anterior);
-  console.log(`   tamanho ${bytes.length} bytes, SHA-256 ${require("crypto").createHash("sha256").update(bytes).digest("hex")}`);
-  for (const [nome, args] of [["silencioso (/S)", ["/S"]], ["com janela", []], ["silencioso, caminho completo", ["/S"]]]) {
-    const exe = nome.includes("completo") ? path.resolve(anterior) : anterior;
-    const r = require("child_process").spawnSync(exe, args, { stdio: "inherit", timeout: 180000, cwd: os.tmpdir() });
-    console.log(`   tentativa ${nome}: codigo ${r.status} sinal ${r.signal} erro ${r.error ? r.error.code || r.error.message : "-"}`);
-    if (versaoInstalada()) break;
-  }
+  const r = require("child_process").spawnSync(path.resolve(anterior), ["/S"], { stdio: "inherit", timeout: 180000 });
+  console.log(`   instalador terminou: codigo ${r.status}${r.error ? ` erro ${r.error.code || r.error.message}` : ""}`);
   const versaoAnterior = versaoInstalada();
   if (!versaoAnterior) throw new Error(`a versao anterior nao ficou instalada em ${PASTA}`);
   console.log(`   versao anterior instalada: ${versaoAnterior}`);
