@@ -65,7 +65,7 @@ const CHAVE_RUN = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
  * Cadastro na inicializacao do Windows, lido e gravado direto no registro com
  * reg.exe. NAO usa app.setLoginItemSettings: no Electron 33 ele grava o caminho
  * SEM aspas (o caminho tem espacos) e o getLoginItemSettings ignora o `name`,
- * respondendo sempre "ausente". Mesmo nome/valor do instalador (instalador.nsh).
+ * respondendo sempre "ausente". O instalador NAO grava este cadastro (o Defender bloqueava).
  */
 const registroWindows = {
   ler() {
