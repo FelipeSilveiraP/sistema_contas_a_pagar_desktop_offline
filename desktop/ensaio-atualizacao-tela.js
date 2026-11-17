@@ -254,7 +254,8 @@ async function principal() {
     distintos.length >= 4 && pcts.every((p, i) => i === 0 || p >= pcts[i - 1]), `${distintos.length} passos`);
   teste("Texto mostra a porcentagem e os MB", amostras.some((a) => /Baixando\.\.\. \d+% \(\d+ de \d+ MB\)/.test(a.texto)),
     (amostras.find((a) => /Baixando/.test(a.texto)) || {}).texto);
-  teste("Barra chega ao fim e avisa que vai instalar", amostras.some((a) => a.pct >= 99 && /Instalando|Conferindo/.test(a.texto)),
+  // a barra enche com animacao: no instante do aviso ela pode estar terminando de encher (>= 95%)
+  teste("Barra chega ao fim e avisa que vai instalar", amostras.some((a) => a.pct >= 95 && /Instalando|Conferindo/.test(a.texto)),
     (amostras[amostras.length - 1] || {}).texto);
 
   // ---- fecha e abre de novo sozinho, ja na versao nova ----
