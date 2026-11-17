@@ -366,22 +366,45 @@ async function procurarAtualizacao(app, registrarLog, versaoAtual = app.getVersi
 }
 
 /** ATUALIZAR: baixa do GitHub (se for de la), confere, executa e fecha o sistema. */
-async function aplicarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, aoProgresso = () => {}) {
+async function aplicarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, aoProgresso = () => {}, pastaLogs = os.tmpdir()) {
   const pronta = atualizacao.origem === "github"
     ? { ...atualizacao, instalador: await baixarInstalador(atualizacao, registrarLog, aoProgresso) }
     : atualizacao;
-  return instalarAtualizacao(app, pronta, registrarLog, iniciar);
+  return instalarAtualizacao(app, pronta, registrarLog, iniciar, pastaLogs);
 }
 
-/** Copia o instalador para a pasta temporaria, executa e fecha o sistema. */
-function instalarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn) {
+/** Texto entre aspas simples do PowerShell. */
+function aspasPs(texto) {
+  return `'${String(texto).replace(/'/g, "''")}'`;
+}
+
+/**
+ * Copia o instalador para a pasta temporaria, executa e fecha o sistema.
+ * O PowerShell (que continua rodando depois que o sistema fecha):
+ * 1. espera o sistema fechar DE VERDADE (e mais 3 s para o Java soltar os arquivos);
+ * 2. abre o instalador e espera ELE terminar (so ele: o sistema novo que ele abre nao conta);
+ * 3. anota cada passo em logs/atualizacao.log;
+ * 4. se o instalador nao abrir ou falhar, REABRE a versao atual (antes o sistema so sumia).
+ */
+function instalarAtualizacao(app, atualizacao, registrarLog, iniciar = spawn, pastaLogs = os.tmpdir()) {
   const destino = path.join(os.tmpdir(), path.basename(atualizacao.instalador));
   // o baixado do GitHub ja esta na pasta temporaria (subpasta propria): copiar so do Drive
   if (path.resolve(destino) !== path.resolve(atualizacao.instalador)) {
     fs.copyFileSync(atualizacao.instalador, destino);
   }
-  // espera o sistema (e o Java) fecharem antes de o instalador substituir os arquivos
-  const comando = `Start-Sleep -Seconds 3; Start-Process -FilePath '${destino.replace(/'/g, "''")}'`;
+  const versao = String(atualizacao.versao).replace(/[^0-9.]/g, "");
+  const comando = [
+    `$log = ${aspasPs(path.join(pastaLogs, "atualizacao.log"))}`,
+    "function Anotar($t) { try { Add-Content -LiteralPath $log -Value ((Get-Date -Format s) + ' ' + $t) } catch {} }",
+    `Anotar 'atualizacao ${versao}: esperando o sistema fechar'`,
+    `Wait-Process -Id ${process.pid} -Timeout 60 -ErrorAction SilentlyContinue`,
+    "Start-Sleep -Seconds 3",
+    "$ok = $false",
+    `try { $p = Start-Process -FilePath ${aspasPs(destino)} -PassThru -ErrorAction Stop; $null = $p.Handle; $p.WaitForExit();`
+      + " Anotar ('instalador terminou (codigo ' + $p.ExitCode + ')'); $ok = ($p.ExitCode -eq 0) }"
+      + " catch { Anotar ('o instalador nao abriu: ' + $_) }",
+    `if (-not $ok -and (Test-Path -LiteralPath ${aspasPs(process.execPath)})) { Anotar 'instalacao falhou: reabrindo a versao atual'; Start-Process -FilePath ${aspasPs(process.execPath)} }`,
+  ].join("; ");
   const proc = iniciar("powershell.exe", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", comando],
     { detached: true, stdio: "ignore", windowsHide: true });
   proc.unref?.();

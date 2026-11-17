@@ -599,7 +599,7 @@ tratarIpc("findesk:instalar-atualizacao", async () => {
       ultimoAviso = agora;
       if (janela && !janela.isDestroyed()) janela.webContents.send("findesk:progresso-atualizacao", { recebidos, total });
     };
-    await automacoes.aplicarAtualizacao(app, atualizacaoEncontrada, registrarLog, undefined, avisarProgresso);
+    await automacoes.aplicarAtualizacao(app, atualizacaoEncontrada, registrarLog, undefined, avisarProgresso, PASTA_LOGS);
     return true;
   } catch (erro) {
     registrarLog("WARN", `atualizacao nao instalada: ${erro && erro.message}`);

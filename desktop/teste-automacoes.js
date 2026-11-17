@@ -147,6 +147,13 @@ function spawnFalso() {
   teste("ATUALIZAR: copia o instalador para a pasta temporaria", fs.existsSync(copia) && fs.readFileSync(copia).equals(conteudo));
   teste("ATUALIZAR: dispara o instalador depois de 3 s (PowerShell oculto)",
     sp.chamadas.length === 1 && sp.chamadas[0].cmd === "powershell.exe" && sp.chamadas[0].args.join(" ").includes("Start-Sleep -Seconds 3") && sp.chamadas[0].args.join(" ").includes(nome));
+  const script = sp.chamadas[0] ? sp.chamadas[0].args.join(" ") : "";
+  teste("ATUALIZAR: espera o sistema fechar de verdade antes do instalador",
+    script.includes(`Wait-Process -Id ${process.pid}`) && script.indexOf("Wait-Process") < script.indexOf("Start-Process"));
+  teste("ATUALIZAR: espera o instalador terminar e anota cada passo em atualizacao.log",
+    script.includes("WaitForExit()") && script.includes("atualizacao.log") && script.includes("Anotar"));
+  teste("ATUALIZAR: se o instalador falhar ou nao abrir, reabre a versao atual",
+    script.includes("if (-not $ok") && script.includes(`Start-Process -FilePath '${process.execPath.replace(/'/g, "''")}'`));
   teste("ATUALIZAR: fecha o sistema para o instalador trocar os arquivos", app12.fechou === true);
   fs.rmSync(copia, { force: true });
   delete process.env.FINDESK_PASTA_ATUALIZACOES;
