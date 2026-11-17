@@ -63,34 +63,34 @@ jobs:
           echo "versao do instalador: $VERSAO | versao dentro do programa: $DENTRO"
           [ "$DENTRO" = "$VERSAO" ] || { echo "ERRO: o programa diz $DENTRO e o instalador $VERSAO"; exit 1; }
 
-      # TRAVA: ensaio da atualizacao num Windows de verdade. Instala a ultima versao
-      # publicada, abre o programa e faz o ATUALIZAR (mesmo codigo do botao) para esta
-      # versao; tem de instalar E abrir de novo sozinho. Se falhar, nada e publicado.
-      - name: Ensaio do ATUALIZAR (versao anterior -> esta versao)
+      # TRAVA: ensaio COMPLETO do ATUALIZAR pela tela, num Windows de verdade. Instala a
+      # ultima versao publicada, abre o programa, confere o pop-up no centro, clica em
+      # ATUALIZAR, confere a barra andando, o programa fechar, a versao nova instalar, o
+      # programa abrir de novo sozinho, o rodape com a versao nova e que nao oferece
+      # atualizar de novo. Fotos de cada passo no artefato "ensaio-atualizacao-fotos".
+      # Se qualquer verificacao falhar, nada e publicado.
+      - name: Ensaio do ATUALIZAR pela tela (versao anterior -> esta versao)
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          ENSAIO_FOTOS: ensaio-fotos
         run: |
           VERSAO=$(node -p "require('./package.json').version")
+          npm install --no-save --no-audit --no-fund playwright-core@1.49.1
           mkdir -p anterior
           gh release download --pattern "*.exe" --dir anterior
           ANTERIOR=$(ls anterior/*.exe | head -1)
           echo "versao anterior: $ANTERIOR"
-          node desktop/ensaio-atualizacao.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO"
+          node desktop/ensaio-atualizacao-tela.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO"
 
-      # Informativo: o ATUALIZAR das versoes que ja estao instaladas na loja (codigo delas)
-      - name: Ensaio do ATUALIZAR das versoes da loja (1.3.20 e 1.3.16)
-        continue-on-error: true
-        shell: bash
-        run: |
-          VERSAO=$(node -p "require('./package.json').version")
-          git fetch -q --depth=100 origin main
-          ANTERIOR=$(ls anterior/*.exe | head -1)
-          for c in 7e221fd 453a8ce; do
-            git show "$c:desktop/automacoes.js" > "desktop/automacoes-$c.js"
-            echo "===== ATUALIZAR com o codigo do commit $c ====="
-            ENSAIO_AUTOMACOES="desktop/automacoes-$c.js" node desktop/ensaio-atualizacao.js "$(cygpath -w "$ANTERIOR")" "$(cygpath -w "release/Contas a Pagar - Chaveiro Universal - Instalador ${VERSAO}.exe")" "$VERSAO" || echo "FALHOU com o codigo $c"
-          done
+      - name: Guardar as fotos do ensaio do ATUALIZAR
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ensaio-atualizacao-fotos
+          retention-days: 30
+          path: ensaio-fotos/
+          if-no-files-found: ignore
 
       - name: Publicar em Releases
         shell: bash
