@@ -43,8 +43,17 @@
 <div class="dialogo__acoes !p-0 !pt-2"><button class="dialogo-botao dialogo-botao--neutro" id="pin-cancelar" type="button">CANCELAR</button><button class="dialogo-botao dialogo-botao--acao" id="pin-entrar" type="submit">ENTRAR</button></div>
 </form>
 <form class="dialogo__corpo hidden" id="esqueci-form" novalidate>
-<p class="dialogo__mensagem" id="esqueci-texto">Peça a um administrador: em CONTAS, ele clica na sua conta e cadastra um PIN novo para você (a conta também é desbloqueada).</p>
-<div class="dialogo__acoes !p-0 !pt-2"><button class="dialogo-botao dialogo-botao--acao" id="esqueci-voltar" type="button">VOLTAR</button></div>
+<p class="dialogo__mensagem" id="esqueci-texto">Digite o e-mail da sua conta. Vamos mandar um código de 6 números para ele e para o e-mail da loja.</p>
+<label class="rotulo-form" for="esqueci-login">E-MAIL DA CONTA</label>
+<input class="entrada-form" id="esqueci-login" maxlength="120" type="email" autocomplete="off" placeholder="nome@gmail.com">
+<div class="hidden flex-col gap-2" id="esqueci-etapa2">
+<label class="rotulo-form" for="esqueci-codigo">CÓDIGO DO E-MAIL</label>
+<input class="entrada-form font-mono" id="esqueci-codigo" inputmode="numeric" maxlength="6" type="text" autocomplete="one-time-code">
+<label class="rotulo-form" for="esqueci-novo">NOVO PIN (4 A 6 NÚMEROS)</label>
+<input class="entrada-form font-mono" id="esqueci-novo" inputmode="numeric" maxlength="6" type="password" autocomplete="new-password">
+</div>
+<p class="campo-erro hidden" id="esqueci-erro"></p>
+<div class="dialogo__acoes !p-0 !pt-2"><button class="dialogo-botao dialogo-botao--neutro" id="esqueci-voltar" type="button">VOLTAR</button><button class="dialogo-botao dialogo-botao--acao" id="esqueci-acao" type="submit">ENVIAR CÓDIGO</button></div>
 </form>
 </div>
 </div>
