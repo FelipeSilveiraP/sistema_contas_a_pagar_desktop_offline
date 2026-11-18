@@ -357,7 +357,13 @@ async function executar() {
   teste("Todas as Contas: máscara de moeda no editor", (await valor("#newValueInput")) === "1.500,00", await valor("#newValueInput"));
   await clicarSel("#btnApplyChange");
   teste("Todas as Contas: editar o valor salva", await esperarNotificacao("Alterações salvas") && await esperarPredicado(`(${linhaConta} || {}).textContent?.includes('R$ 1.500,00')`, 5000));
+  // PAGO abre o pop-up: escolher o banco (criado aqui) e confirmar com a data de hoje
+  await js(`(async () => { const cfg = await window.finDesk.config(); await fetch('http://127.0.0.1:' + cfg.port + '/api/bancos', { method: 'POST',
+    headers: { 'X-FinDesk-Token': cfg.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ instituicao: 'BANCO DO PAGAMENTO CRUD' }) }); return true; })()`);
   await clicar(`(${linhaConta}).querySelector('.btn-mark-paid')`);
+  teste("Todas as Contas: PAGO abre o pop-up com o banco e a data", await esperarPredicado("!!document.getElementById('pagamento-banco') && !!document.getElementById('pagamento-data').value", 5000));
+  await js(`(() => { const b = document.getElementById('pagamento-banco'); b.value = [...b.options].find((o) => o.textContent === 'BANCO DO PAGAMENTO CRUD').value; b.dispatchEvent(new Event('change')); return true; })()`);
+  await clicarSel("[data-dialogo=pagamento] [data-dialogo-acao=confirmar]");
   teste("Todas as Contas: botão PAGO dá baixa", await esperarNotificacao("marcada como paga") && await esperarPredicado(`(${linhaConta} || {}).textContent?.includes('Pago')`, 5000), await notificacoes());
   await clicarSel("#btnImprimirLista");
   teste("Todas as Contas: IMPRIMIR LISTA gera o PDF do relatório", await esperarPredicado("!!document.body.dataset.relatorioPdf", 10000) &&

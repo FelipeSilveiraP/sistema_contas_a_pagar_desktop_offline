@@ -12,6 +12,8 @@
 // foco devolvido ao fechar, fila serial (um dialogo por vez).
 // Testes: data-dialogo (tom), data-dialogo-titulo, data-dialogo-mensagem, data-dialogo-acao.
 
+import { formatarDataBR, mascaraData, parseDataBR } from "./mascaras";
+
 export type TomConfirmacao = "normal" | "atencao" | "perigo";
 
 export interface OpcoesConfirmacao {
@@ -326,3 +328,192 @@ export function mostrarProgresso(titulo: string, texto: string): DialogoProgress
   controle.atualizar(0, texto);
   return controle;
 }
+
+// ---------- MARCAR COMO PAGO: banco que pagou + data do pagamento (pedido do usuario, 2026-11-18) ----------
+
+export interface EscolhaPagamento {
+  idBanco: number;
+  /** aaaa-mm-dd */
+  dataIso: string;
+}
+
+function hojeLocalIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Pop-up no centro da tela ao marcar uma conta como paga: escolher o BANCO que pagou e,
+ * na frente, a DATA DO PAGAMENTO (vem com hoje; pode ter sido outro dia — digitada ou pelo
+ * calendario). Banco obrigatorio; data valida e nao no futuro. null = cancelou.
+ */
+export function escolherPagamento(opcoes: {
+  empresa: string;
+  valor: string;
+  bancos: { id: number; nome: string }[];
+}): Promise<EscolhaPagamento | null> {
+  return new Promise<EscolhaPagamento | null>((resolver) => {
+    const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const criar = <K extends keyof HTMLElementTagNameMap>(tag: K, classe = "", texto?: string): HTMLElementTagNameMap[K] => {
+      const e = document.createElement(tag);
+      if (classe) e.className = classe;
+      if (texto !== undefined) e.textContent = texto;
+      return e;
+    };
+
+    const veu = criar("div", "dialogo-veu");
+    const caixa = criar("div", "dialogo dialogo--largo");
+    caixa.setAttribute("role", "dialog");
+    caixa.setAttribute("aria-modal", "true");
+    caixa.setAttribute("aria-labelledby", "pagamento-titulo");
+    caixa.dataset.dialogo = "pagamento";
+
+    const cabecalho = criar("div", "dialogo__cabecalho");
+    const icone = criar("span", "material-symbols-outlined dialogo__icone", "payments");
+    icone.setAttribute("aria-hidden", "true");
+    const titulo = criar("h2", "dialogo__titulo", "MARCAR COMO PAGO");
+    titulo.id = "pagamento-titulo";
+    cabecalho.append(icone, titulo);
+
+    const corpo = criar("div", "dialogo__corpo");
+    corpo.appendChild(criar("p", "dialogo__mensagem", `${opcoes.empresa} · ${opcoes.valor}`));
+
+    const grade = criar("div", "grid grid-cols-1 sm:grid-cols-2 gap-4");
+    // banco
+    const campoBanco = criar("div", "campo-form");
+    const rotuloBanco = criar("label", "rotulo-form", "BANCO QUE PAGOU");
+    rotuloBanco.htmlFor = "pagamento-banco";
+    const banco = criar("select", "entrada-form");
+    banco.id = "pagamento-banco";
+    const vazio = criar("option", "", opcoes.bancos.length ? "Selecione o banco..." : "Nenhum banco cadastrado");
+    vazio.value = "";
+    banco.appendChild(vazio);
+    for (const b of opcoes.bancos) {
+      const o = criar("option", "", b.nome);
+      o.value = String(b.id);
+      banco.appendChild(o);
+    }
+    campoBanco.append(rotuloBanco, banco);
+    // data (na frente do banco)
+    const campoData = criar("div", "campo-form");
+    const rotuloData = criar("label", "rotulo-form", "DATA DO PAGAMENTO");
+    rotuloData.htmlFor = "pagamento-data";
+    const linhaData = criar("div", "relative");
+    const data = criar("input", "entrada-form font-mono pr-12");
+    data.id = "pagamento-data";
+    data.type = "text";
+    data.inputMode = "numeric";
+    data.autocomplete = "off";
+    data.placeholder = "DD/MM/AAAA";
+    data.value = formatarDataBR(hojeLocalIso());
+    mascaraData(data);
+    const btnCalendario = criar("button", "absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#f0edec] hover:bg-[#FFE600] border-2 border-[#1c1b1b] p-1 flex items-center justify-center cursor-pointer");
+    btnCalendario.type = "button";
+    btnCalendario.title = "Abrir calendário";
+    btnCalendario.setAttribute("aria-label", "Abrir calendário");
+    const iconeCal = criar("span", "material-symbols-outlined text-xl", "calendar_month");
+    iconeCal.setAttribute("aria-hidden", "true");
+    btnCalendario.appendChild(iconeCal);
+    const seletorData = criar("input", "sr-only absolute opacity-0 pointer-events-none");
+    seletorData.type = "date";
+    seletorData.tabIndex = -1;
+    seletorData.max = hojeLocalIso();
+    linhaData.append(data, btnCalendario, seletorData);
+    campoData.append(rotuloData, linhaData);
+    grade.append(campoBanco, campoData);
+    corpo.appendChild(grade);
+    const erro = criar("p", "campo-erro hidden");
+    erro.id = "pagamento-erro";
+    erro.setAttribute("role", "alert");
+    corpo.appendChild(erro);
+    if (!opcoes.bancos.length) {
+      corpo.appendChild(criar("p", "dialogo__detalhes", "Cadastre o banco antes em CADASTROS → NOVO CADASTRO → BANCO."));
+    }
+
+    const acoes = criar("div", "dialogo__acoes");
+    const cancelar = botao("cancelar", "CANCELAR");
+    const confirmarBtn = botao("confirmar", "CONFIRMAR PAGAMENTO");
+    confirmarBtn.disabled = !opcoes.bancos.length;
+    acoes.append(cancelar, confirmarBtn);
+
+    caixa.append(cabecalho, corpo, acoes);
+    veu.appendChild(caixa);
+    document.body.appendChild(veu);
+    definirFundoInerte(true);
+    dialogoAberto = true;
+
+    let concluido = false;
+    const fechar = (resposta: EscolhaPagamento | null): void => {
+      if (concluido) return;
+      concluido = true;
+      veu.remove();
+      definirFundoInerte(false);
+      dialogoAberto = false;
+      document.removeEventListener("keydown", aoTeclar, true);
+      if (anterior && anterior.isConnected) anterior.focus();
+      resolver(resposta);
+    };
+    const mostrarErro = (msg: string, campo: HTMLElement): void => {
+      erro.textContent = msg;
+      erro.classList.remove("hidden");
+      campo.focus();
+    };
+    const tentarConfirmar = (): void => {
+      if (!banco.value) return mostrarErro("Escolha o banco que pagou.", banco);
+      const iso = parseDataBR(data.value);
+      if (!iso) return mostrarErro("Data inválida. Use DD/MM/AAAA.", data);
+      if (iso > hojeLocalIso()) return mostrarErro("A data do pagamento não pode ser no futuro.", data);
+      fechar({ idBanco: Number(banco.value), dataIso: iso });
+    };
+
+    const focaveis: HTMLElement[] = [banco, data, btnCalendario, cancelar, confirmarBtn];
+    const aoTeclar = (evento: KeyboardEvent): void => {
+      if (evento.key === "Escape") {
+        evento.preventDefault();
+        evento.stopPropagation();
+        fechar(null);
+        return;
+      }
+      if (evento.key === "Enter" && !evento.isComposing && !evento.shiftKey && !evento.ctrlKey && !evento.altKey) {
+        const atual = document.activeElement;
+        if (atual === cancelar || atual === btnCalendario) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        tentarConfirmar();
+        return;
+      }
+      if (evento.key === "Tab") {
+        const ativos = focaveis.filter((f) => !(f as HTMLButtonElement).disabled);
+        const i = ativos.indexOf(document.activeElement as HTMLElement);
+        if (evento.shiftKey && i === 0) {
+          evento.preventDefault();
+          ativos[ativos.length - 1].focus();
+        } else if (!evento.shiftKey && i === ativos.length - 1) {
+          evento.preventDefault();
+          ativos[0].focus();
+        }
+      }
+    };
+
+    btnCalendario.addEventListener("click", () => {
+      const iso = parseDataBR(data.value);
+      if (iso) seletorData.value = iso;
+      if (typeof seletorData.showPicker === "function") seletorData.showPicker();
+      else seletorData.click();
+    });
+    seletorData.addEventListener("change", () => {
+      if (seletorData.value) data.value = formatarDataBR(seletorData.value);
+      data.focus();
+    });
+    banco.addEventListener("change", () => erro.classList.add("hidden"));
+    data.addEventListener("input", () => erro.classList.add("hidden"));
+    cancelar.addEventListener("click", () => fechar(null));
+    confirmarBtn.addEventListener("click", tentarConfirmar);
+    veu.addEventListener("mousedown", (evento) => {
+      if (evento.target === veu) evento.preventDefault();
+    });
+    document.addEventListener("keydown", aoTeclar, true);
+    (opcoes.bancos.length ? banco : cancelar).focus();
+  });
+}
+

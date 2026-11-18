@@ -1736,6 +1736,49 @@ async function executar() {
     JSON.stringify(largurasIcones)
   );
 
+  // 12b. MARCAR COMO PAGO: pop-up com o banco e a data do pagamento + coluna PAGO EM / BANCO
+  const apiPag = async (metodo, caminho, dados) => JSON.parse(await js(`(async () => {
+    const cfg = await window.finDesk.config();
+    const r = await fetch('http://127.0.0.1:' + cfg.port + ${JSON.stringify(caminho)}, { method: ${JSON.stringify(metodo)},
+      headers: { 'X-FinDesk-Token': cfg.token, 'Content-Type': 'application/json' }, body: ${dados ? "JSON.stringify(" + JSON.stringify(dados) + ")" : "undefined"} });
+    return JSON.stringify({ status: r.status, body: r.status === 204 ? null : await r.json() });
+  })()`));
+  const sufixoPg = Date.now();
+  const bancoPg = await apiPag("POST", "/api/bancos", { instituicao: `BANCO PAGAMENTO ${sufixoPg}` });
+  const contaPg = await apiPag("POST", "/api/contas", { nomeEmpresa: `EMPRESA PAGAMENTO ${sufixoPg}`, pagadorResponsavel: "LOJA",
+    tipoPessoa: "PJ", formaPagamento: "boleto", valor: "321.00", vencimento: new Date().toISOString().slice(0, 10), semNotaFiscal: true, forcar: true });
+  teste("Pagamento: banco e conta de teste criados", bancoPg.status === 201 && contaPg.status === 201, `${bancoPg.status} ${contaPg.status}`);
+  await js("window.finDesk.navegar('todas-as-contas')");
+  await esperarTela("todas-as-contas");
+  const linhaPg = `document.querySelector('#tableBody tr[data-id="${contaPg.body.id}"]')`;
+  await esperarPredicado(`!!${linhaPg}`, 8000);
+  teste("Tabela tem a coluna PAGO EM / BANCO", await js("[...document.querySelectorAll('#billsTable thead th')].some((th) => th.textContent.trim() === 'PAGO EM / BANCO')"));
+  await js(`${linhaPg}.querySelector('.btn-mark-paid').click()`);
+  teste("PAGO abre o pop-up de pagamento no centro da tela", await esperarPredicado(`(() => { const d = document.querySelector('[data-dialogo=pagamento]'); if (!d) return false;
+    const r = d.getBoundingClientRect(); return Math.abs(r.left + r.width / 2 - innerWidth / 2) < innerWidth * 0.06 && Math.abs(r.top + r.height / 2 - innerHeight / 2) < innerHeight * 0.06; })()`, 5000));
+  teste("Pop-up tem o banco e, na frente, a data do pagamento (hoje)", await js(`(() => { const b = document.getElementById('pagamento-banco'); const d = document.getElementById('pagamento-data');
+    const h = new Date(); const hoje = String(h.getDate()).padStart(2, '0') + '/' + String(h.getMonth() + 1).padStart(2, '0') + '/' + h.getFullYear();
+    return [...b.options].some((o) => o.textContent === 'BANCO PAGAMENTO ${sufixoPg}') && d.value === hoje && b.getBoundingClientRect().top === d.getBoundingClientRect().top; })()`));
+  await capturar("pagamento-popup-1536x864.png");
+  await js("document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click()");
+  teste("Sem banco escolhido: avisa e não paga", await js("!document.getElementById('pagamento-erro').classList.contains('hidden') && document.getElementById('pagamento-erro').textContent.includes('banco') && !!document.querySelector('[data-dialogo=pagamento]')"));
+  const ontem = new Date(Date.now() - 86400000);
+  const ontemBR = `${String(ontem.getDate()).padStart(2, "0")}/${String(ontem.getMonth() + 1).padStart(2, "0")}/${ontem.getFullYear()}`;
+  const ontemIso = `${ontem.getFullYear()}-${String(ontem.getMonth() + 1).padStart(2, "0")}-${String(ontem.getDate()).padStart(2, "0")}`;
+  await js(`(() => { document.getElementById('pagamento-data').value = '01/01/2999'; const b = document.getElementById('pagamento-banco');
+    b.value = '${bancoPg.body.id}'; b.dispatchEvent(new Event('change')); document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click(); })()`);
+  teste("Data no futuro: avisa e não paga", await js("document.getElementById('pagamento-erro').textContent.includes('futuro') && !!document.querySelector('[data-dialogo=pagamento]')"));
+  await js(`(() => { document.getElementById('pagamento-data').value = '${ontemBR}'; document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click(); })()`);
+  teste("Confirmar paga a conta e fecha o pop-up", await esperarPredicado(`!document.querySelector('[data-dialogo=pagamento]') && (${linhaPg} || {}).textContent?.includes('Pago')`, 6000));
+  teste("Coluna PAGO EM / BANCO mostra a data e o banco", await esperarPredicado(`(${linhaPg}.querySelector('.pago-em') || {}).textContent === '${ontemBR} · BANCO PAGAMENTO ${sufixoPg}'`, 5000),
+    await js(`(${linhaPg}.querySelector('.pago-em') || {}).textContent`));
+  const pgGravado = await apiPag("GET", `/api/contas/${contaPg.body.id}/pagamento`);
+  teste("Banco de dados guarda a data e o banco do pagamento", pgGravado.body && pgGravado.body.dataPagamento === ontemIso && pgGravado.body.idBanco === bancoPg.body.id,
+    JSON.stringify(pgGravado.body));
+  await apiPag("DELETE", `/api/contas/${contaPg.body.id}/pagamento`);
+  await apiPag("DELETE", `/api/contas/${contaPg.body.id}`);
+  await apiPag("DELETE", `/api/bancos/${bancoPg.body.id}`);
+
   // 13. Offline + console
   const externos = escanearOffline();
   teste("Offline: nenhuma URL externa em frontend/", externos.length === 0, externos.slice(0, 5).join(" | "));

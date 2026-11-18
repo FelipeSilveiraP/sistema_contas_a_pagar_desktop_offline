@@ -13,12 +13,13 @@ import {
   baixarAnexoConta,
   removerAnexoConta,
   listarPagadores,
+  listarBancos,
   PagadorDados,
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { recolherTabela } from "../tabela-recolhivel";
 import { confirmar, confirmarEstorno, confirmarExclusao } from "../componentes";
-import { escolher } from "../dialogos";
+import { escolher, escolherPagamento } from "../dialogos";
 import { MIME_IMAGEM, extensaoNota, montarPreviaNota } from "../nota-previa";
 import { notificar } from "../notificacoes";
 import { imprimirDocumento, cabecalhoFolha, tabelaCampos, assinaturas, criar } from "../impressao";
@@ -142,6 +143,11 @@ function renderTabela(): void {
     const status = statusDerivado(conta);
     const statusTd = celulaTexto(status.rotulo, "py-3 px-3 text-center whitespace-nowrap");
     statusTd.firstElementChild!.className = `status-badge selo ${status.classe}`;
+    // quando foi paga e por qual banco (pedido do usuario, 2026-11-18)
+    const pg = pagamentos.find((p) => p.idConta === conta.id);
+    const pagoTd = celulaTexto(pg ? `${formatarDataBR(pg.dataPagamento)} · ${pg.instituicaoBanco ?? "SEM BANCO"}` : "—",
+      "py-3 px-3 font-mono text-xs whitespace-nowrap pago-em");
+    pagoTd.firstElementChild!.className = pg ? "font-bold text-[#006c46]" : "text-neutral-400";
     const doc = celulaTexto(conta.numeroDocumento ?? "—", "col-extra py-3 px-3 font-mono text-xs whitespace-nowrap");
     doc.firstElementChild!.className = "";
     const tipoTd = celulaTexto(conta.tipoPessoa, "col-extra py-3 px-3 text-center whitespace-nowrap");
@@ -165,7 +171,7 @@ function renderTabela(): void {
     tdNao.className = "py-3.5 px-3 text-center whitespace-nowrap";
     tdNao.appendChild(btnNaoPago);
 
-    tr.append(data, empresaTd, valor, pastaTd, statusTd, doc, tipoTd, formaTd, pagador, vazio, tdPago, tdNao);
+    tr.append(data, empresaTd, valor, pastaTd, statusTd, pagoTd, doc, tipoTd, formaTd, pagador, vazio, tdPago, tdNao);
     tr.addEventListener("click", () => selecionar(conta.id));
     corpo.appendChild(tr);
   }
@@ -173,7 +179,7 @@ function renderTabela(): void {
     const tr = document.createElement("tr");
     const td = celulaTexto(contas.length ? "Nenhuma conta encontrada com esses filtros." : "Nenhuma conta cadastrada. Use INSERIR CONTA no Menu.",
       "py-6 px-3 text-center font-mono text-xs uppercase");
-    td.colSpan = 12;
+    td.colSpan = 13;
     td.firstElementChild!.className = "text-neutral-500 font-bold";
     tr.appendChild(td);
     corpo.appendChild(tr);
@@ -425,9 +431,18 @@ async function pagar(conta: ContaDados): Promise<void> {
   if (conta.status === "PAGO") return;
   try {
     const cfg = await window.finDesk!.config();
+    // pop-up no centro: banco que pagou + data do pagamento (pedido do usuario, 2026-11-18)
+    const bancos = (await listarBancos(cfg)).map((b) => ({ id: b.id, nome: b.instituicao }));
+    const escolha = await escolherPagamento({
+      empresa: conta.nomeEmpresa,
+      valor: formatarMoedaBR(Math.round(conta.valor * 100)),
+      bancos,
+    });
+    if (!escolha) return;
     await registrarPagamento(cfg, conta.id, {
-      dataPagamento: hoje(),
+      dataPagamento: escolha.dataIso,
       valorPago: conta.valor.toFixed(2),
+      idBanco: escolha.idBanco,
     });
     await recarregar();
     notificar(`Conta de "${conta.nomeEmpresa}" marcada como paga.`);
