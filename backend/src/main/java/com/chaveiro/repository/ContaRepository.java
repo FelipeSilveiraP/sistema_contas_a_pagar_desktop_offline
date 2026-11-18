@@ -291,22 +291,30 @@ public class ContaRepository {
         if (pendentes.isEmpty() || (mudou.isEmpty() && !mudouDia)) {
             return 0;
         }
-        StringBuilder sql = new StringBuilder("UPDATE contas_a_pagar SET ");
-        List<String> partes = new ArrayList<>();
-        mudou.keySet().forEach(coluna -> partes.add(coluna + " = ?"));
-        if (mudouDia) partes.add("vencimento = ?");
-        sql.append(String.join(", ", partes)).append(" WHERE id_conta = ? AND status = 'PENDENTE'");
+        // SQL fixo: cada coluna so muda quando a sua "chave" (1o parametro do CASE) e 1
+        String sql = "UPDATE contas_a_pagar SET"
+                + " nome_empresa = CASE WHEN ? = 1 THEN ? ELSE nome_empresa END,"
+                + " pagador_responsavel = CASE WHEN ? = 1 THEN ? ELSE pagador_responsavel END,"
+                + " tipo_pessoa = CASE WHEN ? = 1 THEN ? ELSE tipo_pessoa END,"
+                + " forma_pagamento = CASE WHEN ? = 1 THEN ? ELSE forma_pagamento END,"
+                + " valor_centavos = CASE WHEN ? = 1 THEN ? ELSE valor_centavos END,"
+                + " vencimento = COALESCE(?, vencimento)"
+                + " WHERE id_conta = ? AND status = 'PENDENTE'";
+        String[] colunas = {"nome_empresa", "pagador_responsavel", "tipo_pessoa", "forma_pagamento", "valor_centavos"};
         int alteradas = 0;
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (Map.Entry<Long, LocalDate> conta : pendentes.entrySet()) {
                 int p = 1;
-                for (Object valor : mudou.values()) {
-                    stmt.setObject(p++, valor);
+                for (String coluna : colunas) {
+                    stmt.setInt(p++, mudou.containsKey(coluna) ? 1 : 0);
+                    stmt.setObject(p++, mudou.get(coluna));
                 }
                 if (mudouDia) {
                     // mesmo mes, dia novo (mes sem o dia: ultimo dia do mes)
                     YearMonth mes = YearMonth.from(conta.getValue());
                     stmt.setString(p++, mes.atDay(Math.min(depois.dia(), mes.lengthOfMonth())).toString());
+                } else {
+                    stmt.setNull(p++, Types.VARCHAR);
                 }
                 stmt.setLong(p, conta.getKey());
                 alteradas += stmt.executeUpdate();
