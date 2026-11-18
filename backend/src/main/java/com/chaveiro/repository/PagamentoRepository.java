@@ -27,7 +27,7 @@ public class PagamentoRepository {
 
     private static final String COLUNAS = """
             p.id_pagamento, p.id_conta, p.data_pagamento, p.valor_pago_centavos,
-            p.id_banco, b.instituicao, c.nome_empresa, c.status
+            p.id_banco, b.instituicao, c.nome_empresa, c.status, p.forma_pagamento
             FROM pagamentos p
             JOIN contas_a_pagar c ON c.id_conta = p.id_conta
             LEFT JOIN bancos b ON b.id_banco = p.id_banco
@@ -41,8 +41,8 @@ public class PagamentoRepository {
 
     /** Baixa atomica: grava o pagamento e marca a conta como PAGO. */
     public Pagamento registrar(long idConta, Pagamento dados) throws SQLException {
-        String inserir = "INSERT INTO pagamentos (id_conta, data_pagamento, valor_pago_centavos, id_banco)"
-                + " VALUES (?, ?, ?, ?)";
+        String inserir = "INSERT INTO pagamentos (id_conta, data_pagamento, valor_pago_centavos, id_banco, forma_pagamento)"
+                + " VALUES (?, ?, ?, ?, ?)";
         String marcar = "UPDATE contas_a_pagar SET status = 'PAGO' WHERE id_conta = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
@@ -55,6 +55,7 @@ public class PagamentoRepository {
                 } else {
                     stmt.setLong(4, dados.idBanco());
                 }
+                stmt.setString(5, dados.formaPagamento());
                 stmt.executeUpdate();
                 long id;
                 try (ResultSet chaves = stmt.getGeneratedKeys()) {
@@ -70,7 +71,7 @@ public class PagamentoRepository {
                 conn.commit();
                 log.info("pagamento registrado (id={}, conta={})", id, idConta);
                 return new Pagamento(id, idConta, dados.dataPagamento(), dados.valorPago(),
-                        dados.idBanco(), dados.instituicaoBanco(), null, "PAGO");
+                        dados.idBanco(), dados.instituicaoBanco(), null, "PAGO", dados.formaPagamento());
             } catch (SQLException erro) {
                 conn.rollback();
                 throw erro;
@@ -143,8 +144,8 @@ public class PagamentoRepository {
     }
 
     public boolean atualizar(long id, Pagamento dados) throws SQLException {
-        String sql = "UPDATE pagamentos SET data_pagamento = ?, valor_pago_centavos = ?, id_banco = ?"
-                + " WHERE id_pagamento = ?";
+        String sql = "UPDATE pagamentos SET data_pagamento = ?, valor_pago_centavos = ?, id_banco = ?,"
+                + " forma_pagamento = ? WHERE id_pagamento = ?";
         try (Connection conn = conexao.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -155,7 +156,8 @@ public class PagamentoRepository {
                 } else {
                     stmt.setLong(3, dados.idBanco());
                 }
-                stmt.setLong(4, id);
+                stmt.setString(4, dados.formaPagamento());
+                stmt.setLong(5, id);
                 int linhas = stmt.executeUpdate();
                 conn.commit();
                 if (linhas > 0) {
@@ -183,7 +185,8 @@ public class PagamentoRepository {
                 idBanco,
                 rs.getString("instituicao"),
                 rs.getString("nome_empresa"),
-                rs.getString("status")
+                rs.getString("status"),
+                rs.getString("forma_pagamento")
         );
     }
 }

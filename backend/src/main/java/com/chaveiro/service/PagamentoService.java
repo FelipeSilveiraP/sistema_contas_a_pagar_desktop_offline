@@ -92,7 +92,8 @@ public class PagamentoService {
     private static Pagamento normalizar(Pagamento dados, Long idConta) {
         return new Pagamento(dados.id(), idConta != null ? idConta : dados.idConta(),
                 dados.dataPagamento(), dados.valorPago(), dados.idBanco(),
-                dados.instituicaoBanco(), dados.nomeEmpresa(), dados.statusConta());
+                dados.instituicaoBanco(), dados.nomeEmpresa(), dados.statusConta(),
+                Texto.maiusculasOuNulo(dados.formaPagamento()));
     }
 
     private static void validar(Pagamento dados) {
@@ -110,6 +111,10 @@ public class PagamentoService {
             } else if (dados.valorPago().compareTo(ContaService.VALOR_MAXIMO) > 0) {
                 erros.put("valorPago", "O valor deve ser de no máximo R$ 999.999.999,99.");
             }
+        }
+        String forma = Texto.maiusculasOuNulo(dados.formaPagamento());
+        if (forma != null && (forma.length() < 2 || forma.length() > 40)) {
+            erros.put("formaPagamento", "Forma de pagamento de 2 a 40 letras (ex.: PIX, DINHEIRO).");
         }
         if (!erros.isEmpty()) {
             log.warn("validacao de pagamento recusada: {}", erros.keySet());

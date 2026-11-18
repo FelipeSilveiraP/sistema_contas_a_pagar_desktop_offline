@@ -1399,3 +1399,38 @@ textarea:not(.sem-maiusculas) {
 .dialogo--grande .dialogo__detalhes { font-size: 1.125rem; padding: 0.875rem 1rem; }
 .dialogo--grande .dialogo__acoes { padding: 0 1.75rem 1.75rem; }
 .dialogo--grande .dialogo-botao { min-height: 3.5rem; padding: 0.75rem 2.5rem; font-size: 1.125rem; }
+
+/* ===== Pop-ups GRANDES nos dois sistemas (pedido do usuario, 2026-11-18) =====
+   - confirmacoes, exclusoes e alertas de risco: no MEIO da tela, grandes;
+   - avisos de "deu certo" (notificacoes): no canto INFERIOR DIREITO, grandes, num espaco moderado. */
+.dialogo { width: min(40rem, 100%); }
+.dialogo--largo { width: min(48rem, 100%); }
+.dialogo--pin { width: min(28rem, 100%); }
+.dialogo--pagamento { width: min(60rem, 100%); }
+.dialogo__cabecalho { padding: 1.25rem 1.5rem; gap: 1rem; }
+.dialogo__icone { font-size: 2.75rem; }
+.dialogo__titulo { font-size: 1.5rem; }
+.dialogo__corpo { padding: 1.5rem 1.75rem; gap: 1rem; }
+.dialogo__mensagem { font-size: 1.25rem; line-height: 1.5; }
+.dialogo__detalhes { font-size: 1.0625rem; padding: 0.875rem 1rem; }
+.dialogo__lista { font-size: 1.0625rem; }
+.dialogo__acoes { padding: 0 1.75rem 1.75rem; gap: 1rem; }
+.dialogo-botao { min-height: 3.25rem; padding: 0.7rem 2rem; font-size: 1.0625rem; }
+
+.notificacoes {
+  left: auto;
+  top: auto;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  transform: none;
+  width: min(30rem, calc(100vw - 2rem));
+}
+.notificacao { gap: 0.9rem; padding: 1rem 1rem 1rem 1.25rem; min-height: 4.5rem; border-width: 4px; box-shadow: 6px 6px 0 0 #1c1b1b; }
+.notificacao__icone { font-size: 2.25rem; }
+.notificacao__texto { font-size: 1.125rem; line-height: 1.35; }
+.notificacao__acao { padding: 0.45rem 0.9rem; font-size: 1rem; }
+.notificacao__fechar { width: 2.25rem; height: 2.25rem; font-size: 1.375rem; }
+
+/* ===== Tabelas com altura de 5 linhas e rolagem por dentro (tabela-recolhivel.ts) ===== */
+.tabela-rolagem { overflow-y: auto; overscroll-behavior: contain; }
+.tabela-rolagem > table > thead { position: sticky; top: 0; z-index: 2; }

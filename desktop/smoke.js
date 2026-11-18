@@ -1174,30 +1174,34 @@ async function executar() {
   }
   teste("Registros de teste do Todos os Cadastros removidos da base temporaria", true);
 
-  // tabela mostra so 5 linhas; EXPANDIR TABELA (seta para baixo) mostra todas
+  // tabela com altura de 5 linhas e rolagem por dentro (sem botao EXPANDIR TABELA)
   const bancosExp = [];
   for (let i = 0; i < 7; i++) bancosExp.push(await tcCriar("/api/bancos", { instituicao: `EXP BANCO ${i} ${sufixoTc}` }));
   await js("window.finDesk.navegar('todos-cadastros')");
   await esperarTela("todos-cadastros");
   await clicar("#btn-filtro-bancos");
   await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'EXP BANCO'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await esperar(300);
-  const visiveisExp = () => js(`[...document.querySelectorAll('#tabela-area tbody tr')].filter(tr => tr.getClientRects().length > 0).length`);
-  const rotuloExp = () => js(`(document.querySelector('[data-expandir-tabela="cadastros"]')?.textContent || '').trim()`);
-  teste("Tabela: mostra so 5 das 7 linhas e o botao EXPANDIR TABELA (seta para baixo)",
-    Number(await visiveisExp()) === 5 && (await rotuloExp()).includes("EXPANDIR TABELA (MAIS 2)") && (await rotuloExp()).includes("keyboard_arrow_down"),
-    `${await visiveisExp()} | ${await rotuloExp()}`);
-  await clicar('[data-expandir-tabela="cadastros"]');
-  await esperar(200);
-  teste("Tabela: EXPANDIR TABELA mostra as 7 linhas e vira RECOLHER TABELA",
-    Number(await visiveisExp()) === 7 && (await rotuloExp()).includes("RECOLHER TABELA"), `${await visiveisExp()} | ${await rotuloExp()}`);
-  await clicar('[data-expandir-tabela="cadastros"]');
-  await esperar(200);
-  teste("Tabela: RECOLHER TABELA volta para 5 linhas", Number(await visiveisExp()) === 5, String(await visiveisExp()));
+  await esperar(400);
+  // linhas que aparecem DENTRO da caixa da tabela (a caixa rola por dentro)
+  const rolagemTab = () => js(`(() => { const corpo = document.querySelector('#tabela-area tbody'); const caixa = corpo.closest('.tabela-rolagem');
+    if (!caixa) return { caixa: false };
+    const c = caixa.getBoundingClientRect(); const cab = corpo.closest('table').tHead.getBoundingClientRect().height;
+    const linhas = [...corpo.rows]; const dentro = linhas.filter(tr => { const r = tr.getBoundingClientRect(); return r.top >= c.top + cab - 1 && r.bottom <= c.bottom + 1; }).length;
+    return { caixa: true, total: linhas.length, escondidas: linhas.filter(tr => tr.getClientRects().length === 0).length, dentro, rola: caixa.scrollHeight > caixa.clientHeight,
+      botao: !!document.querySelector('[data-expandir-tabela]') }; })()`);
+  const r7 = await rolagemTab();
+  teste("Tabela: 7 linhas na tela, altura de 5 e rolagem por dentro, sem botão EXPANDIR",
+    r7.caixa && r7.total === 7 && r7.escondidas === 0 && r7.dentro === 5 && r7.rola && !r7.botao, JSON.stringify(r7));
+  await js("(() => { const caixa = document.querySelector('#tabela-area tbody').closest('.tabela-rolagem'); caixa.scrollTop = caixa.scrollHeight; })()");
+  await esperar(150);
+  teste("Tabela: rolar dentro da tabela mostra a última linha (cabeçalho continua no topo)", await js(`(() => {
+    const caixa = document.querySelector('#tabela-area tbody').closest('.tabela-rolagem'); const ult = [...caixa.querySelectorAll('tbody tr')].pop().getBoundingClientRect();
+    const cab = caixa.querySelector('thead').getBoundingClientRect(); const c = caixa.getBoundingClientRect();
+    return ult.bottom <= c.bottom + 1 && Math.abs(cab.top - c.top) < 3; })()`));
   await js(`(() => { const el = document.getElementById('campo-pesquisa'); el.value = 'EXP BANCO 3'; el.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
-  await esperar(200);
-  teste("Tabela: com ate 5 linhas o botao some",
-    (await js(`document.getElementById('expandir-cadastros') === null || document.getElementById('expandir-cadastros').classList.contains('hidden')`)) === true);
+  await esperar(300);
+  const r1 = await rolagemTab();
+  teste("Tabela: com até 5 linhas não sobra rolagem", r1.caixa && !r1.rola, JSON.stringify(r1));
   for (const b of bancosExp) {
     if (b.body?.id) await js(`(async () => { await fetch('http://127.0.0.1:${cfgTc.port}/api/bancos/${b.body.id}', { method: 'DELETE', headers: { 'X-FinDesk-Token': '${cfgTc.token}' } }); return true; })()`);
   }
@@ -1782,6 +1786,10 @@ async function executar() {
   await js(`${linhaPg}.querySelector('.btn-mark-paid').click()`);
   teste("PAGO abre o pop-up de pagamento no centro da tela", await esperarPredicado(`(() => { const d = document.querySelector('[data-dialogo=pagamento]'); if (!d) return false;
     const r = d.getBoundingClientRect(); return Math.abs(r.left + r.width / 2 - innerWidth / 2) < innerWidth * 0.06 && Math.abs(r.top + r.height / 2 - innerHeight / 2) < innerHeight * 0.06; })()`, 5000));
+  teste("Pop-up do PAGO é grande e tem a FORMA DE PAGAMENTO (escolher ou escrever), já com a do boleto", await js(`(() => {
+    const d = document.querySelector('[data-dialogo=pagamento]'); const f = document.getElementById('pagamento-forma');
+    return d.getBoundingClientRect().width >= 640 && !!f && f.getAttribute('list') === 'pagamento-formas' && f.value === 'BOLETO'
+      && [...document.querySelectorAll('#pagamento-formas option')].some(o => o.value === 'PIX'); })()`));
   teste("Pop-up tem o banco e, na frente, a data do pagamento (hoje)", await js(`(() => { const b = document.getElementById('pagamento-banco'); const d = document.getElementById('pagamento-data');
     const h = new Date(); const hoje = String(h.getDate()).padStart(2, '0') + '/' + String(h.getMonth() + 1).padStart(2, '0') + '/' + h.getFullYear();
     return [...b.options].some((o) => o.textContent === 'BANCO PAGAMENTO ${sufixoPg}') && d.value === hoje && b.getBoundingClientRect().top === d.getBoundingClientRect().top; })()`));
@@ -1794,12 +1802,33 @@ async function executar() {
   await js(`(() => { document.getElementById('pagamento-data').value = '01/01/2999'; const b = document.getElementById('pagamento-banco');
     b.value = '${bancoPg.body.id}'; b.dispatchEvent(new Event('change')); document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click(); })()`);
   teste("Data no futuro: avisa e não paga", await js("document.getElementById('pagamento-erro').textContent.includes('futuro') && !!document.querySelector('[data-dialogo=pagamento]')"));
-  await js(`(() => { document.getElementById('pagamento-data').value = '${ontemBR}'; document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click(); })()`);
+  await js(`(() => { document.getElementById('pagamento-data').value = '${ontemBR}'; const f = document.getElementById('pagamento-forma'); f.value = 'pix pessoal';
+    f.dispatchEvent(new Event('input')); document.querySelector('[data-dialogo=pagamento] [data-dialogo-acao=confirmar]').click(); })()`);
   teste("Confirmar paga a conta e fecha o pop-up", await esperarPredicado(`!document.querySelector('[data-dialogo=pagamento]') && (${linhaPg} || {}).textContent?.includes('Pago')`, 6000));
-  teste("Coluna PAGO EM / BANCO mostra a data e o banco", await esperarPredicado(`(${linhaPg}.querySelector('.pago-em') || {}).textContent === '${ontemBR} · BANCO PAGAMENTO ${sufixoPg}'`, 5000),
+  teste("Coluna PAGO EM / BANCO mostra a data e o banco", await esperarPredicado(`(${linhaPg}.querySelector('.pago-em') || {}).textContent === '${ontemBR} · BANCO PAGAMENTO ${sufixoPg} · PIX PESSOAL'`, 5000),
     await js(`(${linhaPg}.querySelector('.pago-em') || {}).textContent`));
+  teste("Aviso de 'deu certo' fica GRANDE no canto inferior direito", await esperarPredicado(`(() => { const n = [...document.querySelectorAll('.notificacao')].pop(); if (!n) return false;
+    const r = n.getBoundingClientRect(); return r.right > innerWidth - 60 && r.bottom > innerHeight - 60 && r.width >= 400 && r.height >= 60; })()`, 4000));
+  // ESTE MES: so contas com vencimento no mes de hoje
+  await js("document.querySelector('.filter-btn[data-filter=MES]').click()");
+  teste("Filtro ESTE MÊS mostra só as contas que vencem neste mês", await esperarPredicado(`(() => { const mes = new Date().toISOString().slice(0, 7).split('-').reverse().join('/');
+    const linhas = [...document.querySelectorAll('#tableBody tr.bill-row')]; return linhas.length > 0 && linhas.every(tr => tr.textContent.includes(mes)); })()`, 4000));
+  await js("document.querySelector('.filter-btn[data-filter=TODOS]').click()");
+  // clicar no registro leva a tela ate "Alterar um campo"
+  await definirTamanho(1280, 720);
+  await js("(document.scrollingElement || document.documentElement).scrollTop = 0");
+  await js(`${linhaPg}.querySelector('td').click()`);
+  teste("Clicar no registro desce a tela até 'Alterar um campo'", await esperarPredicado(`(() => { const r = document.getElementById('fieldSelect').getBoundingClientRect();
+    return !document.getElementById('editorContainer').classList.contains('hidden') && r.top >= 0 && r.bottom <= innerHeight; })()`, 4000));
+  // caixa de selecao perto do pe da tela: a tela sobe para a lista caber
+  await js(`(() => { const s = document.getElementById('fieldSelect'); const rol = document.scrollingElement || document.documentElement;
+    rol.scrollTop += s.getBoundingClientRect().bottom - innerHeight + 4; })()`);
+  await js("document.getElementById('fieldSelect').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))");
+  teste("Abrir caixa de seleção no pé da tela: a tela sobe para a lista aparecer", await js(`(() => { const s = document.getElementById('fieldSelect');
+    const falta = Math.min(320, s.options.length * 28 + 16); return innerHeight - s.getBoundingClientRect().bottom >= falta - 2; })()`));
+  await definirTamanho(1536, 864);
   const pgGravado = await apiPag("GET", `/api/contas/${contaPg.body.id}/pagamento`);
-  teste("Banco de dados guarda a data e o banco do pagamento", pgGravado.body && pgGravado.body.dataPagamento === ontemIso && pgGravado.body.idBanco === bancoPg.body.id,
+  teste("Banco de dados guarda a data e o banco do pagamento", pgGravado.body && pgGravado.body.dataPagamento === ontemIso && pgGravado.body.idBanco === bancoPg.body.id && pgGravado.body.formaPagamento === 'PIX PESSOAL',
     JSON.stringify(pgGravado.body));
   await apiPag("DELETE", `/api/contas/${contaPg.body.id}/pagamento`);
   await apiPag("DELETE", `/api/contas/${contaPg.body.id}`);

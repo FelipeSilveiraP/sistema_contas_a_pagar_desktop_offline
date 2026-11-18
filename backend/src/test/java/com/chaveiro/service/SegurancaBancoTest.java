@@ -171,6 +171,8 @@ class SegurancaBancoTest {
     @Test
     void bancoNaVersaoAnteriorGanhaOsGatilhosSemPerderDados() throws Exception {
         pagar(idConta);
+        // sem a forma de pagamento da v21 (antes de tirar a auditoria: o SQLite confere os gatilhos)
+        sql("ALTER TABLE pagamentos DROP COLUMN forma_pagamento");
         // volta o banco para a v16 (sem gatilhos nem auditoria), com os dados dentro
         for (String gatilho : List.of("trg_conta_paga_nao_exclui", "trg_conta_nasce_pendente",
                 "trg_status_pago_exige_pagamento", "trg_status_pendente_sem_pagamento", "trg_pagamento_nao_troca_conta",

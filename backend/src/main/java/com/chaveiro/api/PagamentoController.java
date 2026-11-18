@@ -26,7 +26,8 @@ public class PagamentoController {
     public record PagamentoRequest(
             LocalDate dataPagamento,
             BigDecimal valorPago,
-            Long idBanco
+            Long idBanco,
+            String formaPagamento
     ) {}
 
     private final PagamentoService service;
@@ -64,6 +65,6 @@ public class PagamentoController {
 
     private static Pagamento paraModelo(PagamentoRequest requisicao) {
         return new Pagamento(null, null, requisicao.dataPagamento(), requisicao.valorPago(),
-                requisicao.idBanco(), null, null, null);
+                requisicao.idBanco(), null, null, null, requisicao.formaPagamento());
     }
 }

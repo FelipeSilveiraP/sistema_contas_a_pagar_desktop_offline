@@ -269,6 +269,8 @@ export interface PagamentoDados {
   instituicaoBanco: string | null;
   nomeEmpresa: string;
   statusConta: string;
+  /** como foi pago (PIX, DINHEIRO...) */
+  formaPagamento?: string | null;
 }
 
 export interface RecorrenteDados {
@@ -345,7 +347,7 @@ async function post<T>(cfg: FinDeskConfig, caminho: string, dados: unknown): Pro
 export function registrarPagamento(
   cfg: FinDeskConfig,
   idConta: number,
-  dados: { dataPagamento: string; valorPago: string; idBanco?: number }
+  dados: { dataPagamento: string; valorPago: string; idBanco?: number; formaPagamento?: string }
 ): Promise<PagamentoDados> {
   return post<PagamentoDados>(cfg, `/api/contas/${idConta}/pagamento`, dados);
 }
@@ -357,7 +359,7 @@ export async function estornarPagamento(cfg: FinDeskConfig, idConta: number): Pr
 export function atualizarPagamento(
   cfg: FinDeskConfig,
   id: number,
-  dados: { dataPagamento: string; valorPago: string; idBanco?: number }
+  dados: { dataPagamento: string; valorPago: string; idBanco?: number; formaPagamento?: string | null }
 ): Promise<PagamentoDados> {
   return atualizar<PagamentoDados>(cfg, `/api/pagamentos/${id}`, dados);
 }

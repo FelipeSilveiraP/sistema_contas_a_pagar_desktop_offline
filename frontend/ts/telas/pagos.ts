@@ -63,6 +63,7 @@ function renderTabela(): void {
       celula(formatarDataBR(contaDo(pagamento.idConta)?.vencimento ?? ""), "py-3.5 px-4 font-mono whitespace-nowrap"),
       celula(formatarMoedaBR(Math.round(pagamento.valorPago * 100)), "py-3.5 px-4 text-right font-mono font-bold whitespace-nowrap"),
       celula(pagamento.instituicaoBanco ?? "—", "py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap"),
+      celula(pagamento.formaPagamento ?? "—", "py-3.5 px-4 font-mono text-xs whitespace-nowrap"),
     );
     tr.addEventListener("click", () => selecionar(pagamento.id));
     corpo.appendChild(tr);
@@ -76,6 +77,7 @@ function valorAtual(pagamento: PagamentoDados, campo: string): string {
   switch (campo) {
     case "dataPagamento": return formatarDataBR(pagamento.dataPagamento);
     case "banco": return pagamento.idBanco ? String(pagamento.idBanco) : "";
+    case "formaPagamento": return pagamento.formaPagamento ?? "";
     default: return formatarMoedaBR(Math.round(pagamento.valorPago * 100));
   }
 }
@@ -116,6 +118,7 @@ async function aplicarAlteracao(): Promise<void> {
   let dataPagamento = pagamento.dataPagamento;
   let valorPago = pagamento.valorPago.toFixed(2);
   let idBanco = pagamento.idBanco ?? undefined;
+  let formaPagamento = pagamento.formaPagamento ?? null;
   if (campo === "dataPagamento") {
     const iso = parseDataBR(bruto);
     if (!iso) return mostrarErro("Data inválida. Use o formato DD/MM/AAAA.");
@@ -124,13 +127,17 @@ async function aplicarAlteracao(): Promise<void> {
     const centavos = paraCentavos(bruto);
     if (centavos === null) return mostrarErro("Valor inválido. Exemplo: 150,00.");
     valorPago = (centavos / 100).toFixed(2);
+  } else if (campo === "formaPagamento") {
+    const f = bruto.trim();
+    if (f && (f.length < 2 || f.length > 40)) return mostrarErro("Forma de pagamento de 2 a 40 letras (ex.: PIX).");
+    formaPagamento = f || null;
   } else {
     idBanco = bruto ? Number(bruto) : undefined;
   }
   mostrarErro();
   try {
     const cfg = await window.finDesk!.config();
-    await atualizarPagamento(cfg, pagamento.id, { dataPagamento, valorPago, idBanco });
+    await atualizarPagamento(cfg, pagamento.id, { dataPagamento, valorPago, idBanco, formaPagamento });
     await recarregar();
     notificar("Alterações do pagamento salvas.");
   } catch (erro) {
@@ -182,6 +189,7 @@ function iniciar(): void {
     { valor: "valorPago", rotulo: "Valor pago (R$)", mascara: "moeda" },
     { valor: "banco", rotulo: "Banco usado", opcoes: () => [{ valor: "", rotulo: "Sem banco" },
       ...bancos.map((b) => ({ valor: String(b.id), rotulo: b.instituicao }))] },
+    { valor: "formaPagamento", rotulo: "Forma de pagamento" },
   ], (campo) => {
     const pagamento = pagamentos.find((p) => p.id === selecionadoId);
     return pagamento ? valorAtual(pagamento, campo) : "";

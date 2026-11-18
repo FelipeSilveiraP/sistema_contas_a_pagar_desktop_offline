@@ -28,7 +28,7 @@ import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { correspondeBusca, hojeIso, ordenar } from "../filtros";
 
-type Filtro = "TODOS" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
+type Filtro = "TODOS" | "MES" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
 
 const ROTULO_FORMA: Record<string, string> = {
   boleto: "Boleto",
@@ -77,6 +77,8 @@ function filtradas(): ContaDados[] {
     }
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
     switch (filtro) {
+      // contas que vencem no mes de hoje (pagas ou nao)
+      case "MES": return c.vencimento.slice(0, 7) === hoje().slice(0, 7);
       case "PAGO": return c.status === "PAGO";
       case "NAPASTA": return c.boletoNaPasta;
       case "AVENCER": return c.status === "PENDENTE" && diff > 0;
@@ -145,7 +147,7 @@ function renderTabela(): void {
     statusTd.firstElementChild!.className = `status-badge selo ${status.classe}`;
     // quando foi paga e por qual banco (pedido do usuario, 2026-11-18)
     const pg = pagamentos.find((p) => p.idConta === conta.id);
-    const pagoTd = celulaTexto(pg ? `${formatarDataBR(pg.dataPagamento)} · ${pg.instituicaoBanco ?? "SEM BANCO"}` : "—",
+    const pagoTd = celulaTexto(pg ? `${formatarDataBR(pg.dataPagamento)} · ${pg.instituicaoBanco ?? "SEM BANCO"}${pg.formaPagamento ? ` · ${pg.formaPagamento}` : ""}` : "—",
       "py-3 px-3 font-mono text-xs whitespace-nowrap pago-em");
     pagoTd.firstElementChild!.className = pg ? "font-bold text-[#006c46]" : "text-neutral-400";
     const doc = celulaTexto(conta.numeroDocumento ?? "—", "col-extra py-3 px-3 font-mono text-xs whitespace-nowrap");
@@ -437,12 +439,14 @@ async function pagar(conta: ContaDados): Promise<void> {
       empresa: conta.nomeEmpresa,
       valor: formatarMoedaBR(Math.round(conta.valor * 100)),
       bancos,
+      formaSugerida: (ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento ?? "").toUpperCase(),
     });
     if (!escolha) return;
     await registrarPagamento(cfg, conta.id, {
       dataPagamento: escolha.dataIso,
       valorPago: conta.valor.toFixed(2),
       idBanco: escolha.idBanco,
+      formaPagamento: escolha.formaPagamento,
     });
     await recarregar();
     notificar(`Conta de "${conta.nomeEmpresa}" marcada como paga.`);
@@ -609,7 +613,7 @@ async function excluirSelecionado(): Promise<void> {
 // ---------- impressao formal ----------
 
 const ROTULO_FILTRO: Record<Filtro, string> = {
-  TODOS: "Todas as contas", AVENCER: "A vencer", HOJE: "Vencem hoje",
+  TODOS: "Todas as contas", MES: "Vencem este mês", AVENCER: "A vencer", HOJE: "Vencem hoje",
   ATRASADO: "Atrasadas", PAGO: "Pagas", NAPASTA: "Boleto na pasta",
 };
 

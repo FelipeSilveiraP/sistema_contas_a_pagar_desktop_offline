@@ -226,3 +226,11 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 ## 2026-11-18 — Pop-ups iguais aos do Sistema de Garantias (referência visual)
 - Causa do PIN pequeno: o bloco de formulários (`.entrada-form`) estava DEPOIS do `.entrada-pin` no CSS e apagava o tamanho grande. Agora fica antes, na mesma ordem do Garantias (conferido: as 26 peças do pop-up do PIN têm o mesmo tamanho nos dois sistemas).
 - Copiados do Garantias: cabeçalhos sucesso/erro, `.dialogo__lista`, `.dialogo--grande` e `.entrada-form--erro`. Regra: estilo de pop-up/formulário novo nasce no Garantias e vem igual para cá.
+
+## 2026-11-18 — Tabelas com rolagem por dentro, pop-ups grandes e rolagem automática (2 sistemas)
+- Tabelas: sem o botão EXPANDIR TABELA. Altura fixa de 5 linhas e rolagem DENTRO da tabela, cabeçalho parado no topo (`tabela-recolhivel.ts`, `.tabela-rolagem`; igual nos dois sistemas). Todas as linhas ficam na página (pesquisa, totais e impressão valem para todas).
+- Pop-ups: todos maiores. Confirmações, exclusões e alertas de risco no MEIO da tela; avisos de "deu certo" (notificações) GRANDES no canto INFERIOR DIREITO (substitui a decisão de 2026-11-16 de tudo no meio).
+- `rolagem.ts` (igual nos dois): clicar num registro leva a tela até "Alterar um campo" (não à nota fiscal); abrir uma caixa de seleção perto do pé da tela sobe a tela para a lista aparecer inteira.
+- `docs/analise-banco.md`: tabelas e colunas usadas e mortas dos dois sistemas; nada apagado sem aprovação.
+- PAGO: pop-up grande com BANCO, FORMA DE PAGAMENTO (lista para escolher OU escrever: PIX, BOLETO, DINHEIRO, CARTÃO DE CRÉDITO/DÉBITO, TRANSFERÊNCIA, DÉBITO AUTOMÁTICO; vem com o formato da conta) e DATA. v21: `pagamentos.forma_pagamento` (texto livre, 2 a 40, MAIÚSCULAS). Aparece em PAGO EM / BANCO e em Pagos (editável).
+- Todas as Contas: filtro ESTE MÊS (vencimento no mês de hoje, pagas ou não).

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 20;
+    private static final int VERSAO_ATUAL = 21;
 
     private final ConnectionFactory conexao;
 
@@ -402,6 +402,11 @@ public class DatabaseInitializer {
             case 18 -> migracaoAuditoriaRecorrentes();
             case 19 -> contasDeUsuario().toArray(String[]::new);
             case 20 -> recorrenteSemDuplicata();
+            case 21 -> new String[] {
+                // como foi pago de verdade (PIX, DINHEIRO, CREDITO...), escolhido ou escrito no pop-up do PAGO
+                "ALTER TABLE pagamentos ADD COLUMN forma_pagamento TEXT"
+                        + " CHECK (forma_pagamento IS NULL OR length(forma_pagamento) BETWEEN 2 AND 40)"
+            };
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
     }

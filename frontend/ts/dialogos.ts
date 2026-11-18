@@ -333,9 +333,14 @@ export function mostrarProgresso(titulo: string, texto: string): DialogoProgress
 
 export interface EscolhaPagamento {
   idBanco: number;
+  /** como foi pago (PIX, DINHEIRO...): escolhido na lista ou escrito */
+  formaPagamento: string;
   /** aaaa-mm-dd */
   dataIso: string;
 }
+
+/** Opcoes da caixa FORMA DE PAGAMENTO (pode escrever outra). */
+export const FORMAS_PAGAMENTO = ["PIX", "BOLETO", "DINHEIRO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "TRANSFERÊNCIA", "DÉBITO AUTOMÁTICO"];
 
 function hojeLocalIso(): string {
   const d = new Date();
@@ -351,6 +356,8 @@ export function escolherPagamento(opcoes: {
   empresa: string;
   valor: string;
   bancos: { id: number; nome: string }[];
+  /** forma ja sugerida (a do formato da conta, ex.: BOLETO) */
+  formaSugerida?: string;
 }): Promise<EscolhaPagamento | null> {
   return new Promise<EscolhaPagamento | null>((resolver) => {
     const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -362,7 +369,7 @@ export function escolherPagamento(opcoes: {
     };
 
     const veu = criar("div", "dialogo-veu");
-    const caixa = criar("div", "dialogo dialogo--largo");
+    const caixa = criar("div", "dialogo dialogo--grande dialogo--pagamento");
     caixa.setAttribute("role", "dialog");
     caixa.setAttribute("aria-modal", "true");
     caixa.setAttribute("aria-labelledby", "pagamento-titulo");
@@ -378,7 +385,7 @@ export function escolherPagamento(opcoes: {
     const corpo = criar("div", "dialogo__corpo");
     corpo.appendChild(criar("p", "dialogo__mensagem", `${opcoes.empresa} · ${opcoes.valor}`));
 
-    const grade = criar("div", "grid grid-cols-1 sm:grid-cols-2 gap-4");
+    const grade = criar("div", "grid grid-cols-1 sm:grid-cols-3 gap-4");
     // banco
     const campoBanco = criar("div", "campo-form");
     const rotuloBanco = criar("label", "rotulo-form", "BANCO QUE PAGOU");
@@ -394,6 +401,22 @@ export function escolherPagamento(opcoes: {
       banco.appendChild(o);
     }
     campoBanco.append(rotuloBanco, banco);
+    // forma de pagamento: escolhe na lista OU escreve (ex.: a conta era boleto e pagou no PIX)
+    const campoForma = criar("div", "campo-form");
+    const rotuloForma = criar("label", "rotulo-form", "FORMA DE PAGAMENTO");
+    rotuloForma.htmlFor = "pagamento-forma";
+    const forma = criar("input", "entrada-form");
+    forma.id = "pagamento-forma";
+    forma.type = "text";
+    forma.autocomplete = "off";
+    forma.maxLength = 40;
+    forma.placeholder = "Escolha ou escreva...";
+    forma.setAttribute("list", "pagamento-formas");
+    forma.value = opcoes.formaSugerida ?? "";
+    const formas = criar("datalist");
+    formas.id = "pagamento-formas";
+    for (const f of FORMAS_PAGAMENTO) formas.appendChild(Object.assign(document.createElement("option"), { value: f }));
+    campoForma.append(rotuloForma, forma, formas);
     // data (na frente do banco)
     const campoData = criar("div", "campo-form");
     const rotuloData = criar("label", "rotulo-form", "DATA DO PAGAMENTO");
@@ -420,7 +443,7 @@ export function escolherPagamento(opcoes: {
     seletorData.max = hojeLocalIso();
     linhaData.append(data, btnCalendario, seletorData);
     campoData.append(rotuloData, linhaData);
-    grade.append(campoBanco, campoData);
+    grade.append(campoBanco, campoForma, campoData);
     corpo.appendChild(grade);
     const erro = criar("p", "campo-erro hidden");
     erro.id = "pagamento-erro";
@@ -463,10 +486,12 @@ export function escolherPagamento(opcoes: {
       const iso = parseDataBR(data.value);
       if (!iso) return mostrarErro("Data inválida. Use DD/MM/AAAA.", data);
       if (iso > hojeLocalIso()) return mostrarErro("A data do pagamento não pode ser no futuro.", data);
-      fechar({ idBanco: Number(banco.value), dataIso: iso });
+      const textoForma = forma.value.trim().replace(/\s+/g, " ").toUpperCase();
+      if (textoForma.length < 2) return mostrarErro("Escolha ou escreva a forma de pagamento (ex.: PIX).", forma);
+      fechar({ idBanco: Number(banco.value), dataIso: iso, formaPagamento: textoForma });
     };
 
-    const focaveis: HTMLElement[] = [banco, data, btnCalendario, cancelar, confirmarBtn];
+    const focaveis: HTMLElement[] = [banco, forma, data, btnCalendario, cancelar, confirmarBtn];
     const aoTeclar = (evento: KeyboardEvent): void => {
       if (evento.key === "Escape") {
         evento.preventDefault();
@@ -507,6 +532,7 @@ export function escolherPagamento(opcoes: {
     });
     banco.addEventListener("change", () => erro.classList.add("hidden"));
     data.addEventListener("input", () => erro.classList.add("hidden"));
+    forma.addEventListener("input", () => erro.classList.add("hidden"));
     cancelar.addEventListener("click", () => fechar(null));
     confirmarBtn.addEventListener("click", tentarConfirmar);
     veu.addEventListener("mousedown", (evento) => {

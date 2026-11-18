@@ -4,12 +4,15 @@ import { iniciarDiagnostico } from "./diagnostico";
 import { iniciarNotificacoes } from "./notificacoes";
 import { ligarEnterEnvia } from "./enter-envia";
 import { ligarDicas } from "./dicas";
+import { ligarRolagemAutomatica } from "./rolagem";
 
 iniciarDiagnostico();
 // Enter em qualquer campo = botao de enviar/concluir daquele formulario
 ligarEnterEnvia();
 // regioes vivas das notificacoes existem desde o carregamento (e mostram o aviso deixado pela tela anterior)
 iniciarNotificacoes();
+// rolagem automatica: clique no registro leva ao editor; caixa de selecao abre inteira
+ligarRolagemAutomatica();
 // dica do Windows ao parar o mouse em cima de qualquer botao
 ligarDicas({
   "INSERIR CONTA": "Inserir conta: cadastrar um boleto ou conta a pagar",
