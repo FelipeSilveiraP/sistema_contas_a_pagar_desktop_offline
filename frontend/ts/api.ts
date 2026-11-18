@@ -378,6 +378,11 @@ export function gerarContasRecorrente(cfg: FinDeskConfig, id: number): Promise<{
   return post<{ geradas: number }>(cfg, `/api/recorrentes/${id}/gerar`, {});
 }
 
+/** Edita a conta fixa: vale para todas as contas dela ainda nao pagas (todos os meses). */
+export function atualizarRecorrente(cfg: FinDeskConfig, id: number, dados: Omit<RecorrenteDados, "id">): Promise<RecorrenteDados & { contasAlteradas: number }> {
+  return atualizar<RecorrenteDados & { contasAlteradas: number }>(cfg, `/api/recorrentes/${id}`, dados);
+}
+
 export function excluirRecorrente(cfg: FinDeskConfig, id: number): Promise<void> {
   return excluir(cfg, `/api/recorrentes/${id}`);
 }

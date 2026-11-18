@@ -1805,6 +1805,44 @@ async function executar() {
   await apiPag("DELETE", `/api/contas/${contaPg.body.id}`);
   await apiPag("DELETE", `/api/bancos/${bancoPg.body.id}`);
 
+  // 12d. Contas recorrentes: uma tabela so (a conta fixa); editar muda todos os meses nao pagos
+  const recEd = await apiPag("POST", "/api/recorrentes", { nomeEmpresa: `FIXA EDITAR ${sufixoPg}`, pagadorResponsavel: "LOJA",
+    valor: 300, dia: 25, periodicidade: "MENSAL", formaPagamento: "boleto", ativo: true, tipoPessoa: "PJ" });
+  teste("Recorrentes: conta fixa de teste criada", recEd.status === 201, String(recEd.status));
+  const geradasRec = async () => (await apiPag("GET", "/api/contas")).body.filter((c) => c.nomeEmpresa.startsWith(`FIXA EDITAR ${sufixoPg}`) || c.nomeEmpresa === `FIXA NOVO NOME ${sufixoPg}`);
+  const pagaRec = (await geradasRec())[0];
+  await apiPag("POST", `/api/contas/${pagaRec.id}/pagamento`, { dataPagamento: new Date().toISOString().slice(0, 10), valorPago: "300.00" });
+  await js("window.finDesk.navegar('recorrentes-tabela')");
+  await esperarTela("recorrentes-tabela");
+  const linhaRec = `document.querySelector('#tableBody tr[data-recorrente="${recEd.body.id}"]')`;
+  teste("Recorrentes: uma tabela só, com as colunas da conta fixa", await esperarPredicado(`!!${linhaRec}`, 8000) && await js(`(() => {
+    const th = [...document.querySelectorAll('#billsTable thead th')].map((t) => t.textContent.trim().toUpperCase());
+    return document.querySelectorAll('table').length === 1 && ['VENCIMENTO', 'EMPRESA', 'VALOR (R$)', 'CONTA', 'FORMATO CONTA', 'PAGADOR RESPONSÁVEL', 'FREQUÊNCIA', 'AÇÕES'].every((c) => th.includes(c))
+      && ${linhaRec}.textContent.includes('Todo dia 25'); })()`));
+  await js(`${linhaRec}.click()`);
+  teste("Recorrentes: clicar na linha abre a edição da conta fixa", await esperarPredicado("!document.getElementById('editorContainer').classList.contains('hidden')", 3000));
+  await js(`(() => { const s = document.getElementById('fieldSelect'); s.value = 'valor'; s.dispatchEvent(new Event('change'));
+    const i = document.getElementById('newValueInput'); i.value = '450,75'; document.getElementById('btnApplyChange').click(); })()`);
+  await esperarPredicado(`(${linhaRec} || {}).textContent?.includes('450,75')`, 6000);
+  await js(`(() => { const s = document.getElementById('fieldSelect'); s.value = 'dia'; s.dispatchEvent(new Event('change'));
+    const i = document.getElementById('newValueInput'); i.value = '12'; document.getElementById('btnApplyChange').click(); })()`);
+  await esperarPredicado(`(${linhaRec} || {}).textContent?.includes('Todo dia 12')`, 6000);
+  await js(`(() => { const s = document.getElementById('fieldSelect'); s.value = 'nomeEmpresa'; s.dispatchEvent(new Event('change'));
+    const i = document.getElementById('newValueInput'); i.value = 'fixa novo nome ${sufixoPg}'; document.getElementById('btnApplyChange').click(); })()`);
+  await esperarPredicado(`(${linhaRec} || {}).textContent?.includes('FIXA NOVO NOME')`, 6000);
+  teste("Recorrentes: editar avisa quantos meses não pagos mudaram", await esperarPredicado("[...document.querySelectorAll('.notificacao')].some((n) => n.textContent.includes('11 contas não pagas'))", 6000));
+  const depoisRec = await geradasRec();
+  const naoPagas = depoisRec.filter((c) => c.id !== pagaRec.id);
+  teste("Recorrentes: todos os meses não pagos ficaram com o novo valor, dia e empresa", naoPagas.length === 11 && naoPagas.every((c) =>
+    c.valor === 450.75 && c.vencimento.endsWith("-12") && c.nomeEmpresa === `FIXA NOVO NOME ${sufixoPg}`), JSON.stringify(naoPagas.slice(0, 2)));
+  const pagaDepois = depoisRec.find((c) => c.id === pagaRec.id);
+  teste("Recorrentes: o mês já pago continua como estava", !!pagaDepois && pagaDepois.valor === 300 && pagaDepois.vencimento === pagaRec.vencimento
+    && pagaDepois.nomeEmpresa === `FIXA EDITAR ${sufixoPg}`, JSON.stringify(pagaDepois));
+  await capturar("recorrentes-uma-tabela-1536x864.png");
+  await apiPag("DELETE", `/api/contas/${pagaRec.id}/pagamento`);
+  await apiPag("DELETE", `/api/recorrentes/${recEd.body.id}`);
+  await apiPag("DELETE", `/api/contas/${pagaRec.id}`);
+
   // 12c. Menu com muitas contas vencendo: os botoes continuam inteiros (nome visivel)
   const venc = (d) => { const x = new Date(Date.now() + d * 86400000); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
   const contasMenu = [];

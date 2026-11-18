@@ -1,55 +1,43 @@
 import {
+  atualizarRecorrente,
   buscarStatus,
+  ErroApi,
+  ErroValidacaoApi,
   excluirRecorrente,
   gerarContasRecorrente,
-  listarContasFixas,
-  listarRecorrentes,
-  RecorrenteDados,
-  atualizarConta,
-  ContaDados,
-  ErroValidacaoApi,
   listarPagadores,
+  listarRecorrentes,
   PagadorDados,
+  RecorrenteDados,
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { recolherTabela } from "../tabela-recolhivel";
 import { montarNavbar } from "../navbar";
-import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
-import { correspondeBusca, hojeIso, ordenar } from "../filtros";
+import { paraCentavos, formatarMoedaBR } from "../mascaras";
+import { correspondeBusca } from "../filtros";
 import { notificar } from "../notificacoes";
 import { confirmar } from "../componentes";
+
+// Uma tabela so: as contas fixas (a recorrencia). Editar uma linha muda a conta fixa
+// e TODAS as contas dela ainda nao pagas (todos os meses). Para mudar um mes so,
+// o caminho e Todas as Contas.
 
 const ROTULO_FORMA: Record<string, string> = {
   boleto: "Boleto", pix: "PIX", cartao: "Cartão", transferencia: "Transferência", dinheiro: "Dinheiro", debito: "Débito automático",
 };
+const ROTULO_FREQUENCIA: Record<string, string> = {
+  MENSAL: "Mensal", BIMESTRAL: "Bimestral", TRIMESTRAL: "Trimestral", ANUAL: "Anual",
+};
 
-let contas: ContaDados[] = [];
+let recorrentes: RecorrenteDados[] = [];
+let pagadores: PagadorDados[] = [];
 let pesquisa = "";
 let filtro = "TODOS";
 let selecionadoId: number | null = null;
+let editor: EditorCampo;
 
 function el<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
-}
-
-function hoje(): string {
-  return hojeIso();
-}
-
-
-function filtradas(): ContaDados[] {
-  const lista = contas.filter((c) => {
-    if (!correspondeBusca(pesquisa, [c.nomeEmpresa, c.numeroDocumento, c.pagadorResponsavel], c.valor)) {
-      return false;
-    }
-    if (filtro === "PF" || filtro === "PJ") return c.tipoPessoa === filtro;
-    const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
-    if (filtro === "AVENCER") return c.status === "PENDENTE" && diff > 0;
-    if (filtro === "HOJE") return c.status === "PENDENTE" && diff === 0;
-    if (filtro === "ATRASADO") return c.status === "PENDENTE" && diff < 0;
-    return true;
-  });
-  return ordenar(lista, "DATA_ASC", { data: (c) => c.vencimento, valor: (c) => c.valor, nome: (c) => c.nomeEmpresa });
 }
 
 function celula(texto: string, classe: string): HTMLTableCellElement {
@@ -59,98 +47,41 @@ function celula(texto: string, classe: string): HTMLTableCellElement {
   return td;
 }
 
-function renderTabela(): void {
-  const corpo = el("tableBody");
-  corpo.replaceChildren();
-  let total = 0;
-  for (const conta of filtradas()) {
-    total += Math.round(conta.valor * 100);
-    const tr = document.createElement("tr");
-    tr.className = "bill-row cursor-pointer transition-colors hover:bg-[#e0f2fe]";
-    tr.dataset.id = String(conta.id);
-    if (conta.status === "PAGO") tr.classList.add("bg-[#4dffb2]/20");
-    if (selecionadoId === conta.id) tr.classList.add("bg-[#38bdf8]", "border-l-8", "border-l-[#1c1b1b]");
-    const tdTipo = celula(conta.tipoPessoa, "py-3.5 px-4 text-center whitespace-nowrap");
-    tdTipo.textContent = "";
-    const selo = document.createElement("span");
-    selo.className = "selo bg-neutral-100 text-neutral-600";
-    selo.textContent = conta.tipoPessoa;
-    tdTipo.appendChild(selo);
-    tr.append(
-      celula(formatarDataBR(conta.vencimento), "py-3.5 px-4 font-mono font-bold text-[#1c1b1b] whitespace-nowrap"),
-      celula(conta.nomeEmpresa, "py-3.5 px-4"),
-      celula(formatarMoedaBR(Math.round(conta.valor * 100)), "py-3.5 px-4 text-right font-mono font-bold whitespace-nowrap"),
-      tdTipo,
-      celula(ROTULO_FORMA[conta.formaPagamento] ?? conta.formaPagamento, "py-3.5 px-4 text-center whitespace-nowrap"),
-      celula(conta.pagadorResponsavel, "py-3.5 px-4 font-mono text-xs text-neutral-700 whitespace-nowrap"),
-    );
-    tr.addEventListener("click", () => selecionar(conta.id));
-    corpo.appendChild(tr);
-  }
-  el("tableSummaryCount").textContent = String(filtradas().length);
-  el("tableSummaryAmount").textContent = formatarMoedaBR(total);
-  recolherTabela("recorrentes", corpo as HTMLTableSectionElement, corpo.closest("main")!, selecionadoId);
-  el("selectionEmptyState").classList.toggle("hidden", filtradas().length > 0);
+function filtradas(): RecorrenteDados[] {
+  return recorrentes
+    .filter((r) => correspondeBusca(pesquisa, [r.nomeEmpresa, r.pagadorResponsavel], r.valor))
+    .filter((r) => filtro === "TODOS" || r.tipoPessoa === filtro)
+    .sort((a, b) => a.dia - b.dia || a.nomeEmpresa.localeCompare(b.nomeEmpresa, "pt-BR"));
 }
 
-function valorAtual(conta: ContaDados, campo: string): string {
-  switch (campo) {
-    case "vencimento": return formatarDataBR(conta.vencimento);
-    case "pagadorResponsavel": return conta.pagadorResponsavel;
-    case "formaPagamento": return conta.formaPagamento;
-    default: return formatarMoedaBR(Math.round(conta.valor * 100));
-  }
-}
-
-function selecionar(id: number): void {
-  selecionadoId = id;
-  const conta = contas.find((c) => c.id === id);
-  if (!conta) return;
-  el("editorContainer").classList.remove("hidden");
-  el("editorRecordName").textContent = `${conta.nomeEmpresa} (${formatarDataBR(conta.vencimento)})`;
-  editor.atualizar();
-  renderTabela();
-}
-
-function mostrarErro(mensagem?: string): void {
-  editor?.erro(mensagem);
-}
-
-let recorrentes: RecorrenteDados[] = [];
-let pagadores: PagadorDados[] = [];
-let editor: EditorCampo;
-
-async function recarregar(): Promise<void> {
-  const cfg = await window.finDesk!.config();
-  [contas, recorrentes, pagadores] = await Promise.all([listarContasFixas(cfg), listarRecorrentes(cfg), listarPagadores(cfg)]);
-  renderTabela();
-  renderCadastradas();
-}
-
-// ===== Contas fixas cadastradas (a recorrencia em si): gerar proximos meses / excluir =====
 function botaoAcao(texto: string, classe: string, acao: () => void): HTMLButtonElement {
   const b = document.createElement("button");
   b.type = "button";
   b.className = `border-2 border-[#1c1b1b] font-mono text-xs font-bold px-2.5 py-1.5 uppercase shadow-[2px_2px_0px_0px_#1c1b1b] ${classe}`;
   b.textContent = texto;
-  b.addEventListener("click", acao);
+  b.addEventListener("click", (evento) => {
+    evento.stopPropagation(); // o clique no botao nao seleciona a linha
+    acao();
+  });
   return b;
 }
 
-function renderCadastradas(): void {
-  const corpo = document.getElementById("recorrentesCadastradas");
-  if (!corpo) return;
-  if (!recorrentes.length) {
+function renderTabela(): void {
+  const corpo = el<HTMLTableSectionElement>("tableBody");
+  const lista = filtradas();
+  let total = 0;
+  corpo.replaceChildren(...lista.map((r) => {
+    total += Math.round(r.valor * 100);
     const tr = document.createElement("tr");
-    tr.appendChild(celula("Nenhuma conta fixa cadastrada. Use CONTROLE › CONTAS RECORRENTES › CADASTRAR.", "py-3 px-3 text-center font-mono text-xs text-neutral-500 uppercase"));
-    (tr.firstChild as HTMLTableCellElement).colSpan = 7;
-    corpo.replaceChildren(tr);
-    recolherTabela("fixas", corpo as HTMLTableSectionElement, corpo.closest("section")!);
-    return;
-  }
-  corpo.replaceChildren(...recorrentes.map((r) => {
-    const tr = document.createElement("tr");
+    tr.className = "bill-row cursor-pointer transition-colors hover:bg-[#ede9fe]";
+    tr.dataset.id = String(r.id);
     tr.dataset.recorrente = String(r.id);
+    if (selecionadoId === r.id) tr.classList.add("bg-[#ddd6fe]", "border-l-8", "border-l-[#1c1b1b]");
+    const tdTipo = celula("", "py-3 px-3 text-center whitespace-nowrap");
+    const selo = document.createElement("span");
+    selo.className = "selo bg-neutral-100 text-neutral-600";
+    selo.textContent = r.tipoPessoa;
+    tdTipo.appendChild(selo);
     const acoes = celula("", "py-2 px-3 text-center whitespace-nowrap");
     const grupo = document.createElement("div");
     grupo.className = "inline-flex gap-2";
@@ -160,17 +91,64 @@ function renderCadastradas(): void {
     );
     acoes.appendChild(grupo);
     tr.append(
-      celula(r.nomeEmpresa, "py-2 px-3"),
-      celula(formatarMoedaBR(Math.round(r.valor * 100)), "py-2 px-3 text-right font-mono whitespace-nowrap"),
-      celula(String(r.dia), "py-2 px-3 text-center font-mono"),
-      celula(r.periodicidade, "py-2 px-3 text-center font-mono text-xs"),
-      celula(r.tipoPessoa, "py-2 px-3 text-center font-mono"),
-      celula(r.pagadorResponsavel, "py-2 px-3 font-mono text-xs"),
+      celula(`Todo dia ${r.dia}`, "py-3 px-3 font-mono whitespace-nowrap"),
+      celula(r.nomeEmpresa, "py-3 px-3"),
+      celula(formatarMoedaBR(Math.round(r.valor * 100)), "py-3 px-3 text-right font-mono whitespace-nowrap"),
+      tdTipo,
+      celula(ROTULO_FORMA[r.formaPagamento ?? "boleto"] ?? r.formaPagamento ?? "", "py-3 px-3 text-center whitespace-nowrap"),
+      celula(r.pagadorResponsavel, "py-3 px-3 font-mono text-xs whitespace-nowrap"),
+      celula(ROTULO_FREQUENCIA[r.periodicidade] ?? r.periodicidade, "py-3 px-3 text-center font-mono text-xs uppercase"),
       acoes,
     );
+    tr.addEventListener("click", () => selecionar(r.id));
     return tr;
   }));
-  recolherTabela("fixas", corpo as HTMLTableSectionElement, corpo.closest("section")!);
+  el("tableSummaryCount").textContent = String(lista.length);
+  el("tableSummaryAmount").textContent = formatarMoedaBR(total);
+  el("selectionEmptyState").classList.toggle("hidden", lista.length > 0);
+  recolherTabela("fixas", corpo, corpo.closest("main")!, selecionadoId);
+}
+
+function selecionada(): RecorrenteDados | undefined {
+  return recorrentes.find((r) => r.id === selecionadoId);
+}
+
+function selecionar(id: number): void {
+  selecionadoId = id;
+  const r = selecionada();
+  if (!r) return;
+  el("editorContainer").classList.remove("hidden");
+  el("selectionEmptyHint").classList.add("hidden");
+  el("editorRecordName").textContent = `${r.nomeEmpresa} (todo dia ${r.dia})`;
+  editor.erro();
+  editor.atualizar();
+  renderTabela();
+}
+
+function fecharEditor(): void {
+  selecionadoId = null;
+  el("editorContainer").classList.add("hidden");
+  el("selectionEmptyHint").classList.remove("hidden");
+  editor.erro();
+  renderTabela();
+}
+
+function valorAtual(r: RecorrenteDados, campo: string): string {
+  switch (campo) {
+    case "nomeEmpresa": return r.nomeEmpresa;
+    case "dia": return String(r.dia);
+    case "tipoPessoa": return r.tipoPessoa;
+    case "formaPagamento": return r.formaPagamento ?? "boleto";
+    case "pagadorResponsavel": return r.pagadorResponsavel;
+    default: return formatarMoedaBR(Math.round(r.valor * 100));
+  }
+}
+
+async function recarregar(): Promise<void> {
+  const cfg = await window.finDesk!.config();
+  [recorrentes, pagadores] = await Promise.all([listarRecorrentes(cfg), listarPagadores(cfg)]);
+  if (selecionadoId !== null && !selecionada()) fecharEditor();
+  renderTabela();
 }
 
 async function gerar(r: RecorrenteDados): Promise<void> {
@@ -205,55 +183,58 @@ async function excluirFixa(r: RecorrenteDados): Promise<void> {
 }
 
 async function aplicarAlteracao(): Promise<void> {
-  const conta = contas.find((c) => c.id === selecionadoId);
-  if (!conta) return;
+  const r = selecionada();
+  if (!r) return;
   const campo = editor.campo();
-  const bruto = editor.ler();
-  const patch = {
-    nomeEmpresa: conta.nomeEmpresa,
-    // sem isto o PUT gravava id_empresa = NULL e apagava o vinculo com a empresa emissora
-    idEmpresa: conta.idEmpresa ?? undefined,
-    pagadorResponsavel: conta.pagadorResponsavel,
-    tipoPessoa: conta.tipoPessoa,
-    formaPagamento: conta.formaPagamento,
-    categoria: conta.categoria ?? undefined,
-    numeroDocumento: conta.numeroDocumento ?? undefined,
-    valor: conta.valor.toFixed(2),
-    vencimento: conta.vencimento,
-    boletoNaPasta: conta.boletoNaPasta,
-    forcar: true,
+  const bruto = editor.ler().trim();
+  const dados: Omit<RecorrenteDados, "id"> = {
+    nomeEmpresa: r.nomeEmpresa,
+    idEmpresa: r.idEmpresa,
+    pagadorResponsavel: r.pagadorResponsavel,
+    categoria: r.categoria,
+    numeroDocumento: r.numeroDocumento,
+    valor: r.valor,
+    dia: r.dia,
+    periodicidade: r.periodicidade,
+    formaPagamento: r.formaPagamento,
+    ativo: r.ativo,
+    tipoPessoa: r.tipoPessoa,
   };
-  if (campo === "vencimento") {
-    const iso = parseDataBR(bruto);
-    if (!iso) return mostrarErro("Data inválida. Use o formato DD/MM/AAAA.");
-    patch.vencimento = iso;
-  } else if (campo === "valor") {
+  if (campo === "valor") {
     const centavos = paraCentavos(bruto);
-    if (centavos === null) return mostrarErro("Valor inválido. Exemplo: 150,00.");
-    patch.valor = (centavos / 100).toFixed(2);
+    if (centavos === null) return editor.erro("Valor inválido. Exemplo: 150,00.");
+    dados.valor = centavos / 100;
+  } else if (campo === "dia") {
+    const dia = Number(bruto);
+    if (!Number.isInteger(dia) || dia < 1 || dia > 31) return editor.erro("Informe o dia do vencimento (de 1 a 31).");
+    dados.dia = dia;
+  } else if (campo === "nomeEmpresa") {
+    if (bruto.length < 2 || bruto.length > 120) return editor.erro("Informe a empresa (de 2 a 120 caracteres).");
+    dados.nomeEmpresa = bruto;
   } else if (campo === "pagadorResponsavel") {
-    if (!bruto || bruto.length > 120) return mostrarErro("Informe o pagador (de 1 a 120 caracteres).");
-    patch.pagadorResponsavel = bruto;
+    if (!bruto || bruto.length > 120) return editor.erro("Escolha o pagador responsável.");
+    dados.pagadorResponsavel = bruto;
+  } else if (campo === "tipoPessoa") {
+    dados.tipoPessoa = bruto;
   } else {
-    const f = bruto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const mapa: Record<string, string> = {
-      boleto: "boleto", pix: "pix", cartao: "cartao", transferencia: "transferencia", dinheiro: "dinheiro",
-      debito: "debito", "debito automatico": "debito",
-    };
-    if (!mapa[f]) return mostrarErro("Use: boleto, pix, cartão, transferência, dinheiro ou débito.");
-    patch.formaPagamento = mapa[f];
+    dados.formaPagamento = bruto;
   }
-  mostrarErro();
+  editor.erro();
   try {
     const cfg = await window.finDesk!.config();
-    await atualizarConta(cfg, conta.id, patch);
+    const feita = await atualizarRecorrente(cfg, r.id, dados);
     await recarregar();
-    notificar("Alterações salvas.");
+    selecionar(r.id);
+    const n = feita.contasAlteradas;
+    notificar(n > 0
+      ? `Conta fixa alterada — ${n} conta${n > 1 ? "s" : ""} não paga${n > 1 ? "s" : ""} de todos os meses ${n > 1 ? "foram atualizadas" : "foi atualizada"}.`
+      : "Conta fixa alterada.");
   } catch (erro) {
-    if (erro instanceof ErroValidacaoApi) mostrarErro(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
+    if (erro instanceof ErroValidacaoApi) editor.erro(Object.values(erro.campos)[0] ?? "Dados inválidos. Confira o valor digitado.");
+    else if (erro instanceof ErroApi && erro.status === 409) editor.erro("Já existe outra conta fixa igual (mesma empresa, valor, dia e frequência).");
     else {
-      mostrarErro("Não foi possível salvar a alteração. Tente de novo.");
-      console.error("[ContasAPagar] falha na edicao:", erro);
+      editor.erro("Não foi possível salvar a alteração. Tente de novo.");
+      console.error("[ContasAPagar] falha na edicao da conta fixa:", erro);
     }
   }
 }
@@ -286,26 +267,29 @@ function iniciar(): void {
       renderTabela();
     });
   });
-  el("btnClearSelection").addEventListener("click", () => {
-    selecionadoId = null;
-    el("editorContainer").classList.add("hidden");
-    mostrarErro();
-    renderTabela();
-  });
+  el("btnClearSelection").addEventListener("click", fecharEditor);
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
   editor = criarEditorCampo([
     { valor: "valor", rotulo: "Valor (R$)", mascara: "moeda" },
-    { valor: "vencimento", rotulo: "Vencimento (Data)", mascara: "data" },
-    { valor: "pagadorResponsavel", rotulo: "Pagador responsável", opcoes: () => pagadores.map((p) => ({ valor: p.nome, rotulo: p.nome })) },
-    { valor: "formaPagamento", rotulo: "Documento de cobrança", opcoes: () => Object.entries(ROTULO_FORMA).map(([valor, rotulo]) => ({ valor, rotulo })) },
+    { valor: "dia", rotulo: "Dia do vencimento", mascara: "dia" },
+    { valor: "nomeEmpresa", rotulo: "Empresa" },
+    { valor: "tipoPessoa", rotulo: "Conta (PF/PJ)", opcoes: () => [{ valor: "PJ", rotulo: "PJ — Pessoa jurídica" }, { valor: "PF", rotulo: "PF — Pessoa física" }] },
+    { valor: "formaPagamento", rotulo: "Formato conta", opcoes: () => Object.entries(ROTULO_FORMA).map(([valor, rotulo]) => ({ valor, rotulo })) },
+    { valor: "pagadorResponsavel", rotulo: "Pagador responsável", opcoes: () => {
+      const r = selecionada();
+      const nomes = pagadores.map((p) => p.nome);
+      // o pagador gravado aparece mesmo que nao esteja mais no cadastro
+      if (r && !nomes.includes(r.pagadorResponsavel)) nomes.unshift(r.pagadorResponsavel);
+      return nomes.map((nome) => ({ valor: nome, rotulo: nome }));
+    } },
   ], (campo) => {
-    const conta = contas.find((c) => c.id === selecionadoId);
-    return conta ? valorAtual(conta, campo) : "";
+    const r = selecionada();
+    return r ? valorAtual(r, campo) : "";
   });
 
   void verificarApi();
   void recarregar();
-  console.info("[ContasAPagar] tabela de contas recorrentes iniciada");
+  console.info("[ContasAPagar] tabela de contas fixas iniciada");
 }
 
 export function iniciarRecorrentesTabela(): void {

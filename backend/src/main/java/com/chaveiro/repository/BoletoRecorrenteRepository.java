@@ -84,25 +84,16 @@ public class BoletoRecorrenteRepository {
         return conexao.emTransacao(trabalho);
     }
 
-    public boolean atualizar(long id, BoletoRecorrente dados) throws SQLException {
+    /** Atualiza a recorrencia dentro de uma transacao ja aberta (junto com as contas dela). */
+    public boolean atualizar(Connection conn, long id, BoletoRecorrente dados) throws SQLException {
         String sql = "UPDATE boletos_recorrentes SET nome_empresa = ?, id_empresa = ?,"
                 + " pagador_responsavel = ?, categoria = ?, numero_documento = ?, valor_centavos = ?,"
                 + " dia = ?, periodicidade = ?, forma_pagamento = ?, ativo = ?, tipo_pessoa = ?"
                 + " WHERE id_recorrente = ?";
-        try (Connection conn = conexao.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-                preencher(stmt, dados);
-                stmt.setLong(12, id);
-                int linhas = stmt.executeUpdate();
-                conn.commit();
-                return linhas > 0;
-            } catch (SQLException erro) {
-                conn.rollback();
-                throw erro;
-            } finally {
-                conn.setAutoCommit(true);
-            }
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            preencher(stmt, dados);
+            stmt.setLong(12, id);
+            return stmt.executeUpdate() > 0;
         }
     }
 

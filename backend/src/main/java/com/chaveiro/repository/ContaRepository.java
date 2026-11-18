@@ -1,6 +1,7 @@
 package com.chaveiro.repository;
 
 import com.chaveiro.database.ConnectionFactory;
+import com.chaveiro.model.BoletoRecorrente;
 import com.chaveiro.model.Conta;
 import com.chaveiro.service.ConflitoIntegridadeException;
 import java.math.BigDecimal;
@@ -10,7 +11,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -253,6 +258,63 @@ public class ContaRepository {
         stmt.setString(p++, dados.vencimento().toString());
         stmt.setInt(p++, dados.boletoNaPasta() ? 1 : 0);
         return p;
+    }
+
+    /**
+     * Editar a conta fixa vale para TODAS as contas dela ainda nao pagas (de todos os meses).
+     * So os campos que mudaram sao copiados: um ajuste feito num mes so (em Todas as Contas)
+     * continua, a nao ser que aquele mesmo campo seja mudado na conta fixa.
+     * As ja pagas ficam como estao (historico). Devolve quantas contas mudaram.
+     */
+    public int propagarRecorrencia(Connection conn, long idRecorrente, BoletoRecorrente antes, BoletoRecorrente depois)
+            throws SQLException {
+        Map<String, Object> mudou = new LinkedHashMap<>();
+        if (!antes.nomeEmpresa().equals(depois.nomeEmpresa())) mudou.put("nome_empresa", depois.nomeEmpresa());
+        if (!antes.pagadorResponsavel().equals(depois.pagadorResponsavel())) mudou.put("pagador_responsavel", depois.pagadorResponsavel());
+        if (!antes.tipoPessoa().equals(depois.tipoPessoa())) mudou.put("tipo_pessoa", depois.tipoPessoa());
+        String formaAntes = antes.formaPagamento() == null ? "boleto" : antes.formaPagamento();
+        String formaDepois = depois.formaPagamento() == null ? "boleto" : depois.formaPagamento();
+        if (!formaAntes.equals(formaDepois)) mudou.put("forma_pagamento", formaDepois);
+        if (antes.valor().compareTo(depois.valor()) != 0) mudou.put("valor_centavos", depois.valor().movePointRight(2).longValueExact());
+
+        Map<Long, LocalDate> pendentes = new LinkedHashMap<>();
+        try (PreparedStatement stmt = conn.prepareStatement(
+                "SELECT id_conta, vencimento FROM contas_a_pagar WHERE id_recorrente = ? AND status = 'PENDENTE'")) {
+            stmt.setLong(1, idRecorrente);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    pendentes.put(rs.getLong(1), LocalDate.parse(rs.getString(2)));
+                }
+            }
+        }
+        boolean mudouDia = antes.dia() != depois.dia();
+        if (pendentes.isEmpty() || (mudou.isEmpty() && !mudouDia)) {
+            return 0;
+        }
+        StringBuilder sql = new StringBuilder("UPDATE contas_a_pagar SET ");
+        List<String> partes = new ArrayList<>();
+        mudou.keySet().forEach(coluna -> partes.add(coluna + " = ?"));
+        if (mudouDia) partes.add("vencimento = ?");
+        sql.append(String.join(", ", partes)).append(" WHERE id_conta = ? AND status = 'PENDENTE'");
+        int alteradas = 0;
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            for (Map.Entry<Long, LocalDate> conta : pendentes.entrySet()) {
+                int p = 1;
+                for (Object valor : mudou.values()) {
+                    stmt.setObject(p++, valor);
+                }
+                if (mudouDia) {
+                    // mesmo mes, dia novo (mes sem o dia: ultimo dia do mes)
+                    YearMonth mes = YearMonth.from(conta.getValue());
+                    stmt.setString(p++, mes.atDay(Math.min(depois.dia(), mes.lengthOfMonth())).toString());
+                }
+                stmt.setLong(p, conta.getKey());
+                alteradas += stmt.executeUpdate();
+            }
+        }
+        log.info("recorrencia {}: {} contas pendentes atualizadas (campos {}{})", idRecorrente, alteradas,
+                mudou.keySet(), mudouDia ? " + dia" : "");
+        return alteradas;
     }
 
     private static void preencher(PreparedStatement stmt, Conta dados, byte[] anexoPdf) throws SQLException {

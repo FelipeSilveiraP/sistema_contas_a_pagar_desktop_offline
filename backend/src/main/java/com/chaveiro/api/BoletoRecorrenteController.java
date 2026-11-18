@@ -66,7 +66,7 @@ public class BoletoRecorrenteController {
     }
 
     @PutMapping("/{id}")
-    public BoletoRecorrente atualizar(@PathVariable long id, @RequestBody RecorrenteRequest requisicao) {
+    public BoletoRecorrenteService.Atualizacao atualizar(@PathVariable long id, @RequestBody RecorrenteRequest requisicao) {
         return service.atualizar(id, paraModelo(requisicao));
     }
 

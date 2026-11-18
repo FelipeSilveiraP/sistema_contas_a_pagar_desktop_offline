@@ -139,6 +139,15 @@ class SqlInjectionApiTest {
         recorrente.put("tipoPessoa", "PJ");
         JsonNode recorrenteCriado = criar("/api/recorrentes", recorrente);
         assertThat(recorrenteCriado.get("nomeEmpresa").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
+        // editar a conta fixa (vale para as contas nao pagas dela): JSON = campos + contasAlteradas
+        recorrente.put("valor", 2);
+        MvcResult editado = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/recorrentes/" + recorrenteCriado.get("id").asLong()).header("X-FinDesk-Token", TOKEN)
+                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(recorrente)))
+                .andExpect(status().isOk()).andReturn();
+        JsonNode corpoEditado = json.readTree(editado.getResponse().getContentAsByteArray());
+        assertThat(corpoEditado.get("nomeEmpresa").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
+        assertThat(corpoEditado.get("contasAlteradas").asInt()).isEqualTo(12);
 
         // ---- banco (a chave Pix nao aceita espacos: vai o ataque sem espacos) ----
         String semEspaco = ataque.replace(" ", "");

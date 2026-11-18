@@ -213,3 +213,8 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - A faixa "Recados de hoje" só aparece quando há recado (1 no painel; todos no EXPANDIR).
 - O nome do botão (faixa branca) nunca encolhe: quem encolhe é o quadrado do ícone. Coberto pelo smoke 12c (7 contas, 5 resoluções).
 - Mensagens que não cabem no painel (mais de 2 contas ou mais de 1 recado): ao entrar com o PIN o pop-up EXPANDIR abre sozinho (uma vez por entrada, pelo token da sessão); ao fechar, o painel fica recolhido numa faixa "MENSAGENS URGENTES" (rosa se há atrasada) que reabre o pop-up. O aviso de versão nova espera o pop-up fechar.
+
+## 2026-11-18 — Contas recorrentes: uma tabela só e edição geral
+- A tela "Todas contas recorrentes" mostra só as contas fixas (vencimento "todo dia N", empresa, valor, conta, formato, pagador, frequência, ações). As contas de cada mês ficam em Todas as Contas (lá se edita um mês só).
+- Editar a conta fixa (PUT /api/recorrentes/{id}) muda, na mesma transação, todas as contas dela ainda NÃO pagas, de todos os meses; as pagas ficam como estão. Só os campos que mudaram são copiados (ajuste de um mês só continua, a não ser que o mesmo campo seja mudado na fixa). Dia novo = mesmo mês, dia novo (mês sem o dia: último dia). A resposta traz `contasAlteradas`.
+- A frequência não muda pela edição (mudaria quais meses existem): exclua e cadastre de novo.

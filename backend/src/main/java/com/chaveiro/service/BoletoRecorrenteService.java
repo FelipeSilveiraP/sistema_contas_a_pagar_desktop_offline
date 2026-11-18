@@ -1,6 +1,7 @@
 package com.chaveiro.service;
 
 import com.chaveiro.model.BoletoRecorrente;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.chaveiro.model.Conta;
 import com.chaveiro.repository.BoletoRecorrenteRepository;
 import com.chaveiro.repository.ContaRepository;
@@ -86,14 +87,34 @@ public class BoletoRecorrenteService {
         }
     }
 
-    public BoletoRecorrente atualizar(long id, BoletoRecorrente dados) {
+    /** Resultado da edicao: a conta fixa e quantas contas nao pagas dela mudaram junto. */
+    /** JSON: os campos da conta fixa + "contasAlteradas". */
+    public record Atualizacao(@JsonUnwrapped BoletoRecorrente recorrente, int contasAlteradas) {}
+
+    /**
+     * Edita a conta fixa e, na MESMA transacao, todas as contas dela ainda nao pagas
+     * (de todos os meses). A frequencia nao muda aqui: mudaria quais meses existem.
+     */
+    public Atualizacao atualizar(long id, BoletoRecorrente dados) {
+        BoletoRecorrente antes = buscarPorId(id);
         BoletoRecorrente normalizado = normalizar(dados);
         validar(normalizado);
+        if (!normalizado.periodicidade().equals(antes.periodicidade())) {
+            throw new DadosInvalidosException(Map.of("periodicidade",
+                    "A frequência não pode ser mudada. Para mudar, exclua a conta fixa e cadastre de novo."));
+        }
         try {
-            if (!repository.atualizar(id, normalizado)) {
-                throw new RecursoNaoEncontradoException("recorrencia");
-            }
-            return repository.buscarPorId(id).orElse(normalizado);
+            return repository.emTransacao(conn -> {
+                if (!repository.atualizar(conn, id, normalizado)) {
+                    throw new RecursoNaoEncontradoException("recorrencia");
+                }
+                int alteradas = contas.propagarRecorrencia(conn, id, antes, normalizado);
+                BoletoRecorrente depois = new BoletoRecorrente(id, normalizado.nomeEmpresa(), normalizado.idEmpresa(),
+                        normalizado.pagadorResponsavel(), normalizado.categoria(), normalizado.numeroDocumento(),
+                        normalizado.valor(), normalizado.dia(), normalizado.periodicidade(), normalizado.formaPagamento(),
+                        normalizado.ativo(), normalizado.tipoPessoa());
+                return new Atualizacao(depois, alteradas);
+            });
         } catch (SQLException erro) {
             if (duplicada(erro)) {
                 throw new ConflitoIntegridadeException(MENSAGEM_DUPLICADA);

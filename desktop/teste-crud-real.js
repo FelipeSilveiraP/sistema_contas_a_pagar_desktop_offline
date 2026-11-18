@@ -420,24 +420,24 @@ async function executar() {
   await clicarSel("#btn-salvar");
   teste("Recorrente: SALVAR cria a conta fixa", await esperarPredicado("document.body.dataset.recorrenteSalva !== undefined", 8000), await notificacoes());
   await ir("recorrentes-tabela");
-  // espera a tabela carregar (contar logo apos abrir a tela dava 0 as vezes)
-  const contarGeradas = `Array.from(document.querySelectorAll('#tableBody tr')).filter((tr) => tr.textContent.toUpperCase().includes('ALUGUEL DO GALPÃO')).length`;
-  await esperarPredicado(`${contarGeradas} === 12`, 6000);
-  const linhasGeradas = await js(contarGeradas);
-  teste("Recorrentes: 12 contas geradas", linhasGeradas === 12, String(linhasGeradas));
-  teste("Recorrentes: contas geradas com PF e Débito automático", await js(`(() => { const tr = ${linhaCom("#tableBody", "Aluguel do Galpão")}; return !!tr && tr.textContent.includes('PF') && tr.textContent.includes('Débito automático') && tr.textContent.includes('Carlos Eduardo Silva'); })()`));
-  const linhaFixa = linhaCom("#recorrentesCadastradas", "Aluguel do Galpão");
+  // uma tabela so: a conta fixa (as 12 contas geradas ficam em Todas as Contas)
+  const linhaFixa = linhaCom("#tableBody", "Aluguel do Galpão");
+  await esperarPredicado(`!!(${linhaFixa})`, 6000);
+  teste("Recorrentes: conta fixa com PF, Débito automático, pagador e dia", await js(`(() => { const tr = ${linhaFixa}; return !!tr && tr.textContent.includes('PF') && tr.textContent.includes('Débito automático') && tr.textContent.toUpperCase().includes('CARLOS EDUARDO SILVA') && tr.textContent.includes('Todo dia 10'); })()`));
+  const geradasApi = await js(`(async () => { const cfg = await window.finDesk.config(); const r = await fetch('http://127.0.0.1:' + cfg.port + '/api/contas', { headers: { 'X-FinDesk-Token': cfg.token } });
+    return (await r.json()).filter((c) => c.nomeEmpresa.toUpperCase() === 'ALUGUEL DO GALPÃO').length; })()`);
+  teste("Recorrentes: 12 contas geradas", geradasApi === 12, String(geradasApi));
   await clicar(`(${linhaFixa}).querySelector('button')`);
   teste("Recorrentes: GERAR PRÓXIMOS MESES não duplica (12 já existem)", await esperarNotificacao("já existem"), await notificacoes());
-  await clicar(linhaCom("#tableBody", "Aluguel do Galpão"));
+  await clicar(linhaFixa);
   await escolher("#fieldSelect", "valor");
   await digitarEm("#newValueInput", "260000");
   await clicarSel("#btnApplyChange");
-  teste("Recorrentes: editar o valor de uma competência salva", await esperarNotificacao("Alterações salvas"));
+  teste("Recorrentes: editar o valor da conta fixa muda os 12 meses", await esperarNotificacao("12 contas não pagas"), await notificacoes());
   await clicar(`(${linhaFixa}).querySelectorAll('button')[1]`);
   const tituloExcluirFixa = await responderDialogo("confirmar");
   teste("Recorrentes: excluir a conta fixa remove a fixa e as 12 contas pendentes", String(tituloExcluirFixa).includes("EXCLUIR") &&
-    await esperarPredicado(`!(${linhaFixa}) && !(${linhaCom("#tableBody", "Aluguel do Galpão")})`, 6000), String(tituloExcluirFixa));
+    await esperarPredicado(`!(${linhaFixa})`, 6000), String(tituloExcluirFixa));
 
   // ---------- 11. MENSAGENS: criar, ver no Menu, editar, excluir ----------
   await ir("criar-mensagem");

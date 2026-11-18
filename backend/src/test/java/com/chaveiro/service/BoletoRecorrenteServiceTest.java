@@ -113,7 +113,7 @@ class BoletoRecorrenteServiceTest {
                 .isInstanceOf(ConflitoIntegridadeException.class);
         // editar outro campo da propria recorrencia continua permitido
         BoletoRecorrente editada = service.atualizar(outra.id(), new BoletoRecorrente(null, "Aluguel do Galpão", null,
-                "Financeiro", null, null, new BigDecimal("1500.00"), 20, "MENSAL", "pix", true, "PJ"));
+                "Financeiro", null, null, new BigDecimal("1500.00"), 20, "MENSAL", "pix", true, "PJ")).recorrente();
         assertThat(editada.pagadorResponsavel()).isEqualTo("FINANCEIRO");
     }
 
@@ -140,6 +140,61 @@ class BoletoRecorrenteServiceTest {
         List<Conta> restantes = contas.listar(null);
         assertThat(restantes).hasSize(1);
         assertThat(restantes.get(0).status()).isEqualTo("PAGO");
+    }
+
+    @Test
+    void editarContaFixaMudaTodasAsContasNaoPagasDeTodosOsMeses() throws Exception {
+        BoletoRecorrente criado = service.cadastrar(recorrente(31, "MENSAL"));
+        List<Conta> geradas = contas.listar(null);
+        assertThat(geradas).hasSize(12);
+        Conta paga = geradas.get(0);
+        new com.chaveiro.repository.PagamentoRepository(new ConnectionFactory(pastaTemporaria.resolve("contas_teste.db").toString()))
+                .registrar(paga.id(), new com.chaveiro.model.Pagamento(null, paga.id(),
+                        java.time.LocalDate.now(), paga.valor(), null, null, null, null));
+        // ajuste feito so num mes (em Todas as Contas): o valor de uma competencia
+        Conta ajustada = geradas.get(5);
+        try (var c = new ConnectionFactory(pastaTemporaria.resolve("contas_teste.db").toString()).getConnection();
+             var st = c.createStatement()) {
+            st.executeUpdate("UPDATE contas_a_pagar SET valor_centavos = 99900 WHERE id_conta = " + ajustada.id());
+        }
+
+        // muda empresa, pagador, conta, formato e dia (mantem o valor)
+        var feita = service.atualizar(criado.id(), new BoletoRecorrente(null, "aluguel novo", null, "livia", null, null,
+                new BigDecimal("1500.00"), 10, "MENSAL", "pix", true, "PF"));
+        assertThat(feita.contasAlteradas()).isEqualTo(11);
+        assertThat(feita.recorrente().nomeEmpresa()).isEqualTo("ALUGUEL NOVO");
+
+        for (Conta c : contas.listar(null)) {
+            if (c.id().equals(paga.id())) {
+                // a paga fica como estava (historico)
+                assertThat(c.nomeEmpresa()).isEqualTo("ALUGUEL DO GALPÃO");
+                assertThat(c.vencimento()).isEqualTo(paga.vencimento());
+                continue;
+            }
+            assertThat(c.nomeEmpresa()).isEqualTo("ALUGUEL NOVO");
+            assertThat(c.pagadorResponsavel()).isEqualTo("LIVIA");
+            assertThat(c.tipoPessoa()).isEqualTo("PF");
+            assertThat(c.formaPagamento()).isEqualTo("pix");
+            // mesmo mes, dia novo
+            assertThat(c.vencimento().getDayOfMonth()).isEqualTo(10);
+            Conta original = geradas.stream().filter(g -> g.id().equals(c.id())).findFirst().orElseThrow();
+            assertThat(YearMonth.from(c.vencimento())).isEqualTo(YearMonth.from(original.vencimento()));
+            // o valor nao foi mexido na conta fixa: o ajuste do mes continua
+            assertThat(c.valor()).isEqualByComparingTo(c.id().equals(ajustada.id()) ? "999.00" : "1500.00");
+        }
+
+        // agora muda o valor: vale para todas as nao pagas (inclusive a ajustada)
+        service.atualizar(criado.id(), new BoletoRecorrente(null, "aluguel novo", null, "livia", null, null,
+                new BigDecimal("1750.50"), 10, "MENSAL", "pix", true, "PF"));
+        assertThat(contas.listar(null)).filteredOn(c -> !c.id().equals(paga.id()))
+                .allSatisfy(c -> assertThat(c.valor()).isEqualByComparingTo("1750.50"));
+        assertThat(contas.listar(null)).filteredOn(c -> c.id().equals(paga.id()))
+                .singleElement().satisfies(c -> assertThat(c.valor()).isEqualByComparingTo("1500.00"));
+
+        // a frequencia nao muda pela edicao
+        assertThatThrownBy(() -> service.atualizar(criado.id(), new BoletoRecorrente(null, "aluguel novo", null, "livia",
+                null, null, new BigDecimal("1750.50"), 10, "TRIMESTRAL", "pix", true, "PF")))
+                .isInstanceOf(DadosInvalidosException.class);
     }
 
     @Test

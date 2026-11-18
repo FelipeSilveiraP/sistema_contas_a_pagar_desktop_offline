@@ -25,54 +25,40 @@
 <div class="w-full bg-white border-[#1c1b1b] p-3 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 border-2">
 <div class="relative flex-1 min-w-[240px]">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">search</span>
-<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border-2" id="searchInput" placeholder="Pesquisar empresa, documento, pagador ou valor..." type="text">
+<input class="w-full pl-9 pr-3 py-2 border-[#1c1b1b] bg-[#fcf9f8] text-sm font-medium placeholder-gray-500 focus:bg-white focus:outline-none focus:ring-0 uppercase border-2" id="searchInput" placeholder="Pesquisar empresa, pagador ou valor..." type="text">
 </div>
 <div class="flex flex-wrap items-center gap-2" id="filterPillsGroup">
 <button class="filter-btn active-filter bg-[#1c1b1b] text-white border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="TODOS" type="button">TODOS</button>
-<button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="AVENCER" type="button">A VENCER</button>
-<button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="HOJE" type="button">VENCEM HOJE</button>
-<button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="ATRASADO" type="button">ATRASADOS</button>
 <button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="PF" type="button">PF</button>
 <button class="filter-btn bg-white hover:bg-neutral-100 text-[#1c1b1b] border-2 border-[#1c1b1b] font-mono text-xs font-bold px-3 py-2 leading-none whitespace-nowrap shadow-[2px_2px_0px_0px_#1c1b1b] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer" data-filter="PJ" type="button">PJ</button>
 </div>
 </div>
 </header>
-<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border-2">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse" id="billsTable">
-<thead>
-<tr class="bg-[#38bdf8] text-[#1c1b1b] border-[#1c1b1b] font-mono text-xs uppercase tracking-wider select-none border-b">
-<th class="py-3.5 px-4 w-32 whitespace-nowrap font-black font-headline">VENCIMENTO</th>
-<th class="py-3.5 px-4 min-w-[200px] font-black font-headline">EMPRESA</th>
-<th class="py-3.5 px-4 w-32 text-right whitespace-nowrap font-black font-headline">VALOR (R$)</th>
-<th class="py-3.5 px-4 w-24 text-center whitespace-nowrap font-black font-headline">CONTA</th>
-<th class="py-3.5 px-4 w-40 text-center whitespace-nowrap font-black font-headline">FORMATO CONTA</th>
-<th class="py-3.5 px-4 min-w-[170px] whitespace-nowrap font-black font-headline">PAGADOR RESPONSÁVEL</th>
-</tr>
-</thead>
-<tbody class="divide-[#1c1b1b] text-sm font-semibold divide-y" id="tableBody"></tbody>
-</table>
-</div>
-<div id="selectionEmptyState" class="p-6 text-center">
-<p class="font-mono text-sm font-bold text-neutral-500 uppercase">Nenhuma conta fixa gerada — cadastre uma recorrência em "Cadastrar Nova Conta Recorrente".</p>
-</div>
-</main>
-<section class="w-full bg-white border-[#1c1b1b] border-2" aria-labelledby="tituloCadastradas">
+<main class="w-full bg-white border-[#1c1b1b] overflow-hidden border-2" aria-labelledby="tituloCadastradas">
 <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#1c1b1b] bg-[#ede9fe] px-4 py-2.5">
 <h2 class="text-sm sm:text-base font-bold uppercase tracking-tight flex items-center gap-2" id="tituloCadastradas"><span class="material-symbols-outlined text-lg">event_repeat</span>Contas fixas cadastradas</h2>
-<span class="text-xs font-mono font-bold text-neutral-600 uppercase">Cada uma gera os próximos 12 meses</span>
+<span class="text-xs font-mono font-bold text-neutral-600 uppercase">Editar aqui muda todos os meses ainda não pagos · um mês só: Todas as Contas</span>
 </div>
 <div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead class="bg-[#7c3aed] text-white font-mono text-xs uppercase tracking-wider"><tr>
-<th class="py-2.5 px-3">Fornecedor</th><th class="py-2.5 px-3 text-right">Valor</th><th class="py-2.5 px-3 text-center">Dia</th>
-<th class="py-2.5 px-3 text-center">Periodicidade</th><th class="py-2.5 px-3 text-center">Conta</th><th class="py-2.5 px-3">Pagador</th><th class="py-2.5 px-3 text-center">Ações</th>
+<table class="w-full text-left border-collapse" id="billsTable">
+<thead class="bg-[#7c3aed] text-white font-mono text-xs uppercase tracking-wider select-none"><tr>
+<th class="py-3 px-3 whitespace-nowrap">Vencimento</th>
+<th class="py-3 px-3 min-w-[180px]">Empresa</th>
+<th class="py-3 px-3 text-right whitespace-nowrap">Valor (R$)</th>
+<th class="py-3 px-3 text-center">Conta</th>
+<th class="py-3 px-3 text-center whitespace-nowrap">Formato conta</th>
+<th class="py-3 px-3 whitespace-nowrap">Pagador responsável</th>
+<th class="py-3 px-3 text-center">Frequência</th>
+<th class="py-3 px-3 text-center">Ações</th>
 </tr></thead>
-<tbody class="divide-y-2 divide-[#1c1b1b] text-sm font-bold" id="recorrentesCadastradas"></tbody>
+<tbody class="divide-y-2 divide-[#1c1b1b] text-sm font-bold" id="tableBody"></tbody>
 </table>
 </div>
-</section>
-<div class="area-edicao-vazia aviso-selecao" id="selectionEmptyHint"><span class="material-symbols-outlined text-2xl" aria-hidden="true">touch_app</span><p>Nenhuma conta fixa selecionada — clique em uma linha para editar.</p></div>
+<div id="selectionEmptyState" class="p-6 text-center hidden">
+<p class="font-mono text-sm font-bold text-neutral-500 uppercase">Nenhuma conta fixa cadastrada — use "Cadastrar Nova Conta Recorrente".</p>
+</div>
+</main>
+<div class="area-edicao-vazia aviso-selecao" id="selectionEmptyHint"><span class="material-symbols-outlined text-2xl" aria-hidden="true">touch_app</span><p>Nenhuma conta fixa selecionada — clique em uma linha para editar (muda todos os meses ainda não pagos).</p></div>
 <section class="w-full bg-white border-2 border-[#1c1b1b] flex flex-col hidden" id="editorContainer" aria-labelledby="editorRecordName">
 <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5 bg-white border-b-2 border-[#1c1b1b]">
 <div class="flex items-center gap-3 min-w-0">
