@@ -25,6 +25,7 @@ import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { confirmarExclusao } from "../componentes";
 import { notificar } from "../notificacoes";
 import { montarNavbar } from "../navbar";
+import { recolherTabela } from "../tabela-recolhivel";
 import { criarAvatar, definirPerfil, exigirPerfil } from "../perfil";
 
 const TIPOS: Record<string, string> = {
@@ -146,6 +147,7 @@ function renderTabela(): void {
   corpo.replaceChildren(...usuarios.map((u) => {
     const tr = document.createElement("tr");
     tr.className = "cursor-pointer hover:bg-[#fff9d6]";
+    tr.dataset.id = String(u.id);
     if (u.id === selecionadoId) tr.classList.add("bg-[#FFE600]");
     if (!u.ativo) tr.classList.add("text-neutral-500");
     const celula = (conteudo: string | HTMLElement, classe = ""): HTMLTableCellElement => {
@@ -169,6 +171,7 @@ function renderTabela(): void {
     return tr;
   }));
   document.body.dataset.usuarios = String(usuarios.length);
+  recolherTabela("usuarios", corpo, corpo.closest("table")!.parentElement as HTMLElement, selecionadoId);
 }
 
 async function selecionar(id: number): Promise<void> {
@@ -185,11 +188,13 @@ async function selecionar(id: number): Promise<void> {
   renderTabela();
   const acessos = await listarAcessos(await window.finDesk!.config(), id, 30);
   el("acessos-conta").replaceChildren(...(acessos.length ? acessos.map((a) => linhaAcesso(a, false)) : [semAcessos()]));
+  recolherTabela("acessos-conta", el("acessos-conta"), el("acessos-conta"));
 }
 
 function semAcessos(): HTMLLIElement {
   const li = document.createElement("li");
   li.textContent = "Nenhum acesso ainda.";
+  li.dataset.vazio = "true";
   return li;
 }
 
@@ -204,6 +209,7 @@ async function recarregarAdmin(): Promise<void> {
   }
   const todos = await listarAcessos(cfg, undefined, 100);
   el("acessos-todos").replaceChildren(...(todos.length ? todos.map((a) => linhaAcesso(a, true)) : [semAcessos()]));
+  recolherTabela("acessos-todos", el("acessos-todos"), el("acessos-todos"));
   const email = await configEmail(cfg);
   el("email-situacao").textContent = email.configurado ? `Configurado: ${email.remetente}` : "Ainda não configurado: sem ele, \"Esqueci meu PIN\" não funciona.";
   if (email.remetente) el<HTMLInputElement>("e_remetente").value = email.remetente;

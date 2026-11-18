@@ -3,12 +3,28 @@
 import { iniciarDiagnostico } from "./diagnostico";
 import { iniciarNotificacoes } from "./notificacoes";
 import { ligarEnterEnvia } from "./enter-envia";
+import { ligarDicas } from "./dicas";
 
 iniciarDiagnostico();
 // Enter em qualquer campo = botao de enviar/concluir daquele formulario
 ligarEnterEnvia();
 // regioes vivas das notificacoes existem desde o carregamento (e mostram o aviso deixado pela tela anterior)
 iniciarNotificacoes();
+// dica do Windows ao parar o mouse em cima de qualquer botao
+ligarDicas({
+  "INSERIR CONTA": "Inserir conta: cadastrar um boleto ou conta a pagar",
+  CONTROLE: "Controle: ver, pagar, editar e excluir as contas (todas, pagas e recorrentes)",
+  CADASTROS: "Cadastros: empresas, bancos e pagadores",
+  MENSAGENS: "Mensagens: recados e avisos que aparecem no Menu",
+  "GRÁFICOS": "Gráficos e relatórios das contas",
+  "MENU PRINCIPAL": "Voltar para o Menu Principal",
+  VOLTAR: "Voltar para a tela anterior",
+  EXPANDIR: "Ver todas as contas e recados do dia",
+  "VER NO CONTROLE": "Abrir Todas as Contas",
+  "GERAR PRÓXIMOS MESES": "Criar as contas dos próximos 12 meses que ainda faltam",
+  APLICAR: "Salvar a alteração deste campo",
+  DESFAZER: "Voltar o campo ao valor gravado",
+});
 
 const tela = document.body.dataset.tela ?? "menu";
 

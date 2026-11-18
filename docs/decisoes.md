@@ -218,3 +218,7 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - A tela "Todas contas recorrentes" mostra só as contas fixas (vencimento "todo dia N", empresa, valor, conta, formato, pagador, frequência, ações). As contas de cada mês ficam em Todas as Contas (lá se edita um mês só).
 - Editar a conta fixa (PUT /api/recorrentes/{id}) muda, na mesma transação, todas as contas dela ainda NÃO pagas, de todos os meses; as pagas ficam como estão. Só os campos que mudaram são copiados (ajuste de um mês só continua, a não ser que o mesmo campo seja mudado na fixa). Dia novo = mesmo mês, dia novo (mês sem o dia: último dia). A resposta traz `contasAlteradas`.
 - A frequência não muda pela edição (mudaria quais meses existem): exclua e cadastre de novo.
+
+## 2026-11-18 — Dica ao parar o mouse + todas as tabelas com 5 linhas
+- `frontend/ts/dicas.ts` (igual no Garantias): todo botão/link ganha `title` (dica do Windows). Ordem: title escrito à mão > DESCRICOES do main.ts (telas principais, com explicação) > aria-label/texto (+ descrição do cartão) > ícone. Refeita sozinha quando o texto do botão muda.
+- `tabela-recolhivel.ts` vale também para listas `<ul>` (itens com `data-vazio="true"` não contam); agora também na tabela de usuários e nos históricos de acesso.

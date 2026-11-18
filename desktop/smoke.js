@@ -1815,6 +1815,8 @@ async function executar() {
   await js("window.finDesk.navegar('recorrentes-tabela')");
   await esperarTela("recorrentes-tabela");
   const linhaRec = `document.querySelector('#tableBody tr[data-recorrente="${recEd.body.id}"]')`;
+  teste("Dica do Windows: todo botão visível tem o nome ao parar o mouse", await esperarPredicado("[...document.querySelectorAll('button')].filter(b => b.offsetParent !== null).every(b => b.title.trim().length > 0)", 4000),
+    await js("[...document.querySelectorAll('button')].filter(b => b.offsetParent !== null && !b.title).map(b => b.outerHTML.slice(0, 90)).join(' | ')"));
   teste("Recorrentes: uma tabela só, com as colunas da conta fixa", await esperarPredicado(`!!${linhaRec}`, 8000) && await js(`(() => {
     const th = [...document.querySelectorAll('#billsTable thead th')].map((t) => t.textContent.trim().toUpperCase());
     return document.querySelectorAll('table').length === 1 && ['VENCIMENTO', 'EMPRESA', 'VALOR (R$)', 'CONTA', 'FORMATO CONTA', 'PAGADOR RESPONSÁVEL', 'FREQUÊNCIA', 'AÇÕES'].every((c) => th.includes(c))
@@ -1854,6 +1856,8 @@ async function executar() {
   await js("window.finDesk.navegar('menu')");
   await esperarTela("menu");
   await esperarPredicado("Number(document.body.dataset.alertas) >= 7", 8000);
+  teste("Menu: cartões têm a dica do que fazem ao parar o mouse", await esperarPredicado("document.querySelector('a[data-path=inserir-conta]').title.startsWith('Inserir conta:') && document.querySelector('a[data-path=cadastros]').title.startsWith('Cadastros:')", 3000),
+    await js("[...document.querySelectorAll('a[data-path]')].map(a => a.title).join(' | ')"));
   teste("Menu: mesmo login, as mensagens não abrem sozinhas de novo", await js("document.body.dataset.mensagensExpandidas === undefined"));
   teste("Menu: mensagens que não cabem ficam recolhidas em MENSAGENS URGENTES", await js(`(() => {
     const f = document.getElementById('mensagens-recolhidas'); return !!f && f.offsetHeight > 0 && f.offsetHeight < 80

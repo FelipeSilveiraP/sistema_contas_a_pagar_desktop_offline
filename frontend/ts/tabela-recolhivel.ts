@@ -16,12 +16,16 @@ const reaplicar = new Map<string, () => void>();
  */
 export function recolherTabela(
   chave: string,
-  corpo: HTMLTableSectionElement,
+  corpo: HTMLElement,
   depoisDe: HTMLElement,
   selecionadoId?: number | null,
 ): void {
-  // linha de "nenhum registro" (uma celula so) nao conta
-  const linhas = [...corpo.rows].filter((tr) => !(tr.cells.length === 1 && tr.cells[0].colSpan > 1));
+  // vale para <tbody> (linhas) e para listas <ul> (itens); a linha de "nenhum registro"
+  // (uma celula so, ou item sem dados) nao conta
+  const linhas = ([...corpo.children] as HTMLElement[]).filter((linha) => {
+    if (linha instanceof HTMLTableRowElement) return !(linha.cells.length === 1 && linha.cells[0].colSpan > 1);
+    return linha.dataset.vazio !== "true";
+  });
   const aberta = expandida.get(chave) === true;
   const selecionado = selecionadoId == null ? null : String(selecionadoId);
   let visiveis = 0;
