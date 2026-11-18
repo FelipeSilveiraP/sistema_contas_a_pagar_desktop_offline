@@ -78,6 +78,9 @@ public class BoletoRecorrenteService {
                 return criado;
             });
         } catch (SQLException erro) {
+            if (duplicada(erro)) {
+                throw new ConflitoIntegridadeException(MENSAGEM_DUPLICADA);
+            }
             log.error("falha ao cadastrar recorrencia", erro);
             throw new IllegalStateException("falha ao salvar a recorrencia", erro);
         }
@@ -92,6 +95,9 @@ public class BoletoRecorrenteService {
             }
             return repository.buscarPorId(id).orElse(normalizado);
         } catch (SQLException erro) {
+            if (duplicada(erro)) {
+                throw new ConflitoIntegridadeException(MENSAGEM_DUPLICADA);
+            }
             log.error("falha ao atualizar recorrencia id={}", id, erro);
             throw new IllegalStateException("falha ao atualizar a recorrencia", erro);
         }
@@ -164,6 +170,14 @@ public class BoletoRecorrenteService {
             }
         }
         return false;
+    }
+
+    static final String MENSAGEM_DUPLICADA =
+            "Já existe uma conta recorrente igual (mesma empresa, valor, dia e frequência). Ela não foi cadastrada de novo.";
+
+    /** O banco recusou (gatilho v20): ja existe uma recorrencia igual. */
+    private static boolean duplicada(SQLException erro) {
+        return erro.getMessage() != null && erro.getMessage().contains("RECORRENTE_DUPLICADA");
     }
 
     private static BoletoRecorrente normalizar(BoletoRecorrente dados) {

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 19;
+    private static final int VERSAO_ATUAL = 20;
 
     private final ConnectionFactory conexao;
 
@@ -401,6 +401,7 @@ public class DatabaseInitializer {
             case 17 -> migracaoSeguranca();
             case 18 -> migracaoAuditoriaRecorrentes();
             case 19 -> contasDeUsuario().toArray(String[]::new);
+            case 20 -> recorrenteSemDuplicata();
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
     }
@@ -681,5 +682,29 @@ public class DatabaseInitializer {
                 + auditar("manutencao", "DELETE", "OLD.rowid", "json_object('chave', OLD.chave)", "NULL") + " END");
         sql.add("CREATE INDEX idx_codigos_usuario ON codigos_redefinicao(id_usuario, criado_em)");
         return sql;
+    }
+
+    /**
+     * v20 (pedido do usuario, 2026-11-18): conta recorrente IGUAL nao entra duas vezes —
+     * mesma empresa (sem ligar para maiuscula/espacos nas pontas), mesmo valor, mesmo dia e
+     * mesma frequencia. Ultima linha de defesa (o servico ja recusa); vale tambem para dois
+     * cliques no SALVAR ao mesmo tempo. Duplicatas antigas nao sao apagadas sozinhas: editar
+     * outro campo delas continua permitido (o gatilho de UPDATE so olha quando a chave muda).
+     */
+    private static String[] recorrenteSemDuplicata() {
+        String igual = "lower(trim(r.nome_empresa)) = lower(trim(NEW.nome_empresa)) AND r.dia = NEW.dia"
+                + " AND r.periodicidade = NEW.periodicidade AND r.valor_centavos = NEW.valor_centavos";
+        return new String[] {
+            "CREATE TRIGGER IF NOT EXISTS trg_recorrente_duplicada_insert BEFORE INSERT ON boletos_recorrentes"
+                    + " WHEN EXISTS (SELECT 1 FROM boletos_recorrentes r WHERE " + igual + ")"
+                    + " BEGIN SELECT RAISE(ABORT, 'RECORRENTE_DUPLICADA: ja existe uma conta recorrente igual'); END",
+            "CREATE TRIGGER IF NOT EXISTS trg_recorrente_duplicada_update BEFORE UPDATE OF nome_empresa, dia, periodicidade,"
+                    + " valor_centavos ON boletos_recorrentes"
+                    + " WHEN (lower(trim(NEW.nome_empresa)) IS NOT lower(trim(OLD.nome_empresa)) OR NEW.dia IS NOT OLD.dia"
+                    + " OR NEW.periodicidade IS NOT OLD.periodicidade OR NEW.valor_centavos IS NOT OLD.valor_centavos)"
+                    + " AND EXISTS (SELECT 1 FROM boletos_recorrentes r WHERE " + igual
+                    + " AND r.id_recorrente <> NEW.id_recorrente)"
+                    + " BEGIN SELECT RAISE(ABORT, 'RECORRENTE_DUPLICADA: ja existe uma conta recorrente igual'); END",
+        };
     }
 }

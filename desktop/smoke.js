@@ -1736,6 +1736,32 @@ async function executar() {
     JSON.stringify(largurasIcones)
   );
 
+  // 12a. Conta recorrente igual nao entra duas vezes (nem com dois cliques no SALVAR)
+  const apiRec = async (metodo, caminho) => JSON.parse(await js(`(async () => {
+    const cfg = await window.finDesk.config();
+    const r = await fetch('http://127.0.0.1:' + cfg.port + ${JSON.stringify(caminho)}, { method: ${JSON.stringify(metodo)}, headers: { 'X-FinDesk-Token': cfg.token } });
+    return JSON.stringify({ status: r.status, body: r.status === 204 ? null : await r.json() });
+  })()`));
+  const nomeRec = `RECORRENTE DUPLA ${Date.now()}`;
+  const preencherRec = () => js(`(() => { const v = (id, t) => { const e = document.getElementById(id); e.value = t; e.dispatchEvent(new Event('input', { bubbles: true })); };
+    v('fornecedor', ${JSON.stringify(nomeRec)}); v('valor_previsto', '123,45'); v('dia_vencimento', '7'); return true; })()`);
+  await js("window.finDesk.navegar('form-recorrente')");
+  await esperarTela("form-recorrente");
+  await preencherRec();
+  await js("(() => { const b = document.getElementById('btn-salvar'); b.click(); b.click(); document.getElementById('recorrente-form').requestSubmit(); return true; })()");
+  await esperarPredicado("!!document.body.dataset.recorrenteSalva", 8000);
+  await esperar(1500);
+  const recs = (await apiRec("GET", "/api/recorrentes")).body.filter((r) => r.nomeEmpresa === nomeRec);
+  teste("Recorrente: dois cliques no SALVAR gravam uma vez só", recs.length === 1, `${recs.length} gravadas`);
+  await js("window.finDesk.navegar('form-recorrente')");
+  await esperarTela("form-recorrente");
+  await preencherRec();
+  await js("document.getElementById('btn-salvar').click()");
+  teste("Recorrente igual: recusada com o aviso de que já existe", await esperarPredicado("document.getElementById('feedback-recorrente').textContent.includes('Já existe uma conta recorrente igual')", 6000),
+    await js("document.getElementById('feedback-recorrente').textContent"));
+  teste("Recorrente igual: continua só uma no banco", (await apiRec("GET", "/api/recorrentes")).body.filter((r) => r.nomeEmpresa === nomeRec).length === 1);
+  for (const r of recs) await apiRec("DELETE", `/api/recorrentes/${r.id}`);
+
   // 12b. MARCAR COMO PAGO: pop-up com o banco e a data do pagamento + coluna PAGO EM / BANCO
   const apiPag = async (metodo, caminho, dados) => JSON.parse(await js(`(async () => {
     const cfg = await window.finDesk.config();

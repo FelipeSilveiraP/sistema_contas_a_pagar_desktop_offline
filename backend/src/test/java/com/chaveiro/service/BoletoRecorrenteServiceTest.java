@@ -86,6 +86,38 @@ class BoletoRecorrenteServiceTest {
     }
 
     @Test
+    void naoAceitaContaRecorrenteIgual() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        int contasAntes = contas.listar(null).size();
+        // igual (inclusive com maiuscula/espacos diferentes no nome): recusada, nada novo gravado
+        assertThatThrownBy(() -> service.cadastrar(recorrente(10, "MENSAL")))
+                .isInstanceOf(ConflitoIntegridadeException.class);
+        assertThatThrownBy(() -> service.cadastrar(new BoletoRecorrente(null, "  aluguel DO galpão ", null, "Outro", null,
+                null, new BigDecimal("1500.00"), 10, "MENSAL", "pix", true, "PJ")))
+                .isInstanceOf(ConflitoIntegridadeException.class);
+        assertThat(service.listar()).hasSize(1);
+        assertThat(contas.listar(null)).hasSize(contasAntes);
+        // diferente em valor, dia ou frequencia: e outra recorrencia, pode
+        service.cadastrar(new BoletoRecorrente(null, "Aluguel do Galpão", null, "Gerência", null, null,
+                new BigDecimal("900.00"), 10, "MENSAL", "boleto", true, "PJ"));
+        service.cadastrar(recorrente(20, "MENSAL"));
+        service.cadastrar(recorrente(10, "TRIMESTRAL"));
+        assertThat(service.listar()).hasSize(4);
+    }
+
+    @Test
+    void editarNaoPodeDeixarIgualAOutra() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        BoletoRecorrente outra = service.cadastrar(recorrente(20, "MENSAL"));
+        assertThatThrownBy(() -> service.atualizar(outra.id(), recorrente(10, "MENSAL")))
+                .isInstanceOf(ConflitoIntegridadeException.class);
+        // editar outro campo da propria recorrencia continua permitido
+        BoletoRecorrente editada = service.atualizar(outra.id(), new BoletoRecorrente(null, "Aluguel do Galpão", null,
+                "Financeiro", null, null, new BigDecimal("1500.00"), 20, "MENSAL", "pix", true, "PJ"));
+        assertThat(editada.pagadorResponsavel()).isEqualTo("Financeiro");
+    }
+
+    @Test
     void deveRespeitarPeriodicidade() throws Exception {
         service.cadastrar(recorrente(15, "TRIMESTRAL"));
         List<Conta> geradas = contas.listar(null);

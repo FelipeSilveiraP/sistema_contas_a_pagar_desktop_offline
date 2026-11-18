@@ -72,7 +72,11 @@ function mostrarFeedback(mensagem: string, sucesso: boolean): void {
   feedback.classList.toggle("text-[#ba1a1a]", !sucesso);
 }
 
+// um clique so: enquanto salva (e depois de salvo, ate voltar) o SALVAR nao grava de novo
+let salvando = false;
+
 async function submeter(): Promise<void> {
+  if (salvando) return;
   const erros = validar();
   mostrarErros(erros);
   if (Object.keys(erros).length > 0) {
@@ -80,6 +84,10 @@ async function submeter(): Promise<void> {
     return;
   }
   const dados = lerCampos();
+  salvando = true;
+  const botaoSalvar = document.getElementById("btn-salvar") as HTMLButtonElement | null;
+  if (botaoSalvar) botaoSalvar.disabled = true;
+  let salva = false;
   try {
     const cfg = await window.finDesk!.config();
     const criada = await criarRecorrente(cfg, {
@@ -95,6 +103,7 @@ async function submeter(): Promise<void> {
       ativo: true,
       tipoPessoa: dados.tipoPessoa,
     });
+    salva = true;
     sujo = false;
     document.body.dataset.formSujo = "false";
     document.body.dataset.recorrenteSalva = String(criada.id);
@@ -107,11 +116,18 @@ async function submeter(): Promise<void> {
     if (erro instanceof ErroValidacaoApi) {
       mostrarErros(erro.campos);
       mostrarFeedback("Corrija os campos destacados em vermelho.", false);
+    } else if (erro instanceof ErroApi && erro.status === 409) {
+      mostrarFeedback("Já existe uma conta recorrente igual (mesma empresa, valor, dia e frequência). Ela não foi cadastrada de novo.", false);
     } else if (erro instanceof ErroApi) {
       mostrarFeedback("Não foi possível salvar a conta recorrente. Verifique se o sistema está aberto e tente de novo.", false);
     } else {
       mostrarFeedback("Não foi possível salvar a conta recorrente. Verifique se o sistema está aberto e tente de novo.", false);
       console.error("[ContasAPagar] falha ao cadastrar recorrencia:", erro);
+    }
+  } finally {
+    if (!salva) {
+      salvando = false;
+      if (botaoSalvar) botaoSalvar.disabled = false;
     }
   }
 }
