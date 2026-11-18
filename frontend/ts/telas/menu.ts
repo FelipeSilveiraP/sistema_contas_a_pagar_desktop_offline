@@ -183,8 +183,51 @@ function resumoContas(dados: AlertasDados): string {
   return (partes.length ? `Contas: ${partes.join(" e ")}` : "Contas: tudo em dia") + recados + mais + ".";
 }
 
+/** Mais coisa do que cabe no painel: ele fica recolhido numa faixa "MENSAGENS URGENTES". */
+function transborda(dados: AlertasDados): boolean {
+  return dados.atrasados.length + dados.aVencer.length > MAX_LINHAS || dados.avisosHoje.length > MAX_RECADOS;
+}
+
+/** Faixa fina no lugar do painel: os botoes do Menu ficam com o espaco todo. */
+function renderRecolhido(dados: AlertasDados): void {
+  const painel = document.getElementById("painel-mensagens-dia");
+  if (!painel) return;
+  const recolher = transborda(dados);
+  painel.classList.toggle("painel-recolhido", recolher);
+  document.body.dataset.mensagensRecolhidas = String(recolher);
+  let faixa = document.getElementById("mensagens-recolhidas") as HTMLButtonElement | null;
+  if (!recolher) {
+    faixa?.remove();
+    return;
+  }
+  if (!faixa) {
+    faixa = document.createElement("button");
+    faixa.type = "button";
+    faixa.id = "mensagens-recolhidas";
+    faixa.className = "mensagens-recolhidas";
+    faixa.setAttribute("aria-haspopup", "dialog");
+    faixa.addEventListener("click", () => void abrirPopup());
+    painel.prepend(faixa);
+  }
+  const icone = document.createElement("span");
+  icone.className = "material-symbols-outlined";
+  icone.setAttribute("aria-hidden", "true");
+  icone.textContent = dados.atrasados.length ? "warning" : "calendar_clock";
+  const titulo = document.createElement("strong");
+  titulo.textContent = "Mensagens urgentes";
+  const resumo = document.createElement("span");
+  resumo.className = "mensagens-recolhidas__resumo";
+  resumo.textContent = resumoContas(dados).replace(/ · mais \d+ em EXPANDIR/, "");
+  const abrir = document.createElement("span");
+  abrir.className = "mensagens-recolhidas__abrir";
+  abrir.textContent = "Abrir ↗";
+  faixa.classList.toggle("mensagens-recolhidas--atrasada", dados.atrasados.length > 0);
+  faixa.replaceChildren(icone, titulo, resumo, abrir);
+}
+
 function renderAlertas(dados: AlertasDados): void {
   ultimosDados = dados;
+  renderRecolhido(dados);
   const [ano, mes, dia] = dados.hoje.split("-").map(Number);
   const hoje = document.getElementById("alertas-hoje");
   if (hoje) hoje.textContent = `Hoje: ${dia} de ${MESES[mes - 1]} de ${ano}`;
@@ -201,12 +244,15 @@ function renderAlertas(dados: AlertasDados): void {
 
 // ===== pop-up "Mensagens do dia" em tela cheia (todas as contas e recados) =====
 let popupAberto = false;
+let aoFecharPopup: (() => void) | null = null;
 
 function fecharPopup(veu: HTMLElement, origem: HTMLElement | null): void {
   veu.remove();
   popupAberto = false;
   delete document.body.dataset.mensagensExpandidas;
   origem?.focus();
+  aoFecharPopup?.();
+  aoFecharPopup = null;
 }
 
 function botaoPainel(texto: string, id?: string): HTMLButtonElement {
@@ -218,8 +264,9 @@ function botaoPainel(texto: string, id?: string): HTMLButtonElement {
   return b;
 }
 
-function abrirPopup(): void {
-  if (popupAberto) return;
+/** Abre o pop-up de tela cheia; a promessa termina quando ele e fechado. */
+function abrirPopup(): Promise<void> {
+  if (popupAberto) return Promise.resolve();
   const origem = document.activeElement as HTMLElement | null;
   const veu = document.createElement("div");
   veu.className = "dialogo-veu painel-expandido-veu";
@@ -288,6 +335,24 @@ function abrirPopup(): void {
   popupAberto = true;
   document.body.dataset.mensagensExpandidas = "true";
   fechar.focus();
+  return new Promise((ok) => {
+    aoFecharPopup = ok;
+  });
+}
+
+// ao entrar com o PIN, se as mensagens nao cabem no painel, elas abrem sozinhas
+// (uma vez por entrada: o token muda a cada login)
+const CHAVE_MENSAGENS_VISTAS = "contas.mensagensVistas";
+
+async function abrirMensagensAoEntrar(dados: AlertasDados): Promise<void> {
+  const token = perfilAtual()?.token ?? "";
+  try {
+    if (sessionStorage.getItem(CHAVE_MENSAGENS_VISTAS) === token) return;
+    sessionStorage.setItem(CHAVE_MENSAGENS_VISTAS, token);
+  } catch {
+    return;
+  }
+  if (transborda(dados)) await abrirPopup();
 }
 
 function erroAlertas(): void {
@@ -373,9 +438,11 @@ async function iniciar(): Promise<void> {
     document.title += " - API OK";
     console.info("[ContasAPagar] API:", status);
     try {
-      renderAlertas(await buscarAlertas(cfg));
+      const dados = await buscarAlertas(cfg);
+      renderAlertas(dados);
       void conferirBackupDrive(cfg);
-      void oferecerAtualizacao();
+      // o aviso de versao nova espera as mensagens serem fechadas (um pop-up por vez)
+      void abrirMensagensAoEntrar(dados).then(() => oferecerAtualizacao());
     } catch (erro) {
       erroAlertas();
       console.warn("[ContasAPagar] alertas indisponiveis:", erro instanceof Error ? erro.message : erro);
@@ -390,7 +457,7 @@ async function iniciar(): Promise<void> {
 
 /** Botoes do painel "Mensagens do dia": expandir (pop-up) e ir para o Controle. */
 function registrarPainelMensagens(): void {
-  document.getElementById("btn-expandir-mensagens")?.addEventListener("click", abrirPopup);
+  document.getElementById("btn-expandir-mensagens")?.addEventListener("click", () => void abrirPopup());
   document.getElementById("btn-ir-controle")?.addEventListener("click", () => void irPara("todas-as-contas"));
 }
 

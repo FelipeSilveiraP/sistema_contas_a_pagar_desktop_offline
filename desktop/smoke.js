@@ -1816,10 +1816,23 @@ async function executar() {
   await js("window.finDesk.navegar('menu')");
   await esperarTela("menu");
   await esperarPredicado("Number(document.body.dataset.alertas) >= 7", 8000);
-  teste("Menu: painel mostra só as 2 contas mais urgentes (atrasada primeiro)", await js(`(() => {
-    const l = [...document.querySelectorAll('#alertas-corpo tr[data-alerta]')]; return l.length === 2 && l[0].dataset.alerta === 'atrasada'; })()`));
-  teste("Menu: rodapé avisa quantas contas a mais estão no EXPANDIR", await js("document.getElementById('alertas-rodape').textContent.includes('EXPANDIR')"));
-  teste("Menu: sem recado hoje, a faixa de recados some", await js("document.getElementById('faixa-recados').classList.contains('hidden')"));
+  teste("Menu: mesmo login, as mensagens não abrem sozinhas de novo", await js("document.body.dataset.mensagensExpandidas === undefined"));
+  teste("Menu: mensagens que não cabem ficam recolhidas em MENSAGENS URGENTES", await js(`(() => {
+    const f = document.getElementById('mensagens-recolhidas'); return !!f && f.offsetHeight > 0 && f.offsetHeight < 80
+      && f.textContent.toUpperCase().includes('MENSAGENS URGENTES') && f.textContent.includes('1 atrasada')
+      && document.querySelector('#painel-mensagens-dia table').offsetHeight === 0; })()`));
+  // nova entrada com o PIN: abre sozinho, expandido
+  await js("sessionStorage.removeItem('contas.mensagensVistas'); window.finDesk.navegar('menu')");
+  await esperarTela("menu");
+  teste("Menu: ao entrar, mensagens grandes já aparecem expandidas", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 8000));
+  teste("Menu: pop-up expandido mostra todas as 7 contas, atrasada primeiro", await js(`(() => {
+    const l = [...document.querySelectorAll('#alertas-corpo-expandido tr[data-alerta]')]; return l.length >= 7 && l[0].dataset.alerta === 'atrasada'; })()`));
+  await js("document.getElementById('btn-fechar-mensagens').click()");
+  teste("Menu: FECHAR recolhe em MENSAGENS URGENTES", await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined && document.getElementById('mensagens-recolhidas').offsetHeight > 0", 3000));
+  await js("document.getElementById('mensagens-recolhidas').click()");
+  teste("Menu: clicar em MENSAGENS URGENTES abre de novo", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 3000));
+  await js("document.getElementById('btn-fechar-mensagens').click()");
+  await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined", 3000);
   for (const [w, h] of [[1280, 970], [1280, 800], [1536, 864], [1366, 700], [960, 800]]) {
     await definirTamanho(w, h);
     teste(`Menu ${w}x${h} com 7 contas: os 5 botões mostram o nome inteiro`, await js(`[...document.querySelectorAll('.menu-grade .cartao')].every((c) => {

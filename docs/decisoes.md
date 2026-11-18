@@ -212,3 +212,4 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - O painel mostra só as 2 contas mais urgentes (atrasadas primeiro, depois por vencimento); o total e "mais N em EXPANDIR" ficam no rodapé.
 - A faixa "Recados de hoje" só aparece quando há recado (1 no painel; todos no EXPANDIR).
 - O nome do botão (faixa branca) nunca encolhe: quem encolhe é o quadrado do ícone. Coberto pelo smoke 12c (7 contas, 5 resoluções).
+- Mensagens que não cabem no painel (mais de 2 contas ou mais de 1 recado): ao entrar com o PIN o pop-up EXPANDIR abre sozinho (uma vez por entrada, pelo token da sessão); ao fechar, o painel fica recolhido numa faixa "MENSAGENS URGENTES" (rosa se há atrasada) que reabre o pop-up. O aviso de versão nova espera o pop-up fechar.
