@@ -739,6 +739,22 @@
 
 [data-dialogo="atencao"] .dialogo-botao--acao { background: #ffe600; color: #1c1b1b; }
 [data-dialogo="perigo"] .dialogo-botao--acao { background: #dc2626; color: #ffffff; }
+/* avisos de um botao so (avisar): sucesso verde, erro vermelho — iguais ao Garantias */
+[data-dialogo="sucesso"] .dialogo__cabecalho { background: #16a34a; color: #ffffff; }
+[data-dialogo="erro"] .dialogo__cabecalho { background: #ba1a1a; color: #ffffff; }
+[data-dialogo="sucesso"] .dialogo-botao--acao { background: #16a34a; color: #ffffff; }
+[data-dialogo="erro"] .dialogo-botao--acao { background: #ba1a1a; color: #ffffff; }
+.dialogo__lista {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.9rem 0.6rem 1.9rem;
+  border: 2px solid #1c1b1b;
+  background: #fff8d6;
+  list-style: square;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1c1b1b;
+}
+.dialogo__lista li + li { margin-top: 0.3rem; }
 
 /* ===== Notificacoes (toasts) — NO MEIO DA TELA (pedido do usuario, 2026-11-16: "todo e
    qualquer pop-up deve aparecer no meio da tela"), abaixo do veu do dialogo ===== */
@@ -1200,6 +1216,42 @@
 }
 .painel-expandido__secao { margin: 0.5rem 0 0; font-size: 0.9375rem; font-weight: 700; text-transform: uppercase; }
 
+/* ===== Formularios das telas de contas e perfis (iguais aos do Sistema de Garantias) =====
+   ANTES do PIN, como la: senao .entrada-form apaga o tamanho grande do .entrada-pin */
+.campo-form { display: flex; flex-direction: column; gap: 0.375rem; width: 100%; }
+.campo-form.hidden { display: none; }
+.rotulo-form {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+  font-size: 0.9375rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #1c1b1b;
+}
+.dica-form { font-family: ui-monospace, "JetBrains Mono", monospace; font-size: 0.75rem; font-weight: 700; color: #7c775f; }
+.entrada-form {
+  width: 100%; box-sizing: border-box; background: #ffffff; border: 2px solid #1c1b1b;
+  padding: 0.625rem 0.875rem; font-size: 1.0625rem; font-weight: 700; color: #1c1b1b;
+  box-shadow: 3px 3px 0 0 #1c1b1b; transition: background 0.12s, box-shadow 0.12s;
+}
+.entrada-form:focus { outline: none; background: #fffde6; box-shadow: 4px 4px 0 0 #FFE600; }
+.entrada-form--erro { border-color: #ba1a1a; box-shadow: 3px 3px 0 0 #ba1a1a; }
+.entrada-form--desligada, .entrada-form:disabled { background: #e8e5e4; color: #7c775f; box-shadow: none; cursor: not-allowed; }
+select.entrada-form { cursor: pointer; }
+/* seta para baixo: deixa claro que e uma caixa de selecao (tambem com foco e desligada) */
+select.entrada-form,
+select.entrada-form:focus,
+select.entrada-form:disabled {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1b1b' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1.25rem;
+}
+.caixa-form { display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start; cursor: pointer;
+  font-size: 0.875rem; font-weight: 700; text-transform: uppercase; }
+.caixa-form input { width: 1.125rem; height: 1.125rem; accent-color: #1c1b1b; cursor: pointer; }
+.campo-erro { margin: 0; font-size: 0.875rem; font-weight: 700; color: #ba1a1a; }
+.campo-erro.hidden { display: none; }
+
 /* ===== Contas com PIN (copiado do Sistema de Garantias, 2026-11-16) ===== */
 /* botao da conta: hover amarelo */
 .barra-navegacao .conta-menu__botao {
@@ -1327,40 +1379,6 @@
   .barra-progresso--indefinida .barra-progresso__preenchido { animation: none; width: 100%; }
 }
 
-/* ===== Formularios das telas de contas e perfis (iguais aos do Sistema de Garantias) ===== */
-.campo-form { display: flex; flex-direction: column; gap: 0.375rem; width: 100%; }
-.campo-form.hidden { display: none; }
-.rotulo-form {
-  display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
-  font-size: 0.9375rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #1c1b1b;
-}
-.dica-form { font-family: ui-monospace, "JetBrains Mono", monospace; font-size: 0.75rem; font-weight: 700; color: #7c775f; }
-.entrada-form {
-  width: 100%; box-sizing: border-box; background: #ffffff; border: 2px solid #1c1b1b;
-  padding: 0.625rem 0.875rem; font-size: 1.0625rem; font-weight: 700; color: #1c1b1b;
-  box-shadow: 3px 3px 0 0 #1c1b1b; transition: background 0.12s, box-shadow 0.12s;
-}
-.entrada-form:focus { outline: none; background: #fffde6; box-shadow: 4px 4px 0 0 #FFE600; }
-.entrada-form--desligada, .entrada-form:disabled { background: #e8e5e4; color: #7c775f; box-shadow: none; cursor: not-allowed; }
-select.entrada-form { cursor: pointer; }
-/* seta para baixo: deixa claro que e uma caixa de selecao (tambem com foco e desligada) */
-select.entrada-form,
-select.entrada-form:focus,
-select.entrada-form:disabled {
-  appearance: none;
-  -webkit-appearance: none;
-  padding-right: 2.75rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1b1b' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.85rem center;
-  background-size: 1.25rem;
-}
-.caixa-form { display: inline-flex; align-items: center; gap: 0.5rem; align-self: flex-start; cursor: pointer;
-  font-size: 0.875rem; font-weight: 700; text-transform: uppercase; }
-.caixa-form input { width: 1.125rem; height: 1.125rem; accent-color: #1c1b1b; cursor: pointer; }
-.campo-erro { margin: 0; font-size: 0.875rem; font-weight: 700; color: #ba1a1a; }
-.campo-erro.hidden { display: none; }
-
 /* ===== Tudo em MAIUSCULAS ao digitar (pedido do usuario, 2026-11-18; o servidor grava assim) =====
    Fora: e-mail e senha (outros tipos de campo), chave Pix e quem tiver .sem-maiusculas. */
 input[type="text"]:not(.sem-maiusculas):not(#campo-chave-pix),
@@ -1370,3 +1388,14 @@ textarea:not(.sem-maiusculas) {
   text-transform: uppercase;
 }
 
+
+/* pop-up grande (igual ao Garantias) */
+.dialogo--grande { width: min(42rem, 100%); }
+.dialogo--grande .dialogo__cabecalho { padding: 1.25rem 1.5rem; }
+.dialogo--grande .dialogo__icone { font-size: 2.75rem; }
+.dialogo--grande .dialogo__titulo { font-size: 1.75rem; }
+.dialogo--grande .dialogo__corpo { padding: 1.5rem 1.75rem; gap: 1rem; }
+.dialogo--grande .dialogo__mensagem { font-size: 1.375rem; line-height: 1.45; }
+.dialogo--grande .dialogo__detalhes { font-size: 1.125rem; padding: 0.875rem 1rem; }
+.dialogo--grande .dialogo__acoes { padding: 0 1.75rem 1.75rem; }
+.dialogo--grande .dialogo-botao { min-height: 3.5rem; padding: 0.75rem 2.5rem; font-size: 1.125rem; }

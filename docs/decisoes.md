@@ -222,3 +222,7 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 ## 2026-11-18 — Dica ao parar o mouse + todas as tabelas com 5 linhas
 - `frontend/ts/dicas.ts` (igual no Garantias): todo botão/link ganha `title` (dica do Windows). Ordem: title escrito à mão > DESCRICOES do main.ts (telas principais, com explicação) > aria-label/texto (+ descrição do cartão) > ícone. Refeita sozinha quando o texto do botão muda.
 - `tabela-recolhivel.ts` vale também para listas `<ul>` (itens com `data-vazio="true"` não contam); agora também na tabela de usuários e nos históricos de acesso.
+
+## 2026-11-18 — Pop-ups iguais aos do Sistema de Garantias (referência visual)
+- Causa do PIN pequeno: o bloco de formulários (`.entrada-form`) estava DEPOIS do `.entrada-pin` no CSS e apagava o tamanho grande. Agora fica antes, na mesma ordem do Garantias (conferido: as 26 peças do pop-up do PIN têm o mesmo tamanho nos dois sistemas).
+- Copiados do Garantias: cabeçalhos sucesso/erro, `.dialogo__lista`, `.dialogo--grande` e `.entrada-form--erro`. Regra: estilo de pop-up/formulário novo nasce no Garantias e vem igual para cá.
