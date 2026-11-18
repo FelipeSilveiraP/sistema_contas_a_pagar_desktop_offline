@@ -85,9 +85,9 @@ public class PagadorService {
         String cpf = dados.cpf() == null ? "" : dados.cpf().replaceAll("\\D", "");
         return new Pagador(
                 id,
-                dados.nome() == null ? "" : dados.nome().trim(),
+                dados.nome() == null ? "" : Texto.maiusculas(dados.nome()),
                 cpf.isEmpty() ? null : cpf,
-                dados.funcao() == null || dados.funcao().isBlank() ? null : dados.funcao().trim()
+                Texto.maiusculasOuNulo(dados.funcao())
         );
     }
 

@@ -115,8 +115,8 @@ public class AvisoService {
     private static Aviso normalizar(Aviso dados) {
         return new Aviso(dados.id(), dados.dataInicio(), dados.dataFim(),
                 dados.diaSemana() == null ? "TODOS" : dados.diaSemana().trim().toUpperCase(),
-                dados.titulo() == null ? "" : dados.titulo().trim(),
-                dados.mensagem() == null ? "" : dados.mensagem().trim());
+                dados.titulo() == null ? "" : Texto.maiusculas(dados.titulo()),
+                dados.mensagem() == null ? "" : Texto.maiusculas(dados.mensagem()));
     }
 
     private static void validar(Aviso dados) {

@@ -114,7 +114,7 @@ class BoletoRecorrenteServiceTest {
         // editar outro campo da propria recorrencia continua permitido
         BoletoRecorrente editada = service.atualizar(outra.id(), new BoletoRecorrente(null, "Aluguel do Galpão", null,
                 "Financeiro", null, null, new BigDecimal("1500.00"), 20, "MENSAL", "pix", true, "PJ"));
-        assertThat(editada.pagadorResponsavel()).isEqualTo("Financeiro");
+        assertThat(editada.pagadorResponsavel()).isEqualTo("FINANCEIRO");
     }
 
     @Test

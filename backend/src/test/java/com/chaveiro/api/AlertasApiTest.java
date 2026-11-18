@@ -53,7 +53,7 @@ class AlertasApiTest {
 
     @Test
     void deveSepararAtrasadasEAVencerNaJanelaDoVbaComPastaEPagador() throws Exception {
-        String s = UUID.randomUUID().toString().substring(0, 8);
+        String s = (UUID.randomUUID().toString().substring(0, 8)).toUpperCase();
         long idEmpresa = empresas.cadastrar(new Empresa(null, null, "Empresa Alertas " + s, null, null, null, List.of())).id();
         conta(idEmpresa, "ATRASADA 3 DIAS " + s, -3, true);
         conta(idEmpresa, "ATRASADA 16 DIAS " + s, -16, false);
@@ -66,7 +66,7 @@ class AlertasApiTest {
                 .andExpect(jsonPath("$.hoje").value(LocalDate.now().toString()))
                 .andExpect(jsonPath("$.atrasados[?(@.nomeEmpresa == 'ATRASADA 3 DIAS " + s + "')].dias").value(contains(-3)))
                 .andExpect(jsonPath("$.atrasados[?(@.nomeEmpresa == 'ATRASADA 3 DIAS " + s + "')].boletoNaPasta").value(contains(true)))
-                .andExpect(jsonPath("$.atrasados[?(@.nomeEmpresa == 'ATRASADA 3 DIAS " + s + "')].pagadorResponsavel").value(contains("Balcão 01")))
+                .andExpect(jsonPath("$.atrasados[?(@.nomeEmpresa == 'ATRASADA 3 DIAS " + s + "')].pagadorResponsavel").value(contains("BALCÃO 01")))
                 .andExpect(jsonPath("$.atrasados[?(@.nomeEmpresa == 'ATRASADA 16 DIAS " + s + "')]").value(empty()))
                 .andExpect(jsonPath("$.aVencer[*].nomeEmpresa").value(hasItem("VENCE HOJE " + s)))
                 .andExpect(jsonPath("$.aVencer[*].nomeEmpresa").value(hasItem("VENCE EM 10 " + s)))
@@ -98,7 +98,7 @@ class AlertasApiTest {
 
     @Test
     void deveTrazerSomenteRecadosVigentesHoje() throws Exception {
-        String s = UUID.randomUUID().toString().substring(0, 8);
+        String s = (UUID.randomUUID().toString().substring(0, 8)).toUpperCase();
         LocalDate hoje = LocalDate.now();
         avisos.cadastrar(new Aviso(null, hoje.minusDays(1), hoje.plusDays(1), "TODOS", "VIGENTE " + s, "Conferir o caixa"));
         avisos.cadastrar(new Aviso(null, hoje.minusDays(10), hoje.minusDays(2), "TODOS", "EXPIRADO " + s, "Ja passou"));
@@ -106,7 +106,7 @@ class AlertasApiTest {
         mvc.perform(get("/api/contas/alertas").header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.avisosHoje[*].titulo").value(hasItem("VIGENTE " + s)))
-                .andExpect(jsonPath("$.avisosHoje[?(@.titulo == 'VIGENTE " + s + "')].mensagem").value(contains("Conferir o caixa")))
+                .andExpect(jsonPath("$.avisosHoje[?(@.titulo == 'VIGENTE " + s + "')].mensagem").value(contains("CONFERIR O CAIXA")))
                 .andExpect(jsonPath("$.avisosHoje[?(@.titulo == 'EXPIRADO " + s + "')]").value(empty()));
     }
 }

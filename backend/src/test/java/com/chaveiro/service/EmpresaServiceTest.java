@@ -45,7 +45,7 @@ class EmpresaServiceTest {
         Empresa criada = service.cadastrar(dadosValidos());
 
         assertThat(criada.id()).isNotNull();
-        assertThat(criada.razaoSocial()).isEqualTo("Silca Chaves do Brasil");
+        assertThat(criada.razaoSocial()).isEqualTo("SILCA CHAVES DO BRASIL");
         assertThat(criada.telefones()).hasSize(1);
         assertThat(criada.telefones().get(0).numero()).isEqualTo("(11) 3333-4444");
     }
@@ -148,7 +148,7 @@ class EmpresaServiceTest {
                         List.of(new TelefoneEmpresa("(11) 99999-0000", "Celular"),
                                 new TelefoneEmpresa("(11) 2222-3333", null))));
 
-        assertThat(atualizada.razaoSocial()).isEqualTo("Silca Atualizada");
+        assertThat(atualizada.razaoSocial()).isEqualTo("SILCA ATUALIZADA");
         Empresa consultada = service.buscarPorId(criada.id());
         assertThat(consultada.telefones()).hasSize(2);
         assertThat(consultada.telefones().get(1).tipo()).isEqualTo("Comercial");
@@ -171,7 +171,7 @@ class EmpresaServiceTest {
         EmpresaService aoReabrir = new EmpresaService(
                 new EmpresaRepository(new ConnectionFactory(pastaTemporaria.resolve("contas_teste.db").toString())));
 
-        assertThat(aoReabrir.buscarPorId(criada.id()).razaoSocial()).isEqualTo("Silca Chaves do Brasil");
+        assertThat(aoReabrir.buscarPorId(criada.id()).razaoSocial()).isEqualTo("SILCA CHAVES DO BRASIL");
         assertThat(aoReabrir.buscarPorId(criada.id()).telefones()).hasSize(1);
     }
 
@@ -182,7 +182,7 @@ class EmpresaServiceTest {
         Empresa criada = service.cadastrar(
                 new Empresa(null, null, malicioso, null, null, null, List.of()));
 
-        assertThat(service.buscarPorId(criada.id()).razaoSocial()).isEqualTo(malicioso);
+        assertThat(service.buscarPorId(criada.id()).razaoSocial()).isEqualTo(malicioso.toUpperCase(java.util.Locale.of("pt", "BR")));
     }
 
     @Test

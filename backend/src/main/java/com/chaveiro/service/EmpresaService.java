@@ -111,10 +111,10 @@ public class EmpresaService {
         return new Empresa(
                 id,
                 cnpj.isEmpty() ? null : cnpj,
-                dados.razaoSocial() == null ? "" : dados.razaoSocial().trim(),
-                vazioNulo(dados.nomeRepresentante()),
+                dados.razaoSocial() == null ? "" : Texto.maiusculas(dados.razaoSocial()),
+                Texto.maiusculasOuNulo(dados.nomeRepresentante()),
                 vazioNulo(dados.email()),
-                vazioNulo(dados.logradouro()),
+                Texto.maiusculasOuNulo(dados.logradouro()),
                 telefones
         );
     }

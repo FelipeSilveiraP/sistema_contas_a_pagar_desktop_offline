@@ -49,7 +49,7 @@ class BancoApiTest {
                         .content(corpo("Banco Novo", "pix@exemplo.com")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
-                .andExpect(jsonPath("$.instituicao").value("Banco Novo"))
+                .andExpect(jsonPath("$.instituicao").value("BANCO NOVO"))
                 .andExpect(jsonPath("$.chavePix").value("pix@exemplo.com"));
     }
 
@@ -68,7 +68,7 @@ class BancoApiTest {
 
         mvc.perform(get("/api/bancos/" + id).header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.instituicao").value("Banco API Teste"));
+                .andExpect(jsonPath("$.instituicao").value("BANCO API TESTE"));
     }
 
     @Test
@@ -86,10 +86,10 @@ class BancoApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo("Banco Atualizado", "pix@atualizado.com")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.instituicao").value("Banco Atualizado"));
+                .andExpect(jsonPath("$.instituicao").value("BANCO ATUALIZADO"));
 
         mvc.perform(get("/api/bancos/" + id).header("X-FinDesk-Token", TOKEN))
-                .andExpect(jsonPath("$.instituicao").value("Banco Atualizado"));
+                .andExpect(jsonPath("$.instituicao").value("BANCO ATUALIZADO"));
     }
 
     @Test
@@ -145,6 +145,6 @@ class BancoApiTest {
 
         mvc.perform(get("/api/bancos/" + criado.get("id").asLong()).header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.instituicao").value(malicioso));
+                .andExpect(jsonPath("$.instituicao").value(malicioso.toUpperCase(java.util.Locale.of("pt", "BR"))));
     }
 }

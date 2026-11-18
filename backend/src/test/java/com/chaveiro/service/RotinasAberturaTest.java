@@ -102,7 +102,7 @@ class RotinasAberturaTest {
         assertThat(partes).containsKeys("[Content_Types].xml", "xl/workbook.xml", "xl/worksheets/sheet1.xml");
         assertThat(partes.get("xl/workbook.xml")).contains("Contas", "Pagamentos", "Empresas", "Pagadores", "Bancos", "Mensagens");
         String abaContas = partes.get("xl/worksheets/sheet1.xml");
-        assertThat(abaContas).contains("Enel &lt;Energia&gt; &amp; Cia", "20/11/2026", "<v>100.00</v>", "PAGO", "nota.pdf");
+        assertThat(abaContas).contains("ENEL &lt;ENERGIA&gt; &amp; CIA", "20/11/2026", "<v>100.00</v>", "PAGO", "nota.pdf");
         // sem os arquivos das notas: so dados
         assertThat(Files.size(arquivo)).isLessThan(20_000);
     }

@@ -121,10 +121,10 @@ class SqlInjectionApiTest {
         conta.put("forcar", true);
         long idConta = criar("/api/contas", conta).get("id").asLong();
         JsonNode lida = buscar("/api/contas/" + idConta);
-        assertThat(lida.get("nomeEmpresa").asText()).isEqualTo(ataque.trim());
-        assertThat(lida.get("pagadorResponsavel").asText()).isEqualTo(ataque.trim());
-        assertThat(lida.get("categoria").asText()).isEqualTo(ataque.trim());
-        assertThat(lida.get("numeroDocumento").asText()).isEqualTo(ataque.trim());
+        assertThat(lida.get("nomeEmpresa").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
+        assertThat(lida.get("pagadorResponsavel").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
+        assertThat(lida.get("categoria").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
+        assertThat(lida.get("numeroDocumento").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
 
         // ---- conta fixa (recorrencia) ----
         Map<String, Object> recorrente = new LinkedHashMap<>();
@@ -138,7 +138,7 @@ class SqlInjectionApiTest {
         recorrente.put("formaPagamento", "boleto");
         recorrente.put("tipoPessoa", "PJ");
         JsonNode recorrenteCriado = criar("/api/recorrentes", recorrente);
-        assertThat(recorrenteCriado.get("nomeEmpresa").asText()).isEqualTo(ataque.trim());
+        assertThat(recorrenteCriado.get("nomeEmpresa").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
 
         // ---- banco (a chave Pix nao aceita espacos: vai o ataque sem espacos) ----
         String semEspaco = ataque.replace(" ", "");
@@ -147,7 +147,7 @@ class SqlInjectionApiTest {
 
         // ---- pagador ----
         JsonNode pagador = criar("/api/pagadores", Map.of("nome", ataque, "funcao", ataque));
-        assertThat(buscar("/api/pagadores/" + pagador.get("id").asLong()).get("funcao").asText()).isEqualTo(ataque.trim());
+        assertThat(buscar("/api/pagadores/" + pagador.get("id").asLong()).get("funcao").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
 
         // ---- empresa emissora (com telefone) ----
         Map<String, Object> empresa = new LinkedHashMap<>();
@@ -156,7 +156,7 @@ class SqlInjectionApiTest {
         empresa.put("logradouro", ataque);
         empresa.put("telefones", List.of(Map.of("numero", "(11) 3333-4444", "tipo", ataque.length() > 20 ? ataque.substring(0, 20) : ataque)));
         JsonNode empresaCriada = criar("/api/empresas", empresa);
-        assertThat(buscar("/api/empresas/" + empresaCriada.get("id").asLong()).get("logradouro").asText()).isEqualTo(ataque.trim());
+        assertThat(buscar("/api/empresas/" + empresaCriada.get("id").asLong()).get("logradouro").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
 
         // ---- mensagem (aviso) ----
         Map<String, Object> aviso = new LinkedHashMap<>();
@@ -166,7 +166,7 @@ class SqlInjectionApiTest {
         aviso.put("titulo", ataque);
         aviso.put("mensagem", ataque);
         JsonNode avisoCriado = criar("/api/avisos", aviso);
-        assertThat(buscar("/api/avisos/" + avisoCriado.get("id").asLong()).get("mensagem").asText()).isEqualTo(ataque.trim());
+        assertThat(buscar("/api/avisos/" + avisoCriado.get("id").asLong()).get("mensagem").asText()).isEqualTo(ataque.trim().toUpperCase(java.util.Locale.of("pt", "BR")));
     }
 
     @ParameterizedTest

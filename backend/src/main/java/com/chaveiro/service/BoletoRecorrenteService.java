@@ -182,11 +182,11 @@ public class BoletoRecorrenteService {
 
     private static BoletoRecorrente normalizar(BoletoRecorrente dados) {
         return new BoletoRecorrente(dados.id(),
-                dados.nomeEmpresa() == null ? "" : dados.nomeEmpresa().trim(),
+                dados.nomeEmpresa() == null ? "" : Texto.maiusculas(dados.nomeEmpresa()),
                 dados.idEmpresa(),
-                dados.pagadorResponsavel() == null ? "" : dados.pagadorResponsavel().trim(),
-                dados.categoria() == null || dados.categoria().isBlank() ? null : dados.categoria().trim(),
-                dados.numeroDocumento() == null || dados.numeroDocumento().isBlank() ? null : dados.numeroDocumento().trim(),
+                dados.pagadorResponsavel() == null ? "" : Texto.maiusculas(dados.pagadorResponsavel()),
+                Texto.maiusculasOuNulo(dados.categoria()),
+                Texto.maiusculasOuNulo(dados.numeroDocumento()),
                 dados.valor(),
                 dados.dia(),
                 dados.periodicidade() == null ? "" : dados.periodicidade().trim().toUpperCase(),

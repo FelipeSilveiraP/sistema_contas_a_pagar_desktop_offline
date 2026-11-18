@@ -44,7 +44,7 @@ class BancoServiceTest {
         Banco criado = service.cadastrar(new Banco(null, "  Itau  ", "  contato@exemplo.com "));
 
         assertThat(criado.id()).isNotNull();
-        assertThat(criado.instituicao()).isEqualTo("Itau");
+        assertThat(criado.instituicao()).isEqualTo("ITAU");
         assertThat(criado.chavePix()).isEqualTo("contato@exemplo.com");
     }
 
@@ -76,7 +76,7 @@ class BancoServiceTest {
     void deveConsultarPorIdEListar() {
         Banco criado = service.cadastrar(dadosValidos());
 
-        assertThat(service.buscarPorId(criado.id()).instituicao()).isEqualTo("Banco do Brasil");
+        assertThat(service.buscarPorId(criado.id()).instituicao()).isEqualTo("BANCO DO BRASIL");
         assertThat(service.listar()).extracting(Banco::id).contains(criado.id());
     }
 
@@ -87,7 +87,7 @@ class BancoServiceTest {
         Banco atualizado = service.atualizar(criado.id(),
                 new Banco(null, "Itau", "pix@itau.com.br"));
 
-        assertThat(atualizado.instituicao()).isEqualTo("Itau");
+        assertThat(atualizado.instituicao()).isEqualTo("ITAU");
         assertThat(service.buscarPorId(criado.id()).chavePix()).isEqualTo("pix@itau.com.br");
     }
 
@@ -120,7 +120,7 @@ class BancoServiceTest {
         BancoService aoReabrir = new BancoService(
                 new BancoRepository(new ConnectionFactory(pastaTemporaria.resolve("contas_teste.db").toString())));
 
-        assertThat(aoReabrir.buscarPorId(criado.id()).instituicao()).isEqualTo("Banco do Brasil");
+        assertThat(aoReabrir.buscarPorId(criado.id()).instituicao()).isEqualTo("BANCO DO BRASIL");
     }
 
     @Test
@@ -175,7 +175,7 @@ class BancoServiceTest {
         Banco criado = service.cadastrar(
                 new Banco(null, malicioso, null));
 
-        assertThat(service.buscarPorId(criado.id()).instituicao()).isEqualTo(malicioso);
+        assertThat(service.buscarPorId(criado.id()).instituicao()).isEqualTo(malicioso.toUpperCase(java.util.Locale.of("pt", "BR")));
         List<Banco> todos = service.listar();
         assertThat(todos).isNotEmpty();
     }

@@ -42,9 +42,9 @@ class PagadorServiceTest {
                 new Pagador(null, "  Joao Silva  ", "  529.982.247-25 ", " Gerente "));
 
         assertThat(criado.id()).isNotNull();
-        assertThat(criado.nome()).isEqualTo("Joao Silva");
+        assertThat(criado.nome()).isEqualTo("JOAO SILVA");
         assertThat(criado.cpf()).isEqualTo("52998224725");
-        assertThat(criado.funcao()).isEqualTo("Gerente");
+        assertThat(criado.funcao()).isEqualTo("GERENTE");
     }
 
     @Test
@@ -105,7 +105,7 @@ class PagadorServiceTest {
     void deveConsultarPorIdEListar() {
         Pagador criado = service.cadastrar(dadosValidos());
 
-        assertThat(service.buscarPorId(criado.id()).nome()).isEqualTo("Joao da Silva");
+        assertThat(service.buscarPorId(criado.id()).nome()).isEqualTo("JOAO DA SILVA");
         assertThat(service.listar()).extracting(Pagador::id).contains(criado.id());
     }
 
@@ -116,7 +116,7 @@ class PagadorServiceTest {
         Pagador atualizado = service.atualizar(criado.id(),
                 new Pagador(null, "Maria Souza", "12345678909", null));
 
-        assertThat(atualizado.nome()).isEqualTo("Maria Souza");
+        assertThat(atualizado.nome()).isEqualTo("MARIA SOUZA");
         assertThat(service.buscarPorId(criado.id()).cpf()).isEqualTo("12345678909");
     }
 
@@ -149,7 +149,7 @@ class PagadorServiceTest {
         PagadorService aoReabrir = new PagadorService(
                 new PagadorRepository(new ConnectionFactory(pastaTemporaria.resolve("contas_teste.db").toString())));
 
-        assertThat(aoReabrir.buscarPorId(criado.id()).nome()).isEqualTo("Joao da Silva");
+        assertThat(aoReabrir.buscarPorId(criado.id()).nome()).isEqualTo("JOAO DA SILVA");
     }
 
     @Test
@@ -184,7 +184,7 @@ class PagadorServiceTest {
 
         Pagador criado = service.cadastrar(new Pagador(null, malicioso, "52998224725", null));
 
-        assertThat(service.buscarPorId(criado.id()).nome()).isEqualTo(malicioso);
+        assertThat(service.buscarPorId(criado.id()).nome()).isEqualTo(malicioso.toUpperCase(java.util.Locale.of("pt", "BR")));
         List<Pagador> todos = service.listar();
         assertThat(todos).isNotEmpty();
     }

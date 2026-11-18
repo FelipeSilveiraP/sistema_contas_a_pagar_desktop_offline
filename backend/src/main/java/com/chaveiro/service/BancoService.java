@@ -84,7 +84,7 @@ public class BancoService {
     private static Banco normalizar(Banco dados, Long id) {
         return new Banco(
                 id,
-                dados.instituicao() == null ? "" : dados.instituicao().trim(),
+                dados.instituicao() == null ? "" : Texto.maiusculas(dados.instituicao()),
                 dados.chavePix() == null || dados.chavePix().isBlank() ? null : dados.chavePix().trim()
         );
     }

@@ -64,8 +64,8 @@ class ContaApiTest {
                 .andExpect(jsonPath("$.id", notNullValue()))
                 .andExpect(jsonPath("$.status").value("PENDENTE"))
                 .andExpect(jsonPath("$.valor").value(123.45))
-                .andExpect(jsonPath("$.nomeEmpresa").value("Empresa API Contas"))
-                .andExpect(jsonPath("$.pagadorResponsavel").value("Balcão 01"))
+                .andExpect(jsonPath("$.nomeEmpresa").value("EMPRESA API CONTAS"))
+                .andExpect(jsonPath("$.pagadorResponsavel").value("BALCÃO 01"))
                 .andExpect(jsonPath("$.formaPagamento").value("boleto"))
                 .andExpect(jsonPath("$.tipoPessoa").value("PJ"));
     }
@@ -122,7 +122,7 @@ class ContaApiTest {
     @Test
     void deveListarComFiltroDeStatus() throws Exception {
         long idEmpresa = cadastrarEmpresa();
-        String doc = "L-" + sufixo();
+        String doc = ("L-" + sufixo()).toUpperCase();
         mvc.perform(post("/api/contas").header("X-FinDesk-Token", TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo(idEmpresa, "10.00", "2026-12-10", doc, true)))
@@ -174,7 +174,7 @@ class ContaApiTest {
 
         mvc.perform(get("/api/contas/" + id).header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nomeEmpresa").value("Empresa API Contas"))
+                .andExpect(jsonPath("$.nomeEmpresa").value("EMPRESA API CONTAS"))
                 .andExpect(jsonPath("$.idEmpresa").doesNotExist());
     }
 

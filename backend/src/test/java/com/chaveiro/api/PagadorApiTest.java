@@ -49,7 +49,7 @@ class PagadorApiTest {
                         .content(corpo("Pagador Novo", "529.982.247-25", "Gerente")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
-                .andExpect(jsonPath("$.nome").value("Pagador Novo"))
+                .andExpect(jsonPath("$.nome").value("PAGADOR NOVO"))
                 .andExpect(jsonPath("$.cpf").value("52998224725"));
     }
 
@@ -68,7 +68,7 @@ class PagadorApiTest {
 
         mvc.perform(get("/api/pagadores/" + id).header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Pagador API Teste"));
+                .andExpect(jsonPath("$.nome").value("PAGADOR API TESTE"));
     }
 
     @Test
@@ -86,10 +86,10 @@ class PagadorApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo("Pagador Atualizado", "12345678909", "Proprietario")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Pagador Atualizado"));
+                .andExpect(jsonPath("$.nome").value("PAGADOR ATUALIZADO"));
 
         mvc.perform(get("/api/pagadores/" + id).header("X-FinDesk-Token", TOKEN))
-                .andExpect(jsonPath("$.nome").value("Pagador Atualizado"));
+                .andExpect(jsonPath("$.nome").value("PAGADOR ATUALIZADO"));
     }
 
     @Test

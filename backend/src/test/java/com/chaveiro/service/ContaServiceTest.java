@@ -49,7 +49,7 @@ class ContaServiceTest {
 
         assertThat(criada.id()).isNotNull();
         assertThat(criada.status()).isEqualTo("PENDENTE");
-        assertThat(criada.nomeEmpresa()).isEqualTo("Enel Distribuição");
+        assertThat(criada.nomeEmpresa()).isEqualTo("ENEL DISTRIBUIÇÃO");
         assertThat(criada.valor()).isEqualByComparingTo("123.45");
         assertThat(criada.tipoPessoa()).isEqualTo("PJ");
     }

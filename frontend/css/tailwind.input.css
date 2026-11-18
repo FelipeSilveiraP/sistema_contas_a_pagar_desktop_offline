@@ -1333,3 +1333,13 @@ select.entrada-form:disabled {
 .caixa-form input { width: 1.125rem; height: 1.125rem; accent-color: #1c1b1b; cursor: pointer; }
 .campo-erro { margin: 0; font-size: 0.875rem; font-weight: 700; color: #ba1a1a; }
 .campo-erro.hidden { display: none; }
+
+/* ===== Tudo em MAIUSCULAS ao digitar (pedido do usuario, 2026-11-18; o servidor grava assim) =====
+   Fora: e-mail e senha (outros tipos de campo), chave Pix e quem tiver .sem-maiusculas. */
+input[type="text"]:not(.sem-maiusculas):not(#campo-chave-pix),
+input[type="search"]:not(.sem-maiusculas),
+input:not([type]):not(.sem-maiusculas),
+textarea:not(.sem-maiusculas) {
+  text-transform: uppercase;
+}
+

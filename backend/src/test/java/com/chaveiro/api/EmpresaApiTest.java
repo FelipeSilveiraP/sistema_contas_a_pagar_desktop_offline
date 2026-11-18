@@ -53,7 +53,7 @@ class EmpresaApiTest {
                         .content(corpo("11222333000181", "Empresa Nova", "contato@empresa.com.br", "(11) 3333-4444")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", notNullValue()))
-                .andExpect(jsonPath("$.razaoSocial").value("Empresa Nova"))
+                .andExpect(jsonPath("$.razaoSocial").value("EMPRESA NOVA"))
                 .andExpect(jsonPath("$.telefones[0].numero").value("(11) 3333-4444"));
     }
 
@@ -67,7 +67,7 @@ class EmpresaApiTest {
 
         mvc.perform(get("/api/empresas/" + id).header("X-FinDesk-Token", TOKEN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.razaoSocial").value("Empresa API Teste"));
+                .andExpect(jsonPath("$.razaoSocial").value("EMPRESA API TESTE"));
     }
 
     @Test
@@ -85,7 +85,7 @@ class EmpresaApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo(null, "Empresa Atualizada", null, null)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.razaoSocial").value("Empresa Atualizada"));
+                .andExpect(jsonPath("$.razaoSocial").value("EMPRESA ATUALIZADA"));
     }
 
     @Test

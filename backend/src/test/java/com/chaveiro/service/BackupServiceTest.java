@@ -65,7 +65,7 @@ class BackupServiceTest {
         List<Banco> restaurados = service.listar();
         assertThat(restaurados).hasSize(1);
         assertThat(restaurados.getFirst().id()).isEqualTo(criado.id());
-        assertThat(restaurados.getFirst().instituicao()).isEqualTo("Banco Restaurado");
+        assertThat(restaurados.getFirst().instituicao()).isEqualTo("BANCO RESTAURADO");
     }
 
     @Test

@@ -203,3 +203,7 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 ## Conta recorrente sem duplicata (2026-11-18)
 
 - **2026-11-18 — Recorrente igual nao entra duas vezes (pedido do usuario):** igual = mesma empresa (sem ligar para maiuscula/espacos nas pontas), mesmo valor, mesmo dia e mesma frequencia. Tres camadas: o formulario grava uma vez so (botao SALVAR travado enquanto salva — o clique duplo no intervalo de 1,2 s antes de voltar criava a copia, com as 12 contas de novo), o servidor responde 409 com o aviso, e o banco v20 tem gatilhos que recusam (`RECORRENTE_DUPLICADA`) inclusive dois salvamentos ao mesmo tempo. Editar para ficar igual a outra tambem e recusado. Duplicatas antigas nao sao apagadas sozinhas: o usuario exclui a copia em "Todas contas recorrentes" (as contas pendentes dela saem junto; as pagas ficam).
+
+## Tudo em MAIUSCULAS (2026-11-18)
+
+- **2026-11-18 — Todo texto digitado e gravado em MAIUSCULAS (pedido do usuario, nos dois sistemas):** a regra fica no servidor (`service/Texto.maiusculas`, pt-BR: ç → Ç), na normalizacao de cada cadastro: contas e recorrentes (empresa, pagador, categoria, documento), empresas (razao social, representante, endereco), bancos (instituicao), pagadores (nome, funcao) e recados (titulo, mensagem). Fora (quebrariam): e-mail, PIN, senha de app, chave Pix, nomes de arquivo, codigos internos (forma de pagamento, tipo de telefone). Nas telas, CSS `text-transform: uppercase` em campos de texto (menos e-mail, senha e chave Pix). Registros antigos ficam como estavam ate serem editados.

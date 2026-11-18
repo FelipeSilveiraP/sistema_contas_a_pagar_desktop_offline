@@ -200,15 +200,14 @@ public class ContaService {
     private static Conta normalizar(Conta dados, Long id) {
         return new Conta(
                 id,
-                dados.nomeEmpresa() == null ? "" : dados.nomeEmpresa().trim(),
+                dados.nomeEmpresa() == null ? "" : Texto.maiusculas(dados.nomeEmpresa()),
                 dados.idEmpresa(),
                 dados.razaoSocial(),
-                dados.pagadorResponsavel() == null ? "" : dados.pagadorResponsavel().trim(),
+                dados.pagadorResponsavel() == null ? "" : Texto.maiusculas(dados.pagadorResponsavel()),
                 dados.tipoPessoa() == null ? "PJ" : dados.tipoPessoa().trim().toUpperCase(),
                 dados.formaPagamento() == null ? "" : dados.formaPagamento().trim().toLowerCase(),
-                dados.categoria() == null || dados.categoria().isBlank() ? null : dados.categoria().trim(),
-                dados.numeroDocumento() == null || dados.numeroDocumento().isBlank()
-                        ? null : dados.numeroDocumento().trim(),
+                Texto.maiusculasOuNulo(dados.categoria()),
+                Texto.maiusculasOuNulo(dados.numeroDocumento()),
                 dados.valor(),
                 dados.vencimento(),
                 dados.boletoNaPasta(),
