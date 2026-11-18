@@ -67,7 +67,9 @@ function registrarAtalhos(): void {
 
 // ===== "Mensagens do dia": alertas reais (regra do VBA VerificarVencimentosAoAbrir) =====
 // atrasadas de 1 a 15 dias + a vencer de hoje ate 10 dias + recados vigentes hoje.
-const MAX_LINHAS = 3;
+// os 5 botoes sao o mais importante do Menu: o painel mostra so as 2 contas mais
+// urgentes (atrasadas primeiro, depois as que vencem antes); o resto fica no EXPANDIR
+const MAX_LINHAS = 2;
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 function celula(texto: string, classe: string, rotulo: string): HTMLTableCellElement {
@@ -123,7 +125,7 @@ function linhaUnica(texto: string, classe: string): HTMLTableRowElement {
   return tr;
 }
 
-const MAX_RECADOS = 2;
+const MAX_RECADOS = 1;
 let ultimosDados: AlertasDados | null = null;
 
 function itemRecado(titulo: string, mensagem: string, completo: boolean): HTMLLIElement {
@@ -156,14 +158,16 @@ function renderRecados(lista: HTMLElement, dados: AlertasDados, limite: number):
   lista.replaceChildren(...itens);
 }
 
+/** Mais urgente primeiro: a mais atrasada, depois as que vencem antes. */
+function porPrioridade(dados: AlertasDados): AlertaContaDados[] {
+  return [...dados.atrasados, ...dados.aVencer].sort((a, b) => a.dias - b.dias);
+}
+
 function linhasContas(dados: AlertasDados, limite: number): HTMLTableRowElement[] {
-  const todas = [...dados.atrasados, ...dados.aVencer];
+  const todas = porPrioridade(dados);
   const linhas = todas.slice(0, limite).map(linhaAlerta);
   if (!todas.length) {
     linhas.push(linhaUnica("Tudo em dia! Nenhuma conta atrasada ou vencendo nos próximos 10 dias.", "p-3 text-center text-[#006c46] uppercase"));
-  } else if (todas.length > limite) {
-    const resto = todas.length - limite;
-    linhas.push(linhaUnica(`+ ${resto} conta${resto > 1 ? "s" : ""} — use EXPANDIR para ver todas`, "p-2 text-center font-mono text-xs text-neutral-600 uppercase"));
   }
   return linhas;
 }
@@ -174,7 +178,9 @@ function resumoContas(dados: AlertasDados): string {
   if (dados.aVencer.length) partes.push(`${dados.aVencer.length} a vencer`);
   const n = dados.avisosHoje.length;
   const recados = n ? ` · ${n} recado${n > 1 ? "s" : ""} hoje` : "";
-  return (partes.length ? `Contas: ${partes.join(" e ")}` : "Contas: tudo em dia") + recados + ".";
+  const resto = dados.atrasados.length + dados.aVencer.length - MAX_LINHAS;
+  const mais = resto > 0 ? ` · mais ${resto} em EXPANDIR` : "";
+  return (partes.length ? `Contas: ${partes.join(" e ")}` : "Contas: tudo em dia") + recados + mais + ".";
 }
 
 function renderAlertas(dados: AlertasDados): void {
@@ -186,6 +192,8 @@ function renderAlertas(dados: AlertasDados): void {
   document.getElementById("alertas-corpo")?.replaceChildren(...linhasContas(dados, MAX_LINHAS));
   const recados = document.getElementById("recados-dia");
   if (recados) renderRecados(recados, dados, MAX_RECADOS);
+  // sem recado hoje, a faixa some (sobra espaco para os botoes)
+  document.getElementById("faixa-recados")?.classList.toggle("hidden", !dados.avisosHoje.length);
   const rodape = document.getElementById("alertas-rodape");
   if (rodape) rodape.textContent = resumoContas(dados);
   document.body.dataset.alertas = String(dados.atrasados.length + dados.aVencer.length);

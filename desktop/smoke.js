@@ -1805,6 +1805,31 @@ async function executar() {
   await apiPag("DELETE", `/api/contas/${contaPg.body.id}`);
   await apiPag("DELETE", `/api/bancos/${bancoPg.body.id}`);
 
+  // 12c. Menu com muitas contas vencendo: os botoes continuam inteiros (nome visivel)
+  const venc = (d) => { const x = new Date(Date.now() + d * 86400000); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
+  const contasMenu = [];
+  for (const [i, dias] of [5, 2, 2, -3, 8, 2, 0].entries()) {
+    const c = await apiPag("POST", "/api/contas", { nomeEmpresa: `EMPRESA MENU ${sufixoPg} ${i}`, pagadorResponsavel: "LOJA",
+      tipoPessoa: "PJ", formaPagamento: "boleto", valor: "100.00", vencimento: venc(dias), semNotaFiscal: true, forcar: true });
+    if (c.body) contasMenu.push(c.body.id);
+  }
+  await js("window.finDesk.navegar('menu')");
+  await esperarTela("menu");
+  await esperarPredicado("Number(document.body.dataset.alertas) >= 7", 8000);
+  teste("Menu: painel mostra só as 2 contas mais urgentes (atrasada primeiro)", await js(`(() => {
+    const l = [...document.querySelectorAll('#alertas-corpo tr[data-alerta]')]; return l.length === 2 && l[0].dataset.alerta === 'atrasada'; })()`));
+  teste("Menu: rodapé avisa quantas contas a mais estão no EXPANDIR", await js("document.getElementById('alertas-rodape').textContent.includes('EXPANDIR')"));
+  teste("Menu: sem recado hoje, a faixa de recados some", await js("document.getElementById('faixa-recados').classList.contains('hidden')"));
+  for (const [w, h] of [[1280, 970], [1280, 800], [1536, 864], [1366, 700], [960, 800]]) {
+    await definirTamanho(w, h);
+    teste(`Menu ${w}x${h} com 7 contas: os 5 botões mostram o nome inteiro`, await js(`[...document.querySelectorAll('.menu-grade .cartao')].every((c) => {
+      const nome = c.lastElementChild.getBoundingClientRect(); const r = c.getBoundingClientRect();
+      return nome.height > 20 && nome.bottom <= r.bottom + 1 && nome.top >= r.top; })`));
+    if (w === 1280 && h === 970) await capturar("menu-muitas-contas-1280x970.png");
+  }
+  await definirTamanho(1536, 864);
+  for (const id of contasMenu) await apiPag("DELETE", `/api/contas/${id}`);
+
   // 13. Offline + console
   const externos = escanearOffline();
   teste("Offline: nenhuma URL externa em frontend/", externos.length === 0, externos.slice(0, 5).join(" | "));

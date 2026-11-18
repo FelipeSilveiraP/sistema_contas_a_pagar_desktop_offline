@@ -151,6 +151,10 @@
   aspect-ratio: 429 / 240;
   min-height: 7.5rem;
 }
+/* o nome do botao (faixa branca de baixo) nunca some: quando falta altura,
+   quem encolhe e o quadrado do icone */
+.cartao > div:first-child { min-height: 0; overflow: hidden; }
+.cartao > div:last-child { flex-shrink: 0; }
 
 /* Tabela mensagens: linhas rotuladas quando estreita */
 @media (max-width: 599px) {
@@ -584,7 +588,7 @@
   }
   /* cartoes preenchem a celula da grade (altura pela tela, nao pela largura):
      o Menu cabe inteiro na janela, sem rolagem */
-  .menu-grade .cartao { aspect-ratio: auto; min-height: 0; height: 100%; }
+  .menu-grade .cartao { aspect-ratio: auto; min-height: 6.5rem; height: 100%; }
   .cartao--inserir   { grid-area: 1 / 1; }
   .cartao--controle  { grid-area: 1 / 3; }
   .cartao--cadastros { grid-area: 2 / 2; }

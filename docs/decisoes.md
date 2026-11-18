@@ -207,3 +207,8 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 ## Tudo em MAIUSCULAS (2026-11-18)
 
 - **2026-11-18 — Todo texto digitado e gravado em MAIUSCULAS (pedido do usuario, nos dois sistemas):** a regra fica no servidor (`service/Texto.maiusculas`, pt-BR: ç → Ç), na normalizacao de cada cadastro: contas e recorrentes (empresa, pagador, categoria, documento), empresas (razao social, representante, endereco), bancos (instituicao), pagadores (nome, funcao) e recados (titulo, mensagem). Fora (quebrariam): e-mail, PIN, senha de app, chave Pix, nomes de arquivo, codigos internos (forma de pagamento, tipo de telefone). Nas telas, CSS `text-transform: uppercase` em campos de texto (menos e-mail, senha e chave Pix). Registros antigos ficam como estavam ate serem editados.
+
+## 2026-11-18 — Menu: os botões têm prioridade sobre "Mensagens do dia"
+- O painel mostra só as 2 contas mais urgentes (atrasadas primeiro, depois por vencimento); o total e "mais N em EXPANDIR" ficam no rodapé.
+- A faixa "Recados de hoje" só aparece quando há recado (1 no painel; todos no EXPANDIR).
+- O nome do botão (faixa branca) nunca encolhe: quem encolhe é o quadrado do ícone. Coberto pelo smoke 12c (7 contas, 5 resoluções).

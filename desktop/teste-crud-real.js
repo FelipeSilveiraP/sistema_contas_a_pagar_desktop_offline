@@ -295,7 +295,7 @@ async function executar() {
   teste("Conta: aviso 'Conta ... salva' aparece no Menu", await esperarNotificacao("salva"), await notificacoes());
   await esperarPredicado("document.body.dataset.alertas !== undefined", 8000);
   teste("Menu: 'Mensagens do dia' mostra a conta real 'Vence em 5 dias'",
-    await js(`(() => { const t = document.getElementById('alertas-corpo').textContent; return t.includes('Silca Chaves do Brasil') && t.includes('Vence em 5 dias') && t.includes('R$ 1.234,56'); })()`),
+    await js(`(() => { const t = document.getElementById('alertas-corpo').textContent.toUpperCase(); return t.includes('SILCA CHAVES DO BRASIL') && t.includes('VENCE EM 5 DIAS') && t.includes('R$ 1.234,56'); })()`),
     await texto("#alertas-corpo"));
   await capturar("05-menu-com-alerta");
 
@@ -465,7 +465,7 @@ async function executar() {
   teste("Mensagens: editar o título salva", await esperarNotificacao("Mensagem atualizada") && await esperarPredicado(`!!(${linhaCom("#tableBody", "Conferir caixa e cofre")})`, 5000));
   await ir("menu");
   await esperarPredicado("document.body.dataset.alertas !== undefined", 8000);
-  teste("Menu: recado de hoje aparece em 'Recados de hoje'", (await texto("#recados-dia")).includes("Conferir caixa e cofre"), await texto("#recados-dia"));
+  teste("Menu: recado de hoje aparece em 'Recados de hoje'", (await texto("#recados-dia")).toUpperCase().includes("CONFERIR CAIXA E COFRE"), await texto("#recados-dia"));
   await clicarSel("#btn-expandir-mensagens");
   teste("Menu: EXPANDIR abre o pop-up com contas e recados", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 3000) &&
     (await texto("#recados-expandidos")).includes("Conferir caixa e cofre"));
