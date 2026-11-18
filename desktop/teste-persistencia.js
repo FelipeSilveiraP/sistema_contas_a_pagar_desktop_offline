@@ -52,10 +52,14 @@ async function subirBackend() {
       const resposta = await fetch(`http://127.0.0.1:${porta}/api/status`, {
         headers: { "X-FinDesk-Token": token },
       });
-      if (resposta.ok) return { proc, porta, token, logs };
+      // igual ao Electron (main.js): so usa a API depois que o banco terminou as migracoes.
+      // O /api/status responde antes disso, com "inicializado": "false" (era a falha
+      // intermitente do GitHub: "no such table: bancos").
+      if (resposta.ok && (await resposta.json()).inicializado === "true") return { proc, porta, token, logs };
     } catch {
-      await esperar(400);
+      // backend ainda subindo
     }
+    await esperar(400);
   }
   proc.kill();
   throw new Error("backend nao respondeu em 60s");
