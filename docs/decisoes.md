@@ -234,3 +234,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - `docs/analise-banco.md`: tabelas e colunas usadas e mortas dos dois sistemas; nada apagado sem aprovação.
 - PAGO: pop-up grande com BANCO, FORMA DE PAGAMENTO (lista para escolher OU escrever: PIX, BOLETO, DINHEIRO, CARTÃO DE CRÉDITO/DÉBITO, TRANSFERÊNCIA, DÉBITO AUTOMÁTICO; vem com o formato da conta) e DATA. v21: `pagamentos.forma_pagamento` (texto livre, 2 a 40, MAIÚSCULAS). Aparece em PAGO EM / BANCO e em Pagos (editável).
 - Todas as Contas: filtro ESTE MÊS (vencimento no mês de hoje, pagas ou não).
+
+## 2026-11-19 — Correção da rolagem das caixas de seleção
+- O `<body>` (altura 100%) é quem rola nas telas, não a janela. A versão anterior punha um marcador na JANELA: criava uma 2ª rolagem por fora, empurrava a tela e deixava faixa branca embaixo (Cadastrar Garantia, MODELO e PRODUTO). Agora `rolagem.ts` rola só a área que já rola e, no fim da página, põe o espaço extra DENTRO dela (some ao sair do campo). Smoke do Garantias reproduz as fotos do usuário.

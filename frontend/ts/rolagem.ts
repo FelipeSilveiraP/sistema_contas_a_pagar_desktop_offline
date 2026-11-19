@@ -15,27 +15,48 @@ function espacoPedido(campo: HTMLElement): number {
   return ESPACO_LISTA;
 }
 
+/** O que rola de verdade: nas telas o <body> (altura 100%) e quem rola, nao a janela. */
+function rolavelDe(campo: HTMLElement): HTMLElement {
+  for (let pai = campo.parentElement; pai; pai = pai.parentElement) {
+    if (pai.classList.contains("tabela-rolagem") || pai.classList.contains("caixa-busca__lista")) continue;
+    const y = getComputedStyle(pai).overflowY;
+    if (y !== "auto" && y !== "scroll") continue;
+    // o <body> que rola e sempre ele (mesmo quando o conteudo ainda cabe e falta o espaco)
+    if (pai === document.body || pai.scrollHeight > pai.clientHeight + 1) return pai;
+  }
+  return (document.scrollingElement as HTMLElement) ?? document.documentElement;
+}
+
 /** Sobe a tela para a lista do campo caber embaixo dele (nunca esconde o proprio campo).
- * Um marcador invisivel do tamanho da lista e posto logo abaixo do campo e o navegador o traz
- * para dentro da tela (rola quem precisar rolar). No fim da pagina o marcador tambem cria o
- * espaco que falta; ele some quando a pessoa sai do campo. */
+ * Rola so a area que ja rola (nunca cria rolagem nova). No fim da pagina poe um espaco em
+ * branco DENTRO dessa area, que some quando a pessoa sai do campo. */
 function abrirEspaco(campo: HTMLElement): void {
   if (campo.closest(".dialogo, [role=dialog]")) return; // pop-ups ja ficam no meio da tela
   const r = campo.getBoundingClientRect();
   if (r.height === 0) return;
-  const pedido = Math.min(espacoPedido(campo), window.innerHeight - 96 - r.height);
-  if (pedido <= 0 || window.innerHeight - r.bottom >= pedido) return;
-  document.getElementById("espaco-lista-aberta")?.remove();
-  const marcador = document.createElement("div");
-  marcador.id = "espaco-lista-aberta";
-  marcador.setAttribute("aria-hidden", "true");
-  Object.assign(marcador.style, {
-    position: "absolute", left: "0", width: "1px", pointerEvents: "none",
-    top: `${r.bottom + window.scrollY}px`, height: `${pedido}px`,
-  });
-  document.body.appendChild(marcador);
-  marcador.scrollIntoView({ block: "end", behavior: "instant" as ScrollBehavior });
-  campo.addEventListener("blur", () => marcador.remove(), { once: true });
+  const rolavel = rolavelDe(campo);
+  const area = rolavel === document.scrollingElement
+    ? { top: 0, bottom: window.innerHeight }
+    : rolavel.getBoundingClientRect();
+  const fundo = Math.min(area.bottom, window.innerHeight);
+  const pedido = espacoPedido(campo);
+  const falta = pedido - (fundo - r.bottom);
+  if (falta <= 0) return;
+  // sobe o que falta, mas o campo continua visivel abaixo do topo da area (barra fixa incluida)
+  const delta = Math.min(falta, Math.max(0, r.top - Math.max(area.top, 0) - 96));
+  if (delta <= 0) return;
+  const sobra = rolavel.scrollHeight - rolavel.clientHeight - rolavel.scrollTop;
+  if (sobra < delta) {
+    document.getElementById("espaco-lista-aberta")?.remove();
+    const espaco = document.createElement("div");
+    espaco.id = "espaco-lista-aberta";
+    espaco.setAttribute("aria-hidden", "true");
+    espaco.style.flex = "0 0 auto";
+    espaco.style.height = `${Math.ceil(delta - sobra)}px`;
+    (rolavel === document.scrollingElement ? document.body : rolavel).appendChild(espaco);
+    campo.addEventListener("blur", () => espaco.remove(), { once: true });
+  }
+  rolavel.scrollTop += delta;
 }
 
 const SELETOR_CAIXA = "select, .caixa-busca__campo, input[list]";
