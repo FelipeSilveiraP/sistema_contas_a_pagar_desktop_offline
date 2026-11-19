@@ -237,3 +237,8 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-19 — Correção da rolagem das caixas de seleção
 - O `<body>` (altura 100%) é quem rola nas telas, não a janela. A versão anterior punha um marcador na JANELA: criava uma 2ª rolagem por fora, empurrava a tela e deixava faixa branca embaixo (Cadastrar Garantia, MODELO e PRODUTO). Agora `rolagem.ts` rola só a área que já rola e, no fim da página, põe o espaço extra DENTRO dela (some ao sair do campo). Smoke do Garantias reproduz as fotos do usuário.
+
+## 2026-11-19 — Programa reabre sozinho depois da atualização
+- Na loja o programa não reabria após atualizar. Causas possíveis: (1) o jeito padrão do NSIS abre pelo atalho do Menu Iniciar via Explorer (`ExecShellAsUser`), que pode falhar calado; (2) o programa novo abria enquanto o antigo ainda fechava e, sem a "instância única", fechava sozinho.
+- Agora: `instalador.nsh` (customInstall, só em atualização) abre o exe DIRETO com `--reabrir-depois-da-atualizacao`; com essa marca o programa tenta a instância única a cada 0,5 s por até 40 s em vez de desistir (`desktop/main.js`). Se o atalho também abrir, um dos dois fica e o outro sai quieto.
+- Ensaio do GitHub: além do processo, exige a JANELA aberta e ainda aberta 15 s depois.

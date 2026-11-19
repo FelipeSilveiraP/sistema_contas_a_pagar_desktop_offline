@@ -249,6 +249,15 @@ function spawnFalso() {
   delete process.env.FINDESK_API_ATUALIZACOES;
 
   fs.rmSync(PASTA, { recursive: true, force: true });
+  // reabrir depois da atualizacao (2026-11-19): o instalador abre o programa DIRETO e o
+  // programa novo espera o antigo fechar, em vez de desistir
+  const nshReabrir = fs.readFileSync(path.join(__dirname, "..", "instalador", "instalador.nsh"), "utf8");
+  teste("Instalador: numa atualizacao abre o programa direto (sem depender do atalho)",
+    /\$\{if\} \$\{isUpdated\}\s+Exec '"\$INSTDIR\\\$\{APP_EXECUTABLE_FILENAME\}" --reabrir-depois-da-atualizacao'/.test(nshReabrir));
+  const mainJs = fs.readFileSync(path.join(__dirname, "main.js"), "utf8");
+  teste("Programa reaberto espera o antigo fechar (tenta a instancia unica de novo)",
+    mainJs.includes('const ARG_REABRIR = "--reabrir-depois-da-atualizacao"') && /process\.argv\.includes\(ARG_REABRIR\)[\s\S]*app\.requestSingleInstanceLock\(\)[\s\S]*setTimeout\(tentar, 500\)/.test(mainJs));
+
   console.log(`\n=== RESULTADO AUTOMACOES: ${ok}/${total} verificacoes passaram ===`);
   process.exit(ok === total ? 0 : 1);
 })();

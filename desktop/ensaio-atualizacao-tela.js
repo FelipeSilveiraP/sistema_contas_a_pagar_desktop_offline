@@ -68,6 +68,17 @@ function pidsDoPrograma() {
   }
 }
 
+/** Titulos das janelas abertas do programa (tasklist /V; "N/A" = processo sem janela). */
+function janelasDoPrograma() {
+  try {
+    const saida = execFileSync("tasklist", ["/V", "/FI", `IMAGENAME eq ${EXE}`, "/FO", "CSV", "/NH"], { encoding: "utf8" });
+    return saida.split(/\r?\n/).filter((l) => l.startsWith(`"${EXE}"`))
+      .map((l) => l.slice(1, -1).split('","').pop()).filter((t) => t && t !== "N/A");
+  } catch {
+    return [];
+  }
+}
+
 function fecharPrograma() {
   try {
     execFileSync("taskkill", ["/IM", EXE, "/T", "/F"], { stdio: "ignore" });
@@ -266,6 +277,12 @@ async function principal() {
   teste(`Versao nova instalada (${versaoNova})`, instalou, `instalada: ${versaoInstalada()}`);
   const reabriu = await ate(() => pidsDoPrograma().some((pid) => !pidsAntes.has(pid)), 90000);
   teste("Programa abre de novo sozinho", reabriu);
+  // nao basta o processo existir: a JANELA tem que aparecer e continuar aberta (na loja o
+  // programa reaberto fechava sozinho quando o antigo ainda nao tinha terminado de fechar)
+  const comJanela = await ate(() => janelasDoPrograma().length > 0, 90000);
+  teste("Janela do programa aparece depois da atualizacao", comJanela, janelasDoPrograma().join(" | "));
+  await esperar(15000);
+  teste("Janela continua aberta 15 s depois (nao fechou sozinha)", janelasDoPrograma().length > 0, janelasDoPrograma().join(" | "));
 
   // ---- o programa novo: versao certa e sem oferecer atualizar de novo ----
   await esperar(5000);

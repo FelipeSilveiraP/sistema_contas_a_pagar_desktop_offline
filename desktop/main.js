@@ -611,11 +611,15 @@ tratarIpc("findesk:fechar", () => {
   app.quit();
 });
 
-const instanciaUnica = app.requestSingleInstanceLock();
-if (!instanciaUnica) {
-  app.quit();
-} else {
-  app.on("second-instance", () => {
+// Aberto pelo instalador depois de uma ATUALIZACAO (instalador.nsh): o programa antigo pode
+// ainda estar terminando de fechar e segurar a "instancia unica". Este espera ele sair (ate
+// 40 s) em vez de desistir; antes o programa novo fechava sozinho e nao reabria.
+const ARG_REABRIR = "--reabrir-depois-da-atualizacao";
+
+function iniciarInstancia() {
+  app.on("second-instance", (_evento, argv) => {
+    // o que espera o antigo fechar nao puxa a janela (ele tenta de novo a cada meio segundo)
+    if (argv.includes(ARG_REABRIR)) return;
     if (abrirAgora) abrirAgora(); // atalho clicado durante a espera: abre na hora
     if (janela) {
       if (janela.isMinimized()) janela.restore();
@@ -669,4 +673,23 @@ if (!instanciaUnica) {
   app.on("window-all-closed", () => {
     app.quit();
   });
+}
+
+if (app.requestSingleInstanceLock()) {
+  iniciarInstancia();
+} else if (process.argv.includes(ARG_REABRIR)) {
+  let tentativas = 0;
+  const tentar = () => {
+    if (app.requestSingleInstanceLock()) {
+      registrarLog("INFO", "programa reaberto depois da atualizacao");
+      iniciarInstancia();
+    } else if (++tentativas >= 80) {
+      app.quit(); // ja tem um aberto (o instalador abriu pelo atalho): esse fica
+    } else {
+      setTimeout(tentar, 500);
+    }
+  };
+  setTimeout(tentar, 500);
+} else {
+  app.quit();
 }

@@ -7,6 +7,14 @@
 ; respeitando "abrirAoLigarComputador" do configuracoes.json
 ; (desktop/automacoes.js configurarInicioComWindows).
 
+!macro customInstall
+  ; ATUALIZACAO: abre o programa direto, sem depender do atalho do Menu Iniciar (o jeito
+  ; padrao, pelo Explorer, as vezes nao abria nada). O programa espera o antigo fechar.
+  ${if} ${isUpdated}
+    Exec '"$INSTDIR\${APP_EXECUTABLE_FILENAME}" --reabrir-depois-da-atualizacao'
+  ${endIf}
+!macroend
+
 ; numa ATUALIZACAO o desinstalador da versao antiga tambem roda: so remove o
 ; cadastro quando o sistema e desinstalado de verdade
 !macro customUnInstall
