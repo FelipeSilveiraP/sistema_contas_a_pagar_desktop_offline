@@ -269,6 +269,15 @@ function iniciar(): void {
   });
   el("btnClearSelection").addEventListener("click", fecharEditor);
   el("btnApplyChange").addEventListener("click", () => void aplicarAlteracao());
+  // as mesmas acoes da linha, tambem na area de edicao (como nas outras tabelas)
+  el("btnGerarAction").addEventListener("click", () => {
+    const r = selecionada();
+    if (r) void gerar(r);
+  });
+  el("btnDeleteAction").addEventListener("click", () => {
+    const r = selecionada();
+    if (r) void excluirFixa(r);
+  });
   editor = criarEditorCampo([
     { valor: "valor", rotulo: "Valor (R$)", mascara: "moeda" },
     { valor: "dia", rotulo: "Dia do vencimento", mascara: "dia" },

@@ -248,3 +248,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-19 — Fim da lista pequena do Windows (datalist)
 - `caixa-sugestoes.ts`: todo `<input list>` vira sozinho a caixa de digitar ou escolher neobrutalista (classes `caixa-busca__*`, iguais às do Garantias): lista grande, filtra ao digitar, aceita texto livre, setas/Enter/Esc. Vale para CATEGORIA DA CONTA (Inserir Conta) e FORMA DE PAGAMENTO (pop-up do PAGO). Regra: não usar `<datalist>` nativo à vista.
+
+## 2026-11-19 — Contas recorrentes: ações também na área de edição
+- Como nas outras tabelas, a área que abre ao clicar na conta fixa tem "Ações": GERAR PRÓXIMOS MESES e EXCLUIR (mesmo pop-up de confirmação da linha).

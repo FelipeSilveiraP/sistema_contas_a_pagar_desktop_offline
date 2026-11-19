@@ -1901,6 +1901,13 @@ async function executar() {
     && pagaDepois.nomeEmpresa === `FIXA EDITAR ${sufixoPg}`, JSON.stringify(pagaDepois));
   await capturar("recorrentes-uma-tabela-1536x864.png");
   await apiPag("DELETE", `/api/contas/${pagaRec.id}/pagamento`);
+  // EXCLUIR tambem na area de edicao (nao so na linha)
+  teste("Recorrentes: área de edição tem as ações GERAR PRÓXIMOS MESES e EXCLUIR", await js(`(() => { const e = document.getElementById('btnDeleteAction'), g = document.getElementById('btnGerarAction');
+    return !!e && !!g && e.offsetParent !== null && g.offsetParent !== null && e.textContent.includes('EXCLUIR'); })()`));
+  await js("document.getElementById('btnDeleteAction').click()");
+  teste("Recorrentes: EXCLUIR da área de edição pede confirmação", await esperarPredicado("document.querySelector('[data-dialogo]')?.textContent.includes('EXCLUIR CONTA FIXA')", 3000));
+  await js("document.querySelector('[data-dialogo] [data-dialogo-acao=confirmar]').click()");
+  teste("Recorrentes: confirmou, a conta fixa some da tabela e a edição fecha", await esperarPredicado(`!${linhaRec} && document.getElementById('editorContainer').classList.contains('hidden')`, 6000));
   await apiPag("DELETE", `/api/recorrentes/${recEd.body.id}`);
   await apiPag("DELETE", `/api/contas/${pagaRec.id}`);
 
