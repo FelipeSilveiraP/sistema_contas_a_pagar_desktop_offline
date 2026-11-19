@@ -302,6 +302,7 @@ async function executar() {
   // ---------- 6. TODAS AS CONTAS: ler, buscar por valor, editar, baixar PDF, pagar, imprimir ----------
   teste("Menu → CONTROLE (clique real)", await clicarSel('a[data-path="controle-de-contas"]') && await esperarTela("controle"));
   teste("CONTROLE → TODAS AS CONTAS (clique real)", await clicarSel('a[data-modulo="todas-as-contas"]') && await esperarTela("todas-as-contas"));
+  await js("(() => { const s = document.getElementById('filtroMes'); if (s) { s.value = ''; s.dispatchEvent(new Event('change')); } return true; })()");
   const linhaConta = linhaCom("#tableBody", "Silca Chaves do Brasil");
   teste("Todas as Contas: conta listada com valor, pasta e boleto", await js(`(() => { const tr = ${linhaConta}; const t = tr ? tr.textContent : ''; return t.includes('R$ 1.234,56') && t.includes('SIM') && t.toLowerCase().includes('boleto'); })()`));
   await digitarEm("#searchInput", "1234");
@@ -400,6 +401,7 @@ async function executar() {
 
   // ---------- 9. EXCLUIR a conta (Todas as Contas) ----------
   await ir("todas-as-contas");
+  await js("(() => { const s = document.getElementById('filtroMes'); if (s) { s.value = ''; s.dispatchEvent(new Event('change')); } return true; })()");
   await clicar(linhaConta);
   await clicarSel("#btnDeleteAction");
   const tituloExcluirConta = await responderDialogo("confirmar");

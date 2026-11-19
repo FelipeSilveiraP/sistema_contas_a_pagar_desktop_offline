@@ -1809,11 +1809,27 @@ async function executar() {
     await js(`(${linhaPg}.querySelector('.pago-em') || {}).textContent`));
   teste("Aviso de 'deu certo' fica GRANDE no canto inferior direito", await esperarPredicado(`(() => { const n = [...document.querySelectorAll('.notificacao')].pop(); if (!n) return false;
     const r = n.getBoundingClientRect(); return r.right > innerWidth - 60 && r.bottom > innerHeight - 60 && r.width >= 400 && r.height >= 60; })()`, 4000));
-  // ESTE MES: so contas com vencimento no mes de hoje
-  await js("document.querySelector('.filter-btn[data-filter=MES]').click()");
-  teste("Filtro ESTE MÊS mostra só as contas que vencem neste mês", await esperarPredicado(`(() => { const mes = new Date().toISOString().slice(0, 7).split('-').reverse().join('/');
-    const linhas = [...document.querySelectorAll('#tableBody tr.bill-row')]; return linhas.length > 0 && linhas.every(tr => tr.textContent.includes(mes)); })()`, 4000));
-  await js("document.querySelector('.filter-btn[data-filter=TODOS]').click()");
+  // caixa MES: abre no mes de hoje, tem os 12 meses do ano e TODOS OS MESES; botoes menores
+  const mesHoje = await js("(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })()");
+  teste("Caixa MÊS já vem neste mês, com os 12 meses do ano e TODOS OS MESES", await js(`(() => { const s = document.getElementById('filtroMes');
+    const ano = '${mesHoje}'.slice(0, 4); const valores = [...s.options].map(o => o.value);
+    return s.value === '${mesHoje}' && valores.includes('') && Array.from({ length: 12 }, (_, i) => ano + '-' + String(i + 1).padStart(2, '0')).every(m => valores.includes(m)); })()`));
+  teste("Sem o botão ESTE MÊS e os filtros ficaram menores", await js(`!document.querySelector('.filter-btn[data-filter=MES]')
+    && [...document.querySelectorAll('.filter-btn')].every(b => b.getBoundingClientRect().height <= 34)`));
+  const outroMes = await apiPag("POST", "/api/contas", { nomeEmpresa: `EMPRESA OUTRO MES ${sufixoPg}`, pagadorResponsavel: "LOJA", tipoPessoa: "PJ",
+    formaPagamento: "boleto", valor: "10.00", vencimento: (() => { const d = new Date(); d.setDate(15); d.setMonth(d.getMonth() + 2); return d.toISOString().slice(0, 10); })(), semNotaFiscal: true, forcar: true });
+  await js("window.finDesk.navegar('todas-as-contas')");
+  await esperarTela("todas-as-contas");
+  await esperarPredicado(`!!${linhaPg}`, 8000);
+  const temOutro = () => js(`[...document.querySelectorAll('#tableBody tr.bill-row')].some(tr => tr.textContent.includes('OUTRO MES ${sufixoPg}'))`);
+  teste("Mês de hoje (padrão): mostra a conta deste mês e esconde a de outro mês", (await js(`!!${linhaPg}`)) && !(await temOutro()));
+  await js("(() => { const s = document.getElementById('filtroMes'); s.value = ''; s.dispatchEvent(new Event('change')); })()");
+  teste("TODOS OS MESES mostra as contas de todos os meses", await esperarPredicado(`[...document.querySelectorAll('#tableBody tr.bill-row')].some(tr => tr.textContent.includes('OUTRO MES ${sufixoPg}'))`, 3000));
+  await js(`(() => { const s = document.getElementById('filtroMes'); s.value = '${outroMes.body.vencimento.slice(0, 7)}'; s.dispatchEvent(new Event('change')); })()`);
+  teste("Escolher outro mês mostra só as contas daquele mês", await esperarPredicado(`(() => { const l = [...document.querySelectorAll('#tableBody tr.bill-row')];
+    return l.length > 0 && l.every(tr => tr.textContent.includes('OUTRO MES ${sufixoPg}') || tr.textContent.includes('${outroMes.body.vencimento.slice(5, 7)}/${outroMes.body.vencimento.slice(0, 4)}')); })()`, 3000));
+  await apiPag("DELETE", `/api/contas/${outroMes.body.id}`);
+  await js("(() => { const s = document.getElementById('filtroMes'); s.value = ''; s.dispatchEvent(new Event('change')); })()");
   // clicar no registro leva a tela ate "Alterar um campo"
   await definirTamanho(1280, 720);
   await js("(document.scrollingElement || document.documentElement).scrollTop = 0");

@@ -28,7 +28,7 @@ import { montarNavbar } from "../navbar";
 import { paraCentavos, parseDataBR, formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { correspondeBusca, hojeIso, ordenar } from "../filtros";
 
-type Filtro = "TODOS" | "MES" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
+type Filtro = "TODOS" | "AVENCER" | "HOJE" | "ATRASADO" | "PAGO" | "NAPASTA";
 
 const ROTULO_FORMA: Record<string, string> = {
   boleto: "Boleto",
@@ -44,6 +44,26 @@ let pagamentos: PagamentoDados[] = [];
 let pagadores: PagadorDados[] = [];
 let editor: EditorCampo;
 let filtro: Filtro = "TODOS";
+/** mes do vencimento escolhido ("aaaa-mm"; "" = todos). Abre sempre no mes de hoje. */
+let mesFiltro = hojeIso().slice(0, 7);
+const NOMES_MESES = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+
+function rotuloMes(mes: string): string {
+  const [ano, m] = mes.split("-");
+  return `${NOMES_MESES[Number(m) - 1]} / ${ano}`;
+}
+
+/** Caixa MES: os 12 meses do ano de hoje + os meses que tem contas (outros anos). */
+function montarFiltroMes(): void {
+  const caixa = document.getElementById("filtroMes") as HTMLSelectElement | null;
+  if (!caixa) return;
+  const ano = hojeIso().slice(0, 4);
+  const meses = new Set<string>(Array.from({ length: 12 }, (_, i) => `${ano}-${String(i + 1).padStart(2, "0")}`));
+  for (const c of contas) meses.add(c.vencimento.slice(0, 7));
+  const opcoes = [new Option("TODOS OS MESES", ""), ...[...meses].sort().map((m) => new Option(rotuloMes(m), m))];
+  caixa.replaceChildren(...opcoes);
+  caixa.value = mesFiltro;
+}
 let pesquisa = "";
 let selecionadoId: number | null = null;
 /** nota fiscal mostrada na area de edicao (chave = id + nome do arquivo) */
@@ -76,9 +96,8 @@ function filtradas(): ContaDados[] {
       return false;
     }
     const diff = Math.round((new Date(c.vencimento).getTime() - new Date(hoje()).getTime()) / 86400000);
+    if (mesFiltro && c.vencimento.slice(0, 7) !== mesFiltro) return false;
     switch (filtro) {
-      // contas que vencem no mes de hoje (pagas ou nao)
-      case "MES": return c.vencimento.slice(0, 7) === hoje().slice(0, 7);
       case "PAGO": return c.status === "PAGO";
       case "NAPASTA": return c.boletoNaPasta;
       case "AVENCER": return c.status === "PENDENTE" && diff > 0;
@@ -422,6 +441,7 @@ function valorAtual(conta: ContaDados, campo: string): string {
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
   [contas, pagamentos, pagadores] = await Promise.all([listarContas(cfg), listarPagamentos(cfg), listarPagadores(cfg)]);
+  montarFiltroMes();
   renderTabela();
   if (selecionadoId !== null) {
     if (contas.some((c) => c.id === selecionadoId)) selecionar(selecionadoId);
@@ -613,7 +633,7 @@ async function excluirSelecionado(): Promise<void> {
 // ---------- impressao formal ----------
 
 const ROTULO_FILTRO: Record<Filtro, string> = {
-  TODOS: "Todas as contas", MES: "Vencem este mês", AVENCER: "A vencer", HOJE: "Vencem hoje",
+  TODOS: "Todas as contas", AVENCER: "A vencer", HOJE: "Vencem hoje",
   ATRASADO: "Atrasadas", PAGO: "Pagas", NAPASTA: "Boleto na pasta",
 };
 
@@ -621,7 +641,7 @@ async function imprimirLista(): Promise<void> {
   const lista = filtradas();
   await imprimirDocumento("Lista de contas", (folha) => {
     const pagina = criar("section", "folha__pagina");
-    const filtroTxt = `Filtro: ${ROTULO_FILTRO[filtro]}${pesquisa ? ` · Pesquisa: "${pesquisa}"` : ""} · ${lista.length} conta(s)`;
+    const filtroTxt = `Mês: ${mesFiltro ? rotuloMes(mesFiltro) : "todos"} · Filtro: ${ROTULO_FILTRO[filtro]}${pesquisa ? ` · Pesquisa: "${pesquisa}"` : ""} · ${lista.length} conta(s)`;
     pagina.append(cabecalhoFolha("Relação de contas a pagar"), criar("p", "folha__nota", filtroTxt));
     const tabela = criar("table", "folha__lista");
     const cab = criar("tr");
@@ -741,6 +761,11 @@ function iniciar(): void {
   ligarExpansaoColunas(el("billsTable"), el("btnExpandirColunas"));
   el("searchInput").addEventListener("input", () => {
     pesquisa = el<HTMLInputElement>("searchInput").value.trim();
+    renderTabela();
+  });
+  montarFiltroMes();
+  el<HTMLSelectElement>("filtroMes").addEventListener("change", () => {
+    mesFiltro = el<HTMLSelectElement>("filtroMes").value;
     renderTabela();
   });
   document.querySelectorAll<HTMLButtonElement>(".filter-btn").forEach((botao) => {

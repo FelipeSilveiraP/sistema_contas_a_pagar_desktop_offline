@@ -242,3 +242,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - Na loja o programa não reabria após atualizar. Causas possíveis: (1) o jeito padrão do NSIS abre pelo atalho do Menu Iniciar via Explorer (`ExecShellAsUser`), que pode falhar calado; (2) o programa novo abria enquanto o antigo ainda fechava e, sem a "instância única", fechava sozinho.
 - Agora: `instalador.nsh` (customInstall, só em atualização) abre o exe DIRETO com `--reabrir-depois-da-atualizacao`; com essa marca o programa tenta a instância única a cada 0,5 s por até 40 s em vez de desistir (`desktop/main.js`). Se o atalho também abrir, um dos dois fica e o outro sai quieto.
 - Ensaio do GitHub: além do processo, exige a JANELA aberta e ainda aberta 15 s depois.
+
+## 2026-11-19 — Todas as Contas: caixa MÊS
+- Caixa de seleção MÊS (os 12 meses do ano de hoje + meses de outros anos que têm contas + TODOS OS MESES); abre SEMPRE no mês de hoje. Os botões (TODOS, A VENCER, VENCEM HOJE, ATRASADOS, PAGOS, NA PASTA) ficaram menores e valem DENTRO do mês escolhido. O botão ESTE MÊS saiu (a caixa faz isso). A impressão diz o mês.
