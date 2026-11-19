@@ -1434,3 +1434,17 @@ textarea:not(.sem-maiusculas) {
 /* ===== Tabelas com altura de 5 linhas e rolagem por dentro (tabela-recolhivel.ts) ===== */
 .tabela-rolagem { overflow-y: auto; overscroll-behavior: contain; }
 .tabela-rolagem > table > thead { position: sticky; top: 0; z-index: 2; }
+
+/* ===== Caixa de digitar ou escolher (caixa-sugestoes.ts; igual a do Sistema de Garantias) ===== */
+.caixa-busca { position: relative; }
+.caixa-busca__campo { width: 100%; padding-right: 2.75rem !important; }
+.caixa-busca__seta { position: absolute; top: 0; right: 0; bottom: 0; width: 2.5rem; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; cursor: pointer; color: #1c1b1b; }
+.caixa-busca__lista { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0; max-height: 16rem; overflow-y: auto; margin: 0; padding: 0; list-style: none; background: #ffffff; border: 3px solid #1c1b1b; box-shadow: 4px 4px 0 0 #1c1b1b; }
+.caixa-busca__lista.hidden { display: none; }
+.caixa-busca__opcao { padding: 0.6rem 0.85rem; font-size: 1.0625rem; font-weight: 700; text-transform: uppercase; cursor: pointer; color: #1c1b1b; }
+.caixa-busca__opcao + .caixa-busca__opcao { border-top: 1px solid #e5e5e5; }
+.caixa-busca__opcao:hover { background: #fff9d6; }
+.caixa-busca__opcao[aria-selected="true"] { background: #FFE600; }
+.caixa-busca__vazio { padding: 0.6rem 0.85rem; font-size: 0.9375rem; font-weight: 700; color: #525252; }
+/* no pop-up do PAGO a lista passa por cima da borda do pop-up (nao fica cortada) */
+.dialogo--pagamento .dialogo__corpo { overflow: visible; }

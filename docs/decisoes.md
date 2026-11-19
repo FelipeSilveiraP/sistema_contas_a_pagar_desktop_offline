@@ -245,3 +245,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-19 — Todas as Contas: caixa MÊS
 - Caixa de seleção MÊS (os 12 meses do ano de hoje + meses de outros anos que têm contas + TODOS OS MESES); abre SEMPRE no mês de hoje. Os botões (TODOS, A VENCER, VENCEM HOJE, ATRASADOS, PAGOS, NA PASTA) ficaram menores e valem DENTRO do mês escolhido. O botão ESTE MÊS saiu (a caixa faz isso). A impressão diz o mês.
+
+## 2026-11-19 — Fim da lista pequena do Windows (datalist)
+- `caixa-sugestoes.ts`: todo `<input list>` vira sozinho a caixa de digitar ou escolher neobrutalista (classes `caixa-busca__*`, iguais às do Garantias): lista grande, filtra ao digitar, aceita texto livre, setas/Enter/Esc. Vale para CATEGORIA DA CONTA (Inserir Conta) e FORMA DE PAGAMENTO (pop-up do PAGO). Regra: não usar `<datalist>` nativo à vista.

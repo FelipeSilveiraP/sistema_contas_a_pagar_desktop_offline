@@ -5,6 +5,7 @@ import { iniciarNotificacoes } from "./notificacoes";
 import { ligarEnterEnvia } from "./enter-envia";
 import { ligarDicas } from "./dicas";
 import { ligarRolagemAutomatica } from "./rolagem";
+import { ligarCaixasSugestoes } from "./caixa-sugestoes";
 
 iniciarDiagnostico();
 // Enter em qualquer campo = botao de enviar/concluir daquele formulario
@@ -13,6 +14,8 @@ ligarEnterEnvia();
 iniciarNotificacoes();
 // rolagem automatica: clique no registro leva ao editor; caixa de selecao abre inteira
 ligarRolagemAutomatica();
+// caixas de digitar ou escolher no estilo do sistema (no lugar da lista pequena do Windows)
+ligarCaixasSugestoes();
 // dica do Windows ao parar o mouse em cima de qualquer botao
 ligarDicas({
   "INSERIR CONTA": "Inserir conta: cadastrar um boleto ou conta a pagar",

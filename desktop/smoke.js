@@ -1230,6 +1230,9 @@ async function executar() {
 
   await js("window.finDesk.navegar('inserir-conta')");
   teste("Inserir Conta: tela abre pela whitelist", await esperarTela("inserir-conta"));
+  teste("Inserir Conta: CATEGORIA DA CONTA é a caixa neobrutalista (sem a lista pequena do Windows)", await esperarPredicado(`(() => {
+    const c = document.getElementById('category'); return !document.querySelector('input[list]') && !!c && !!c.closest('.caixa-busca')
+      && c.closest('.caixa-busca').querySelectorAll('.caixa-busca__seta').length === 1; })()`, 3000));
   await prepararPagina();
   await esperarPredicado(`document.body.dataset.listasCarregadas === 'true'`, 10000);
   const estruturaIc = JSON.parse(
@@ -1788,8 +1791,19 @@ async function executar() {
     const r = d.getBoundingClientRect(); return Math.abs(r.left + r.width / 2 - innerWidth / 2) < innerWidth * 0.06 && Math.abs(r.top + r.height / 2 - innerHeight / 2) < innerHeight * 0.06; })()`, 5000));
   teste("Pop-up do PAGO é grande e tem a FORMA DE PAGAMENTO (escolher ou escrever), já com a do boleto", await js(`(() => {
     const d = document.querySelector('[data-dialogo=pagamento]'); const f = document.getElementById('pagamento-forma');
-    return d.getBoundingClientRect().width >= 640 && !!f && f.getAttribute('list') === 'pagamento-formas' && f.value === 'BOLETO'
+    return d.getBoundingClientRect().width >= 640 && !!f && !!f.closest('.caixa-busca') && f.value === 'BOLETO'
       && [...document.querySelectorAll('#pagamento-formas option')].some(o => o.value === 'PIX'); })()`));
+  // FORMA DE PAGAMENTO e a caixa neobrutalista (nao a lista pequena do Windows): abre grande, filtra e escolhe
+  await js("(() => { const f = document.getElementById('pagamento-forma'); f.focus(); f.value = 'cred'; f.dispatchEvent(new Event('input', { bubbles: true })); })()");
+  teste("Forma de pagamento: lista própria grande, filtrando o que foi digitado", await esperarPredicado(`(() => { const l = document.querySelector('[data-dialogo=pagamento] .caixa-busca__lista');
+    const ops = [...l.querySelectorAll('.caixa-busca__opcao')]; const r = l.getBoundingClientRect();
+    return !l.classList.contains('hidden') && ops.length === 1 && ops[0].textContent === 'CARTÃO DE CRÉDITO' && parseFloat(getComputedStyle(ops[0]).fontSize) >= 16
+      && r.bottom <= innerHeight && getComputedStyle(l).borderTopWidth === '3px'; })()`, 3000));
+  await capturar("pagamento-forma-lista-1536x864.png");
+  await js("document.querySelector('[data-dialogo=pagamento] .caixa-busca__opcao').dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))");
+  teste("Forma de pagamento: clicar na opção preenche e fecha a lista (sem fechar o pop-up)", await js(`document.getElementById('pagamento-forma').value === 'CARTÃO DE CRÉDITO'
+    && document.querySelector('[data-dialogo=pagamento] .caixa-busca__lista').classList.contains('hidden') && !!document.querySelector('[data-dialogo=pagamento]')`));
+  await js("(() => { const f = document.getElementById('pagamento-forma'); f.value = 'BOLETO'; f.blur(); })()");
   teste("Pop-up tem o banco e, na frente, a data do pagamento (hoje)", await js(`(() => { const b = document.getElementById('pagamento-banco'); const d = document.getElementById('pagamento-data');
     const h = new Date(); const hoje = String(h.getDate()).padStart(2, '0') + '/' + String(h.getMonth() + 1).padStart(2, '0') + '/' + h.getFullYear();
     return [...b.options].some((o) => o.textContent === 'BANCO PAGAMENTO ${sufixoPg}') && d.value === hoje && b.getBoundingClientRect().top === d.getBoundingClientRect().top; })()`));
