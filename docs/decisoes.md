@@ -251,3 +251,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-19 — Contas recorrentes: ações também na área de edição
 - Como nas outras tabelas, a área que abre ao clicar na conta fixa tem "Ações": GERAR PRÓXIMOS MESES e EXCLUIR (mesmo pop-up de confirmação da linha).
+
+## 2026-11-19 — REGRA PERMANENTE: nunca gerar nem imprimir documento fiscal
+- Ordem do usuário (vale para os dois sistemas): só mandamos a requisição ao sistema fiscal de fora; emitir, desenhar e imprimir nota/cupom é dele. Regra no CLAUDE.md e no AGENTS.md.

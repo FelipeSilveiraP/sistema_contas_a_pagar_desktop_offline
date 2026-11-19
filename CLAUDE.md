@@ -62,3 +62,7 @@ Os smokes e o teste de persistência exigem o jar já compilado e o frontend já
 - `status` de uma conta (PENDENTE/PAGO) é imutável via PUT; só muda pela baixa/estorno, que grava `pagamentos` + status na mesma transação (`UNIQUE(id_conta)` em pagamentos — pagamento integral único por conta).
 - Duplicidade de conta segue o VBA (comparação restrita ao mês do vencimento); `forcar` pula apenas esse filtro, nunca validações/FKs/CHECKs.
 - Recorrência gera 12 competências, preserva o dia (dia inexistente → último dia do mês), anti-duplicação por nome+vencimento; excluir recorrência remove só as contas geradas não pagas.
+
+## REGRA PERMANENTE — documentos fiscais (usuário, 2026-11-19)
+
+**NUNCA gerar, desenhar, montar, formatar ou imprimir nota fiscal, cupom fiscal, DANFE ou qualquer documento fiscal.** Os nossos sistemas só MANDAM A REQUISIÇÃO ao sistema fiscal de fora (ex.: RM Software): produto, quantidade, valor e forma de pagamento. Emitir o documento, desenhar e imprimir é tarefa EXCLUSIVA desse sistema. Nada de HTML de cupom, QR Code próprio, impressão silenciosa na impressora fiscal ou "cópia" do layout. Se o sistema de fora não imprimir sozinho, a impressão é feita nele pelo operador. (Motivo: em 2026-11-19 o Garantias imprimiu um cupom desenhado por ele mesmo na DARUMA, diferente e incompleto em relação ao do RM.)
