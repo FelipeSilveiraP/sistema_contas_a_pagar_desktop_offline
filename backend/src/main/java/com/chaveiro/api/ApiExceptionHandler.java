@@ -80,6 +80,12 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> generico(Exception erro) {
+        // gatilho do banco recusou (ultima linha de defesa): motivo claro, 409
+        var regra = RegraDoBanco.mensagem(erro);
+        if (regra.isPresent()) {
+            log.warn("gravacao recusada por regra do banco: {}", regra.get());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("erro", regra.get()));
+        }
         // Erros do proprio Spring (rota inexistente 404, metodo errado 405, tipo de
         // conteudo errado 415, id que nao e numero 400...): status certo em vez de
         // "erro interno" 500, sem encher o log de ERROR com tentativas invalidas.

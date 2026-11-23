@@ -171,8 +171,6 @@ class SegurancaBancoTest {
     @Test
     void bancoNaVersaoAnteriorGanhaOsGatilhosSemPerderDados() throws Exception {
         pagar(idConta);
-        // sem a forma de pagamento da v21 (antes de tirar a auditoria: o SQLite confere os gatilhos)
-        sql("ALTER TABLE pagamentos DROP COLUMN forma_pagamento");
         // volta o banco para a v16 (sem gatilhos nem auditoria), com os dados dentro
         for (String gatilho : List.of("trg_conta_paga_nao_exclui", "trg_conta_nasce_pendente",
                 "trg_status_pago_exige_pagamento", "trg_status_pendente_sem_pagamento", "trg_pagamento_nao_troca_conta",
@@ -181,6 +179,8 @@ class SegurancaBancoTest {
                 "trg_auditoria_nao_altera", "trg_auditoria_nao_apaga")) {
             sql("DROP TRIGGER " + gatilho);
         }
+        // sem a forma de pagamento da v21 (depois de tirar os gatilhos que leem a coluna: o SQLite os confere)
+        sql("ALTER TABLE pagamentos DROP COLUMN forma_pagamento");
         sql("DROP TABLE auditoria_operacoes");
         // e sem as contas de usuario da v19
         for (String gatilho : List.of("trg_auditoria_config_insert", "trg_auditoria_config_update", "trg_auditoria_config_delete")) {
@@ -197,8 +197,12 @@ class SegurancaBancoTest {
         assertThat(inicializador.lerVersao()).isEqualTo(inicializador.getVersaoAtual());
         assertThat(contas.buscarPorId(idConta).orElseThrow().status()).isEqualTo("PAGO");
         assertThat(contar("SELECT COUNT(*) FROM pagamentos WHERE id_conta = " + idConta)).isEqualTo(1);
-        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'trg_%' AND name NOT LIKE '%recorrente%' AND name NOT LIKE '%valor_maximo%'"
-                + " AND name NOT LIKE '%usuario%' AND name NOT LIKE '%acessos%' AND name NOT LIKE '%admin%' AND name NOT LIKE '%config%'")).isEqualTo(13);
+        // os 13 gatilhos da v17 voltaram (a v22 acrescenta outros, que nao entram nesta conta)
+        assertThat(contar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'trigger' AND name IN ('trg_conta_paga_nao_exclui',"
+                + " 'trg_conta_nasce_pendente', 'trg_status_pago_exige_pagamento', 'trg_status_pendente_sem_pagamento',"
+                + " 'trg_pagamento_nao_troca_conta', 'trg_auditoria_conta_insert', 'trg_auditoria_conta_update',"
+                + " 'trg_auditoria_conta_delete', 'trg_auditoria_pagamento_insert', 'trg_auditoria_pagamento_update',"
+                + " 'trg_auditoria_pagamento_delete', 'trg_auditoria_nao_altera', 'trg_auditoria_nao_apaga')")).isEqualTo(13);
         assertThatThrownBy(() -> contaService.excluir(idConta)).isInstanceOf(ConflitoIntegridadeException.class);
     }
 

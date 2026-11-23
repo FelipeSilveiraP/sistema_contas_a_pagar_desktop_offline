@@ -161,6 +161,12 @@ class PagadorServiceTest {
                     + " nome TEXT NOT NULL, cpf TEXT NOT NULL, funcao TEXT)");
             stmt.execute("INSERT INTO pagadores (nome, cpf, funcao)"
                     + " VALUES ('Pagador Antigo', '52998224725', 'Caixa')");
+            // a v22 cria gatilhos em bancos, empresas e telefones: um banco v3 real ja tem essas tabelas
+            stmt.execute("CREATE TABLE bancos (id_banco INTEGER PRIMARY KEY AUTOINCREMENT, instituicao TEXT NOT NULL, chave_pix TEXT)");
+            stmt.execute("CREATE TABLE empresas (id_empresa INTEGER PRIMARY KEY AUTOINCREMENT, cnpj TEXT UNIQUE, razao_social TEXT NOT NULL,"
+                    + " nome_representante TEXT, email TEXT, logradouro TEXT)");
+            stmt.execute("CREATE TABLE telefones_empresa (id_telefone INTEGER PRIMARY KEY AUTOINCREMENT, id_empresa INTEGER NOT NULL,"
+                    + " numero TEXT NOT NULL, tipo TEXT)");
             stmt.execute("PRAGMA user_version = 3");
         }
 

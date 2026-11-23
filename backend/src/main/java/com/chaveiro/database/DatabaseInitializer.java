@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class DatabaseInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializer.class);
-    private static final int VERSAO_ATUAL = 21;
+    private static final int VERSAO_ATUAL = 22;
 
     private final ConnectionFactory conexao;
 
@@ -407,6 +407,7 @@ public class DatabaseInitializer {
                 "ALTER TABLE pagamentos ADD COLUMN forma_pagamento TEXT"
                         + " CHECK (forma_pagamento IS NULL OR length(forma_pagamento) BETWEEN 2 AND 40)"
             };
+            case 22 -> protecoesV22();
             default -> throw new IllegalStateException("migracao desconhecida: " + versao);
         };
     }
@@ -711,5 +712,142 @@ public class DatabaseInitializer {
                     + " AND r.id_recorrente <> NEW.id_recorrente)"
                     + " BEGIN SELECT RAISE(ABORT, 'RECORRENTE_DUPLICADA: ja existe uma conta recorrente igual'); END",
         };
+    }
+
+    // ---------- v22: revisao de gatilhos e auditoria (pedido do usuario, 2026-11-23) ----------
+
+    /** Pagamento COMPLETO na auditoria (a forma de pagamento da v21 ficava de fora). */
+    private static String jsonPagamentoCompleto(String r) {
+        // json_object completo (json_patch apagaria do historico os campos vazios)
+        String base = jsonPagamento(r);
+        return base.substring(0, base.length() - 1) + ", 'forma_pagamento', " + r + ".forma_pagamento)";
+    }
+
+    private static String jsonBanco(String r) {
+        return "json_object('id_banco', " + r + ".id_banco, 'instituicao', " + r + ".instituicao, 'chave_pix', " + r + ".chave_pix)";
+    }
+
+    private static String jsonPagador(String r) {
+        return "json_object('id_pagador', " + r + ".id_pagador, 'nome', " + r + ".nome, 'cpf', " + r + ".cpf,"
+                + " 'funcao', " + r + ".funcao)";
+    }
+
+    private static String jsonEmpresa(String r) {
+        return "json_object('id_empresa', " + r + ".id_empresa, 'cnpj', " + r + ".cnpj, 'razao_social', " + r + ".razao_social,"
+                + " 'nome_representante', " + r + ".nome_representante, 'email', " + r + ".email,"
+                + " 'logradouro', " + r + ".logradouro)";
+    }
+
+    private static String jsonTelefone(String r) {
+        return "json_object('id_telefone', " + r + ".id_telefone, 'id_empresa', " + r + ".id_empresa,"
+                + " 'numero', " + r + ".numero, 'tipo', " + r + ".tipo)";
+    }
+
+    private static String jsonAviso(String r) {
+        return "json_object('id_aviso', " + r + ".id_aviso, 'data_inicio', " + r + ".data_inicio, 'data_fim', " + r + ".data_fim,"
+                + " 'dia_semana', " + r + ".dia_semana, 'titulo', " + r + ".titulo, 'mensagem', " + r + ".mensagem)";
+    }
+
+    private static void auditoriaCompleta(List<String> sql, String tabela, String prefixo, String id,
+                                          java.util.function.Function<String, String> json) {
+        sql.add("CREATE TRIGGER IF NOT EXISTS " + prefixo + "_insert AFTER INSERT ON " + tabela + " BEGIN "
+                + auditar(tabela, "INSERT", "NEW." + id, "NULL", json.apply("NEW")) + " END");
+        sql.add("CREATE TRIGGER IF NOT EXISTS " + prefixo + "_update AFTER UPDATE ON " + tabela
+                + " WHEN " + json.apply("OLD") + " IS NOT " + json.apply("NEW") + " BEGIN "
+                + auditar(tabela, "UPDATE", "NEW." + id, json.apply("OLD"), json.apply("NEW")) + " END");
+        sql.add("CREATE TRIGGER IF NOT EXISTS " + prefixo + "_delete AFTER DELETE ON " + tabela + " BEGIN "
+                + auditar(tabela, "DELETE", "OLD." + id, json.apply("OLD"), "NULL") + " END");
+    }
+
+    /**
+     * Regra no INSERT e no UPDATE (so quando a coluna MUDA: editar outro campo de uma linha
+     * antiga, gravada antes da regra existir, continua permitido).
+     */
+    private static void regra(List<String> sql, String nome, String tabela, String coluna, String ruim, String mensagem) {
+        String recusa = " BEGIN SELECT RAISE(ABORT, '" + mensagem + "'); END";
+        sql.add("CREATE TRIGGER IF NOT EXISTS " + nome + "_ins BEFORE INSERT ON " + tabela + " WHEN " + ruim + recusa);
+        sql.add("CREATE TRIGGER IF NOT EXISTS " + nome + "_upd BEFORE UPDATE OF " + coluna + " ON " + tabela
+                + " WHEN NEW." + coluna + " IS NOT OLD." + coluna + " AND (" + ruim + ")" + recusa);
+    }
+
+    private static String dataRuim(String coluna) {
+        return "NEW." + coluna + " IS NOT NULL AND date(NEW." + coluna + ") IS NOT NEW." + coluna;
+    }
+
+    /**
+     * v22 - revisao dos gatilhos (so acrescenta regras; nenhum dado muda):
+     * 1) auditoria COMPLETA: a forma de pagamento entra no historico dos pagamentos, e bancos,
+     *    pagadores, empresas, telefones e mensagens passam a ser auditados;
+     * 2) datas sempre no formato do calendario (AAAA-MM-DD) e mensagem com inicio <= fim;
+     * 3) marcacoes so 0/1 e PF/PJ nas contas fixas;
+     * 4) limite de tamanho dos textos (folga sobre o limite da API; ultima linha de defesa);
+     * 5) linhas da planilha antiga ficam como vieram (so o vinculo com a conta muda);
+     * 6) codigo de "Esqueci o PIN" usado nao volta a valer e as tentativas so sobem.
+     */
+    private static String[] protecoesV22() {
+        List<String> sql = new ArrayList<>();
+        // 1) auditoria
+        for (String op : new String[] {"insert", "update", "delete"}) {
+            sql.add("DROP TRIGGER IF EXISTS trg_auditoria_pagamento_" + op);
+        }
+        auditoriaCompleta(sql, "pagamentos", "trg_auditoria_pagamento", "id_pagamento", DatabaseInitializer::jsonPagamentoCompleto);
+        auditoriaCompleta(sql, "bancos", "trg_auditoria_banco", "id_banco", DatabaseInitializer::jsonBanco);
+        auditoriaCompleta(sql, "pagadores", "trg_auditoria_pagador", "id_pagador", DatabaseInitializer::jsonPagador);
+        auditoriaCompleta(sql, "empresas", "trg_auditoria_empresa", "id_empresa", DatabaseInitializer::jsonEmpresa);
+        auditoriaCompleta(sql, "telefones_empresa", "trg_auditoria_telefone", "id_telefone", DatabaseInitializer::jsonTelefone);
+        auditoriaCompleta(sql, "avisos", "trg_auditoria_aviso", "id_aviso", DatabaseInitializer::jsonAviso);
+        // 2) datas
+        String dataMsg = "DATA_INVALIDA: use uma data valida do calendario (AAAA-MM-DD)";
+        regra(sql, "trg_conta_vencimento_data", "contas_a_pagar", "vencimento", dataRuim("vencimento"), dataMsg);
+        regra(sql, "trg_pagamento_data", "pagamentos", "data_pagamento", dataRuim("data_pagamento"), dataMsg);
+        regra(sql, "trg_aviso_inicio_data", "avisos", "data_inicio", dataRuim("data_inicio") + " OR NEW.data_fim < NEW.data_inicio",
+                "DATA_INVALIDA: o fim da mensagem nao pode ser antes do inicio");
+        regra(sql, "trg_aviso_fim_data", "avisos", "data_fim", dataRuim("data_fim") + " OR NEW.data_fim < NEW.data_inicio",
+                "DATA_INVALIDA: o fim da mensagem nao pode ser antes do inicio");
+        // 3) marcacoes
+        regra(sql, "trg_conta_boleto_pasta", "contas_a_pagar", "boleto_na_pasta", "NEW.boleto_na_pasta NOT IN (0, 1)",
+                "VALOR_INVALIDO: boleto na pasta e 0 ou 1");
+        regra(sql, "trg_recorrente_ativo", "boletos_recorrentes", "ativo", "NEW.ativo NOT IN (0, 1)",
+                "VALOR_INVALIDO: ativo e 0 ou 1");
+        regra(sql, "trg_recorrente_tipo_pessoa", "boletos_recorrentes", "tipo_pessoa", "NEW.tipo_pessoa NOT IN ('PF', 'PJ')",
+                "VALOR_INVALIDO: tipo de pessoa e PF ou PJ");
+        // 4) tamanho dos textos (limite da API entre parenteses)
+        String[][] limites = {
+            {"contas_a_pagar", "nome_empresa", "200"}, {"contas_a_pagar", "pagador_responsavel", "200"}, // (120)
+            {"contas_a_pagar", "forma_pagamento", "100"}, {"contas_a_pagar", "categoria", "100"},        // (60)
+            {"contas_a_pagar", "numero_documento", "100"}, {"contas_a_pagar", "anexo_nome", "300"},      // (60/200)
+            {"boletos_recorrentes", "nome_empresa", "200"}, {"boletos_recorrentes", "pagador_responsavel", "200"},
+            {"boletos_recorrentes", "categoria", "100"}, {"boletos_recorrentes", "numero_documento", "100"},
+            {"boletos_recorrentes", "forma_pagamento", "100"},
+            {"empresas", "razao_social", "200"}, {"empresas", "nome_representante", "200"}, {"empresas", "email", "200"},
+            {"empresas", "logradouro", "200"}, {"empresas", "cnpj", "30"},
+            {"telefones_empresa", "numero", "30"}, {"telefones_empresa", "tipo", "40"},
+            {"bancos", "instituicao", "200"}, {"bancos", "chave_pix", "200"},
+            {"pagadores", "nome", "200"}, {"pagadores", "cpf", "30"}, {"pagadores", "funcao", "100"},
+            {"avisos", "titulo", "200"}, {"avisos", "mensagem", "1000"}, {"avisos", "dia_semana", "100"}, // (100/500; varios dias: "SEGUNDA,TERCA,...")
+        };
+        for (String[] l : limites) {
+            regra(sql, "trg_" + l[0] + "_" + l[1] + "_tamanho", l[0], l[1], "length(NEW." + l[1] + ") > " + l[2],
+                    "TEXTO_LONGO: " + l[1] + " passa de " + l[2] + " caracteres");
+        }
+        // 5) planilha antiga
+        String[][] legado = {
+            {"legado_lancamentos", "arquivo_origem, aba_origem, linha_origem, data_vencimento, numero_documento, fornecedor,"
+                    + " valor_original, valor_centavos, situacao, observacoes, quem_vai_pagar, cor_linha, importado_em"},
+            {"legado_padroes", "arquivo_origem, linha_origem, dia, nome, valor_original, valor_centavos, numero_documento,"
+                    + " pagador, importado_em"},
+            {"legado_avisos", "arquivo_origem, linha_origem, periodo_de, periodo_ate, dia_semana, titulo, mensagem, importado_em"},
+        };
+        for (String[] l : legado) {
+            sql.add("CREATE TRIGGER IF NOT EXISTS trg_" + l[0] + "_nao_altera BEFORE UPDATE OF " + l[1] + " ON " + l[0]
+                    + " BEGIN SELECT RAISE(ABORT, 'LEGADO_IMUTAVEL: a linha da planilha antiga fica como foi importada'); END");
+        }
+        // 6) codigos de redefinicao do PIN
+        sql.add("CREATE TRIGGER IF NOT EXISTS trg_codigo_nao_reativa BEFORE UPDATE OF usado, tentativas, codigo_hash, expira_em,"
+                + " id_usuario ON codigos_redefinicao WHEN (OLD.usado = 1 AND NEW.usado = 0)"
+                + " OR NEW.tentativas < OLD.tentativas OR NEW.codigo_hash IS NOT OLD.codigo_hash"
+                + " OR NEW.expira_em IS NOT OLD.expira_em OR NEW.id_usuario IS NOT OLD.id_usuario"
+                + " BEGIN SELECT RAISE(ABORT, 'CODIGO_IMUTAVEL: codigo de redefinicao nao pode ser reaproveitado'); END");
+        return sql.toArray(String[]::new);
     }
 }
