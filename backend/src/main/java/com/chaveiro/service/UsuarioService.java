@@ -80,6 +80,9 @@ public class UsuarioService {
             return acao.executar();
         } catch (SQLException erro) {
             String msg = erro.getMessage() == null ? "" : erro.getMessage();
+            if (msg.contains("ADMIN_JA_EXISTE")) {
+                throw new AcessoNegadoException(403, "o administrador ja foi criado");
+            }
             if (msg.contains("ULTIMO_ADMIN")) {
                 throw new ConflitoIntegridadeException("o sistema precisa de pelo menos um administrador ativo");
             }
@@ -128,19 +131,12 @@ public class UsuarioService {
                         ? "Informe o e-mail da loja." : "E-mail da loja inválido. Exemplo: loja@gmail.com"));
             }
         }
-        long id = inserir(d, true, null);
-        if (loja != null) {
-            String lojaCifrado = cripto.cifrar(loja);
-            banco(() -> {
-                repository.gravarConfig(CFG_REMETENTE, lojaCifrado);
-                return null;
-            });
-        }
+        Nova n = validarNova(d, null);
+        String lojaCifrado = loja == null ? null : cripto.cifrar(loja);
+        // tudo numa transacao: admin + e-mail da loja + entrada (ou nada)
+        long id = banco(() -> repository.inserirPrimeiroAdmin(n.nome(), n.indice(), n.loginCifrado(), n.emailCifrado(),
+                n.pinHash(), CFG_REMETENTE, lojaCifrado));
         Linha l = banco(() -> repository.buscarPorId(id)).orElseThrow();
-        banco(() -> {
-            repository.registrarEntrada(id, l.nome());
-            return null;
-        });
         log.info("primeiro administrador criado (id={})", id);
         return abrirSessao(l);
     }
@@ -311,11 +307,7 @@ public class UsuarioService {
             });
             throw new DadosInvalidosException(Map.of("codigo", "Código incorreto."));
         }
-        banco(() -> repository.atualizarPin(l.id(), cripto.hashPin(pin)));
-        banco(() -> {
-            repository.registrarEvento(l.id(), l.nome(), "PIN_REDEFINIDO_EMAIL");
-            return null;
-        });
+        banco(() -> repository.atualizarPin(l.id(), cripto.hashPin(pin), l.nome(), "PIN_REDEFINIDO_EMAIL"));
     }
 
     static String mascarar(String email) {
@@ -351,11 +343,8 @@ public class UsuarioService {
             }
             throw new DadosInvalidosException(Map.of("pinAtual", "PIN atual incorreto."));
         }
-        banco(() -> repository.atualizarPin(s.id(), cripto.hashPin(validarPin(novoPin))));
-        banco(() -> {
-            repository.registrarEvento(s.id(), s.nome(), "PIN_TROCADO");
-            return null;
-        });
+        String hashNovo = cripto.hashPin(validarPin(novoPin));
+        banco(() -> repository.atualizarPin(s.id(), hashNovo, s.nome(), "PIN_TROCADO"));
     }
 
     // ---------- administrador ----------
@@ -400,11 +389,8 @@ public class UsuarioService {
     public void novoPin(String token, long id, String novoPin) {
         exigirAdmin(token);
         Linha l = banco(() -> repository.buscarPorId(id)).orElseThrow(() -> new RecursoNaoEncontradoException("usuario"));
-        banco(() -> repository.atualizarPin(id, cripto.hashPin(validarPin(novoPin))));
-        banco(() -> {
-            repository.registrarEvento(id, l.nome(), "PIN_REDEFINIDO_ADMIN");
-            return null;
-        });
+        String hashNovo = cripto.hashPin(validarPin(novoPin));
+        banco(() -> repository.atualizarPin(id, hashNovo, l.nome(), "PIN_REDEFINIDO_ADMIN"));
     }
 
     public void trocarFoto(String token, long id, byte[] foto) {
@@ -457,9 +443,12 @@ public class UsuarioService {
         if (!erros.isEmpty()) {
             throw new DadosInvalidosException(erros);
         }
+        // Gmail e senha de app juntos: nunca fica um sem o outro
+        Map<String, String> valores = new LinkedHashMap<>();
+        valores.put(CFG_REMETENTE, cripto.cifrar(r));
+        valores.put(CFG_SENHA_APP, cripto.cifrar(senha));
         banco(() -> {
-            repository.gravarConfig(CFG_REMETENTE, cripto.cifrar(r));
-            repository.gravarConfig(CFG_SENHA_APP, cripto.cifrar(senha));
+            repository.gravarConfigs(valores);
             return null;
         });
     }
@@ -484,7 +473,16 @@ public class UsuarioService {
 
     // ---------- validacao ----------
 
+    /** Conta nova ja validada e cifrada, pronta para gravar. */
+    private record Nova(String nome, String indice, String loginCifrado, String emailCifrado, String pinHash) {
+    }
+
     private long inserir(Dados d, boolean admin, byte[] foto) {
+        Nova n = validarNova(d, foto);
+        return banco(() -> repository.inserir(n.nome(), n.indice(), n.loginCifrado(), n.emailCifrado(), n.pinHash(), admin, foto));
+    }
+
+    private Nova validarNova(Dados d, byte[] foto) {
         Map<String, String> erros = new LinkedHashMap<>();
         String nome = nome(d.nome(), erros);
         String login = loginEmail(d.email(), d.login(), erros);
@@ -509,8 +507,7 @@ public class UsuarioService {
         if (banco(() -> repository.indiceEmUso(indice, null))) {
             throw new DadosInvalidosException(Map.of("email", "Esse e-mail já é de outra conta."));
         }
-        String hash = cripto.hashPin(pin);
-        return banco(() -> repository.inserir(nome, indice, cripto.cifrar(login), email == null ? null : cripto.cifrar(email), hash, admin, foto));
+        return new Nova(nome, indice, cripto.cifrar(login), cripto.cifrar(email), cripto.hashPin(pin)); // e-mail = login (nunca nulo aqui)
     }
 
     private static String nome(String nome, Map<String, String> erros) {

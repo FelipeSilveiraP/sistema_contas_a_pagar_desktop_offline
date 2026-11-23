@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
@@ -101,27 +102,52 @@ public class UsuarioRepository {
 
     public long inserir(String nome, String indice, String loginCifrado, String emailCifrado, String pinHash, boolean admin,
                         byte[] foto) throws SQLException {
+        return conexao.emTransacao(conn -> inserir(conn, nome, indice, loginCifrado, emailCifrado, pinHash, admin, foto));
+    }
+
+    /**
+     * Primeira conta (admin) numa transacao so: confere que ainda nao ha nenhuma conta, cria
+     * o admin, grava o e-mail da loja (se veio) e registra a entrada. Se qualquer passo
+     * falhar, nada fica gravado (antes, o admin podia ficar criado sem o e-mail da loja).
+     */
+    public long inserirPrimeiroAdmin(String nome, String indice, String loginCifrado, String emailCifrado, String pinHash,
+                                     String chaveConfig, String valorConfig) throws SQLException {
         return conexao.emTransacao(conn -> {
-            try (PreparedStatement st = conn.prepareStatement("INSERT INTO usuarios (nome, login_indice, login_cifrado, email_cifrado,"
-                    + " pin_hash, admin, foto) VALUES (?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
-                st.setString(1, nome);
-                st.setString(2, indice);
-                st.setString(3, loginCifrado);
-                st.setString(4, emailCifrado);
-                st.setString(5, pinHash);
-                st.setInt(6, admin ? 1 : 0);
-                if (foto == null) {
-                    st.setNull(7, Types.BLOB);
-                } else {
-                    st.setBytes(7, foto);
-                }
-                st.executeUpdate();
-                try (ResultSet ch = st.getGeneratedKeys()) {
-                    ch.next();
-                    return ch.getLong(1);
+            try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM usuarios")) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new SQLException("ADMIN_JA_EXISTE: o administrador ja foi criado");
                 }
             }
+            long id = inserir(conn, nome, indice, loginCifrado, emailCifrado, pinHash, true, null);
+            if (valorConfig != null) {
+                gravarConfig(conn, chaveConfig, valorConfig);
+            }
+            entrada(conn, id, nome);
+            return id;
         });
+    }
+
+    private static long inserir(Connection conn, String nome, String indice, String loginCifrado, String emailCifrado,
+                                String pinHash, boolean admin, byte[] foto) throws SQLException {
+        try (PreparedStatement st = conn.prepareStatement("INSERT INTO usuarios (nome, login_indice, login_cifrado, email_cifrado,"
+                + " pin_hash, admin, foto) VALUES (?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+            st.setString(1, nome);
+            st.setString(2, indice);
+            st.setString(3, loginCifrado);
+            st.setString(4, emailCifrado);
+            st.setString(5, pinHash);
+            st.setInt(6, admin ? 1 : 0);
+            if (foto == null) {
+                st.setNull(7, Types.BLOB);
+            } else {
+                st.setBytes(7, foto);
+            }
+            st.executeUpdate();
+            try (ResultSet ch = st.getGeneratedKeys()) {
+                ch.next();
+                return ch.getLong(1);
+            }
+        }
     }
 
     public boolean atualizarDados(long id, String nome, String indice, String loginCifrado, String emailCifrado, boolean admin,
@@ -132,6 +158,14 @@ public class UsuarioRepository {
 
     /** Novo PIN: zera as falhas e o bloqueio e invalida os codigos de e-mail pendentes. */
     public boolean atualizarPin(long id, String pinHash) throws SQLException {
+        return atualizarPin(id, pinHash, null, null);
+    }
+
+    /**
+     * Novo PIN + registro no historico de acessos (PIN_TROCADO, PIN_REDEFINIDO_...) na MESMA
+     * transacao: o PIN nunca muda sem ficar registrado.
+     */
+    public boolean atualizarPin(long id, String pinHash, String nome, String evento) throws SQLException {
         return conexao.emTransacao(conn -> {
             try (PreparedStatement st = conn.prepareStatement(
                     "UPDATE usuarios SET pin_hash = ?, falhas = 0, bloqueado_ate = NULL WHERE id_usuario = ?");
@@ -140,7 +174,11 @@ public class UsuarioRepository {
                 st.setLong(2, id);
                 codigos.setLong(1, id);
                 codigos.executeUpdate();
-                return st.executeUpdate() > 0;
+                boolean mudou = st.executeUpdate() > 0;
+                if (mudou && evento != null) {
+                    registrar(conn, id, nome, evento);
+                }
+                return mudou;
             }
         });
     }
@@ -252,14 +290,18 @@ public class UsuarioRepository {
     /** Entrada certa: conta o acesso, guarda a data e zera as falhas, tudo junto. */
     public void registrarEntrada(long id, String nome) throws SQLException {
         conexao.emTransacao(conn -> {
-            try (PreparedStatement st = conn.prepareStatement("UPDATE usuarios SET acessos = acessos + 1, falhas = 0, bloqueado_ate = NULL,"
-                    + " ultimo_acesso = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime') WHERE id_usuario = ?")) {
-                st.setLong(1, id);
-                st.executeUpdate();
-            }
-            registrar(conn, id, nome, "ENTRADA");
+            entrada(conn, id, nome);
             return null;
         });
+    }
+
+    private static void entrada(Connection conn, long id, String nome) throws SQLException {
+        try (PreparedStatement st = conn.prepareStatement("UPDATE usuarios SET acessos = acessos + 1, falhas = 0, bloqueado_ate = NULL,"
+                + " ultimo_acesso = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime') WHERE id_usuario = ?")) {
+            st.setLong(1, id);
+            st.executeUpdate();
+        }
+        registrar(conn, id, nome, "ENTRADA");
     }
 
     public void registrarEvento(long id, String nome, String tipo) throws SQLException {
@@ -347,7 +389,26 @@ public class UsuarioRepository {
     }
 
     public void gravarConfig(String chave, String valor) throws SQLException {
-        executar("INSERT INTO manutencao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor", chave, valor);
+        gravarConfigs(Map.of(chave, valor));
+    }
+
+    /** Varias configuracoes juntas (ex.: Gmail + senha de app): ou grava todas, ou nenhuma. */
+    public void gravarConfigs(Map<String, String> valores) throws SQLException {
+        conexao.emTransacao(conn -> {
+            for (Map.Entry<String, String> v : valores.entrySet()) {
+                gravarConfig(conn, v.getKey(), v.getValue());
+            }
+            return null;
+        });
+    }
+
+    private static void gravarConfig(Connection conn, String chave, String valor) throws SQLException {
+        try (PreparedStatement st = conn.prepareStatement(
+                "INSERT INTO manutencao (chave, valor) VALUES (?, ?) ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor")) {
+            st.setString(1, chave);
+            st.setString(2, valor);
+            st.executeUpdate();
+        }
     }
 
     private boolean executar(String sql, Object... params) throws SQLException {
