@@ -7,6 +7,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const { fileURLToPath } = require("url");
 const automacoes = require("./automacoes");
+const novidades = require("./novidades");
 // versao DO SISTEMA (package.json): app.getVersion() devolve a do Electron quando
 // o app roda por script (desenvolvimento/testes)
 const VERSAO_SISTEMA = require(path.join(__dirname, "..", "package.json")).version;
@@ -47,6 +48,8 @@ function caminhoBanco() {
 }
 
 const PASTA_LOGS = path.join(path.dirname(caminhoBanco()), "logs");
+// O QUE MUDOU: o banco ja existia antes desta abertura? (instalacao nova nao mostra o pop-up)
+const BANCO_JA_EXISTIA = fs.existsSync(caminhoBanco());
 
 function registrarLog(nivel, mensagem) {
   try {
@@ -445,6 +448,18 @@ function encerrarBackend() {
   }
 }
 
+
+// O QUE MUDOU depois de uma atualizacao (desktop/novidades.js): o Menu pergunta e, depois do
+// ENTENDI, marca como visto (o arquivo fica ao lado do banco)
+const ARQUIVO_NOVIDADES_VISTAS = path.join(path.dirname(caminhoBanco()), "novidades-vistas.json");
+let historicoNovidades = null;
+function historicoDeNovidades() {
+  if (!historicoNovidades) historicoNovidades = novidades.carregarHistorico(path.join(__dirname, ".."));
+  return historicoNovidades;
+}
+tratarIpc("findesk:novidades", () =>
+  novidades.novidadesPendentes({ arquivoVisto: ARQUIVO_NOVIDADES_VISTAS, historico: historicoDeNovidades(), versao: VERSAO_SISTEMA, usadoAntes: BANCO_JA_EXISTIA }));
+tratarIpc("findesk:novidades-vistas", () => novidades.marcarVisto(ARQUIVO_NOVIDADES_VISTAS, VERSAO_SISTEMA, historicoDeNovidades()));
 tratarIpc("findesk:config", () => ({ port: porta, token, versao: VERSAO_SISTEMA }));
 
 // Reparo de foco da pagina apos fechar dialogos modais nativos (alert/confirm):

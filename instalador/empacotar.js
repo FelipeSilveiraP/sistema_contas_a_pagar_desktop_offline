@@ -77,6 +77,10 @@ await etapa("Electron baixado", () => {
   if (!fs.existsSync(exe)) throw new Error(`Electron nao encontrado em ${exe}`);
   console.log(`[instalador] ${exe}`);
 });
+await etapa("Novidades (O QUE MUDOU, dos commits)", () => {
+  const itens = require(path.join(RAIZ, "desktop", "novidades.js")).gravarHistorico(RAIZ);
+  console.log(`${itens.length} mudancas gravadas em desktop/novidades.json`);
+});
 await etapa("Frontend", () => execSync("npm run build", { cwd: RAIZ, stdio: "inherit" }));
 await etapa("Backend (testes + jar)", () => execSync(`${acharMaven()} -q -f backend/pom.xml package`, { cwd: RAIZ, stdio: "inherit" }));
 await etapa("Java minimo (jlink)", () => execFileSync(process.execPath, [path.join(__dirname, "gerar-jre.js")], { cwd: RAIZ, stdio: "inherit" }));
@@ -104,6 +108,9 @@ await etapa("Instalador (electron-builder / NSIS)", () => {
         "desktop/main.js",
         "desktop/preload.js",
         "desktop/automacoes.js",
+        // O QUE MUDOU (gerado a partir dos commits na etapa "Novidades")
+        "desktop/novidades.js",
+        "desktop/novidades.json",
         "frontend/html/**",
         "frontend/css/fonts.css",
         "frontend/dist/**",

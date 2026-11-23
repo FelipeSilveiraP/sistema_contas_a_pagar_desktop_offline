@@ -89,3 +89,6 @@ $RECYCLE.BIN/
 
 # Gerados pelo instalador: Java minimo (jlink) e pasta de trabalho do empacotamento
 build/
+
+# O QUE MUDOU: gerado dos commits ao montar o instalador
+desktop/novidades.json

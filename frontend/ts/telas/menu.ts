@@ -6,6 +6,7 @@ import { criarBotaoConta } from "../conta-menu";
 import { formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { Tela, irPara } from "../navegacao";
 import { respostaProvisoria } from "../componentes";
+import { mostrarNovidades } from "../novidades";
 
 const MODULOS: Record<string, string> = {
   "inserir-conta": "INSERIR CONTA",
@@ -442,7 +443,8 @@ async function iniciar(): Promise<void> {
       renderAlertas(dados);
       void conferirBackupDrive(cfg);
       // o aviso de versao nova espera as mensagens serem fechadas (um pop-up por vez)
-      void abrirMensagensAoEntrar(dados).then(() => oferecerAtualizacao());
+      // O QUE MUDOU (depois de atualizar) vem antes das mensagens; um pop-up por vez
+      void mostrarNovidades().then(() => abrirMensagensAoEntrar(dados)).then(() => oferecerAtualizacao());
     } catch (erro) {
       erroAlertas();
       console.warn("[ContasAPagar] alertas indisponiveis:", erro instanceof Error ? erro.message : erro);

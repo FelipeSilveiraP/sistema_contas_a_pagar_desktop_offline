@@ -29,6 +29,12 @@ export interface OpcoesConfirmacao {
   icone?: string;
   /** Enter CANCELA (em vez de confirmar): acoes que apagam ou desfazem dinheiro */
   enterCancela?: boolean;
+  /** lista em destaque abaixo da mensagem (ex.: O QUE MUDOU) */
+  itens?: string[];
+  /** caixa maior (listas longas) */
+  grande?: boolean;
+  /** so o botao de confirmar (aviso de um botao) */
+  semCancelar?: boolean;
 }
 
 export type RespostaDialogo = "confirmar" | "alternativa" | "cancelar";
@@ -85,7 +91,7 @@ function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
     veu.className = "dialogo-veu";
 
     const caixa = document.createElement("div");
-    caixa.className = opcoes.textoAlternativa ? "dialogo dialogo--largo" : "dialogo";
+    caixa.className = opcoes.grande ? "dialogo dialogo--grande" : opcoes.textoAlternativa ? "dialogo dialogo--largo" : "dialogo";
     caixa.setAttribute("role", "alertdialog");
     caixa.setAttribute("aria-modal", "true");
     caixa.setAttribute("aria-labelledby", "dialogo-titulo");
@@ -120,13 +126,25 @@ function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
       detalhes.textContent = opcoes.detalhes;
       corpo.appendChild(detalhes);
     }
+    if (opcoes.itens?.length) {
+      const lista = document.createElement("ul");
+      lista.className = "dialogo__lista";
+      lista.dataset.dialogoLista = "";
+      for (const item of opcoes.itens) {
+        const li = document.createElement("li");
+        li.textContent = item;
+        lista.appendChild(li);
+      }
+      corpo.appendChild(lista);
+    }
 
     const acoes = document.createElement("div");
     acoes.className = "dialogo__acoes";
     const cancelar = botao("cancelar", opcoes.textoCancelar ?? "CANCELAR");
     const confirmar = botao("confirmar", opcoes.textoConfirmar);
     const alternativa = opcoes.textoAlternativa ? botao("alternativa", opcoes.textoAlternativa) : null;
-    if (alternativa) acoes.append(cancelar, alternativa, confirmar);
+    if (opcoes.semCancelar) acoes.append(confirmar);
+    else if (alternativa) acoes.append(cancelar, alternativa, confirmar);
     else acoes.append(cancelar, confirmar);
 
     caixa.append(cabecalho, corpo, acoes);
@@ -164,6 +182,11 @@ function montar(opcoes: OpcoesConfirmacao): Promise<RespostaDialogo> {
         evento.preventDefault();
         evento.stopPropagation();
         fechar(enterCancela ? "cancelar" : "confirmar");
+        return;
+      }
+      if (evento.key === "Tab" && opcoes.semCancelar) {
+        evento.preventDefault();
+        confirmar.focus();
         return;
       }
       if (evento.key === "Tab") {

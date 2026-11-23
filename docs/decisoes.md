@@ -254,3 +254,10 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-19 — REGRA PERMANENTE: nunca gerar nem imprimir documento fiscal
 - Ordem do usuário (vale para os dois sistemas): só mandamos a requisição ao sistema fiscal de fora; emitir, desenhar e imprimir nota/cupom é dele. Regra no CLAUDE.md e no AGENTS.md.
+
+## 2026-11-23 — Pop-up O QUE MUDOU depois de cada atualização (os dois sistemas)
+- Pedido do usuário: depois de atualizar, mostrar o que foi feito (ele fica dias sem ir à loja e esquece).
+- A lista sai dos commits `feat:` (NOVO), `fix:` (CORRIGIDO) e `perf:` (MAIS RÁPIDO); commits de bastidor (testes, CI, SpotBugs) ficam de fora. `instalador/empacotar.js` grava `desktop/novidades.json` (fora do Git) e o CI faz checkout com o histórico inteiro (`fetch-depth: 0`). No `npm run dev`, a lista sai do git na hora.
+- O "já visto" fica ao lado do banco (`novidades-vistas.json`: versão + data da última mudança vista). Instalação nova (banco ainda não existia) não mostra nada; na 1ª vez com o recurso, mostra os últimos 30 dias. No máximo 60 itens; ENTENDI marca como visto.
+- No Menu: O QUE MUDOU primeiro, depois as mensagens/aviso de versão nova (um pop-up por vez). O ensaio do ATUALIZAR no CI confere o pop-up e o ENTENDI. Código igual nos dois sistemas: `desktop/novidades.js`, `frontend/ts/novidades.ts`, `desktop/teste-novidades.js`.
+- **Por isso: escrever o assunto dos commits `feat:`/`fix:` em português simples, para a loja entender.**

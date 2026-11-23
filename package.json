@@ -14,7 +14,7 @@
     "dev": "npm run build && electron desktop/main.js",
     "test:mascaras": "node desktop/teste-mascaras.js",
     "test:filtros": "node desktop/teste-filtros.js",
-    "test:frontend": "node desktop/teste-mascaras.js && node desktop/teste-filtros.js && node desktop/teste-automacoes.js",
+    "test:frontend": "node desktop/teste-mascaras.js && node desktop/teste-filtros.js && node desktop/teste-automacoes.js && node desktop/teste-novidades.js",
     "jre": "node instalador/gerar-jre.js",
     "instalador": "node instalador/empacotar.js",
     "publicar": "node instalador/publicar.js",

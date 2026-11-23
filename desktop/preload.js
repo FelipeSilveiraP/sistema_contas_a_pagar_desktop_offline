@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld("finDesk", {
   abrirArquivo: (caminho) => ipcRenderer.invoke("findesk:abrir-arquivo", caminho),
   imprimirPdf: (nome, opcoes) => ipcRenderer.invoke("findesk:imprimir-pdf", nome, opcoes),
   atualizacaoDisponivel: () => ipcRenderer.invoke("findesk:atualizacao-disponivel"),
+  novidades: () => ipcRenderer.invoke("findesk:novidades"),
+  marcarNovidadesVistas: () => ipcRenderer.invoke("findesk:novidades-vistas"),
   instalarAtualizacao: () => ipcRenderer.invoke("findesk:instalar-atualizacao"),
   onProgressoAtualizacao: (callback) =>
     ipcRenderer.on("findesk:progresso-atualizacao", (_evento, progresso) => callback(progresso)),

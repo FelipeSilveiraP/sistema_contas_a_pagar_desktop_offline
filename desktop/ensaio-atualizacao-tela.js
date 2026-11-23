@@ -292,6 +292,15 @@ async function principal() {
   teste("Programa novo chega ao Menu", await entrarNoMenu(false));
   const rodapeNovo = await noJs("document.getElementById('versao-sistema').textContent").catch(() => "");
   teste("Rodape do Menu mostra a versao nova", rodapeNovo.includes(versaoNova), rodapeNovo);
+  // O QUE MUDOU: quem ja usava o sistema ve o pop-up com as mudancas; ENTENDI fecha
+  const novidades = await ate(() => noJs("Boolean(document.body.dataset.novidades) && Boolean(document.querySelector('[data-dialogo-lista] li'))"), 30000);
+  teste("Pop-up O QUE MUDOU aparece depois da atualizacao", novidades);
+  await foto("5a-o-que-mudou.png");
+  if (novidades) {
+    await pagina().click('[data-dialogo-acao="confirmar"]');
+    const fechou = await ate(() => noJs("!document.body.dataset.novidades && !document.querySelector('[data-dialogo-lista]')"), 10000);
+    teste("ENTENDI fecha o O QUE MUDOU", fechou);
+  }
   await esperar(15000);
   const ofereceDeNovo = await noJs("Boolean(document.body.dataset.atualizacao) || Boolean(document.querySelector('[data-dialogo-acao=\"confirmar\"]'))").catch(() => true);
   teste("Nao oferece atualizar de novo (nao ficou na versao antiga)", !ofereceDeNovo);

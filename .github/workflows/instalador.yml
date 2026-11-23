@@ -26,6 +26,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          # historico inteiro: o pop-up O QUE MUDOU sai dos commits
+          fetch-depth: 0
 
       - uses: actions/setup-java@v4
         with:

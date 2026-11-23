@@ -755,6 +755,8 @@
   color: #1c1b1b;
 }
 .dialogo__lista li + li { margin-top: 0.3rem; }
+/* lista longa (ex.: O QUE MUDOU) rola por dentro; o botao continua visivel */
+.dialogo__lista { max-height: 50vh; overflow-y: auto; }
 
 /* ===== Notificacoes (toasts) — NO MEIO DA TELA (pedido do usuario, 2026-11-16: "todo e
    qualquer pop-up deve aparecer no meio da tela"), abaixo do veu do dialogo ===== */
