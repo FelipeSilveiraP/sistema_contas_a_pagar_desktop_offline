@@ -10,6 +10,7 @@ import com.chaveiro.model.Conta;
 import com.chaveiro.repository.BoletoRecorrenteRepository;
 import com.chaveiro.repository.ContaRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.nio.file.Path;
 import java.time.YearMonth;
 import java.util.List;
@@ -206,5 +207,48 @@ class BoletoRecorrenteServiceTest {
         assertThatThrownBy(() -> service.cadastrar(new BoletoRecorrente(null, "A", null, "B",
                 null, null, BigDecimal.ZERO, 10, "MENSAL", null, true, "PJ")))
                 .isInstanceOf(DadosInvalidosException.class);
+    }
+
+    // ---------- filtro forte no Inserir Conta (pedido do usuario, 2026-11-24) ----------
+
+    private Conta contaNova(String nome, String vencimento) {
+        return new Conta(null, nome, null, null, "Gerência", "PJ", "boleto", null, null,
+                new BigDecimal("1500.00"), LocalDate.parse(vencimento), false, null, true, null, "PENDENTE");
+    }
+
+    @Test
+    void contaQueJaEstaNasRecorrentesEAvisadaComAContaDoMes() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        Conta gerada = contas.listar(null).get(0);
+        ContaService contaService = new ContaService(contas);
+        // nome parecido ("ALUGUEL" esta dentro de "ALUGUEL DO GALPAO") e vencimento em outro dia do mes
+        assertThatThrownBy(() -> contaService.cadastrar(contaNova("aluguel", gerada.vencimento().withDayOfMonth(25).toString()), null, false))
+                .isInstanceOfSatisfying(PossivelDuplicataException.class, e -> {
+                    assertThat(e.getRecorrente()).isNotNull();
+                    assertThat(e.getRecorrente().dia()).isEqualTo(10);
+                    assertThat(e.getExistente()).isNotNull();
+                    assertThat(e.getExistente().id()).isEqualTo(gerada.id());
+                });
+    }
+
+    @Test
+    void recorrenteSemContaNoMesTambemBloqueiaEForcarInsere() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        ContaService contaService = new ContaService(contas);
+        Conta distante = contaNova("ALUGUEL DO GALPÃO", "2040-01-10");
+        assertThatThrownBy(() -> contaService.cadastrar(distante, null, false))
+                .isInstanceOfSatisfying(PossivelDuplicataException.class, e -> {
+                    assertThat(e.getRecorrente()).isNotNull();
+                    assertThat(e.getExistente()).isNull();
+                });
+        // "quer realmente ter uma duplicata?" -> SIM: grava
+        assertThat(contaService.cadastrar(distante, null, true).id()).isNotNull();
+    }
+
+    @Test
+    void contaComNomeDiferenteDaRecorrenteNaoBloqueia() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        ContaService contaService = new ContaService(contas);
+        assertThat(contaService.cadastrar(contaNova("ENERGIA CEMIG", "2040-01-10"), null, false).id()).isNotNull();
     }
 }

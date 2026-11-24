@@ -8,9 +8,10 @@ import {
   ErroApi,
   ContaDados,
 } from "../api";
-import { confirmarDuplicidade, confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { confirmar, confirmarSaida, dialogoEstaAberto, menuLateralAberto } from "../componentes";
+import { pedirAbertura } from "../abrir-registro";
 import { notificarAoAbrir } from "../notificacoes";
-import { voltar } from "../navegacao";
+import { irPara, voltar } from "../navegacao";
 import { montarNavbar } from "../navbar";
 import { preencherSelectPagadores } from "../pagadores";
 import { montarPreviaNota } from "../nota-previa";
@@ -181,6 +182,61 @@ async function enviar(forcar: boolean): Promise<ContaDados> {
   return criarConta(await window.finDesk!.config(), montarPayload(forcar));
 }
 
+const PERIODICIDADE: Record<string, string> = { MENSAL: "todo mês", BIMESTRAL: "a cada 2 meses", TRIMESTRAL: "a cada 3 meses", ANUAL: "uma vez por ano" };
+
+/**
+ * Filtro forte de duplicidade (pedido do usuario, 2026-11-24): a conta ja existe (ou ja e
+ * uma conta RECORRENTE)? 1) quer EDITAR a que ja existe? SIM = vai para a edicao dela;
+ * NAO = 2) quer mesmo cadastrar uma DUPLICATA? (Enter cancela: so grava clicando).
+ */
+async function decidirDuplicidade(erro: ErroDuplicidadeApi): Promise<"editar" | "duplicar" | "cancelar"> {
+  const { existente: e, recorrente: r } = erro;
+  const linhas: string[] = [];
+  if (r) {
+    linhas.push(`Conta recorrente: ${r.nomeEmpresa}`);
+    linhas.push(`Vence dia ${r.dia}, ${PERIODICIDADE[r.periodicidade] ?? r.periodicidade.toLowerCase()} · ${formatarMoedaBR(Math.round(r.valor * 100))}`);
+  }
+  if (e) {
+    linhas.push(`${r ? "Conta deste mês" : "Conta"}: ${e.nomeEmpresa}`);
+    linhas.push(`Vencimento ${formatarDataBR(e.vencimento)} · ${formatarMoedaBR(Math.round(e.valor * 100))} · ${e.status === "PAGO" ? "PAGA" : "PENDENTE"}`);
+    if (e.numeroDocumento) linhas.push(`Documento: ${e.numeroDocumento}`);
+  }
+  const editar = await confirmar({
+    titulo: r ? "ESTA CONTA JÁ ESTÁ NAS CONTAS RECORRENTES" : "ESTA CONTA JÁ EXISTE",
+    mensagem: r
+      ? "Esta conta já é cadastrada como conta recorrente (ela é gerada sozinha todo período). Quer editar a conta que já existe?"
+      : "Já existe uma conta muito parecida com esta no mesmo mês. Quer editar a conta que já existe?",
+    detalhes: linhas.join("\n"),
+    textoConfirmar: "SIM, EDITAR A QUE JÁ EXISTE",
+    textoCancelar: "NÃO",
+    tom: "atencao",
+    icone: "content_copy",
+  });
+  if (editar) return "editar";
+  const duplicar = await confirmar({
+    titulo: "CADASTRAR UMA DUPLICATA?",
+    mensagem: "A mesma conta vai ficar DUAS vezes no sistema e pode ser paga duas vezes. Quer mesmo cadastrar esta duplicata?",
+    textoConfirmar: "SIM, CADASTRAR DUPLICATA",
+    textoCancelar: "NÃO, VOLTAR",
+    tom: "atencao",
+    enterCancela: true,
+  });
+  return duplicar ? "duplicar" : "cancelar";
+}
+
+/** Vai para a edicao da conta que ja existe (Controle) ou da conta recorrente. */
+function abrirExistente(erro: ErroDuplicidadeApi): void {
+  sujo = false;
+  document.body.dataset.formSujo = "false";
+  if (erro.existente) {
+    pedirAbertura("conta", erro.existente.id);
+    void irPara("todas-as-contas");
+  } else if (erro.recorrente) {
+    pedirAbertura("recorrente", erro.recorrente.id);
+    void irPara("recorrentes-tabela");
+  }
+}
+
 async function submeter(): Promise<void> {
   const erros = validar(lerCampos());
   mostrarErros(erros);
@@ -193,15 +249,12 @@ async function submeter(): Promise<void> {
       await enviar(false);
     } catch (erro) {
       if (!(erro instanceof ErroDuplicidadeApi)) throw erro;
-      const e = erro.existente;
-      const linhas = [
-        `Empresa: ${e.nomeEmpresa}`,
-        `Vencimento: ${formatarDataBR(e.vencimento)}`,
-        `Valor: ${formatarMoedaBR(Math.round(e.valor * 100))}`,
-      ];
-      if (e.numeroDocumento) linhas.push(`Documento: ${e.numeroDocumento}`);
-      const inserir = await confirmarDuplicidade(linhas.join("\n"));
-      if (!inserir) return;
+      const decisao = await decidirDuplicidade(erro);
+      if (decisao === "editar") {
+        abrirExistente(erro);
+        return;
+      }
+      if (decisao !== "duplicar") return;
       await enviar(true);
     }
     sujo = false;

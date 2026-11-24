@@ -93,9 +93,17 @@ public class ContaService {
         try {
             if (!forcar) {
                 Conta duplicata = buscarPossivelDuplicata(normalizado);
-                if (duplicata != null) {
-                    log.info("possivel duplicidade detectada: conta existente id={}", duplicata.id());
-                    throw new PossivelDuplicataException(duplicata);
+                // filtro forte (pedido do usuario, 2026-11-24): conta que ja e uma conta FIXA
+                // (recorrente) tambem e duplicata, mesmo que a deste mes ainda nao exista
+                ContaRepository.RecorrenteResumo recorrente = buscarRecorrenteParecida(normalizado);
+                if (duplicata == null && recorrente != null) {
+                    duplicata = repository.contaDaRecorrenteNoMes(recorrente.id(), YearMonth.from(normalizado.vencimento()))
+                            .orElse(null);
+                }
+                if (duplicata != null || recorrente != null) {
+                    log.info("possivel duplicidade detectada: conta existente id={} recorrente id={}",
+                            duplicata == null ? null : duplicata.id(), recorrente == null ? null : recorrente.id());
+                    throw new PossivelDuplicataException(duplicata, recorrente);
                 }
             }
             Conta criada = repository.inserir(normalizado, anexoPdf);
@@ -160,6 +168,21 @@ public class ContaService {
             log.error("falha ao verificar duplicidade", erro);
             throw new IllegalStateException("falha ao verificar duplicidade", erro);
         }
+    }
+
+    /**
+     * Conta FIXA ativa igual a conta nova: mesmo documento (nao vazio) ou nome de empresa
+     * parecido (um contem o outro, sem ligar para maiusculas e espacos nas pontas).
+     */
+    ContaRepository.RecorrenteResumo buscarRecorrenteParecida(Conta nova) throws SQLException {
+        String doc = nova.numeroDocumento() == null ? "" : nova.numeroDocumento().trim();
+        for (ContaRepository.RecorrenteResumo r : repository.recorrentesAtivas()) {
+            String docR = r.numeroDocumento() == null ? "" : r.numeroDocumento().trim();
+            if ((!doc.isEmpty() && doc.equalsIgnoreCase(docR)) || nomesParecidos(r.nomeEmpresa(), nova.nomeEmpresa())) {
+                return r;
+            }
+        }
+        return null;
     }
 
     /**

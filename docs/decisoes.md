@@ -272,3 +272,8 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - **Erro de gatilho na tela:** `api/RegraDoBanco` (igual nos dois sistemas) transforma o `RAISE(ABORT, 'CODIGO: motivo')` em 409 com mensagem clara, em vez de "erro interno" 500.
 - Auditoria nova usa `json_object` completo (nunca `json_patch`, que apaga do histórico os campos vazios).
 - Regras de UPDATE só disparam quando a coluna MUDA (`NEW.x IS NOT OLD.x`): linhas antigas gravadas antes da regra continuam editáveis.
+
+## 2026-11-24 — Filtro forte de duplicidade no Inserir Conta (contas recorrentes)
+- Pedido do usuário: contas que já estão nas CONTAS RECORRENTES eram cadastradas de novo à mão. Agora o Inserir Conta também compara com as recorrentes ATIVAS (mesmo documento, ou nome de empresa parecido: um contém o outro), em qualquer mês, além da regra do VBA (contas do mesmo mês).
+- Pop-up 1 "ESTA CONTA JÁ ESTÁ NAS CONTAS RECORRENTES" / "ESTA CONTA JÁ EXISTE": recorrente (dia, frequência, valor) e a conta do mês (vencimento, valor, situação). **SIM, EDITAR A QUE JÁ EXISTE** abre Todas as Contas no mês dela, com a conta selecionada na edição (ou a tabela de recorrentes, se a conta do mês ainda não foi gerada). **NÃO** → pop-up 2 "CADASTRAR UMA DUPLICATA?" (Enter cancela; só grava clicando em SIM).
+- Servidor: `PossivelDuplicataException` leva `existente` (pode faltar) + `recorrente`; `ContaRepository.recorrentesAtivas()` / `contaDaRecorrenteNoMes()`. Tela de destino recebe o id por `frontend/ts/abrir-registro.ts` (sessionStorage, lido uma vez).

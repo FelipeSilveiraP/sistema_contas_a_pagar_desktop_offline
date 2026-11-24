@@ -18,6 +18,8 @@ import {
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { recolherTabela } from "../tabela-recolhivel";
+import { aberturaPedida } from "../abrir-registro";
+import { rolarParaEdicao } from "../rolagem";
 import { confirmar, confirmarEstorno, confirmarExclusao } from "../componentes";
 import { escolher, escolherPagamento } from "../dialogos";
 import { MIME_IMAGEM, extensaoNota, montarPreviaNota } from "../nota-previa";
@@ -441,12 +443,20 @@ function valorAtual(conta: ContaDados, campo: string): string {
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
   [contas, pagamentos, pagadores] = await Promise.all([listarContas(cfg), listarPagamentos(cfg), listarPagadores(cfg)]);
+  // veio do Inserir Conta ("EDITAR A QUE JA EXISTE"): abre essa conta no mes dela
+  const pedida = aberturaPedida("conta");
+  const alvo = pedida === null ? undefined : contas.find((c) => c.id === pedida);
+  if (alvo) {
+    mesFiltro = alvo.vencimento.slice(0, 7);
+    selecionadoId = alvo.id;
+  }
   montarFiltroMes();
   renderTabela();
   if (selecionadoId !== null) {
     if (contas.some((c) => c.id === selecionadoId)) selecionar(selecionadoId);
     else fecharEdicao();
   }
+  if (alvo) rolarParaEdicao();
 }
 
 async function pagar(conta: ContaDados): Promise<void> {

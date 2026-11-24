@@ -12,6 +12,8 @@ import {
 } from "../api";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { recolherTabela } from "../tabela-recolhivel";
+import { aberturaPedida } from "../abrir-registro";
+import { rolarParaEdicao } from "../rolagem";
 import { montarNavbar } from "../navbar";
 import { paraCentavos, formatarMoedaBR } from "../mascaras";
 import { correspondeBusca } from "../filtros";
@@ -149,6 +151,12 @@ async function recarregar(): Promise<void> {
   [recorrentes, pagadores] = await Promise.all([listarRecorrentes(cfg), listarPagadores(cfg)]);
   if (selecionadoId !== null && !selecionada()) fecharEditor();
   renderTabela();
+  // veio do Inserir Conta ("EDITAR A QUE JA EXISTE"): abre essa conta recorrente
+  const pedida = aberturaPedida("recorrente");
+  if (pedida !== null && recorrentes.some((r) => r.id === pedida)) {
+    selecionar(pedida);
+    rolarParaEdicao();
+  }
 }
 
 async function gerar(r: RecorrenteDados): Promise<void> {

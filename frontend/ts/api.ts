@@ -41,8 +41,19 @@ export interface ContaEntrada {
   forcar?: boolean;
 }
 
+/** Conta fixa (recorrente) igual a conta nova (aviso de duplicidade do Inserir Conta). */
+export interface RecorrenteResumo {
+  id: number;
+  nomeEmpresa: string;
+  numeroDocumento: string | null;
+  valor: number;
+  dia: number;
+  periodicidade: string;
+}
+
 export class ErroDuplicidadeApi extends Error {
-  constructor(public existente: ContaDados) {
+  /** `existente` falta quando so a conta recorrente bate (a conta do mes ainda nao foi gerada) */
+  constructor(public existente: ContaDados | null, public recorrente: RecorrenteResumo | null = null) {
     super("possivel duplicidade");
   }
 }
@@ -448,9 +459,9 @@ export async function criarConta(cfg: FinDeskConfig, dados: ContaEntrada): Promi
     throw new ErroValidacaoApi(corpo.campos ?? {});
   }
   if (resposta.status === 409) {
-    const corpo = (await resposta.json()) as { tipo?: string; existente?: ContaDados };
-    if (corpo.tipo === "possivel_duplicata" && corpo.existente) {
-      throw new ErroDuplicidadeApi(corpo.existente);
+    const corpo = (await resposta.json()) as { tipo?: string; existente?: ContaDados; recorrente?: RecorrenteResumo };
+    if (corpo.tipo === "possivel_duplicata" && (corpo.existente || corpo.recorrente)) {
+      throw new ErroDuplicidadeApi(corpo.existente ?? null, corpo.recorrente ?? null);
     }
     throw new ErroApi(409);
   }

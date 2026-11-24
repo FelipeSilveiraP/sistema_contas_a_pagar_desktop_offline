@@ -62,7 +62,12 @@ public class ApiExceptionHandler {
         Map<String, Object> corpo = new LinkedHashMap<>();
         corpo.put("erro", "possivel duplicidade de conta");
         corpo.put("tipo", "possivel_duplicata");
-        corpo.put("existente", erro.getExistente());
+        if (erro.getExistente() != null) {
+            corpo.put("existente", erro.getExistente());
+        }
+        if (erro.getRecorrente() != null) {
+            corpo.put("recorrente", erro.getRecorrente());
+        }
         return ResponseEntity.status(HttpStatus.CONFLICT).body(corpo);
     }
 

@@ -50,6 +50,43 @@ public class ContaRepository {
         return listar(status, false);
     }
 
+    /** Conta fixa (recorrente) ativa, resumida para o aviso de duplicidade do Inserir Conta. */
+    public record RecorrenteResumo(long id, String nomeEmpresa, String numeroDocumento, BigDecimal valor, int dia,
+                                   String periodicidade) {
+    }
+
+    public List<RecorrenteResumo> recorrentesAtivas() throws SQLException {
+        try (Connection conn = conexao.getConnection();
+             PreparedStatement st = conn.prepareStatement("SELECT id_recorrente, nome_empresa, numero_documento, valor_centavos,"
+                     + " dia, periodicidade FROM boletos_recorrentes WHERE ativo = 1 ORDER BY id_recorrente");
+             ResultSet rs = st.executeQuery()) {
+            List<RecorrenteResumo> lista = new ArrayList<>();
+            while (rs.next()) {
+                lista.add(new RecorrenteResumo(rs.getLong(1), rs.getString(2), rs.getString(3),
+                        BigDecimal.valueOf(rs.getLong(4), 2), rs.getInt(5), rs.getString(6)));
+            }
+            return lista;
+        }
+    }
+
+    /** Conta gerada pela recorrente no mes (a de vencimento mais perto do dia 1, se houver mais de uma). */
+    public Optional<Conta> contaDaRecorrenteNoMes(long idRecorrente, YearMonth mes) throws SQLException {
+        try (Connection conn = conexao.getConnection();
+             PreparedStatement st = conn.prepareStatement("SELECT id_conta FROM contas_a_pagar WHERE id_recorrente = ?"
+                     + " AND vencimento BETWEEN ? AND ? ORDER BY vencimento LIMIT 1")) {
+            st.setLong(1, idRecorrente);
+            st.setString(2, mes.atDay(1).toString());
+            st.setString(3, mes.atEndOfMonth().toString());
+            try (ResultSet rs = st.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                long id = rs.getLong(1);
+                return buscarPorId(id);
+            }
+        }
+    }
+
     /** fixas=true: apenas contas geradas por recorrencia (id_recorrente preenchido). */
     public List<Conta> listar(String status, boolean fixas) throws SQLException {
         String condicoes = " WHERE " + (status == null || status.isBlank() ? "1=1" : "c.status = ?");

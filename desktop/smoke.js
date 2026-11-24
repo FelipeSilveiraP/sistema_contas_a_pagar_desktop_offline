@@ -1385,16 +1385,56 @@ async function executar() {
   await clicar("#btn-salvar");
   const dialogouDup = await esperarDialogo(10000);
   const infoDup = dialogouDup ? await dialogoInfo() : null;
-  teste("Inserir Conta: duplicidade dispara dialogo CONTA PARECIDA", dialogouDup && Boolean(infoDup) && infoDup.titulo.includes("PARECIDA"), JSON.stringify(infoDup));
+  teste("Inserir Conta: duplicidade dispara dialogo ESTA CONTA JA EXISTE", dialogouDup && Boolean(infoDup) && infoDup.titulo.includes("JÁ EXISTE"), JSON.stringify(infoDup));
   teste("Inserir Conta: detalhes da duplicidade exibidos", Boolean(infoDup) && Boolean(infoDup.detalhes) && infoDup.detalhes.includes("Vencimento"), JSON.stringify(infoDup ? infoDup.detalhes : null));
-  teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined);
+  teste("Inserir Conta: 1o pop-up pergunta se quer EDITAR a que ja existe", (await js(`(document.querySelector('[data-dialogo-acao="confirmar"]') || {}).textContent || ''`)).includes("EDITAR"));
+  // NAO -> 2o pop-up "CADASTRAR UMA DUPLICATA?"; NAO, VOLTAR -> nada e gravado
+  await responderDialogo("cancelar");
+  const segundo = await esperarPredicado("(document.querySelector('[data-dialogo-titulo]') || {}).textContent === 'CADASTRAR UMA DUPLICATA?'", 5000);
+  teste("Inserir Conta: NAO abre o 2o pop-up CADASTRAR UMA DUPLICATA?", segundo);
   await responderDialogo("cancelar");
   await esperarPredicado("!document.querySelector('[data-dialogo]')", 3000);
+  teste("Inserir Conta: duplicidade cancelada nao insere", (await js(`document.body.dataset.contaSalva`)) === undefined);
   await clicar("#btn-salvar");
   teste("Inserir Conta: dialogo de duplicidade reabre ao salvar de novo", await esperarDialogo(10000));
+  await responderDialogo("cancelar");
+  await esperarPredicado("(document.querySelector('[data-dialogo-titulo]') || {}).textContent === 'CADASTRAR UMA DUPLICATA?'", 5000);
   await responderDialogo("confirmar");
   const forcadaIc = await esperarPredicado(`document.body.dataset.contaSalva === 'true'`, 10000);
   teste("Inserir Conta: confirmada a duplicidade, insercao forçada ocorre", forcadaIc);
+  // SIM, EDITAR A QUE JA EXISTE -> Todas as Contas com a conta aberta na edicao
+  await esperarPredicado("document.body.dataset.tela !== 'inserir-conta'", 5000);
+  await js("window.finDesk.navegar('inserir-conta')");
+  await esperarTela("inserir-conta");
+  await prepararPagina();
+  await esperarPredicado(`document.body.dataset.listasCarregadas === 'true'`, 10000);
+  await js(`(() => {
+    document.getElementById('due_date').value = '28/12/2026';
+    document.getElementById('company_name').value = 'IC EMPRESA ${sufixoIc}';
+    const pg = document.getElementById('payer_responsible'); pg.value = [...pg.options].find((o) => o.value && !o.disabled)?.value ?? '';
+    const el = document.getElementById('total_amount');
+    el.value = '99900';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-proxima");
+  await esperar(300);
+  await js(`(() => {
+    document.getElementById('payment_method').value = 'pix';
+    document.getElementById('doc_number').value = 'DOC-' + ${JSON.stringify(sufixoIc)};
+    document.getElementById('sem_nota').checked = true;
+    document.getElementById('form-conta').dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  })()`);
+  await clicar("#btn-salvar");
+  await esperarDialogo(10000);
+  await responderDialogo("confirmar");
+  const abriuEdicao = await esperarPredicado("document.body.dataset.tela === 'todas-as-contas' && !document.getElementById('editorContainer').classList.contains('hidden')"
+    + ` && document.getElementById('editorRecordName').textContent.includes('IC EMPRESA ${sufixoIc}'.toUpperCase())`, 15000);
+  teste("Inserir Conta: SIM, EDITAR abre a conta que ja existe na edicao do Controle", abriuEdicao,
+    await js("document.body.dataset.tela + ' | ' + (document.getElementById('editorRecordName') || {}).textContent"));
+  await capturar("duplicidade-editar-existente-1536x864.png");
 
   const listaIc2 = JSON.parse(
     await js(`(async () => {

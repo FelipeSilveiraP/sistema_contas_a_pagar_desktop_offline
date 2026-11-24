@@ -9,7 +9,7 @@
 - **Versão 1.3.7 (2026-11-15) — auditoria de segurança** (relatório em `docs/seguranca.md`): teto de valor, PDF com JavaScript escondido recusado, erros 4xx no lugar de 500, limite de tamanho das requisições, token obrigatório, IPC só das telas do sistema, backup no Drive que nunca apaga arquivo alheio, Spring Boot 3.5.16, sqlite-jdbc 3.54.1.0, GitHub Actions (`.github/workflows/testes.yml`).
 - Esquema SQLite **v19** (v17: gatilhos + `auditoria_operacoes`; v18: auditoria das contas fixas e teto de valor; v19: contas de usuário com PIN). Nova dependência de execução: `pdf-lib` 1.17.1, que junta a nota em PDF na impressão.
 
-- **O QUE MUDOU (2026-11-23):** depois de cada atualização o Menu mostra o que foi feito (lista dos commits feat/fix).
+- **Duplicidade forte (2026-11-24):** Inserir Conta compara também com as contas recorrentes; pop-up EDITAR A QUE JÁ EXISTE → Controle, ou DUPLICATA confirmada. Pop-up O QUE MUDOU depois de atualizar (2026-11-23).
 
 - **Banco v22 (2026-11-23):** revisão de gatilhos, auditoria completa e transações do PIN (ver `decisoes.md`).
 
