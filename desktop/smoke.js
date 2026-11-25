@@ -1979,7 +1979,18 @@ async function executar() {
   teste("Menu: FECHAR recolhe em MENSAGENS URGENTES", await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined && document.getElementById('mensagens-recolhidas').offsetHeight > 0", 3000));
   await js("document.getElementById('mensagens-recolhidas').click()");
   teste("Menu: clicar em MENSAGENS URGENTES abre de novo", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 3000));
-  await js("document.getElementById('btn-fechar-mensagens').click()");
+  // clicar numa conta da mensagem = abre o Controle com ela selecionada (pedido 2026-11-25)
+  const alvoMsg = await js(`(() => { const l = document.querySelectorAll('#alertas-corpo-expandido tr[data-id-conta]'); const tr = l[l.length - 1];
+    const id = tr.dataset.idConta; const nome = tr.children[1].textContent; tr.click(); return { id, nome }; })()`);
+  teste("Menu: clicar numa conta da mensagem abre o Controle com ela selecionada", await esperarPredicado(
+    "document.body.dataset.tela === 'todas-as-contas' && !document.getElementById('editorContainer').classList.contains('hidden')"
+    + ` && document.getElementById('editorRecordName').textContent.startsWith(${JSON.stringify(alvoMsg.nome)})`, 15000), JSON.stringify(alvoMsg));
+  teste("Menu: a linha da conta aberta fica visivel dentro da tabela do Controle", await js(`(() => {
+    const tr = document.querySelector('#billsTable tr[data-id="' + ${JSON.stringify(alvoMsg.id)} + '"]'); const c = tr.closest('.tabela-rolagem') || document.documentElement;
+    const r = tr.getBoundingClientRect(); const b = c.getBoundingClientRect(); return r.top >= b.top - 1 && r.bottom <= b.bottom + 1; })()`));
+  await capturar("mensagem-abre-conta-no-controle-1536x864.png");
+  await js("window.finDesk.navegar('menu')");
+  await esperarTela("menu");
   await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined", 3000);
   for (const [w, h] of [[1280, 970], [1280, 800], [1536, 864], [1366, 700], [960, 800]]) {
     await definirTamanho(w, h);

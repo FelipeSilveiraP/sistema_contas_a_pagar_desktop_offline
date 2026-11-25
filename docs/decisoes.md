@@ -282,3 +282,6 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - Foto da loja: STAM de R$ 1.056,49 vencendo dia 12 travava porque já havia STAM com o mesmo valor no dia 29 (regra do VBA: mesma empresa no mês + valor até R$ 150 de diferença). Era outro boleto.
 - Regra nova (contas do mês e contas recorrentes): mesmo número de documento, OU nome de empresa parecido E vencimento até 3 dias de distância (para a recorrente, do dia dela no mês). O valor não entra. Boleto da mesma empresa em outro dia grava direto.
 - Detalhes dos pop-ups com uma informação por linha (`white-space: pre-line`).
+
+## 2026-11-25 — Mensagens do dia: clicar na conta abre o Controle
+- Cada conta das mensagens (painel do Menu e pop-up MENSAGENS URGENTES) é clicável (mouse, Enter ou espaço): abre Todas as Contas no mês dela, com a conta selecionada na edição e a linha rolada até ficar visível dentro da tabela. Usa o mesmo `abrir-registro.ts` do aviso de duplicidade.

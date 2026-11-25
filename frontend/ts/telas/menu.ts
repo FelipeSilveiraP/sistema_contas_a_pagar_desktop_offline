@@ -7,6 +7,7 @@ import { formatarDataBR, formatarMoedaBR } from "../mascaras";
 import { Tela, irPara } from "../navegacao";
 import { respostaProvisoria } from "../componentes";
 import { mostrarNovidades } from "../novidades";
+import { pedirAbertura } from "../abrir-registro";
 
 const MODULOS: Record<string, string> = {
   "inserir-conta": "INSERIR CONTA",
@@ -100,8 +101,23 @@ function situacao(dias: number): { texto: string; cores: string; atrasada: boole
 function linhaAlerta(conta: AlertaContaDados): HTMLTableRowElement {
   const s = situacao(conta.dias);
   const tr = document.createElement("tr");
-  tr.className = s.atrasada ? "bg-[#fff1ef]" : "hover:bg-[#fff9d6] transition-colors";
+  tr.className = `${s.atrasada ? "bg-[#fff1ef]" : ""} hover:bg-[#fff9d6] transition-colors cursor-pointer`;
   tr.dataset.alerta = s.atrasada ? "atrasada" : "a-vencer";
+  tr.dataset.idConta = String(conta.id);
+  // clique (ou Enter) = abre esta conta no Controle, ja selecionada (pedido do usuario, 2026-11-25)
+  tr.tabIndex = 0;
+  tr.title = "Abrir esta conta no Controle";
+  const abrir = (): void => {
+    pedirAbertura("conta", conta.id);
+    void irPara("todas-as-contas");
+  };
+  tr.addEventListener("click", abrir);
+  tr.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Enter" && evento.key !== " ") return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    abrir();
+  });
   tr.appendChild(celula(formatarDataBR(conta.vencimento), `p-2.5 sm:px-4 py-2 text-center font-mono ${s.atrasada ? "text-[#ba1a1a]" : "text-[#1c1b1b]"}`, "Vencimento"));
   tr.appendChild(celula(conta.nomeEmpresa, "p-2.5 sm:px-4 py-2", "Empresa"));
   tr.appendChild(celula(formatarMoedaBR(Math.round(conta.valor * 100)), "p-2.5 sm:px-4 py-2 text-right font-mono whitespace-nowrap", "Valor"));
@@ -325,7 +341,7 @@ function abrirPopup(): Promise<void> {
       fecharPopup(veu, origem);
     } else if (evento.key === "Tab") {
       // foco preso dentro do pop-up
-      const focaveis = [...caixa.querySelectorAll<HTMLElement>("button")];
+      const focaveis = [...caixa.querySelectorAll<HTMLElement>("button, tr[tabindex]")];
       const i = focaveis.indexOf(document.activeElement as HTMLElement);
       const proximo = evento.shiftKey ? (i <= 0 ? focaveis.length - 1 : i - 1) : (i + 1) % focaveis.length;
       evento.preventDefault();

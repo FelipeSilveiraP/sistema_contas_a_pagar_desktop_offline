@@ -456,7 +456,17 @@ async function recarregar(): Promise<void> {
     if (contas.some((c) => c.id === selecionadoId)) selecionar(selecionadoId);
     else fecharEdicao();
   }
-  if (alvo) rolarParaEdicao();
+  if (alvo) {
+    // a linha pode estar abaixo das 5 visiveis: rola so a tabela ate ela
+    const linha = document.querySelector<HTMLElement>(`#billsTable tr[data-id="${alvo.id}"]`);
+    const caixa = linha?.closest<HTMLElement>(".tabela-rolagem");
+    if (linha && caixa && caixa.scrollHeight > caixa.clientHeight) {
+      const r = linha.getBoundingClientRect();
+      const c = caixa.getBoundingClientRect();
+      caixa.scrollTop += r.top - c.top - (c.height - r.height) / 2;
+    }
+    rolarParaEdicao();
+  }
 }
 
 async function pagar(conta: ContaDados): Promise<void> {
