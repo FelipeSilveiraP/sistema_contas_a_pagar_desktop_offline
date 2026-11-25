@@ -289,3 +289,7 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 ## 2026-11-25 — Botão CONTAS A VENCER em Todas as Contas
 - Ao lado de IMPRIMIR LISTA: abre o mesmo pop-up MENSAGENS DO DIA do Menu (atrasadas + a vencer em 10 dias + recados), sem voltar ao Menu. Clicar numa conta fecha o pop-up e seleciona a conta ali mesmo (mês dela, edição aberta).
 - O pop-up saiu do `menu.ts` para `frontend/ts/mensagens-dia.ts` (compartilhado); no Menu ele mantém o botão "Ver no Controle".
+
+## 2026-11-25 — E-mail em minúsculas e SALVAR na extrema direita
+- E-mail nunca em MAIÚSCULAS: campo do cadastro de empresa e do "Alterar um campo" mostram em minúsculas (`inputmode="email"`/`type="email"` → `text-transform: lowercase`), e o servidor grava o e-mail da empresa em minúsculas.
+- Formulários de Empresa, Banco e Pagador: CANCELAR / ETAPA ANTERIOR à esquerda, SALVAR (e PRÓXIMA ETAPA) na extrema direita.

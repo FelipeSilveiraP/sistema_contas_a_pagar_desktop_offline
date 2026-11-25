@@ -314,7 +314,7 @@ async function aplicarAlteracao(): Promise<void> {
       else if (campo === "razaoSocial") dados.razaoSocial = bruto;
       else if (campo === "cnpj") dados.cnpj = vazioOu(bruto);
       else if (campo === "nomeRepresentante") dados.nomeRepresentante = vazioOu(bruto);
-      else if (campo === "email") dados.email = vazioOu(bruto);
+      else if (campo === "email") dados.email = vazioOu(bruto.toLowerCase());
       else if (campo === "logradouro") dados.logradouro = vazioOu(bruto);
       await atualizarEmpresa(cfg, e.id, dados);
       empresas = await listarEmpresas(cfg);

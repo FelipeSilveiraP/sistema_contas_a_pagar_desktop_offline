@@ -41,7 +41,7 @@ Cadastre a empresa/fornecedora usada nas despesas da oficina.
 <fieldset class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 p-4 sm:p-6" id="etapa-2">
 <div class="flex flex-col gap-1.5">
 <label class="font-headline text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1c1b1b]" for="campo-email">E-mail (opcional)</label>
-<input class="form-campo w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-email" name="email" type="text" maxlength="120" autocomplete="off" placeholder="contato@empresa.com.br">
+<input class="form-campo sem-maiusculas lowercase w-full border-4 border-[#1c1b1b] bg-white px-3 py-2.5 font-mono text-sm sm:text-base text-[#1c1b1b] shadow-[3px_3px_0_0_#1c1b1b] focus:outline-none focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-[5px_5px_0_0_#1c1b1b]" id="campo-email" name="email" type="text" inputmode="email" spellcheck="false" autocapitalize="off" maxlength="120" autocomplete="off" placeholder="contato@empresa.com.br">
 <p class="campo-erro hidden font-headline text-xs font-bold text-[#b6212a]" data-erro-campo="email"></p>
 </div>
 <div class="flex flex-col gap-1.5">
@@ -61,15 +61,7 @@ Cadastre a empresa/fornecedora usada nas despesas da oficina.
 </fieldset>
 <div class="flex flex-col gap-3 border-t-2 border-[#1c1b1b] bg-[#fcf9f8] px-4 py-4 sm:px-6">
 <p class="hidden text-center font-headline text-sm font-bold text-[#006c46]" id="feedback-empresa" role="status"></p>
-<div class="flex flex-wrap items-center justify-center gap-3">
-<button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-proxima" type="button">
-<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_forward</span>
-<span>Próxima etapa</span>
-</button>
-<button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-salvar" type="submit">
-<span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
-<span>Salvar</span>
-</button>
+<div class="flex flex-wrap items-center justify-center sm:justify-start gap-3" data-botoes-form>
 <button class="hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-voltar-etapa" type="button">
 <span class="material-symbols-outlined text-lg leading-none font-bold">arrow_back</span>
 <span>Etapa anterior</span>
@@ -77,6 +69,14 @@ Cadastre a empresa/fornecedora usada nas despesas da oficina.
 <button class="inline-flex items-center gap-2.5 px-5 py-2.5 bg-white text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-cancelar" type="button">
 <span class="material-symbols-outlined text-lg leading-none font-bold">close</span>
 <span>Cancelar</span>
+</button>
+<button class="sm:ml-auto inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-proxima" type="button">
+<span class="material-symbols-outlined text-lg leading-none font-bold">arrow_forward</span>
+<span>Próxima etapa</span>
+</button>
+<button class="sm:ml-auto hidden inline-flex items-center gap-2.5 px-5 py-2.5 bg-[#f59e0b] text-[#1c1b1b] border-4 border-[#1c1b1b] font-headline font-bold text-sm uppercase tracking-wider shadow-[4px_4px_0_0_#1c1b1b] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#1c1b1b] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0_0_#1c1b1b] transition-all cursor-pointer" id="btn-salvar" type="submit">
+<span class="material-symbols-outlined text-lg leading-none font-bold">save</span>
+<span>Salvar</span>
 </button>
 </div>
 </div>

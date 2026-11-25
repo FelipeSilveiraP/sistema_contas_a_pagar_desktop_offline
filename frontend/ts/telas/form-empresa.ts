@@ -30,7 +30,7 @@ function lerCampos(): CamposFormulario {
     razaoSocial: campo("razaoSocial").value.trim(),
     cnpj: campo("cnpj").value.trim(),
     nomeRepresentante: campo("nomeRepresentante").value.trim(),
-    email: campo("email").value.trim(),
+    email: campo("email").value.trim().toLowerCase(),
     logradouro: campo("logradouro").value.trim(),
   };
 }

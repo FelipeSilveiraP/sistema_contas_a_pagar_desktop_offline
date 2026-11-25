@@ -95,6 +95,8 @@ export function criarEditorCampo(
       input.value = gravado;
       input.inputMode = c.mascara ? "numeric" : "text";
       if (c.mascara === "cnpj") input.inputMode = "text";
+      // e-mail: digitado e mostrado em minusculas (o resto do sistema e em MAIUSCULAS)
+      if (c.valor === "email") input.inputMode = "email";
     }
     erro();
     aoMudar?.(c.valor);

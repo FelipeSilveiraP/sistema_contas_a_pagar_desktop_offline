@@ -51,6 +51,15 @@ class EmpresaServiceTest {
     }
 
     @Test
+    void emailDaEmpresaFicaEmMinusculas() {
+        Empresa criada = service.cadastrar(
+                new Empresa(null, null, "IG Industria", null, " FINANCEIRO@IG.IND.BR ", null, List.of()));
+
+        assertThat(criada.email()).isEqualTo("financeiro@ig.ind.br");
+        assertThat(criada.razaoSocial()).isEqualTo("IG INDUSTRIA");
+    }
+
+    @Test
     void deveAceitarEmpresaSemCnpjENemTelefones() {
         Empresa criada = service.cadastrar(
                 new Empresa(null, null, "Gold Chaves", null, null, null, List.of()));

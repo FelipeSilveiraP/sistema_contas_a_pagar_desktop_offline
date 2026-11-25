@@ -113,10 +113,16 @@ public class EmpresaService {
                 cnpj.isEmpty() ? null : cnpj,
                 dados.razaoSocial() == null ? "" : Texto.maiusculas(dados.razaoSocial()),
                 Texto.maiusculasOuNulo(dados.nomeRepresentante()),
-                vazioNulo(dados.email()),
+                emailMinusculo(dados.email()),
                 Texto.maiusculasOuNulo(dados.logradouro()),
                 telefones
         );
+    }
+
+    /** E-mail e sempre em minusculas (pedido do usuario, 2026-11-25). */
+    private static String emailMinusculo(String valor) {
+        String e = vazioNulo(valor);
+        return e == null ? null : e.toLowerCase(java.util.Locale.ROOT);
     }
 
     private static String vazioNulo(String valor) {

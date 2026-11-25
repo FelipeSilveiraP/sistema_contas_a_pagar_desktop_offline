@@ -1390,6 +1390,8 @@ input:not([type]):not(.sem-maiusculas),
 textarea:not(.sem-maiusculas) {
   text-transform: uppercase;
 }
+/* e-mail e sempre em minusculas (pedido do usuario, 2026-11-25); o servidor grava assim */
+input[type="email"], input[inputmode="email"] { text-transform: lowercase !important; }
 
 
 /* pop-up grande (igual ao Garantias) */
