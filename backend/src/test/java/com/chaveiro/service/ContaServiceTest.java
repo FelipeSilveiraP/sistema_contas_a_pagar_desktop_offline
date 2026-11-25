@@ -134,33 +134,34 @@ class ContaServiceTest {
         service.cadastrar(conta("Auto Posto Central", "200.00", "2026-12-10", "A1"), null, false);
 
         assertThatThrownBy(() -> service.cadastrar(
-                conta("auto posto central ltda", "555.55", "2026-12-15", "B2"), null, false))
+                conta("auto posto central ltda", "555.55", "2026-12-13", "B2"), null, false))
                 .isInstanceOf(PossivelDuplicataException.class);
     }
 
     @Test
-    void deveDetectarDuplicataPorNomeParecidoEValorParecidoComVencimentoDistanteNoMesmoMes() {
-        service.cadastrar(conta("Auto Posto Central", "200.00", "2026-12-10", "A1"), null, false);
+    void mesmaEmpresaMesmoValorEmOutroDiaEOutroBoleto() {
+        // caso da loja (2026-11-25): STAM dia 29 ja cadastrada; outro boleto da STAM, mesmo valor, dia 12
+        service.cadastrar(conta("Stam", "1056.49", "2026-12-29", null), null, false);
 
-        assertThatThrownBy(() -> service.cadastrar(
-                conta("Auto Posto Central", "300.00", "2026-12-28", "B2"), null, false))
-                .isInstanceOf(PossivelDuplicataException.class);
+        Conta outroBoleto = service.cadastrar(conta("Stam", "1056.49", "2026-12-12", null), null, false);
+        assertThat(outroBoleto.id()).isNotNull();
     }
 
     @Test
     void limitesDaRegraDeDuplicidade() {
         service.cadastrar(conta("Auto Posto Central", "200.00", "2026-12-10", "A1"), null, false);
 
+        // ate 3 dias de distancia: pergunta (qualquer valor)
         assertThatThrownBy(() -> service.cadastrar(
-                conta("Auto Posto Central", "999.99", "2026-12-15", null), null, false))
+                conta("Auto Posto Central", "999.99", "2026-12-13", null), null, false))
+                .isInstanceOf(PossivelDuplicataException.class);
+        assertThatThrownBy(() -> service.cadastrar(
+                conta("Auto Posto Central", "200.00", "2026-12-07", null), null, false))
                 .isInstanceOf(PossivelDuplicataException.class);
 
-        assertThatThrownBy(() -> service.cadastrar(
-                conta("Auto Posto Central", "50.00", "2026-12-16", null), null, false))
-                .isInstanceOf(PossivelDuplicataException.class);
-
+        // 4 dias ou mais: outro boleto, grava direto
         Conta distinta = service.cadastrar(
-                conta("Auto Posto Central", "49.99", "2026-12-16", null), null, false);
+                conta("Auto Posto Central", "200.00", "2026-12-14", null), null, false);
         assertThat(distinta.id()).isNotNull();
     }
 

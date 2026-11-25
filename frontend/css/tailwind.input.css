@@ -679,6 +679,7 @@
 }
 
 .dialogo__detalhes {
+  white-space: pre-line; /* cada informacao numa linha (ex.: duplicidade) */
   margin: 0;
   padding: 0.625rem 0.75rem;
   font-size: 0.9375rem;

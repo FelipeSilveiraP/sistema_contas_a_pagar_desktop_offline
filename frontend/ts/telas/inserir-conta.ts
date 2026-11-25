@@ -204,8 +204,8 @@ async function decidirDuplicidade(erro: ErroDuplicidadeApi): Promise<"editar" | 
   const editar = await confirmar({
     titulo: r ? "ESTA CONTA JÁ ESTÁ NAS CONTAS RECORRENTES" : "ESTA CONTA JÁ EXISTE",
     mensagem: r
-      ? "Esta conta já é cadastrada como conta recorrente (ela é gerada sozinha todo período). Quer editar a conta que já existe?"
-      : "Já existe uma conta muito parecida com esta no mesmo mês. Quer editar a conta que já existe?",
+      ? "Esta empresa já tem uma conta recorrente que vence perto desta data (ela é gerada sozinha todo período). Quer editar a conta que já existe?"
+      : "Já existe uma conta desta empresa vencendo até 3 dias desta data (ou com o mesmo número de documento). Quer editar a conta que já existe?",
     detalhes: linhas.join("\n"),
     textoConfirmar: "SIM, EDITAR A QUE JÁ EXISTE",
     textoCancelar: "NÃO",

@@ -4,6 +4,7 @@ import com.chaveiro.model.Conta;
 import com.chaveiro.repository.ContaRepository;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
@@ -25,8 +26,12 @@ public class ContaService {
 
     private static final Logger log = LoggerFactory.getLogger(ContaService.class);
 
-    static final int JANELA_DIAS_DUPLICATA = 5;
-    static final BigDecimal TOLERANCIA_VALOR_DUPLICATA = new BigDecimal("150.00");
+    /**
+     * Mesma empresa com vencimento ate 3 dias de distancia = possivel duplicata. O VALOR nao
+     * conta mais (pedido do usuario, 2026-11-25): boleto da mesma empresa, com o mesmo valor,
+     * mas vencendo em outro dia (ex.: dia 12 e dia 29) e outro boleto, nao duplicata.
+     */
+    static final int JANELA_DIAS_DUPLICATA = 3;
 
     /**
      * Maior valor aceito (R$ 999.999.999,99). Sem teto, um valor absurdo estourava
@@ -171,14 +176,18 @@ public class ContaService {
     }
 
     /**
-     * Conta FIXA ativa igual a conta nova: mesmo documento (nao vazio) ou nome de empresa
-     * parecido (um contem o outro, sem ligar para maiusculas e espacos nas pontas).
+     * Conta FIXA ativa igual a conta nova: mesmo documento (nao vazio), ou nome de empresa
+     * parecido (um contem o outro) E vencimento ate 3 dias do dia da conta fixa. Outro boleto
+     * da mesma empresa em outro dia do mes nao e barrado.
      */
     ContaRepository.RecorrenteResumo buscarRecorrenteParecida(Conta nova) throws SQLException {
-        String doc = nova.numeroDocumento() == null ? "" : nova.numeroDocumento().trim();
+        LocalDate venc = nova.vencimento();
         for (ContaRepository.RecorrenteResumo r : repository.recorrentesAtivas()) {
-            String docR = r.numeroDocumento() == null ? "" : r.numeroDocumento().trim();
-            if ((!doc.isEmpty() && doc.equalsIgnoreCase(docR)) || nomesParecidos(r.nomeEmpresa(), nova.nomeEmpresa())) {
+            // dia da conta fixa neste mes (dia 31 em fevereiro vira o ultimo dia, como na geracao)
+            LocalDate diaDaFixa = venc.withDayOfMonth(Math.min(r.dia(), venc.lengthOfMonth()));
+            boolean diaPerto = Math.abs(ChronoUnit.DAYS.between(diaDaFixa, venc)) <= JANELA_DIAS_DUPLICATA;
+            if (mesmoDocumento(r.numeroDocumento(), nova.numeroDocumento())
+                    || (nomesParecidos(r.nomeEmpresa(), nova.nomeEmpresa()) && diaPerto)) {
                 return r;
             }
         }
@@ -186,26 +195,22 @@ public class ContaService {
     }
 
     /**
-     * Regra VBA cmdInserir_Click ("filtro ultra-sensivel"), aplicada a contas
-     * do mesmo mes: documento identico (nao vazio), OU nome de empresa parecido
-     * E (vencimento em ate 5 dias OU valor com diferenca de ate R$ 150,00).
+     * Possivel duplicata, entre contas do mesmo mes: documento identico (nao vazio), OU nome de
+     * empresa parecido E vencimento em ate 3 dias. (O VBA tambem marcava "valor com diferenca
+     * de ate R$ 150", o que travava o segundo boleto da mesma empresa: removido em 2026-11-25.)
      */
     static boolean possivelDuplicata(Conta existente, Conta nova) {
-        String docExistente = existente.numeroDocumento() == null ? "" : existente.numeroDocumento().trim();
-        String docNovo = nova.numeroDocumento() == null ? "" : nova.numeroDocumento().trim();
-        if (!docExistente.isEmpty() && docExistente.equalsIgnoreCase(docNovo)) {
+        if (mesmoDocumento(existente.numeroDocumento(), nova.numeroDocumento())) {
             return true;
         }
-        boolean nomesParecidos = nomesParecidos(existente.nomeEmpresa(), nova.nomeEmpresa());
-        if (!nomesParecidos) {
-            return false;
-        }
-        long dias = Math.abs(ChronoUnit.DAYS.between(existente.vencimento(), nova.vencimento()));
-        if (dias <= JANELA_DIAS_DUPLICATA) {
-            return true;
-        }
-        BigDecimal diferenca = existente.valor().subtract(nova.valor()).abs();
-        return diferenca.compareTo(TOLERANCIA_VALOR_DUPLICATA) <= 0;
+        return nomesParecidos(existente.nomeEmpresa(), nova.nomeEmpresa())
+                && Math.abs(ChronoUnit.DAYS.between(existente.vencimento(), nova.vencimento())) <= JANELA_DIAS_DUPLICATA;
+    }
+
+    private static boolean mesmoDocumento(String a, String b) {
+        String da = a == null ? "" : a.trim();
+        String db = b == null ? "" : b.trim();
+        return !da.isEmpty() && da.equalsIgnoreCase(db);
     }
 
     private static boolean nomesParecidos(String a, String b) {

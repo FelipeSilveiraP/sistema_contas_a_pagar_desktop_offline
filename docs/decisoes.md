@@ -277,3 +277,8 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 - Pedido do usuário: contas que já estão nas CONTAS RECORRENTES eram cadastradas de novo à mão. Agora o Inserir Conta também compara com as recorrentes ATIVAS (mesmo documento, ou nome de empresa parecido: um contém o outro), em qualquer mês, além da regra do VBA (contas do mesmo mês).
 - Pop-up 1 "ESTA CONTA JÁ ESTÁ NAS CONTAS RECORRENTES" / "ESTA CONTA JÁ EXISTE": recorrente (dia, frequência, valor) e a conta do mês (vencimento, valor, situação). **SIM, EDITAR A QUE JÁ EXISTE** abre Todas as Contas no mês dela, com a conta selecionada na edição (ou a tabela de recorrentes, se a conta do mês ainda não foi gerada). **NÃO** → pop-up 2 "CADASTRAR UMA DUPLICATA?" (Enter cancela; só grava clicando em SIM).
 - Servidor: `PossivelDuplicataException` leva `existente` (pode faltar) + `recorrente`; `ContaRepository.recorrentesAtivas()` / `contaDaRecorrenteNoMes()`. Tela de destino recebe o id por `frontend/ts/abrir-registro.ts` (sessionStorage, lido uma vez).
+
+## 2026-11-25 — Duplicidade: o valor não conta mais, só documento ou data próxima
+- Foto da loja: STAM de R$ 1.056,49 vencendo dia 12 travava porque já havia STAM com o mesmo valor no dia 29 (regra do VBA: mesma empresa no mês + valor até R$ 150 de diferença). Era outro boleto.
+- Regra nova (contas do mês e contas recorrentes): mesmo número de documento, OU nome de empresa parecido E vencimento até 3 dias de distância (para a recorrente, do dia dela no mês). O valor não entra. Boleto da mesma empresa em outro dia grava direto.
+- Detalhes dos pop-ups com uma informação por linha (`white-space: pre-line`).

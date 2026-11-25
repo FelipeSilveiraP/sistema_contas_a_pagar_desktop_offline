@@ -221,8 +221,8 @@ class BoletoRecorrenteServiceTest {
         service.cadastrar(recorrente(10, "MENSAL"));
         Conta gerada = contas.listar(null).get(0);
         ContaService contaService = new ContaService(contas);
-        // nome parecido ("ALUGUEL" esta dentro de "ALUGUEL DO GALPAO") e vencimento em outro dia do mes
-        assertThatThrownBy(() -> contaService.cadastrar(contaNova("aluguel", gerada.vencimento().withDayOfMonth(25).toString()), null, false))
+        // nome parecido ("ALUGUEL" esta dentro de "ALUGUEL DO GALPAO") e vencimento 2 dias depois do dia da fixa
+        assertThatThrownBy(() -> contaService.cadastrar(contaNova("aluguel", gerada.vencimento().withDayOfMonth(12).toString()), null, false))
                 .isInstanceOfSatisfying(PossivelDuplicataException.class, e -> {
                     assertThat(e.getRecorrente()).isNotNull();
                     assertThat(e.getRecorrente().dia()).isEqualTo(10);
@@ -243,6 +243,14 @@ class BoletoRecorrenteServiceTest {
                 });
         // "quer realmente ter uma duplicata?" -> SIM: grava
         assertThat(contaService.cadastrar(distante, null, true).id()).isNotNull();
+    }
+
+    @Test
+    void outroBoletoDaMesmaEmpresaEmOutroDiaNaoBloqueia() throws Exception {
+        service.cadastrar(recorrente(10, "MENSAL"));
+        ContaService contaService = new ContaService(contas);
+        // fixa no dia 10; boleto extra da mesma empresa, mesmo valor, dia 25
+        assertThat(contaService.cadastrar(contaNova("ALUGUEL DO GALPÃO", "2040-01-25"), null, false).id()).isNotNull();
     }
 
     @Test
