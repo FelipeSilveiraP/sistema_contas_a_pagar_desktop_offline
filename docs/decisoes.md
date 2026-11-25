@@ -285,3 +285,7 @@ A ordem de autoridade das fontes é: **design** = Stitch (`docs/stitch/`), **req
 
 ## 2026-11-25 — Mensagens do dia: clicar na conta abre o Controle
 - Cada conta das mensagens (painel do Menu e pop-up MENSAGENS URGENTES) é clicável (mouse, Enter ou espaço): abre Todas as Contas no mês dela, com a conta selecionada na edição e a linha rolada até ficar visível dentro da tabela. Usa o mesmo `abrir-registro.ts` do aviso de duplicidade.
+
+## 2026-11-25 — Botão CONTAS A VENCER em Todas as Contas
+- Ao lado de IMPRIMIR LISTA: abre o mesmo pop-up MENSAGENS DO DIA do Menu (atrasadas + a vencer em 10 dias + recados), sem voltar ao Menu. Clicar numa conta fecha o pop-up e seleciona a conta ali mesmo (mês dela, edição aberta).
+- O pop-up saiu do `menu.ts` para `frontend/ts/mensagens-dia.ts` (compartilhado); no Menu ele mantém o botão "Ver no Controle".

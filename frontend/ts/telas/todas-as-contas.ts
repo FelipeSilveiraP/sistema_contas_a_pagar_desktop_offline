@@ -15,7 +15,9 @@ import {
   listarPagadores,
   listarBancos,
   PagadorDados,
+  buscarAlertas,
 } from "../api";
+import { abrirMensagensDia } from "../mensagens-dia";
 import { criarEditorCampo, EditorCampo } from "../editor-registro";
 import { recolherTabela } from "../tabela-recolhivel";
 import { aberturaPedida } from "../abrir-registro";
@@ -443,29 +445,43 @@ function valorAtual(conta: ContaDados, campo: string): string {
 async function recarregar(): Promise<void> {
   const cfg = await window.finDesk!.config();
   [contas, pagamentos, pagadores] = await Promise.all([listarContas(cfg), listarPagamentos(cfg), listarPagadores(cfg)]);
-  // veio do Inserir Conta ("EDITAR A QUE JA EXISTE"): abre essa conta no mes dela
+  // veio do Inserir Conta ("EDITAR A QUE JA EXISTE") ou das mensagens do Menu: abre essa conta
   const pedida = aberturaPedida("conta");
-  const alvo = pedida === null ? undefined : contas.find((c) => c.id === pedida);
-  if (alvo) {
-    mesFiltro = alvo.vencimento.slice(0, 7);
-    selecionadoId = alvo.id;
-  }
   montarFiltroMes();
   renderTabela();
   if (selecionadoId !== null) {
     if (contas.some((c) => c.id === selecionadoId)) selecionar(selecionadoId);
     else fecharEdicao();
   }
-  if (alvo) {
-    // a linha pode estar abaixo das 5 visiveis: rola so a tabela ate ela
-    const linha = document.querySelector<HTMLElement>(`#billsTable tr[data-id="${alvo.id}"]`);
-    const caixa = linha?.closest<HTMLElement>(".tabela-rolagem");
-    if (linha && caixa && caixa.scrollHeight > caixa.clientHeight) {
-      const r = linha.getBoundingClientRect();
-      const c = caixa.getBoundingClientRect();
-      caixa.scrollTop += r.top - c.top - (c.height - r.height) / 2;
-    }
-    rolarParaEdicao();
+  if (pedida !== null) mostrarConta(pedida);
+}
+
+/** Abre a conta no mes dela, selecionada na edicao, com a linha visivel dentro da tabela. */
+function mostrarConta(id: number): void {
+  const alvo = contas.find((c) => c.id === id);
+  if (!alvo) return;
+  mesFiltro = alvo.vencimento.slice(0, 7);
+  montarFiltroMes();
+  selecionar(alvo.id);
+  // a linha pode estar abaixo das 5 visiveis: rola so a tabela ate ela
+  const linha = document.querySelector<HTMLElement>(`#billsTable tr[data-id="${alvo.id}"]`);
+  const caixa = linha?.closest<HTMLElement>(".tabela-rolagem");
+  if (linha && caixa && caixa.scrollHeight > caixa.clientHeight) {
+    const r = linha.getBoundingClientRect();
+    const c = caixa.getBoundingClientRect();
+    caixa.scrollTop += r.top - c.top - (c.height - r.height) / 2;
+  }
+  rolarParaEdicao();
+}
+
+/** CONTAS A VENCER: o mesmo pop-up MENSAGENS URGENTES do Menu, sem sair desta tela. */
+async function abrirContasAVencer(): Promise<void> {
+  try {
+    const dados = await buscarAlertas(await window.finDesk!.config());
+    await abrirMensagensDia(dados, { aoEscolherConta: mostrarConta });
+  } catch (erro) {
+    notificar("Não foi possível carregar as contas a vencer. Tente de novo.", "erro");
+    console.error("[ContasAPagar] falha nas contas a vencer:", erro);
   }
 }
 
@@ -816,6 +832,7 @@ function iniciar(): void {
   editor = montarEditor();
   // nota fiscal anexada: salva em Downloads (sem dialogo nativo) e oferece ABRIR
   el("btnImprimirLista").addEventListener("click", () => void imprimirLista());
+  el("btnContasAVencer").addEventListener("click", () => void abrirContasAVencer());
   el("btnImprimirConta").addEventListener("click", () => {
     const conta = contas.find((c) => c.id === selecionadoId);
     if (conta) void imprimirConta(conta);

@@ -1989,6 +1989,16 @@ async function executar() {
     const tr = document.querySelector('#billsTable tr[data-id="' + ${JSON.stringify(alvoMsg.id)} + '"]'); const c = tr.closest('.tabela-rolagem') || document.documentElement;
     const r = tr.getBoundingClientRect(); const b = c.getBoundingClientRect(); return r.top >= b.top - 1 && r.bottom <= b.bottom + 1; })()`));
   await capturar("mensagem-abre-conta-no-controle-1536x864.png");
+  // botao CONTAS A VENCER (Todas as Contas): o mesmo pop-up, sem voltar ao Menu (pedido 2026-11-25)
+  await js("document.getElementById('btnContasAVencer').click()");
+  teste("Todas as Contas: CONTAS A VENCER abre o pop-up das mensagens do dia", await esperarPredicado(
+    "document.body.dataset.mensagensExpandidas === 'true' && document.querySelectorAll('#alertas-corpo-expandido tr[data-alerta]').length >= 7", 8000));
+  await capturar("contas-a-vencer-popup-1536x864.png");
+  const alvoBotao = await js(`(() => { const tr = document.querySelectorAll('#alertas-corpo-expandido tr[data-id-conta]')[0];
+    const nome = tr.children[1].textContent; tr.click(); return nome; })()`);
+  teste("Todas as Contas: clicar na conta do pop-up fecha o pop-up e seleciona a conta", await esperarPredicado(
+    "document.body.dataset.mensagensExpandidas === undefined && document.body.dataset.tela === 'todas-as-contas'"
+    + ` && document.getElementById('editorRecordName').textContent.startsWith(${JSON.stringify(alvoBotao)})`, 8000), alvoBotao);
   await js("window.finDesk.navegar('menu')");
   await esperarTela("menu");
   await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined", 3000);
