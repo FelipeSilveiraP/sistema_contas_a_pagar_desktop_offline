@@ -1978,7 +1978,7 @@ async function executar() {
   await js("document.getElementById('btn-fechar-mensagens').click()");
   teste("Menu: FECHAR recolhe em MENSAGENS URGENTES", await esperarPredicado("document.body.dataset.mensagensExpandidas === undefined && document.getElementById('mensagens-recolhidas').offsetHeight > 0", 3000));
   await js("document.getElementById('mensagens-recolhidas').click()");
-  teste("Menu: faixa MENSAGENS URGENTES sempre amarela (mesmo com conta atrasada)", await js("getComputedStyle(document.getElementById('mensagens-recolhidas')).backgroundColor === 'rgb(255, 230, 0)'"),
+  teste("Menu: faixa MENSAGENS URGENTES vermelha com conta atrasada (não rosa)", await js("getComputedStyle(document.getElementById('mensagens-recolhidas')).backgroundColor === 'rgb(186, 26, 26)'"),
     await js("getComputedStyle(document.getElementById('mensagens-recolhidas')).backgroundColor"));
   teste("Menu: clicar em MENSAGENS URGENTES abre de novo", await esperarPredicado("document.body.dataset.mensagensExpandidas === 'true'", 3000));
   // clicar numa conta da mensagem = abre o Controle com ela selecionada (pedido 2026-11-25)

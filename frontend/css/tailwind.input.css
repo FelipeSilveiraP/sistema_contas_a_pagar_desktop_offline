@@ -1170,7 +1170,9 @@
 .mensagens-recolhidas strong { flex: 0 0 auto; font-size: 1.25rem; text-transform: uppercase; }
 .mensagens-recolhidas__resumo { flex: 1 1 auto; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mensagens-recolhidas__abrir { flex: 0 0 auto; padding: 0.3rem 0.65rem; background: #ffffff; border: 2px solid #1c1b1b; box-shadow: 2px 2px 0 0 #1c1b1b; font-weight: 700; text-transform: uppercase; }
-/* faixa SEMPRE amarela, mesmo com conta atrasada (pedido do usuario, 2026-11-26: antes ficava rosa) */
+/* conta atrasada: faixa VERMELHA, letras brancas (pedido do usuario, 2026-11-26: antes era rosa); sem atraso, amarela */
+.mensagens-recolhidas--atrasada { background: #ba1a1a; color: #ffffff; }
+.mensagens-recolhidas--atrasada .mensagens-recolhidas__abrir { color: #1c1b1b; }
 .mensagens-recolhidas:hover .mensagens-recolhidas__abrir { background: #1c1b1b; color: #ffffff; }
 .mensagens-recolhidas:focus-visible { outline: 3px solid #2165ef; outline-offset: 2px; }
 
